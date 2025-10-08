@@ -10,14 +10,20 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Button } from '../../../common/components/Button';
+import { BackButton } from '../../../common/components/BackButton';
 import { Input } from '../../../common/components/Input';
 import { SocialButton } from '../../../common/components/SocialButton';
-import { GoogleIcon } from '../../../common/components/GoogleIcon';
-import { EmailIcon } from '../../../common/components/EmailIcon';
 import { colors } from '../../../common/theme/colors';
+import { FontAwesome5, AntDesign  } from '@expo/vector-icons'; 
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { AuthStackParamList } from '../../../navigation/types';
+
+type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const handleContinue = () => {
     console.log('Continue with phone:', phoneNumber);
@@ -32,7 +38,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleSignUpNow = () => {
-    console.log('Navigate to sign up');
+    navigation.navigate('Register');
   };
 
   const handlePrivacyPolicy = () => {
@@ -48,12 +54,13 @@ export const LoginScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           
-          <TouchableOpacity style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
 
           <View style={styles.titleContainer}>
-            <Text style={styles.appTitle}>eMotoRent</Text>
+            <Text style={styles.appTitle}>
+              <Text style={styles.brandEmoto}>eMoto</Text>
+              <Text style={styles.brandRent}>Rent</Text>
+            </Text>
             <Text style={styles.subtitle}>Sign in to your eMotoRent Account</Text>
           </View>
 
@@ -70,9 +77,10 @@ export const LoginScreen: React.FC = () => {
             title="Continue"
             onPress={handleContinue}
             variant="primary"
+            style={styles.continueButton}
+            textStyle={styles.continueButtonText}
           />
 
-          {/* Or Separator */}
           <View style={styles.separatorContainer}>
             <Text style={styles.separatorText}>Or</Text>
           </View>
@@ -80,13 +88,13 @@ export const LoginScreen: React.FC = () => {
           <SocialButton
             title="Sign Up With Google"
             onPress={handleGoogleSignUp}
-            icon={<GoogleIcon />}
+            icon={<AntDesign name="google" size={24} color="white" />}
           />
 
           <SocialButton
             title="Sign Up With E-Mail"
             onPress={handleEmailSignUp}
-            icon={<EmailIcon />}
+            icon={<FontAwesome5 name="envelope" size={24} color="white" />}
           />
 
           <View style={styles.signUpContainer}>
@@ -126,30 +134,27 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
-  backButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 20,
-  },
-  backButtonText: {
-    color: colors.text.primary,
-    fontSize: 16,
-  },
+  
   titleContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 40,
   },
   appTitle: {
-    fontSize: 32,
+    fontSize: 56,
     fontWeight: 'bold',
     color: colors.text.primary,
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
+  brandEmoto: {
+    color: '#C9B6FF',
+  },
+  brandRent: {
     color: colors.text.primary,
-    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 24,
+    color: colors.text.secondary,
+    textAlign: 'left',
   },
   inputContainer: {
     marginBottom: 20,
@@ -161,6 +166,17 @@ const styles = StyleSheet.create({
   separatorText: {
     color: colors.text.secondary,
     fontSize: 16,
+  },
+  continueButton: {
+    backgroundColor: '#4285F4',
+    borderWidth: 0,
+    height: 56,
+    borderRadius: 28,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   signUpContainer: {
     alignItems: 'center',

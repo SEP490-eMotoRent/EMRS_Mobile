@@ -10,26 +10,32 @@ import {
   ScrollView,
 } from 'react-native';
 import { Button } from '../../../common/components/Button';
+import { BackButton } from '../../../common/components/BackButton';
 import { Input } from '../../../common/components/Input';
 import { SocialButton } from '../../../common/components/SocialButton';
-import { GoogleIcon } from '../../../common/components/GoogleIcon';
 import { colors } from '../../../common/theme/colors';
+import { useNavigation } from '@react-navigation/native';
+import { AntDesign } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { AuthStackParamList } from '../../../navigation/types';
+
+type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
 
 export const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
+  const navigation = useNavigation<RegisterScreenNavigationProp>();
   const handleContinue = () => {
     console.log('Register with:', { email, password, confirmPassword });
   };
 
   const handleGoogleSignUp = () => {
     console.log('Google sign up');
-  };
+  };            
 
   const handleSignIn = () => {
-    console.log('Navigate to sign in');
+    navigation.navigate('Login');
   };
 
   const handlePrivacyPolicy = () => {
@@ -45,12 +51,13 @@ export const RegisterScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           
-          <TouchableOpacity style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={() => navigation.goBack()} />
 
           <View style={styles.titleContainer}>
-            <Text style={styles.appTitle}>eMotoRent</Text>
+            <Text style={styles.appTitle}>
+              <Text style={styles.brandEmoto}>eMoto</Text>
+              <Text style={styles.brandRent}>Rent</Text>
+            </Text>
             <Text style={styles.subtitle}>Let's Create Your eMotoRent Account</Text>
           </View>
 
@@ -79,6 +86,8 @@ export const RegisterScreen: React.FC = () => {
             title="Continue"
             onPress={handleContinue}
             variant="primary"
+            style={styles.continueButton}
+            textStyle={styles.continueButtonText}
           />
 
           <View style={styles.separatorContainer}>
@@ -88,12 +97,15 @@ export const RegisterScreen: React.FC = () => {
           <SocialButton
             title="Sign Up With Google"
             onPress={handleGoogleSignUp}
-            icon={<GoogleIcon />}
+            icon={<AntDesign name="google" size={24} color="white" />}
           />
-
+          
           <View style={styles.signInContainer}>
             <Text style={styles.signInText}>
-              I already Have An Account
+            I already Have An Account!{' '}
+              <Text style={styles.signInLink} onPress={handleSignIn}>
+                Sign In
+              </Text>
             </Text>
           </View>
 
@@ -125,33 +137,41 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
-  backButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 20,
-  },
-  backButtonText: {
-    color: colors.text.primary,
-    fontSize: 16,
-  },
+  
   titleContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 40,
   },
   appTitle: {
-    fontSize: 32,
+    fontSize: 56,
     fontWeight: 'bold',
     color: colors.text.primary,
     marginBottom: 8,
   },
+  brandEmoto: {
+    color: '#C9B6FF',
+  },
+  brandRent: {
+    color: colors.text.primary,
+  },
   subtitle: {
-    fontSize: 16,
+    fontSize: 24,
     color: colors.text.secondary,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   inputContainer: {
     marginBottom: 20,
+  },
+  continueButton: {
+    backgroundColor: '#4285F4',
+    borderWidth: 0,
+    height: 56,
+    borderRadius: 28,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   separatorContainer: {
     alignItems: 'center',
@@ -165,6 +185,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
     marginBottom: 10,
+  },
+  signInLink: {
+    color: colors.text.primary,
+    fontWeight: '500',
   },
   signInText: {
     color: colors.text.secondary,
