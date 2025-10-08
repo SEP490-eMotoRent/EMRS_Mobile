@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ApiEndpoints } from '../network/APIEndpoint';
 import { ServerException } from '../errors/ServerException';
-import { AppLogger } from '../utils/logger';
+import { AppLogger } from '../utils/Logger';
 
 export class AxiosClient {
     private readonly axiosInstance: AxiosInstance;
