@@ -2,6 +2,11 @@ import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 
 import { ApiEndpoints } from '../network/APIEndpoint';
 import { ServerException } from '../errors/ServerException';
 import { AppLogger } from '../utils/Logger';
+import { AccountLocalDataSourceImpl } from '../../data/datasources/local/AccountLocalDataSource';
+import { RenterLocalDataSourceImpl } from '../../data/datasources/local/RenterLocalDataSource';
+import { AccountRemoteDataSourceImpl } from '../../data/datasources/remote/AccountRemoteDataSource';
+import { RenterRemoteDataSourceImpl } from '../../data/datasources/remote/RenterRemoteDataSource';
+
 
 export class AxiosClient {
     private readonly axiosInstance: AxiosInstance;
@@ -89,6 +94,10 @@ class ServiceLocator {
         // Register services
         this.services.set('AxiosClient', new AxiosClient());
         this.services.set('AppLogger', AppLogger.getInstance());
+        this.services.set('AccountLocalDataSource', new AccountLocalDataSourceImpl());
+        this.services.set('RenterLocalDataSource', new RenterLocalDataSourceImpl());
+        this.services.set('AccountRemoteDataSource', new AccountRemoteDataSourceImpl());
+        this.services.set('RenterRemoteDataSource', new RenterRemoteDataSourceImpl());
     }
 
     static getInstance(): ServiceLocator {
