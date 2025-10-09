@@ -1,7 +1,7 @@
-import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, GestureResponderEvent } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import React from 'react';
+import { GestureResponderEvent, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { colors } from '../../theme/colors';
 
 interface BackButtonProps {
   onPress: (event: GestureResponderEvent) => void;

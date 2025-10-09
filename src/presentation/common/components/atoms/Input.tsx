@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-  TextInput,
-  View,
-  Text,
   StyleSheet,
-  ViewStyle,
+  Text,
+  TextInput,
   TextStyle,
+  View,
+  ViewStyle,
 } from 'react-native';
-import { colors } from '../theme/colors';
+import { colors } from '../../theme/colors';
 
 interface InputProps {
   placeholder: string;
