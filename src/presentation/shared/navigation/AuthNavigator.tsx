@@ -8,7 +8,7 @@ import { HelloScreen } from '../../features/authentication/ui/screens/HelloScree
 
 // Define the parameter list for the stack navigator
 export type AuthStackParamList = {
-  Onboarding: undefined;
+  Hello: undefined;
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
@@ -19,11 +19,11 @@ const Stack = createStackNavigator<AuthStackParamList>();
 export default function AuthNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="Onboarding"
+      initialRouteName="Hello"
       screenOptions={{ headerShown: false }}
       id={undefined}
     >
-      <Stack.Screen name="Onboarding" component={HelloScreen} />
+      <Stack.Screen name="Hello" component={HelloScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
