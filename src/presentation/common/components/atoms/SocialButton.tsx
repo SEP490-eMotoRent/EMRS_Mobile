@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  TouchableOpacity,
-  Text,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { colors } from '../theme/colors';
+import { colors } from '../../theme/colors';
 
 interface SocialButtonProps {
   title: string;

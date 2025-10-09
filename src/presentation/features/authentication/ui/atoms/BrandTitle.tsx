@@ -1,30 +1,46 @@
 import React from 'react';
-import { Dimensions, StyleSheet, Text } from 'react-native';
-import { AppColors } from '../../../../common/constants/AppColor';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors } from '../../../../common/theme/colors';
 
 interface BrandTitleProps {
-    title: string;
+    subtitle?: string;
+    title?: string;
     accessibilityLabel?: string;
 }
 
-export const BrandTitle: React.FC<BrandTitleProps> = ({ title, accessibilityLabel }) => {
-    const screenWidth = Dimensions.get('window').width;
 
+export const BrandTitle: React.FC<BrandTitleProps> = ({ subtitle }) => {
     return (
-        <Text
-        style={[styles.text, { fontSize: screenWidth * 0.13 }]}
-        accessibilityLabel={accessibilityLabel}
-        >
-        {title}
-        </Text>
+        <View style={styles.container}>
+            <Text style={styles.appTitle}>
+                <Text style={styles.brandEmoto}>eMoto</Text>
+                <Text style={styles.brandRent}>Rent</Text>
+            </Text>
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    text: {
+    container: {
+        alignItems: 'flex-start',
+        marginBottom: 40,
+    },
+    appTitle: {
+        fontSize: 56,
         fontWeight: 'bold',
-        color: AppColors.white,
-        lineHeight: undefined, // React Native uses fontSize * lineHeightFactor
-        letterSpacing: -1,
+        color: colors.text.primary,
+        marginBottom: 8,
+    },
+    brandEmoto: {
+        color: '#C9B6FF',
+    },
+    brandRent: {
+        color: colors.text.primary,
+    },
+    subtitle: {
+        fontSize: 24,
+        color: colors.text.secondary,
+        textAlign: 'left',
     },
 });

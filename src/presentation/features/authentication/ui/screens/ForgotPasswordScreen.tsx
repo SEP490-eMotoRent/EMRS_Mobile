@@ -1,27 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
-import { Button } from '../../../../common/components/Button';
-import { Input } from '../../../../common/components/Input';
+
 import { colors } from '../../../../common/theme/colors';
+import { BackButton } from '../../../../common/components/atoms/BackButton';
+import { PageTitle } from '../../../../common/components/molecules/PageTitle';
+import { ResetPasswordForm } from '../organism/ResetPasswordForm';
+import { BackToLogin } from '../molecules/BackToLogin';
 
 export const ForgotPasswordScreen: React.FC = () => {
-  const [email, setEmail] = useState('');
-
-  const handleResetPassword = () => {
+  const handleResetPassword = (email: string) => {
     console.log('Reset password for:', email);
   };
 
   const handleBackToLogin = () => {
     console.log('Navigate back to login');
+  };
+
+  const handleGoBack = () => {
+    console.log('Go back');
   };
 
   return (
@@ -33,37 +35,16 @@ export const ForgotPasswordScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           
-          <TouchableOpacity style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
+          <BackButton onPress={handleGoBack} />
 
-          <View style={styles.titleContainer}>
-            <Text style={styles.appTitle}>eMotoRent</Text>
-            <Text style={styles.subtitle}>Reset Your Password</Text>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Input
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-          </View>
-
-          <Button
-            title="Reset Password"
-            onPress={handleResetPassword}
-            variant="primary"
+          <PageTitle 
+            title="eMotoRent" 
+            subtitle="Reset Your Password"
           />
 
-          <View style={styles.backToLoginContainer}>
-            <TouchableOpacity onPress={handleBackToLogin}>
-              <Text style={styles.backToLoginText}>
-                Back to Login
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <ResetPasswordForm onSubmit={handleResetPassword} />
+
+          <BackToLogin onPress={handleBackToLogin} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -83,42 +64,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 20,
-  },
-  backButtonText: {
-    color: colors.text.primary,
-    fontSize: 16,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  appTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  backToLoginContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  backToLoginText: {
-    color: colors.text.accent,
-    fontSize: 14,
-    fontWeight: '500',
   },
 });
