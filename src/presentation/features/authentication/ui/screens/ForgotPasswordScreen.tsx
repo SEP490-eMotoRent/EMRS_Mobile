@@ -9,9 +9,9 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Button } from '../../../common/components/Button';
-import { Input } from '../../../common/components/Input';
-import { colors } from '../../../common/theme/colors';
+import { Button } from '../../../../common/components/Button';
+import { Input } from '../../../../common/components/Input';
+import { colors } from '../../../../common/theme/colors';
 
 export const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState('');
