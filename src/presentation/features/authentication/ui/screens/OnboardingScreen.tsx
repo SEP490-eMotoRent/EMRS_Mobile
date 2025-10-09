@@ -1,3 +1,8 @@
+//This Screen is replaced by HelloScreen.tsx
+
+
+
+
 // import React from 'react';
 // import {
 //   View,

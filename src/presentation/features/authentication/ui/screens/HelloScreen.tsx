@@ -5,7 +5,7 @@ import { HelloPageTemplate } from '../templates/HelloPageTemplate';
 import { HelloBody } from '../organism/HelloBody';
 import { useAuth } from '../../../../../presentation/features/authentication/notifiers/AuthContext';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
+type Props = NativeStackScreenProps<AuthStackParamList, 'Hello'>;
 
 export const HelloScreen: React.FC<Props> = ({ navigation }) => {
     const { authState } = useAuth();
