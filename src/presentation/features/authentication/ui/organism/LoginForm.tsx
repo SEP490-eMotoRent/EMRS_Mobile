@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Button } from '../../../../common/components/atoms/Button';
+import { View, StyleSheet } from 'react-native';
 import { Input } from '../../../../common/components/atoms/Input';
+import { Button } from '../../../../common/components/atoms/Button';
 
 interface LoginFormProps {
     onContinue: (phoneNumber: string) => void;
@@ -39,13 +39,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue }) => {
 const styles = StyleSheet.create({
     container: {
         width: '100%',
+        marginBottom: 10,
     },
     inputContainer: {
-        marginBottom: 20,
+        marginBottom: 32,
     },
     continueButton: {
-        backgroundColor: '#4285F4',
-        borderWidth: 0,
+        backgroundColor: '#000000',
+        borderWidth: 1,
+        borderColor: '#FFFFFF',
         height: 56,
         borderRadius: 28,
     },

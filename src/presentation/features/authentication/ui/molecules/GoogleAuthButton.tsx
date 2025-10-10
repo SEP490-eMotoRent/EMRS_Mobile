@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     },
     separatorContainer: {
         alignItems: 'center',
-        marginVertical: 20,
+        marginVertical: 32,
     },
     separatorText: {
         color: colors.text.secondary,

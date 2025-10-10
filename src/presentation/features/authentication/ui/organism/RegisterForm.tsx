@@ -54,13 +54,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onContinue }) => {
 const styles = StyleSheet.create({
     container: {
         width: '100%',
+        marginBottom: 10,
     },
     inputContainer: {
-        marginBottom: 20,
+        marginBottom: 32,
     },
     continueButton: {
-        backgroundColor: '#4285F4',
-        borderWidth: 0,
+        backgroundColor: '#000000',
+        borderWidth: 1,
+        borderColor: '#FFFFFF',
         height: 56,
         borderRadius: 28,
     },
