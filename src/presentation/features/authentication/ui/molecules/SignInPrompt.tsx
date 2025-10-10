@@ -22,7 +22,7 @@ export const SignInPrompt: React.FC<SignInPromptProps> = ({ onSignInPress }) => 
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 48,
         marginBottom: 10,
     },
     text: {

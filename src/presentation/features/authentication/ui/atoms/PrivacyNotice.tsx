@@ -22,11 +22,11 @@ export const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ onPrivacyPolicyPre
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: 10,
+        marginTop: 20,
     },
     text: {
         color: colors.text.secondary,
-        fontSize: 12,
+        fontSize: 14,
         textAlign: 'center',
     },
     link: {

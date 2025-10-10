@@ -5,6 +5,7 @@ import { LoginScreen } from '../../features/authentication/ui/screens/LoginScree
 import { RegisterScreen } from '../../features/authentication/ui/screens/RegisterScreen';
 import { ForgotPasswordScreen } from '../../features/authentication/ui/screens/ForgotPasswordScreen';
 import { HelloScreen } from '../../features/authentication/ui/screens/HelloScreen';
+import { HomeScreen } from '../../features/homepage/ui/screens/HomeScreen';
 
 // Define the parameter list for the stack navigator
 export type AuthStackParamList = {
@@ -12,6 +13,7 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  Home: undefined;
 };
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -27,6 +29,7 @@ export default function AuthNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="Home" component={HomeScreen} />
     </Stack.Navigator>
   );
 }
