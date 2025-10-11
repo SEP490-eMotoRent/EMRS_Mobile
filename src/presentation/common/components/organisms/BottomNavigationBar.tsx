@@ -1,11 +1,10 @@
-// organisms/navigation/BottomNavigationBar.tsx
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import { NavItem } from '../molecules/navigationBar/NavItem';
-import { HomeIcon } from '../atoms/navigationBarIcons/HomeIcon';
-import { ScheduleIcon } from '../atoms/navigationBarIcons/ScheduleIcon';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BatteryIcon } from '../atoms/navigationBarIcons/BatteryIcon';
+import { HomeIcon } from '../atoms/navigationBarIcons/HomeIcon';
 import { ProfileIcon } from '../atoms/navigationBarIcons/ProfileIcon';
+import { ScheduleIcon } from '../atoms/navigationBarIcons/ScheduleIcon';
+import { NavItem } from '../molecules/navigationBar/NavItem';
 
 export type NavRoute = 'home' | 'schedule' | 'battery' | 'profile';
 
@@ -20,9 +19,9 @@ interface BottomNavigationBarProps {
 export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
     activeRoute,
     onNavigate,
-    activeColor = '#007AFF',
-    inactiveColor = '#8E8E93',
-    backgroundColor = '#FFFFFF',
+    activeColor = '#FFFFFF',          // white for active
+    inactiveColor = '#9E9E9E',        // dimmed gray for inactive
+    backgroundColor = '#121212',      // dark background
     }) => {
     const handlePress = (route: NavRoute) => {
         onNavigate?.(route);
@@ -70,15 +69,12 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         borderTopWidth: 1,
-        borderTopColor: '#E5E5EA',
+        borderTopColor: '#2C2C2C', // subtle dark divider
         paddingBottom: Platform.OS === 'ios' ? 20 : 8,
         elevation: 8,
         shadowColor: '#000',
-        shadowOffset: {
-        width: 0,
-        height: -2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
     },
 });
