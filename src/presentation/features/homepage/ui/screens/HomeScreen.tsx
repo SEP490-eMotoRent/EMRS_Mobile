@@ -7,6 +7,10 @@ import { HeroSection } from '../organisms/hero/HeroSection';
 import { PrimaryButton } from '../atoms/buttons/PrimaryButton';
 import { FeaturedBikesSection } from '../organisms/featuredBikes/FeaturedBikesSection';
 import { WhyChooseSection } from '../organisms/whyChoose/WhyChooseSection';
+import { ReviewsSection } from '../organisms/sections/ReviewsSection';
+import { ComparisonSection } from '../organisms/sections/ComparisonSection';
+import { LocationsSection } from '../organisms/sections/LocationSection';
+import { TapBookGoSection } from '../organisms/sections/TapBookGoSection';
 
 export const HomeScreen: React.FC = () => {
     const [activeRoute, setActiveRoute] = useState<NavRoute>('home');
@@ -19,22 +23,26 @@ export const HomeScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.searchContainer}>
-            <SearchBar />
-            </View>
+            <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+                <View style={styles.searchContainer}>
+                    <SearchBar />
+                </View>
 
-            <HeroSection />
+                <HeroSection />
 
-            <View style={styles.buttonContainer}>
-            <PrimaryButton>Search Available Bikes</PrimaryButton>
-            </View>
+                {/* <View style={styles.buttonContainer}>
+                <PrimaryButton>Search Available Bikes</PrimaryButton>
+                </View> */}
 
-            <FeaturedBikesSection bikes={bikes} />
-            <WhyChooseSection />
-        </ScrollView>
+                <FeaturedBikesSection bikes={bikes} />
+                <WhyChooseSection />
+                <TapBookGoSection />
+                <ReviewsSection />
+                <ComparisonSection />
+                <LocationsSection />
+            </ScrollView>
 
-        <BottomNavigationBar activeRoute={activeRoute} onNavigate={setActiveRoute} />
+            <BottomNavigationBar activeRoute={activeRoute} onNavigate={setActiveRoute} />
         </View>
     );
 };

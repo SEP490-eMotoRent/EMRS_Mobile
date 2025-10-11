@@ -32,9 +32,9 @@ export const WhyChooseSection: React.FC = () => (
         description="Ride with peace of mind knowing you're covered by our comprehensive insurance packages tailored for electric vehicles."
         />
 
-        <View style={styles.calloutBox}>
+        {/* <View style={styles.calloutBox}>
         <Heading2 style={styles.calloutText}>Tap, Book, Go — It's That Easy</Heading2>
-        </View>
+        </View> */}
     </View>
 );
 
