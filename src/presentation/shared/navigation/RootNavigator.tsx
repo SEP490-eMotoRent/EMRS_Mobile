@@ -38,7 +38,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 export const RootNavigator: React.FC = () => {
   return (
     <Stack.Navigator
-      id="RootStack"
+      id={undefined}
       initialRouteName="Auth"
       screenOptions={{ headerShown: false }}
     >

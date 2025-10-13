@@ -7,7 +7,7 @@ const Stack = createStackNavigator<HomeStackParamList>();
 
 export const HomeNavigator: React.FC = () => {
     return (
-        <Stack.Navigator id="HomeStack" initialRouteName="Home" screenOptions={{ headerShown: false }}>
+        <Stack.Navigator id={undefined} initialRouteName="Home" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Home" component={HomeScreen} />
             {/* TODO: Add Schedule and Battery screens when ready */}
         </Stack.Navigator>

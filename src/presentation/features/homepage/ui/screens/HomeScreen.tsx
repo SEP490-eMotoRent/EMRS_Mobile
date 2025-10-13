@@ -1,14 +1,15 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SearchBar } from '../../../../common/components/atoms/inputs/SearchBar';
-import { HeroSection } from '../organisms/hero/HeroSection';
+import { Bike } from '../molecules/cards/BikeCard';
+import { BookingModal } from '../organisms/bookingSearchBar/BookingModal';
 import { FeaturedBikesSection } from '../organisms/featuredBikes/FeaturedBikesSection';
-import { WhyChooseSection } from '../organisms/whyChoose/WhyChooseSection';
-import { ReviewsSection } from '../organisms/sections/ReviewsSection';
+import { HeroSection } from '../organisms/hero/HeroSection';
 import { ComparisonSection } from '../organisms/sections/ComparisonSection';
 import { LocationsSection } from '../organisms/sections/LocationSection';
+import { ReviewsSection } from '../organisms/sections/ReviewsSection';
 import { TapBookGoSection } from '../organisms/sections/TapBookGoSection';
-import { Bike } from '../molecules/cards/BikeCard';
+import { WhyChooseSection } from '../organisms/whyChoose/WhyChooseSection';
 
 export const HomeScreen: React.FC = () => {
     const bikes: Bike[] = [
@@ -17,12 +18,19 @@ export const HomeScreen: React.FC = () => {
         { name: 'Zero SR/F', category: 'Sport', range: '200 km', speed: '124 mph', price: '$89', rating: '4.9' },
     ];
 
+    const [modalVisible, setModalVisible] = useState(false);
+
     return (
         <View style={styles.container}>
-            <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+            <ScrollView
+                style={styles.content}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={styles.searchContainer}>
-                    <SearchBar />
+                    <SearchBar onPress={() => setModalVisible(true)} />
                 </View>
+
                 <HeroSection />
                 <FeaturedBikesSection bikes={bikes} />
                 <WhyChooseSection />
@@ -31,6 +39,11 @@ export const HomeScreen: React.FC = () => {
                 <ComparisonSection />
                 <LocationsSection />
             </ScrollView>
+
+            <BookingModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+            />
         </View>
     );
 };
