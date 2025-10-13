@@ -9,11 +9,11 @@ interface TextLinkProps {
     textStyle?: TextStyle;
 }
 
-export const TextLink: React.FC<TextLinkProps> = ({ 
-    text, 
-    onPress, 
+export const TextLink: React.FC<TextLinkProps> = ({
+    text,
+    onPress,
     style,
-    textStyle 
+    textStyle
 }) => {
     return (
         <TouchableOpacity onPress={onPress} style={style}>
