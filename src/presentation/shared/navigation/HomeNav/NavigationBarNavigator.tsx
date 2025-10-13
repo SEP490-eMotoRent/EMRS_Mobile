@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { BottomNavigationBar, NavRoute } from '../../common/components/organisms/BottomNavigationBar';
+import { BottomNavigationBar, NavRoute } from '../../../common/components/organisms/BottomNavigationBar';
 import { HomeNavigator } from './HomeNavigator';
 import { ProfileNavigator } from './ProfileNavigator';
 
-export const MainNavigator: React.FC = () => {
+export const NavigationBarNavigator: React.FC = () => {
     const [activeRoute, setActiveRoute] = useState<NavRoute>('home');
 
     const renderScreen = () => {

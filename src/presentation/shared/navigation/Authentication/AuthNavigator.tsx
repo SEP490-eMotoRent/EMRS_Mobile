@@ -1,10 +1,10 @@
-import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { LoginScreen } from '../../features/authentication/ui/screens/LoginScreen';
-import { RegisterScreen } from '../../features/authentication/ui/screens/RegisterScreen';
-import { ForgotPasswordScreen } from '../../features/authentication/ui/screens/ForgotPasswordScreen';
-import { HelloScreen } from '../../features/authentication/ui/screens/HelloScreen';
-import { AuthStackParamList } from './types';
+import React from 'react';
+import { ForgotPasswordScreen } from '../../../features/authentication/ui/screens/ForgotPasswordScreen';
+import { HelloScreen } from '../../../features/authentication/ui/screens/HelloScreen';
+import { LoginScreen } from '../../../features/authentication/ui/screens/LoginScreen';
+import { RegisterScreen } from '../../../features/authentication/ui/screens/RegisterScreen';
+import { AuthStackParamList } from '../StackParameters/types';
 
 const Stack = createStackNavigator<AuthStackParamList>();
 

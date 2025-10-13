@@ -1,11 +1,11 @@
-import React from 'react';
-import { View, StyleSheet, SafeAreaView, Dimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../../../shared/navigation/AuthNavigator';
-import { HorizontalSlideshow } from '../molecules/HorizontalSlideshow';
-import { BrandHeader } from '../molecules/BrandHeader';
-import { AuthButtonGroup } from '../molecules/AuthButtonGroup';
+import React from 'react';
+import { Dimensions, SafeAreaView, StyleSheet, View } from 'react-native';
 import { AppColors } from '../../../../common/constants/AppColor';
+import { AuthStackParamList } from '../../../../shared/navigation/Authentication/AuthNavigator';
+import { AuthButtonGroup } from '../molecules/AuthButtonGroup';
+import { BrandHeader } from '../molecules/BrandHeader';
+import { HorizontalSlideshow } from '../molecules/HorizontalSlideshow';
 
 
 const onboarding1 = require('../../../../../../assets/images/onboarding1.png');

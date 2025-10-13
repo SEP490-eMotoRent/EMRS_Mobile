@@ -1,22 +1,22 @@
-import React from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import React from 'react';
+import {
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+} from 'react-native';
 
+import { BackButton } from '../../../../common/components/atoms/BackButton';
+import { colors } from '../../../../common/theme/colors';
+import { AuthStackParamList } from '../../../../shared/navigation/Authentication/AuthNavigator';
+import { BrandTitle } from '../atoms/BrandTitle';
+import { PrivacyNotice } from '../atoms/PrivacyNotice';
 import { GoogleAuthButton } from '../molecules/GoogleAuthButton';
 import { SignInPrompt } from '../molecules/SignInPrompt';
-import { colors } from '../../../../common/theme/colors';
-import { AuthStackParamList } from '../../../../shared/navigation/AuthNavigator';
-import { PrivacyNotice } from '../atoms/PrivacyNotice';
 import { RegisterForm } from '../organism/RegisterForm';
-import { BrandTitle } from '../atoms/BrandTitle';
-import { BackButton } from '../../../../common/components/atoms/BackButton';
 
 type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
 
