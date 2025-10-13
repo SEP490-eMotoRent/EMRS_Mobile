@@ -1,0 +1,59 @@
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { StaffBottomNavigationBar, StaffNavRoute } from '../../../common/components/organisms/StaffBottomNavigationBar';
+import { HandoverScreen, ReturnScreen, ScanFaceScreen, BookingDetailsScreen } from '../../../features/staff/ui/screens';
+import { ProfileNavigator } from '../HomeNav/ProfileNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
+import { StaffStackParamList } from '../StackParameters/types';
+
+const Stack = createStackNavigator<StaffStackParamList>();
+
+export const StaffNavigator: React.FC = () => {
+  const [activeRoute, setActiveRoute] = useState<StaffNavRoute>('handover');
+
+  const renderScreen = () => {
+    switch (activeRoute) {
+      case 'handover':
+        return <HandoverScreen />;
+      case 'return':
+        return <ReturnScreen />;
+      case 'scanface':
+        return <ScanFaceScreen />;
+      case 'profile':
+        return <ProfileNavigator />;
+      default:
+        return <HandoverScreen />;
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName="Handover"
+      >
+        <Stack.Screen name="Handover">
+          {() => (
+            <View style={styles.tabContainer}>
+              <View style={styles.content}>{renderScreen()}</View>
+              <StaffBottomNavigationBar activeRoute={activeRoute} onNavigate={setActiveRoute} />
+            </View>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
+      </Stack.Navigator>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1,
+  },
+  tabContainer: {
+    flex: 1,
+  },
+  content: { 
+    flex: 1,
+  },
+});

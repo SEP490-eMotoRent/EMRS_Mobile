@@ -31,6 +31,7 @@ import React from 'react';
 import { AuthNavigator } from './Authentication/AuthNavigator';
 import { NavigationBarNavigator } from './HomeNav/NavigationBarNavigator';
 import { ProfileNavigator } from './HomeNav/ProfileNavigator';
+import { StaffNavigator } from './StaffNav/StaffNavigator';
 import { RootStackParamList } from './StackParameters/types';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -47,6 +48,9 @@ export const RootNavigator: React.FC = () => {
 
       {/* After login/register success, navigate to Main (which includes Home, Schedule, etc.) */}
       <Stack.Screen name="Home" component={NavigationBarNavigator} />
+
+      {/* Staff navigation for staff accounts */}
+      <Stack.Screen name="Staff" component={StaffNavigator} />
 
       {/* Profile stack is accessible from Main */}
       <Stack.Screen name="Profile" component={ProfileNavigator} />

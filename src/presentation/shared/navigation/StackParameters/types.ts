@@ -16,8 +16,17 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
 };
 
+export type StaffStackParamList = {
+  Handover: undefined;
+  Return: undefined;
+  ScanFace: undefined;
+  BookingDetails: undefined;
+  Profile: undefined;
+};
+
 export type RootStackParamList = {
   Auth: undefined;
   Home: undefined;
   Profile: undefined;
+  Staff: undefined;
 };

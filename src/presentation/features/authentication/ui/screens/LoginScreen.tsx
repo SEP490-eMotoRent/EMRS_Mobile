@@ -12,7 +12,7 @@ import {
     TouchableOpacity
 } from 'react-native';
 import { BackButton } from '../../../../common/components/atoms/BackButton';
-import { AuthStackParamList } from '../../../../shared/navigation/Authentication/AuthNavigator';
+import { RootStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { LoginForm } from '../organism/LoginForm';
 
 import { colors } from '../../../../common/theme/colors';
@@ -21,13 +21,12 @@ import { PrivacyNotice } from '../atoms/PrivacyNotice';
 import { SignUpPrompt } from '../atoms/SignUpPrompt';
 import { SocialAuthGroup } from '../atoms/SocialAuthGroup';
 
-type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Auth'>;
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const handleContinue = (phoneNumber: string) => {
-    console.log('Continue with phone:', phoneNumber);
   };
 
   const handleGoogleSignUp = () => {
@@ -39,6 +38,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleSignUpNow = () => {
+    // @ts-ignore - Navigate to Register within Auth stack
     navigation.navigate('Register');
   };
 
@@ -50,6 +50,12 @@ export const LoginScreen: React.FC = () => {
   const handleTestNavigation = () => {
     // @ts-ignore - Temporarily navigate to Home screen for testing
     navigation.navigate('Home');
+  };
+
+  // TODO: REMOVE THIS WHEN API IS READY - Test staff navigation only
+  const handleTestStaffNavigation = () => {
+    // @ts-ignore - Temporarily navigate to Staff screen for testing
+    navigation.navigate('Staff');
   };
 
   return (
@@ -72,12 +78,19 @@ export const LoginScreen: React.FC = () => {
             onEmailPress={handleEmailSignUp}
           />
 
-          {/* TODO: REMOVE WHEN API IS READY - Test navigation button */}
+          {/* TODO: REMOVE WHEN API IS READY - Test navigation buttons */}
           <TouchableOpacity 
             style={styles.testButton} 
             onPress={handleTestNavigation}
           >
-            <Text style={styles.testButtonText}>Test Navigation (Remove when needed)</Text>
+            <Text style={styles.testButtonText}>Test Customer Navigation</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.testButton, styles.staffTestButton]} 
+            onPress={handleTestStaffNavigation}
+          >
+            <Text style={styles.testButtonText}>Test Staff Navigation</Text>
           </TouchableOpacity>
 
           <SignUpPrompt onSignUpPress={handleSignUpNow} />
@@ -118,5 +131,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  staffTestButton: {
+    backgroundColor: '#C9B6FF',
+    borderColor: '#9C27B0',
   },
 });
