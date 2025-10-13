@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
 import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useState } from 'react';
+import { ProfileStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { EditProfileTemplate } from '../templates/EditProfileTemplate';
-import { ProfileStackParamList } from '../../../../shared/navigation/types';
 
 type EditProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'EditProfile'>;
 

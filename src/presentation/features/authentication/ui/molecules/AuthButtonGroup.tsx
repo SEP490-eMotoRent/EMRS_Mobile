@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { AppColors } from '../../../../common/constants/AppColor';
-import { AuthStackParamList } from '../../../../shared/navigation/AuthNavigator';
+import { AuthStackParamList } from '../../../../shared/navigation/Authentication/AuthNavigator';
 import { AppButton } from '../atoms/AppButton';
 
 interface AuthButtonGroupProps {

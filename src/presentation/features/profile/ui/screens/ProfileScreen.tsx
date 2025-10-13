@@ -1,13 +1,13 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import React from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { ProfileStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { ProfileHeader } from '../molecules/ProfileHeader';
-import { WalletCard } from '../organisms/WalletCard';
+import { QuickSettings } from '../organisms/QuickSettings';
 import { TransactionList } from '../organisms/TransactionList';
 import { VerificationCard } from '../organisms/VerificationCard';
-import { QuickSettings } from '../organisms/QuickSettings';
+import { WalletCard } from '../organisms/WalletCard';
 import { Transaction, Verification } from '../temp';
-import { ProfileStackParamList } from '../../../../shared/navigation/types';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'Profile'>;
 

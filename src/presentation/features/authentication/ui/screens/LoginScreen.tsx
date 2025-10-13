@@ -3,16 +3,16 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Text
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity
 } from 'react-native';
 import { BackButton } from '../../../../common/components/atoms/BackButton';
-import { AuthStackParamList } from '../../../../shared/navigation/AuthNavigator';
+import { AuthStackParamList } from '../../../../shared/navigation/Authentication/AuthNavigator';
 import { LoginForm } from '../organism/LoginForm';
 
 import { colors } from '../../../../common/theme/colors';
