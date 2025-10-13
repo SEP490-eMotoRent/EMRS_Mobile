@@ -1,16 +1,20 @@
 import React from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export const SearchBar: React.FC = () => (
-    <View style={styles.container}>
+export const SearchBar = ({ onPress }: { onPress: () => void }) => (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        <View style={styles.container}>
         <Ionicons name="search-outline" size={18} color="#aaa" />
         <TextInput
-        style={styles.input}
-        placeholder="Search For An Address"
-        placeholderTextColor="#aaa"
+            style={styles.input}
+            placeholder="Search for an Address"
+            placeholderTextColor="#aaa"
+            editable={false}
+            pointerEvents="none"
         />
-    </View>
+        </View>
+    </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({

@@ -8,7 +8,7 @@ const Stack = createStackNavigator<ProfileStackParamList>();
 
 export const ProfileNavigator: React.FC = () => {
     return (
-        <Stack.Navigator id="ProfileStack" initialRouteName="Profile" screenOptions={{ headerShown: false }}>
+        <Stack.Navigator id={undefined} initialRouteName="Profile" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         </Stack.Navigator>
