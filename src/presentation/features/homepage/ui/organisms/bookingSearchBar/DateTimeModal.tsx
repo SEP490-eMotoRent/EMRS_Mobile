@@ -6,8 +6,8 @@ import {
     TouchableOpacity,
     TouchableWithoutFeedback,
     StyleSheet,
-    ScrollView,
     Dimensions,
+    ScrollView,
 } from "react-native";
 import { CalendarList } from "react-native-calendars";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
@@ -35,6 +35,8 @@ export const DateTimeModal: React.FC<DateTimeModalProps> = ({
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
     const minutes = ["00", "30"];
     const periods = ["AM", "PM"];
+
+    const today = new Date("2025-10-14T07:35:00+07:00"); // Set to October 14, 2025, 07:35 AM +07
 
     const onDayPress = (day: any) => {
         if (!startDate || (startDate && endDate)) {
@@ -105,6 +107,24 @@ export const DateTimeModal: React.FC<DateTimeModalProps> = ({
         return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()} ${date.getFullYear()}`;
     };
 
+    // Mark past dates as disabled and grayed out
+    const markedDatesWithDisabled = { ...selectedDates };
+    const currentDate = new Date();
+    if (currentDate < today) {
+        const pastDate = new Date(today);
+        pastDate.setDate(pastDate.getDate() - 1);
+        while (pastDate >= currentDate) {
+            const pastDateStr = pastDate.toISOString().split("T")[0];
+            markedDatesWithDisabled[pastDateStr] = {
+                disabled: true,
+                disableTouchEvent: true,
+                color: "#888",
+                textColor: "#888",
+            };
+            pastDate.setDate(pastDate.getDate() - 1);
+        }
+    }
+
     return (
         <Modal
             visible={visible}
@@ -125,41 +145,49 @@ export const DateTimeModal: React.FC<DateTimeModalProps> = ({
                             </View>
 
                             {/* Calendar */}
-                            <CalendarList
-                                markingType="period"
-                                markedDates={selectedDates}
-                                onDayPress={onDayPress}
-                                pastScrollRange={0}
-                                futureScrollRange={3}
-                                theme={{
-                                    calendarBackground: "#000",
-                                    dayTextColor: "#fff",
-                                    monthTextColor: "#fff",
-                                    arrowColor: "#fff",
-                                    textDisabledColor: "#555",
-                                    todayTextColor: "#b8a4ff",
-                                }}
-                                style={styles.calendar}
-                            />
-
-                            {/* Date & Time Display */}
-                            <View style={styles.dateTimeContainer}>
-                                <View style={styles.dateTimeBox}>
-                                    <Text style={styles.dateLabel}>Start time</Text>
-                                    <TouchableOpacity onPress={() => openTimePicker("pickup")}>
-                                        <Text style={styles.timeLabel}>{pickupTime}</Text>
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.dateTimeBox}>
-                                    <Text style={styles.dateLabel}>End time</Text>
-                                    <TouchableOpacity onPress={() => openTimePicker("return")}>
-                                        <Text style={styles.timeLabel}>{returnTime}</Text>
-                                    </TouchableOpacity>
-                                </View>
+                            <View style={styles.calendarContainer}>
+                                <CalendarList
+                                    markingType="period"
+                                    markedDates={markedDatesWithDisabled}
+                                    onDayPress={onDayPress}
+                                    pastScrollRange={0}
+                                    futureScrollRange={2}
+                                    scrollEnabled={true}
+                                    minDate={today.toISOString().split("T")[0]}
+                                    theme={{
+                                        calendarBackground: "#000",
+                                        dayTextColor: "#fff",
+                                        monthTextColor: "#fff",
+                                        arrowColor: "#fff",
+                                        textDisabledColor: "#888",
+                                        todayTextColor: "#b8a4ff",
+                                    }}
+                                    style={styles.calendar}
+                                />
                             </View>
 
-                            {/* Confirm Button */}
-                            <PrimaryButton onPress={handleConfirm}>Confirm</PrimaryButton>
+                            {/* Overlay for Date & Time Display */}
+                            <View style={styles.dateTimeOverlay}>
+                                <View style={styles.dateTimeContainer}>
+                                    <ScrollView style={styles.dateTimeBoxScroll}>
+                                        <View style={styles.dateTimeBox}>
+                                            <Text style={styles.dateLabel}>Start time</Text>
+                                            <TouchableOpacity onPress={() => openTimePicker("pickup")}>
+                                                <Text style={styles.timeLabel}>{pickupTime}</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </ScrollView>
+                                    <ScrollView style={styles.dateTimeBoxScroll}>
+                                        <View style={styles.dateTimeBox}>
+                                            <Text style={styles.dateLabel}>End time</Text>
+                                            <TouchableOpacity onPress={() => openTimePicker("return")}>
+                                                <Text style={styles.timeLabel}>{returnTime}</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </ScrollView>
+                                </View>
+                                <PrimaryButton onPress={handleConfirm}>Confirm</PrimaryButton>
+                            </View>
 
                             {/* Time Picker Modal */}
                             {showTimePicker && (
@@ -285,33 +313,54 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 24,
     },
+    calendarContainer: {
+        alignItems: "flex-start",
+        justifyContent: "flex-start",
+        width: "100%",
+        height: "70%",
+    },
     calendar: {
-        width: width - 40,
-        height: 350,
-        marginBottom: 20,
+        width: width - 60,
+        height: 320,
+    },
+    dateTimeOverlay: {
+        position: "absolute",
+        bottom: 20,
+        left: 20,
+        right: 20,
+        flexDirection: "column",
+        alignItems: "center",
     },
     dateTimeContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
         marginBottom: 20,
-        gap: 10,
+        width: "100%",
+    },
+    dateTimeBoxScroll: {
+        flex: 1,
+        marginHorizontal: 5,
+        maxHeight: 60,
     },
     dateTimeBox: {
         flex: 1,
-        backgroundColor: "#1a1a1a",
-        borderRadius: 10,
-        padding: 15,
+        backgroundColor: "#2a2a2a",
+        borderWidth: 1,
+        borderColor: "#444",
+        borderRadius: 8,
+        padding: 10,
         alignItems: "center",
+        marginHorizontal: 5,
     },
     dateLabel: {
-        color: "#fff",
-        fontSize: 14,
-        marginBottom: 8,
+        color: "#ccc",
+        fontSize: 12,
+        marginBottom: 5,
     },
     timeLabel: {
         color: "#b8a4ff",
-        fontSize: 18,
-        fontWeight: "600",
+        fontSize: 16,
+        fontWeight: "500",
     },
     timePickerOverlay: {
         position: "absolute",
@@ -319,30 +368,32 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         top: 0,
-        backgroundColor: "rgba(0,0,0,0.7)",
+        backgroundColor: "#000", // Solid black background
         justifyContent: "flex-end",
     },
     timePickerSheet: {
-        backgroundColor: "#2a2a2a",
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 20,
+        backgroundColor: "#000",
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
+        padding: 15,
+        alignItems: "center",
+        width: "100%",
+        alignSelf: "stretch",
     },
     timePickerTitle: {
         color: "#fff",
         fontSize: 18,
         fontWeight: "600",
-        marginBottom: 20,
-        textAlign: "center",
+        marginBottom: 15,
     },
     pickerContainer: {
         flexDirection: "row",
-        justifyContent: "center",
-        height: 150,
+        justifyContent: "space-around",
+        width: "100%",
         marginBottom: 20,
     },
     pickerColumn: {
-        width: 80,
+        width: 60,
         height: 150,
     },
     pickerItem: {
@@ -351,31 +402,31 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     pickerItemSelected: {
-        backgroundColor: "transparent",
+        backgroundColor: "rgba(184, 164, 255, 0.2)",
+        borderRadius: 5,
     },
     pickerText: {
-        color: "#666",
-        fontSize: 24,
+        color: "#bbb",
+        fontSize: 20,
     },
     pickerTextSelected: {
-        color: "#fff",
-        fontSize: 28,
+        color: "#b8a4ff",
+        fontSize: 22,
         fontWeight: "600",
     },
     timePickerActions: {
         flexDirection: "row",
-        justifyContent: "space-around",
-        borderTopWidth: 1,
-        borderTopColor: "#444",
-        paddingTop: 15,
+        justifyContent: "space-between",
+        width: "100%",
     },
     timeButton: {
-        flex: 1,
-        padding: 15,
-        alignItems: "center",
+        padding: 10,
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: "#444",
     },
     timeButtonText: {
-        color: "#fff",
+        color: "#b8a4ff",
         fontSize: 16,
         fontWeight: "500",
     },
