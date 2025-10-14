@@ -11,7 +11,7 @@ import {
     Text,
     TouchableOpacity
 } from 'react-native';
-import { BackButton } from '../../../../common/components/atoms/BackButton';
+import { BackButton } from '../../../../common/components/atoms/buttons/BackButton';
 import { RootStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { LoginForm } from '../organism/LoginForm';
 

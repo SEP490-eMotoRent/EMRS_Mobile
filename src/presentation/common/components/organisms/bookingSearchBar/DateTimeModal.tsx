@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import {
+    Dimensions,
     Modal,
-    View,
+    ScrollView,
+    StyleSheet,
     Text,
     TouchableOpacity,
     TouchableWithoutFeedback,
-    StyleSheet,
-    Dimensions,
-    ScrollView,
+    View,
 } from "react-native";
 import { CalendarList } from "react-native-calendars";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";

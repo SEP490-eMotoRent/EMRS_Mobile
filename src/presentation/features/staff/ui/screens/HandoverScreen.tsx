@@ -15,7 +15,7 @@ import { StaffStackParamList } from "../../../../shared/navigation/StackParamete
 import { AppHeader } from '../components/organisms/AppHeader';
 import { SectionHeader } from '../components/molecules/SectionHeader';
 import { InfoCard } from '../components/molecules/InfoCard';
-import { PrimaryButton } from '../components/atoms/PrimaryButton';
+import { PrimaryButton } from "../../../../common/components/atoms/buttons/PrimaryButton";
 
 type HandoverScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Handover'>;
 
