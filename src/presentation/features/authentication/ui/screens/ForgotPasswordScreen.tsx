@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 
 import { colors } from '../../../../common/theme/colors';
-import { BackButton } from '../../../../common/components/atoms/BackButton';
+import { BackButton } from '../../../../common/components/atoms/buttons/BackButton';
 import { PageTitle } from '../../../../common/components/molecules/PageTitle';
 import { ResetPasswordForm } from '../organism/ResetPasswordForm';
 import { BackToLogin } from '../molecules/BackToLogin';

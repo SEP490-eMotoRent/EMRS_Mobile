@@ -9,14 +9,14 @@ import {
 } from 'react-native';
 import { colors } from '../../../../common/theme/colors';
 import { AntDesign } from '@expo/vector-icons';
-import { BackButton } from '../../../../common/components/atoms/BackButton';
+import { BackButton } from '../../../../common/components/atoms/buttons/BackButton';
 import { SectionHeader } from '../components/molecules/SectionHeader';
 import { InfoCard } from '../components/molecules/InfoCard';
 import { InfoItem } from '../components/molecules/InfoItem';
-import { PrimaryButton } from '../components/atoms/PrimaryButton';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { StaffStackParamList } from '../../../../shared/navigation/StackParameters/types';
+import { PrimaryButton } from '../../../../common/components/atoms/buttons/PrimaryButton';
 
 type BookingDetailsScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'BookingDetails'>;
 

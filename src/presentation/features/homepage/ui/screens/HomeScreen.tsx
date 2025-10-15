@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SearchBar } from '../../../../common/components/atoms/inputs/SearchBar';
+import { BookingModal } from '../../../../common/components/organisms/bookingSearchBar/BookingModal';
 import { Bike } from '../molecules/cards/BikeCard';
-import { BookingModal } from '../organisms/bookingSearchBar/BookingModal';
 import { FeaturedBikesSection } from '../organisms/featuredBikes/FeaturedBikesSection';
 import { HeroSection } from '../organisms/hero/HeroSection';
 import { ComparisonSection } from '../organisms/sections/ComparisonSection';

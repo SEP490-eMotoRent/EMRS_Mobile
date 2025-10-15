@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import {
+    Dimensions,
     Modal,
-    View,
+    ScrollView,
+    StyleSheet,
     Text,
     TouchableOpacity,
     TouchableWithoutFeedback,
-    StyleSheet,
-    Dimensions,
-    ScrollView,
+    View,
 } from "react-native";
 import { CalendarList } from "react-native-calendars";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
@@ -186,7 +186,7 @@ export const DateTimeModal: React.FC<DateTimeModalProps> = ({
                                         </View>
                                     </ScrollView>
                                 </View>
-                                <PrimaryButton onPress={handleConfirm}>Confirm</PrimaryButton>
+                                <PrimaryButton title="Confirm" onPress={handleConfirm} />
                             </View>
 
                             {/* Time Picker Modal */}
@@ -314,13 +314,13 @@ const styles = StyleSheet.create({
         fontSize: 24,
     },
     calendarContainer: {
-        alignItems: "flex-start",
+        alignItems: "center",
         justifyContent: "flex-start",
         width: "100%",
         height: "70%",
     },
     calendar: {
-        width: width - 60,
+        width: "100%",
         height: 320,
     },
     dateTimeOverlay: {
