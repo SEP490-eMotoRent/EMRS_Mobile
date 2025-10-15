@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { StaffBottomNavigationBar, StaffNavRoute } from '../../../common/components/organisms/StaffBottomNavigationBar';
-import { HandoverScreen, ReturnScreen, ScanFaceScreen, BookingDetailsScreen } from '../../../features/staff/ui/screens';
+import { HandoverScreen, ReturnScreen, ScanFaceScreen, ScanResultScreen, CustomerRentalsScreen, BookingDetailsScreen } from '../../../features/staff/ui/screens';
 import { ProfileNavigator } from '../HomeNav/ProfileNavigator';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StaffStackParamList } from '../StackParameters/types';
@@ -40,6 +40,8 @@ export const StaffNavigator: React.FC = () => {
             </View>
           )}
         </Stack.Screen>
+        <Stack.Screen name="ScanResult" component={ScanResultScreen} />
+        <Stack.Screen name="CustomerRentals" component={CustomerRentalsScreen} />
         <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
       </Stack.Navigator>
     </View>

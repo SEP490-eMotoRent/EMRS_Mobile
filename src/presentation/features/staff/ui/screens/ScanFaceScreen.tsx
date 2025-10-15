@@ -23,6 +23,7 @@ export const ScanFaceScreen: React.FC = () => {
 
   const handleStartFacialScan = () => {
     console.log('Start facial scan');
+    navigation.navigate('ScanResult');
   };
 
   const handleScanID = () => {

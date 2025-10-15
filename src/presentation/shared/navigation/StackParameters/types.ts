@@ -20,6 +20,8 @@ export type StaffStackParamList = {
   Handover: undefined;
   Return: undefined;
   ScanFace: undefined;
+  ScanResult: undefined;
+  CustomerRentals: undefined;
   BookingDetails: undefined;
   Profile: undefined;
 };
