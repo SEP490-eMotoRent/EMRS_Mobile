@@ -1,8 +1,7 @@
 import { AntDesign } from '@expo/vector-icons';
 import React from 'react';
 import { GestureResponderEvent, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '../../theme/colors';
-
+import { colors } from '../../../../common/theme/colors';
 interface BackButtonProps {
   onPress: (event: GestureResponderEvent) => void;
   label?: string;

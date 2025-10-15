@@ -10,6 +10,10 @@ import {
 } from "react-native";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
 import { DateTimeModal } from "./DateTimeModal";
+import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
+import { BuildingIcon } from "../../atoms/icons/searchBarIcons/BuildingIcon";
+import { CityCard } from "../../molecules/cards/CityCard";
+import { InputField } from "../../molecules/InputField";
 
 interface BookingModalProps {
     visible: boolean;
@@ -19,13 +23,50 @@ interface BookingModalProps {
 export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) => {
     const [dateModalVisible, setDateModalVisible] = useState(false);
 
-    const [address] = useState("1 Phạm Văn Hai, Street, Tân Bình...");
+    const [address, setAddress] = useState("1 Phạm Văn Hai, Street, Tân Bình...");
     const [selectedDates, setSelectedDates] = useState<string | null>(null);
 
     const handleConfirmDates = (range: string) => {
         setSelectedDates(range);
         setDateModalVisible(false);
     };
+
+    const handleCitySelect = (cityName: string, state: string) => {
+        setAddress(`${cityName}, ${state}`);
+    };
+
+    const formatDateRange = (range: string | null) => {
+        if (!range) return null;
+        
+        // Parse the range format: "2025-10-21 - 2025-10-31 (6:00 PM - 10:00 AM)"
+        const parts = range.match(/(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2}) \((.+) - (.+)\)/);
+        if (!parts) return null;
+
+        const [_, startDate, endDate, startTime, endTime] = parts;
+        
+        const formatDate = (dateStr: string) => {
+            const date = new Date(dateStr);
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return `${months[date.getMonth()]} ${date.getDate()}`;
+        };
+
+        return {
+            start: formatDate(startDate),
+            end: formatDate(endDate),
+            startTime,
+            endTime
+        };
+    };
+
+    const formattedDates = formatDateRange(selectedDates);
+
+    const popularCities = [
+        { name: "New York City", state: "New York, USA" },
+        { name: "Los Angeles", state: "California, USA" },
+        { name: "Austin", state: "Texas, USA" },
+        { name: "Atlanta", state: "Georgia, USA" },
+        { name: "San Francisco", state: "California, USA" }
+    ];
 
     return (
         <>
@@ -37,39 +78,46 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                     <ScrollView showsVerticalScrollIndicator={false}>
                     <Text style={styles.sectionTitle}>Where & When</Text>
 
-                    {/* Address */}
-                    <TouchableOpacity style={styles.inputBox}>
-                        <Text style={styles.inputLabel}>{address}</Text>
-                    </TouchableOpacity>
+                    {/* Address Input */}
+                    <InputField 
+                        icon={<BuildingIcon />}
+                        value={address}
+                        onChangeText={setAddress}
+                        placeholder="Enter address"
+                    />
 
                     {/* Date Range */}
                     <TouchableOpacity
-                        style={styles.inputBox}
+                        style={styles.dateBox}
                         onPress={() => setDateModalVisible(true)}
                     >
-                        <Text style={styles.inputLabel}>
-                        {selectedDates ?? "Select Dates"}
-                        </Text>
+                        <CalendarIcon />
+                        <View style={styles.dateContent}>
+                            {formattedDates ? (
+                                <>
+                                    <Text style={styles.dateFromLabel}>From</Text>
+                                    <Text style={styles.dateText}>
+                                        {formattedDates.start} | {formattedDates.startTime} - {formattedDates.end} | {formattedDates.endTime}
+                                    </Text>
+                                </>
+                            ) : (
+                                <Text style={styles.inputLabel}>Select Dates</Text>
+                            )}
+                        </View>
                     </TouchableOpacity>
 
                     <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Popular Cities</Text>
-                    {["New York City", "Los Angeles", "Austin", "Atlanta", "San Francisco"].map(
-                        (city, i) => (
-                        <TouchableOpacity key={i} style={styles.cityBox}>
-                            <Text style={styles.cityName}>{city}</Text>
-                            <Text style={styles.citySub}>
-                            {city === "Austin"
-                                ? "Texas, USA"
-                                : city === "Atlanta"
-                                ? "Georgia, USA"
-                                : "California, USA"}
-                            </Text>
-                        </TouchableOpacity>
-                        )
-                    )}
+                    {popularCities.map((city, i) => (
+                        <CityCard
+                            key={i}
+                            cityName={city.name}
+                            state={city.state}
+                            onPress={() => handleCitySelect(city.name, city.state)}
+                        />
+                    ))}
 
                     <View style={{ marginVertical: 20 }}>
-                        <PrimaryButton onPress={onClose}>Search</PrimaryButton>
+                        <PrimaryButton title="Search" onPress={onClose} />
                     </View>
                     </ScrollView>
                 </View>
@@ -108,28 +156,28 @@ const styles = StyleSheet.create({
         marginTop: 12,
         marginBottom: 8,
     },
-    inputBox: {
-        backgroundColor: "#111",
+    dateBox: {
+        backgroundColor: '#111',
         borderRadius: 10,
         padding: 14,
         marginVertical: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    dateContent: {
+        flex: 1,
     },
     inputLabel: {
         color: "#fff",
         fontSize: 15,
     },
-    cityBox: {
-        backgroundColor: "#111",
-        borderRadius: 10,
-        padding: 14,
-        marginVertical: 6,
-    },
-    cityName: {
+    dateFromLabel: {
         color: "#fff",
-        fontWeight: "600",
-    },
-    citySub: {
-        color: "#aaa",
         fontSize: 13,
+        marginBottom: 2,
+    },
+    dateText: {
+        color: "#fff",
+        fontSize: 15,
     },
 });
