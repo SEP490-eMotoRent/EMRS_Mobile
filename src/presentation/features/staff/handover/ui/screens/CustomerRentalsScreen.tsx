@@ -8,13 +8,13 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { colors } from '../../../../common/theme/colors';
+import { colors } from '../../../../../common/theme/colors';
 import { AntDesign, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { BackButton } from '../../../../common/components/atoms/BackButton';
+import { BackButton } from '../../../../../common/components/atoms/BackButton';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { StaffStackParamList } from '../../../../shared/navigation/StackParameters/types';
-const motorImage = require("../../../../../../assets/images/motor.png");
+import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+const motorImage = require("../../../../../../../assets/images/motor.png");
 
 type CustomerRentalsScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'CustomerRentals'>;
 

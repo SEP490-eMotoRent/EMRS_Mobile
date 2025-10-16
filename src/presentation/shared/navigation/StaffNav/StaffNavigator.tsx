@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { StaffBottomNavigationBar, StaffNavRoute } from '../../../common/components/organisms/StaffBottomNavigationBar';
-import { HandoverScreen, ReturnScreen, ScanFaceScreen, ScanResultScreen, CustomerRentalsScreen, BookingDetailsScreen } from '../../../features/staff/ui/screens';
 import { ProfileNavigator } from '../HomeNav/ProfileNavigator';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StaffStackParamList } from '../StackParameters/types';
+import { HandoverScreen, ReturnScreen, ScanFaceScreen, ScanResultScreen, CustomerRentalsScreen, BookingDetailsScreen } from '../../../features/staff/handover/ui/screens';
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
