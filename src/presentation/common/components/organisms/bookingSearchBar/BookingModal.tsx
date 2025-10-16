@@ -8,12 +8,17 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
 import { DateTimeModal } from "./DateTimeModal";
 import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { BuildingIcon } from "../../atoms/icons/searchBarIcons/BuildingIcon";
 import { CityCard } from "../../molecules/cards/CityCard";
 import { InputField } from "../../molecules/InputField";
+import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+
+type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 
 interface BookingModalProps {
     visible: boolean;
@@ -21,6 +26,7 @@ interface BookingModalProps {
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) => {
+    const navigation = useNavigation<NavigationProp>();
     const [dateModalVisible, setDateModalVisible] = useState(false);
 
     const [address, setAddress] = useState("1 Phạm Văn Hai, Street, Tân Bình...");
@@ -58,14 +64,35 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
         };
     };
 
+    const formatDateRangeForDisplay = (range: string | null) => {
+        if (!range) return "Select dates";
+        
+        const formatted = formatDateRange(range);
+        if (!formatted) return "Select dates";
+        
+        return `${formatted.start} | ${formatted.startTime} - ${formatted.end} | ${formatted.endTime}`;
+    };
+
+    const handleSearch = () => {
+        // Close modal first
+        onClose();
+        
+        // Navigate to Map screen with search parameters
+        navigation.navigate('Map', {
+            location: address,
+            dateRange: formatDateRangeForDisplay(selectedDates),
+            address: address,
+        });
+    };
+
     const formattedDates = formatDateRange(selectedDates);
 
     const popularCities = [
-        { name: "New York City", state: "New York, USA" },
-        { name: "Los Angeles", state: "California, USA" },
-        { name: "Austin", state: "Texas, USA" },
-        { name: "Atlanta", state: "Georgia, USA" },
-        { name: "San Francisco", state: "California, USA" }
+        { name: "Quận 1", state: "Hồ Chí Minh, Việt Nam" },
+        { name: "Quận 3", state: "Hồ Chí Minh, Việt Nam" },
+        { name: "Quận 10", state: "Hồ Chí Minh, Việt Nam" },
+        { name: "Tân Bình", state: "Hồ Chí Minh, Việt Nam" },
+        { name: "Bình Thạnh", state: "Hồ Chí Minh, Việt Nam" }
     ];
 
     return (
@@ -106,7 +133,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         </View>
                     </TouchableOpacity>
 
-                    <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Popular Cities</Text>
+                    <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Popular Districts</Text>
                     {popularCities.map((city, i) => (
                         <CityCard
                             key={i}
@@ -117,7 +144,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                     ))}
 
                     <View style={{ marginVertical: 20 }}>
-                        <PrimaryButton title="Search" onPress={onClose} />
+                        <PrimaryButton title="Search" onPress={handleSearch} />
                     </View>
                     </ScrollView>
                 </View>

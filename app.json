@@ -26,7 +26,7 @@
       "edgeToEdgeEnabled": true,
       "config": {
         "googleMaps": {
-          "apiKey": "YOUR_ANDROID_API_KEY_HERE"
+          "apiKey": "NOTHING_HERE"
         }
       }
     },

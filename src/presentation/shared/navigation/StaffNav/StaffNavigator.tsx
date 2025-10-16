@@ -29,6 +29,7 @@ export const StaffNavigator: React.FC = () => {
   return (
     <View style={styles.container}>
       <Stack.Navigator
+        id={undefined}
         screenOptions={{ headerShown: false }}
         initialRouteName="Handover"
       >
