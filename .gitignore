@@ -49,4 +49,4 @@ yarn-error.*
 .augment/rules/byterover-rules.md
 
 #extra files
-app.json
+**/app.json
