@@ -5,11 +5,11 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { MapSearchBar } from "../molecules/MapSearchBar";
 import { ListViewButton } from "../atoms/buttons/ListViewButton";
-import { PriceMarker } from "../atoms/markers/PriceMarkers";
-import { ClusterMarker } from "../atoms/markers/ClusterMarkers";
-import { MapFilters } from "../orgamisms/MapFilters";
-import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
 import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
+import { MapFilters } from "../orgamisms/MapFilters";
+import { ClusterMarker } from "../atoms/markers/ClusterMarkers";
+import { PriceMarker } from "../atoms/markers/PriceMarkers";
 
 type MapScreenRouteProp = RouteProp<HomeStackParamList, 'Map'>;
 type MapScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Map'>;
@@ -31,9 +31,9 @@ export const MapScreen: React.FC = () => {
 
     // Get parameters from navigation
     const { location, dateRange, address } = route.params || {
-        location: "Ho Chi Minh City, Vietnam",
+        location: "1 Phạm Văn Hai, Street, Tân Bình...",
         dateRange: "Select dates",
-        address: "Ho Chi Minh City, Vietnam"
+        address: "1 Phạm Văn Hai, Street, Tân Bình..."
     };
 
     // Default region (you can change this based on user's location or selected city)

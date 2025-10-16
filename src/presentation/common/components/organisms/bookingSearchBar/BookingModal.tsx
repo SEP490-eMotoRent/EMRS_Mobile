@@ -74,8 +74,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
     };
 
     const handleSearch = () => {
-        // Navigate to Map screen with search parameters
+        // Close modal first
         onClose();
+        
+        // Navigate to Map screen with search parameters
         navigation.navigate('Map', {
             location: address,
             dateRange: formatDateRangeForDisplay(selectedDates),

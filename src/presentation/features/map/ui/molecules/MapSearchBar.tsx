@@ -23,6 +23,9 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
             {dateRange}
             </Text>
         </View>
+        <View style={styles.currentLocationButton}>
+            <Text style={styles.targetIcon}>🎯</Text>
+        </View>
         </TouchableOpacity>
     );
 };
@@ -40,9 +43,21 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
     },
-    searchIcon: {
+    locationIcon: {
         fontSize: 24,
         marginRight: 12,
+    },
+    currentLocationButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "#2a2a2a",
+        alignItems: "center",
+        justifyContent: "center",
+        marginLeft: 8,
+    },
+    targetIcon: {
+        fontSize: 18,
     },
     textContainer: {
         flex: 1,
@@ -56,5 +71,9 @@ const styles = StyleSheet.create({
         color: "#aaa",
         fontSize: 14,
         marginTop: 2,
+    },
+    searchIcon: {
+        fontSize: 24,
+        marginRight: 12,
     },
 });
