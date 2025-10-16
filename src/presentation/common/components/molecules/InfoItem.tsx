@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../../../../common/theme/colors';
+import { colors } from '../../theme/colors';
 
 interface InfoItemProps {
   label: string;

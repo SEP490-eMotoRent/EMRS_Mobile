@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { StaffBottomNavigationBar, StaffNavRoute } from '../../../common/components/organisms/StaffBottomNavigationBar';
-import { HandoverScreen, ReturnScreen, ScanFaceScreen, ScanResultScreen, CustomerRentalsScreen, BookingDetailsScreen } from '../../../features/staff/ui/screens';
 import { ProfileNavigator } from '../HomeNav/ProfileNavigator';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StaffStackParamList } from '../StackParameters/types';
+import { HandoverScreen, ReturnScreen, ScanFaceScreen, ScanResultScreen, CustomerRentalsScreen, BookingDetailsScreen, SelectVehicleScreen, VehicleInspectionScreen, HandoverReportScreen, AwaitingApprovalScreen } from '../../../features/staff/handover/ui/screens';
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -43,6 +43,10 @@ export const StaffNavigator: React.FC = () => {
         </Stack.Screen>
         <Stack.Screen name="ScanResult" component={ScanResultScreen} />
         <Stack.Screen name="CustomerRentals" component={CustomerRentalsScreen} />
+        <Stack.Screen name="SelectVehicle" component={SelectVehicleScreen} />
+        <Stack.Screen name="VehicleInspection" component={VehicleInspectionScreen} />
+        <Stack.Screen name="HandoverReport" component={HandoverReportScreen} />
+        <Stack.Screen name="AwaitingApproval" component={AwaitingApprovalScreen} />
         <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
       </Stack.Navigator>
     </View>
