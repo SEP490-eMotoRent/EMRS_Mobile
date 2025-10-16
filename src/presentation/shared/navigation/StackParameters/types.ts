@@ -9,6 +9,11 @@ export type HomeStackParamList = {
   Home: undefined;
   Schedule: undefined;
   Battery: undefined;
+  Map: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
 };
 
 export type ProfileStackParamList = {
