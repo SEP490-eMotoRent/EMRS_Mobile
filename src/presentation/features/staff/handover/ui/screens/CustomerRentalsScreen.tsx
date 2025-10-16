@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { colors } from '../../../../../common/theme/colors';
 import { AntDesign, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { BackButton } from '../../../../../common/components/atoms/BackButton';
+import { BackButton } from '../../../../../common/components/atoms/buttons/BackButton';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
@@ -23,7 +23,7 @@ export const CustomerRentalsScreen: React.FC = () => {
 
   const handleSelectBooking = () => {
     console.log('Select booking');
-    navigation.navigate('BookingDetails');
+    navigation.navigate('SelectVehicle');
   };
 
   const handleViewDetails = () => {

@@ -22,6 +22,10 @@ export type StaffStackParamList = {
   ScanFace: undefined;
   ScanResult: undefined;
   CustomerRentals: undefined;
+  SelectVehicle: undefined;
+  VehicleInspection: undefined;
+  HandoverReport: undefined;
+  AwaitingApproval: undefined;
   BookingDetails: undefined;
   Profile: undefined;
 };

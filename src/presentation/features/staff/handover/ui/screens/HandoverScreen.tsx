@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
@@ -16,6 +17,8 @@ import { AppHeader } from '../../../../../common/components/organisms/AppHeader'
 import { SectionHeader } from '../molecules/SectionHeader';
 import { InfoCard } from '../../../../../common/components/molecules/InfoCard';
 import { PrimaryButton } from '../../../../../common/components/atoms/PrimaryButton';
+
+const vehicleImg = require("../../../../../../../assets/images/motor.png");
 
 type HandoverScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Handover'>;
 
@@ -114,7 +117,7 @@ export const HandoverScreen: React.FC = () => {
             </View>
 
             <View style={styles.vehicleSection}>
-              <View style={styles.vehicleImage} />
+              <Image source={vehicleImg} style={styles.vehicleImage} />
               <View style={styles.vehicleInfo}>
                 <Text style={styles.vehicleName}>VinFast Evo200</Text>
                 <Text style={styles.rentalDuration}>7 days rental</Text>
@@ -194,7 +197,7 @@ export const HandoverScreen: React.FC = () => {
             </View>
 
             <View style={styles.vehicleSection}>
-              <View style={styles.vehicleImage} />
+              <Image source={vehicleImg} style={styles.vehicleImage} />
               <View style={styles.vehicleInfo}>
                 <Text style={styles.vehicleName}>Klara S</Text>
                 <Text style={styles.rentalDuration}>7 days rental</Text>
