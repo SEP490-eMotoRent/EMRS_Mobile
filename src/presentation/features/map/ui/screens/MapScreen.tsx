@@ -11,9 +11,9 @@ import { ListViewButton } from "../atoms/buttons/ListViewButton";
 import { ClusterMarker } from "../atoms/markers/ClusterMarkers";
 import { LocationPinMarker } from "../atoms/markers/LocationPinMarker";
 import { PriceMarker } from "../atoms/markers/PriceMarkers";
+import { ElectricVehicle } from "../molecules/VehicleCard";
 import { MapFilters } from "../orgamisms/MapFilters";
 import { VehicleBottomSheet } from "../orgamisms/VehicleBottomSheet";
-import { ElectricVehicle } from "../molecules/VehicleCard";
 
 type MapScreenRouteProp = RouteProp<HomeStackParamList, 'Map'>;
 type MapScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Map'>;
@@ -214,8 +214,9 @@ export const MapScreen: React.FC = () => {
 
     const handleListViewPress = () => {
         console.log("Switch to list view");
-        // navigation.navigate('ListView');
+        navigation.navigate('ListView', { location, dateRange, address });
     };
+
 
     const handleSearchBarPress = () => {
         setBookingModalVisible(true);
