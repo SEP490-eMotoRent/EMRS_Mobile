@@ -14,6 +14,11 @@ export type HomeStackParamList = {
     dateRange: string;
     address: string;
   };
+  ListView: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
 };
 
 export type ProfileStackParamList = {
