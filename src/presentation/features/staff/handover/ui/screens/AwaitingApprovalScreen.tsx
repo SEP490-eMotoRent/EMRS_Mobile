@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   titleRight: { flexDirection: 'row', alignItems: 'center' },
   iconBtn: { padding: 8 },
   staffBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#C9B6FF', alignItems: 'center', justifyContent: 'center' },
-  staffText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  staffText: { color: '#000', fontWeight: '700', fontSize: 12 },
 
   primaryCard: { backgroundColor: '#1E1E1E', borderRadius: 12, marginHorizontal: 16, padding: 16, marginBottom: 12, alignItems: 'center' },
   clockCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#2A2A2A', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },

@@ -73,7 +73,7 @@ type SelectVehicleScreenNavigationProp = StackNavigationProp<
 >;
 
 export const SelectVehicleScreen: React.FC = () => {
-  const [selectedId, setSelectedId] = useState<string | null>("v1");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const navigation = useNavigation<SelectVehicleScreenNavigationProp>();
 
   const renderBadge = (badge: VehicleCard["badge"]) => {
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginLeft: 4,
   },
-  staffBadgeText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+  staffBadgeText: { color: "#000", fontWeight: "700", fontSize: 12 },
   bookedInfo: { paddingHorizontal: 16, marginBottom: 8 },
   bookedType: { color: colors.text.secondary, fontSize: 12 },
   customerName: { color: colors.text.primary, fontSize: 12 },
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 8,
   },
-  bottomCtaText: { color: "#fff", fontWeight: "700" },
+  bottomCtaText: { color: "#000", fontWeight: "700" },
   expireNote: {
     color: colors.text.secondary,
     textAlign: "center",

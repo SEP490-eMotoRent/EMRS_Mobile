@@ -11,7 +11,7 @@ import { colors } from '../../../../../common/theme/colors';
 import { AntDesign } from '@expo/vector-icons';
 import { AppHeader } from '../../../../../common/components/organisms/AppHeader';
 import { InfoCard } from '../../../../../common/components/molecules/InfoCard';
-import { PrimaryButton } from '../../../../../common/components/atoms/PrimaryButton';
+import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
 
 export const ReturnScreen: React.FC = () => {
   const handleStartReturn = () => {

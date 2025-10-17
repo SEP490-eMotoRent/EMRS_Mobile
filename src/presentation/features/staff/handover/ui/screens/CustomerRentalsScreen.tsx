@@ -21,7 +21,7 @@ type CustomerRentalsScreenNavigationProp = StackNavigationProp<StaffStackParamLi
 export const CustomerRentalsScreen: React.FC = () => {
   const navigation = useNavigation<CustomerRentalsScreenNavigationProp>();
 
-  const handleSelectBooking = () => {
+  const handleSelectVehicle = () => {
     console.log('Select booking');
     navigation.navigate('SelectVehicle');
   };
@@ -119,8 +119,8 @@ export const CustomerRentalsScreen: React.FC = () => {
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.selectButton} onPress={handleSelectBooking}>
-                <Text style={styles.buttonText}>Select Booking</Text>
+              <TouchableOpacity style={styles.selectButton} onPress={handleSelectVehicle}>
+                <Text style={styles.buttonText}>Select Vehicle</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.viewButton} onPress={handleViewDetails}>
                 <Text style={styles.buttonText}>View Details</Text>
@@ -184,8 +184,8 @@ export const CustomerRentalsScreen: React.FC = () => {
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.selectButton} onPress={handleSelectBooking}>
-                <Text style={styles.buttonText}>Select Booking</Text>
+              <TouchableOpacity style={styles.selectButton} onPress={handleSelectVehicle}>
+                <Text style={styles.buttonText}>Select Vehicle</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.viewButton} onPress={handleViewDetails}>
                 <Text style={styles.buttonText}>View Details</Text>
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   staffText: {
-    color: '#FFFFFF',
+    color: '#000',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -398,7 +398,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },

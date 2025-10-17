@@ -13,10 +13,10 @@ import { BackButton } from '../../../../../common/components/atoms/buttons/BackB
 import { SectionHeader } from '../molecules/SectionHeader';
 import { InfoCard } from '../../../../../common/components/molecules/InfoCard';
 import { InfoItem } from '../../../../../common/components/molecules/InfoItem';
-import { PrimaryButton } from '../../../../../common/components/atoms/PrimaryButton';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
 
 type BookingDetailsScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'BookingDetails'>;
 
