@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,36 +6,40 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import { colors } from '../../../../../common/theme/colors';
-import { AntDesign } from '@expo/vector-icons';
-import { BackButton } from '../../../../../common/components/atoms/buttons/BackButton';
-import { SectionHeader } from '../molecules/SectionHeader';
-import { InfoCard } from '../../../../../common/components/molecules/InfoCard';
-import { InfoItem } from '../../../../../common/components/molecules/InfoItem';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
-import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
+} from "react-native";
+import { colors } from "../../../../../common/theme/colors";
+import { AntDesign } from "@expo/vector-icons";
+import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
+import { SectionHeader } from "../molecules/SectionHeader";
+import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
+import { InfoItem } from "../../../../../common/components/molecules/InfoItem";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 
-type BookingDetailsScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'BookingDetails'>;
+type BookingDetailsScreenNavigationProp = StackNavigationProp<
+  StaffStackParamList,
+  "BookingDetails"
+>;
 
 export const BookingDetailsScreen: React.FC = () => {
   const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
 
   const handleProceedToCheck = () => {
-    console.log('Proceed to check car');
+    console.log("Proceed to check car");
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <BackButton onPress={() => navigation.goBack()} />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Chi tiết Booking</Text>
-        </View>
+        <ScreenHeader
+          title="Booking Details"
+          subtitle="John Nguyen"
+          submeta="ID: #EMR240915001"
+          onBack={() => navigation.goBack()}
+        />
 
         {/* Customer Information */}
         <View style={styles.section}>
@@ -55,7 +59,10 @@ export const BookingDetailsScreen: React.FC = () => {
           <SectionHeader title="Thông tin Booking" icon="calendar" />
           <InfoCard>
             <InfoItem label="Mã Booking:" value="BK001-345-987" />
-            <InfoItem label="Địa điểm:" value="Xx Street, Ward 2, Tan Binh District" />
+            <InfoItem
+              label="Địa điểm:"
+              value="Xx Street, Ward 2, Tan Binh District"
+            />
             <InfoItem label="Thời gian thuê:" value="06/09/2025 - 09:00" />
             <InfoItem label="Thời gian trả:" value="07/09/2025 - 09:00" />
             <InfoItem label="Gói thuê:" value="24 giờ" />
@@ -82,7 +89,11 @@ export const BookingDetailsScreen: React.FC = () => {
         </View>
 
         {/* Proceed Button */}
-        <PrimaryButton title="Tiến hành kiểm tra xe" onPress={handleProceedToCheck} style={styles.proceedButton} />
+        <PrimaryButton
+          title="Tiến hành kiểm tra xe"
+          onPress={handleProceedToCheck}
+          style={styles.proceedButton}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -94,47 +105,48 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingHorizontal: 16,
     paddingBottom: 40,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 20,
   },
   headerTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.text.primary,
   },
   section: {
+    paddingHorizontal: 16,
     marginBottom: 20,
+    marginTop: 10,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
     paddingHorizontal: 4,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.text.primary,
     marginLeft: 8,
   },
   infoCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: "#2A2A2A",
     borderRadius: 12,
     padding: 16,
   },
   customerName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.text.primary,
     marginBottom: 8,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   infoText: {
     fontSize: 14,
@@ -146,9 +158,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 8,
     paddingVertical: 2,
   },
@@ -161,20 +173,20 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     color: colors.text.primary,
-    fontWeight: '500',
+    fontWeight: "500",
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   proceedButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     borderRadius: 12,
     marginTop: 20,
     marginBottom: 20,
   },
   proceedButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 16,
     paddingHorizontal: 20,
   },
@@ -182,14 +194,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   proceedButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

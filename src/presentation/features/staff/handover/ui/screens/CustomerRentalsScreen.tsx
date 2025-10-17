@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,47 +7,45 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-} from 'react-native';
-import { colors } from '../../../../../common/theme/colors';
-import { AntDesign, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { BackButton } from '../../../../../common/components/atoms/buttons/BackButton';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+} from "react-native";
+import { colors } from "../../../../../common/theme/colors";
+import { AntDesign, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 const motorImage = require("../../../../../../../assets/images/motor.png");
 
-type CustomerRentalsScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'CustomerRentals'>;
+type CustomerRentalsScreenNavigationProp = StackNavigationProp<
+  StaffStackParamList,
+  "CustomerRentals"
+>;
 
 export const CustomerRentalsScreen: React.FC = () => {
   const navigation = useNavigation<CustomerRentalsScreenNavigationProp>();
 
   const handleSelectVehicle = () => {
-    console.log('Select booking');
-    navigation.navigate('SelectVehicle');
+    console.log("Select booking");
+    navigation.navigate("SelectVehicle");
   };
 
   const handleViewDetails = () => {
-    console.log('View details');
-    navigation.navigate('BookingDetails');
+    console.log("View details");
+    navigation.navigate("BookingDetails");
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <BackButton onPress={() => navigation.goBack()} />
+        <ScreenHeader
+          title="Customer Rentals"
+          subtitle="John Nguyễn Bookings"
+          submeta="Sep 15, 2025"
+          onBack={() => navigation.goBack()}
+        />
 
-        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={styles.headerTitle}>John Nguyễn Bookings</Text>
-            <Text style={styles.headerDate}>Sep 15, 2025</Text>
-            <TouchableOpacity style={styles.notificationButton}>
-              <AntDesign name="bell" size={20} color={colors.text.primary} />
-            </TouchableOpacity>
-            <View style={styles.staffBadge}>
-              <Text style={styles.staffText}>ST</Text>
-            </View>
-          </View>
           <View style={styles.branchRow}>
             <Text style={styles.branchText}>District 2 Branch</Text>
             <AntDesign name="down" size={12} color={colors.text.primary} />
@@ -67,7 +65,11 @@ export const CustomerRentalsScreen: React.FC = () => {
           <View style={styles.rentalCard}>
             {/* Time and Date Section */}
             <View style={styles.timeSection}>
-              <AntDesign name="clock-circle" size={16} color={colors.text.primary} />
+              <AntDesign
+                name="clock-circle"
+                size={16}
+                color={colors.text.primary}
+              />
               <Text style={styles.timeText}>10:30 AM - 11:00 AM</Text>
               <View style={styles.dateInfo}>
                 <Text style={styles.dateText}>From: Sep 15, 2025</Text>
@@ -99,19 +101,35 @@ export const CustomerRentalsScreen: React.FC = () => {
               </View>
               <View style={styles.specsGrid}>
                 <View style={styles.specCard}>
-                  <FontAwesome name="battery-4" size={16} color={colors.text.primary} />
+                  <FontAwesome
+                    name="battery-4"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>3.24 kWh</Text>
                 </View>
                 <View style={styles.specCard}>
-                  <AntDesign name="clock-circle" size={16} color={colors.text.primary} />
+                  <AntDesign
+                    name="clock-circle"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>180 km</Text>
                 </View>
                 <View style={styles.specCard}>
-                  <AntDesign name="dashboard" size={16} color={colors.text.primary} />
+                  <AntDesign
+                    name="dashboard"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>99 km/h</Text>
                 </View>
                 <View style={styles.specCard}>
-                  <FontAwesome5 name="weight-hanging" size={16} color={colors.text.primary} />
+                  <FontAwesome5
+                    name="weight-hanging"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>118 kg</Text>
                 </View>
               </View>
@@ -119,10 +137,16 @@ export const CustomerRentalsScreen: React.FC = () => {
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.selectButton} onPress={handleSelectVehicle}>
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={handleSelectVehicle}
+              >
                 <Text style={styles.buttonText}>Select Vehicle</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.viewButton} onPress={handleViewDetails}>
+              <TouchableOpacity
+                style={styles.viewButton}
+                onPress={handleViewDetails}
+              >
                 <Text style={styles.buttonText}>View Details</Text>
               </TouchableOpacity>
             </View>
@@ -132,7 +156,11 @@ export const CustomerRentalsScreen: React.FC = () => {
           <View style={styles.rentalCard}>
             {/* Time and Date Section */}
             <View style={styles.timeSection}>
-              <AntDesign name="clock-circle" size={16} color={colors.text.primary} />
+              <AntDesign
+                name="clock-circle"
+                size={16}
+                color={colors.text.primary}
+              />
               <Text style={styles.timeText}>11:30 PM - 17:00 PM</Text>
               <View style={styles.dateInfo}>
                 <Text style={styles.dateText}>From: Sep 15, 2025</Text>
@@ -164,19 +192,35 @@ export const CustomerRentalsScreen: React.FC = () => {
               </View>
               <View style={styles.specsGrid}>
                 <View style={styles.specCard}>
-                  <FontAwesome name="battery-4" size={16} color={colors.text.primary} />
+                  <FontAwesome
+                    name="battery-4"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>3.24 kWh</Text>
                 </View>
                 <View style={styles.specCard}>
-                  <AntDesign name="clock-circle" size={16} color={colors.text.primary} />
+                  <AntDesign
+                    name="clock-circle"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>180 km</Text>
                 </View>
                 <View style={styles.specCard}>
-                  <AntDesign name="dashboard" size={16} color={colors.text.primary} />
+                  <AntDesign
+                    name="dashboard"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>99 km/h</Text>
                 </View>
                 <View style={styles.specCard}>
-                  <FontAwesome5 name="weight-hanging" size={16} color={colors.text.primary} />
+                  <FontAwesome5
+                    name="weight-hanging"
+                    size={16}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.specText}>118 kg</Text>
                 </View>
               </View>
@@ -184,10 +228,16 @@ export const CustomerRentalsScreen: React.FC = () => {
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.selectButton} onPress={handleSelectVehicle}>
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={handleSelectVehicle}
+              >
                 <Text style={styles.buttonText}>Select Vehicle</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.viewButton} onPress={handleViewDetails}>
+              <TouchableOpacity
+                style={styles.viewButton}
+                onPress={handleViewDetails}
+              >
                 <Text style={styles.buttonText}>View Details</Text>
               </TouchableOpacity>
             </View>
@@ -211,14 +261,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.text.primary,
     flex: 1,
   },
@@ -234,18 +284,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#C9B6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#C9B6FF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   staffText: {
-    color: '#000',
+    color: "#000",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   branchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   branchText: {
     color: colors.text.primary,
@@ -256,13 +306,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.text.primary,
     marginRight: 8,
   },
@@ -270,29 +320,29 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#C9B6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#C9B6FF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   countText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   rentalCard: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: "#2A2A2A",
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
   timeSection: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
   },
   timeText: {
     color: colors.text.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 8,
     marginBottom: 8,
   },
@@ -305,14 +355,14 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   customerSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   customerName: {
     color: colors.text.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 8,
     marginRight: 8,
   },
@@ -321,14 +371,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   vehicleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   vehicleImage: {
     width: 40,
     height: 40,
-    backgroundColor: '#444444',
+    backgroundColor: "#444444",
     borderRadius: 8,
     marginRight: 12,
   },
@@ -338,7 +388,7 @@ const styles = StyleSheet.create({
   vehicleName: {
     color: colors.text.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   rentalDuration: {
     color: colors.text.secondary,
@@ -349,29 +399,29 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   specsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   specsTitle: {
     color: colors.text.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   specsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
   specCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A1A",
     paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 8,
-    minWidth: '48%',
+    minWidth: "48%",
   },
   specText: {
     color: colors.text.secondary,
@@ -380,25 +430,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   selectButton: {
     flex: 1,
-    backgroundColor: '#C9B6FF',
+    backgroundColor: "#C9B6FF",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   viewButton: {
     flex: 1,
-    backgroundColor: '#C9B6FF',
+    backgroundColor: "#C9B6FF",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

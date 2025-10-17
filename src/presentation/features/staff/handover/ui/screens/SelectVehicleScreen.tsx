@@ -14,6 +14,7 @@ import { BackButton } from "../../../../../common/components/atoms/buttons/BackB
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 
 const banner = require("../../../../../../../assets/images/motor-bg.png");
 
@@ -91,28 +92,14 @@ export const SelectVehicleScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <BackButton onPress={() => navigation.goBack()} />
-
-        {/* Top meta */}
-        <View style={styles.metaHeader}>
-          <Text style={styles.metaTitle}>Select Vehicle</Text>
-          <View style={styles.metaRight}>
-            <TouchableOpacity style={styles.iconBtn}>
-              <AntDesign name="search" size={18} color={colors.text.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <AntDesign name="bell" size={18} color={colors.text.primary} />
-            </TouchableOpacity>
-            <View style={styles.staffBadge}>
-              <Text style={styles.staffBadgeText}>ST</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.bookedInfo}>
-          <Text style={styles.bookedType}>Booked type: VinFast Evo200</Text>
-          <Text style={styles.customerName}>John Nguyen</Text>
-        </View>
+        <ScreenHeader
+          title="Select Vehicle"
+          subtitle="John Nguyen"
+          submeta="Booked type: VinFast Evo200"
+          showSearch={true}
+          onSearchPress={() => {}}
+          onBack={() => navigation.goBack()}
+        />
 
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionHeaderText}>Available Vehicles</Text>
@@ -263,7 +250,13 @@ export const SelectVehicleScreen: React.FC = () => {
                 ]}
                 onPress={() => setSelectedId(vehicle.id)}
               >
-                <Text style={styles.selectBtnText}>
+                <Text
+                  style={
+                    selectedId === vehicle.id
+                      ? styles.selectBtnTextActive
+                      : styles.selectBtnText
+                  }
+                >
                   {selectedId === vehicle.id ? "Selected" : "Select"}
                 </Text>
               </TouchableOpacity>
@@ -280,7 +273,10 @@ export const SelectVehicleScreen: React.FC = () => {
         ))}
 
         {/* Bottom CTA */}
-        <TouchableOpacity style={styles.bottomCta} onPress={() => navigation.navigate('VehicleInspection')}>
+        <TouchableOpacity
+          style={styles.bottomCta}
+          onPress={() => navigation.navigate("VehicleInspection")}
+        >
           <Text style={styles.bottomCtaText}>Inspection Motorbikes</Text>
         </TouchableOpacity>
         <Text style={styles.expireNote}>
@@ -455,6 +451,7 @@ const styles = StyleSheet.create({
   selectBtnActive: { backgroundColor: "#C9B6FF" },
   selectBtnDisabled: { backgroundColor: "#333" },
   selectBtnText: { color: "#FFFFFF", fontWeight: "600" },
+  selectBtnTextActive: { color: "#000", fontWeight: "700" },
 
   disabledNote: {
     backgroundColor: "#1A1A1A",

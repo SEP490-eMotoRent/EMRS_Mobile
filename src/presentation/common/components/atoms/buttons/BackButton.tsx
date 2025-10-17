@@ -29,7 +29,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.button.border,
     backgroundColor: colors.button.background,
-    marginBottom: 20,
   },
   backIconCircle: {
     width: 26,

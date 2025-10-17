@@ -14,6 +14,7 @@ import { BackButton } from "../../../../../common/components/atoms/buttons/BackB
 import { useNavigation } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 
 const vehicleImg = require("../../../../../../../assets/images/motor.png");
 
@@ -27,27 +28,7 @@ export const HandoverReportScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <BackButton onPress={() => navigation.goBack()} />
-
-        {/* Title Row */}
-        <View style={styles.titleRow}>
-          <View>
-            <Text style={styles.title}>Handover Report</Text>
-            <Text style={styles.subtitle}>Ready to send</Text>
-          </View>
-          <View style={styles.titleRight}>
-            <TouchableOpacity style={styles.iconBtn}>
-              <AntDesign
-                name="share-alt"
-                size={18}
-                color={colors.text.primary}
-              />
-            </TouchableOpacity>
-            <View style={styles.staffBadge}>
-              <Text style={styles.staffText}>ST</Text>
-            </View>
-          </View>
-        </View>
+        <ScreenHeader title="Handover Report" subtitle="Ready to send" onBack={() => navigation.goBack()} />
 
         {/* Customer Information */}
         <View style={styles.card}>
@@ -173,7 +154,7 @@ export const HandoverReportScreen: React.FC = () => {
         </View>
 
         {/* Bottom CTA */}
-        <TouchableOpacity style={styles.sendCta} onPress={() => navigation.navigate('AwaitingApproval')}>
+        <TouchableOpacity style={styles.sendCta} onPress={() => navigation.navigate('AwaitingApproval', { status: 'approved' })}>
           <AntDesign name="send" size={16} color="#000" />
           <Text style={styles.sendCtaText}>Send to Customer</Text>
         </TouchableOpacity>
@@ -212,72 +193,101 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: "#1E1E1E",
-    borderRadius: 12,
+    borderRadius: 16,
     marginHorizontal: 16,
-    padding: 12,
-    marginBottom: 10,
+    padding: 16,
+    marginBottom: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#2E2E2E",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  cardHeader: { color: colors.text.secondary, fontSize: 12, marginBottom: 10 },
+  cardHeader: { 
+    color: colors.text.primary, 
+    fontSize: 14, 
+    fontWeight: "700", 
+    marginBottom: 12,
+    paddingLeft: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#C9B6FF"
+  },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#2A2A2A",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
   },
-  infoLabel: { color: colors.text.secondary, fontSize: 12 },
-  infoValue: { color: colors.text.primary, fontSize: 12, fontWeight: "600" },
+  infoLabel: { color: colors.text.secondary, fontSize: 13, fontWeight: "500" },
+  infoValue: { color: colors.text.primary, fontSize: 13, fontWeight: "600" },
   valueRight: { flexDirection: "row", alignItems: "center" },
-  valueIcon: { marginLeft: 6 },
-  okText: { color: "#67D16C", fontWeight: "600" },
+  valueIcon: { marginLeft: 8 },
+  okText: { color: "#67D16C", fontWeight: "700" },
 
   galleryRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-evenly",
-    marginBottom: 10,
+    justifyContent: "space-between",
+    marginBottom: 12,
+    gap: 8,
   },
   galleryItem: {
-    width: "32%",
+    width: "48%",
     backgroundColor: "#2A2A2A",
-    borderRadius: 10,
-    padding: 8,
+    borderRadius: 12,
+    padding: 12,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
   },
-  galleryImage: { width: "100%", height: 70, resizeMode: "contain" },
-  galleryLabel: { color: colors.text.secondary, fontSize: 12, marginTop: 6 },
+  galleryImage: { width: "100%", height: 80, resizeMode: "cover", borderRadius: 8 },
+  galleryLabel: { color: colors.text.secondary, fontSize: 12, marginTop: 8, fontWeight: "600" },
   tipText: { color: colors.text.secondary, fontSize: 12, textAlign: "right" },
 
-  metaRow: { flexDirection: "row", justifyContent: "space-between", gap: 10 },
+  metaRow: { flexDirection: "row", justifyContent: "space-between", gap: 12, marginBottom: 8 },
   metaBox: {
     flex: 1,
     backgroundColor: "#2A2A2A",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
   },
-  metaLabel: { color: colors.text.secondary, fontSize: 12, marginBottom: 6 },
-  metaValue: { color: colors.text.primary, fontSize: 12, fontWeight: "600" },
+  metaLabel: { color: colors.text.secondary, fontSize: 12, marginBottom: 6, fontWeight: "500" },
+  metaValue: { color: colors.text.primary, fontSize: 13, fontWeight: "600" },
 
   sendCta: {
     marginHorizontal: 16,
     backgroundColor: "#C9B6FF",
     alignItems: "center",
-    paddingVertical: 14,
-    borderRadius: 10,
-    marginTop: 6,
+    paddingVertical: 16,
+    borderRadius: 14,
+    marginTop: 8,
     flexDirection: "row",
     justifyContent: "center",
-    gap: 10,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
-  sendCtaText: { color: "#000", fontWeight: "700" },
+  sendCtaText: { color: "#000", fontWeight: "800", fontSize: 16 },
   noteText: {
     color: colors.text.secondary,
     fontSize: 12,
     textAlign: "center",
-    marginTop: 8,
+    marginTop: 12,
+    marginHorizontal: 16,
+    lineHeight: 16,
   },
 });

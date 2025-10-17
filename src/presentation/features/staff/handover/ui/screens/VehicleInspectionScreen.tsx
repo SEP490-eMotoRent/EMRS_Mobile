@@ -17,6 +17,7 @@ import { BackButton } from "../../../../../common/components/atoms/buttons/BackB
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 
 const vehicleImg = require("../../../../../../../assets/images/motor.png");
 
@@ -162,24 +163,7 @@ export const VehicleInspectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <BackButton onPress={() => navigation.goBack()} />
-
-        {/* Title Row */}
-        <View style={styles.titleRow}>
-          <View>
-            <Text style={styles.title}>Vehicle Inspection</Text>
-            <Text style={styles.subtitle}>Pre-inspection Mode</Text>
-            <Text style={styles.submeta}>VinFast Evo200 · 59X1-12345</Text>
-          </View>
-          <View style={styles.titleRight}>
-            <TouchableOpacity style={styles.iconBtn}>
-              <AntDesign name="bell" size={18} color={colors.text.primary} />
-            </TouchableOpacity>
-            <View style={styles.staffBadge}>
-              <Text style={styles.staffText}>ST</Text>
-            </View>
-          </View>
-        </View>
+        <ScreenHeader title="Vehicle Inspection" subtitle="Pre-inspection Mode" onBack={() => navigation.goBack()} />
 
         {/* Required Photos */}
         <View style={styles.photosCard}>
@@ -342,6 +326,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 12,
     marginBottom: 10,
+    marginTop: 10
   },
   cardHeader: { color: colors.text.secondary, fontSize: 12, marginBottom: 10 },
   statusItem: {

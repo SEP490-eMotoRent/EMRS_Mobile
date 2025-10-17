@@ -14,6 +14,7 @@ import { BackButton } from '../../../../../common/components/atoms/buttons/BackB
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 const customerAvatar = require("../../../../../../../assets/images/avatar.png");
 
 type ScanResultScreenNavigationProp = StackNavigationProp<
@@ -32,14 +33,12 @@ export const ScanResultScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <BackButton onPress={() => navigation.goBack()} />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Verify Customer Identity</Text>
-          <Text style={styles.bookingId}>#EMR240915001</Text>
-          <Text style={styles.customerName}>John Nguyen</Text>
-        </View>
+        <ScreenHeader
+          title="Verify Customer Identity"
+          subtitle="#EMR240915001"
+          submeta="John Nguyen"
+          onBack={() => navigation.goBack()}
+        />
 
         {/* Customer Information Card */}
         <View style={styles.customerSection}>
@@ -144,6 +143,7 @@ const styles = StyleSheet.create({
   },
   customerSection: {
     marginBottom: 24,
+    marginTop: 10,
   },
   sectionTitle: {
     fontSize: 18,
