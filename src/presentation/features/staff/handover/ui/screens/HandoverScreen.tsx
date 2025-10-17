@@ -16,7 +16,7 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { AppHeader } from '../../../../../common/components/organisms/AppHeader';
 import { SectionHeader } from '../molecules/SectionHeader';
 import { InfoCard } from '../../../../../common/components/molecules/InfoCard';
-import { PrimaryButton } from '../../../../../common/components/atoms/PrimaryButton';
+import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 
 const vehicleImg = require("../../../../../../../assets/images/motor.png");
 

@@ -7,15 +7,52 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
+  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 
 const vehicleImg = require("../../../../../../../assets/images/motor.png");
+
+type PhotoTileProps = {
+  uri: string | null;
+  labelTop?: string;
+  labelBottom?: string;
+  placeholderTitle?: string;
+  placeholderSubtitle?: string;
+  onPress: () => void;
+  isPrimary?: boolean;
+};
+
+const PhotoTile: React.FC<PhotoTileProps> = ({ uri, labelTop, labelBottom, placeholderTitle, placeholderSubtitle, onPress, isPrimary }) => {
+  return (
+    <TouchableOpacity style={[styles.tile, isPrimary && styles.tilePrimary]} onPress={onPress} activeOpacity={0.8}>
+      {uri ? (
+        <>
+          <Image source={{ uri }} style={styles.tileImage} />
+          {labelBottom && (
+            <View style={styles.retakeBadge}>
+              <Text style={styles.retakeText}>{labelBottom}</Text>
+            </View>
+          )}
+          {labelTop && <Text style={styles.tileTopLabel}>{labelTop}</Text>}
+        </>
+      ) : (
+        <View style={styles.placeholderInner}>
+          <AntDesign name="camera" size={26} color={colors.text.secondary} />
+          {!!placeholderTitle && <Text style={styles.placeholderTitle}>{placeholderTitle}</Text>}
+          {!!placeholderSubtitle && <Text style={styles.placeholderSubtitle}>{placeholderSubtitle}</Text>}
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+};
 
 type InspectionNav = StackNavigationProp<
   StaffStackParamList,
@@ -25,6 +62,59 @@ type InspectionNav = StackNavigationProp<
 export const VehicleInspectionScreen: React.FC = () => {
   const navigation = useNavigation<InspectionNav>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [photos, setPhotos] = useState<Record<string, string | null>>({
+    front: null,
+    back: null,
+    left: null,
+    right: null,
+  });
+
+  const ensurePermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    return cam.status === "granted" && lib.status === "granted";
+  };
+
+  const openPicker = async (key: keyof typeof photos) => {
+    const ok = await ensurePermissions();
+    if (!ok) {
+      Alert.alert("Permission required", "Please grant camera and media permissions.");
+      return;
+    }
+
+    Alert.alert(
+      "Add photo",
+      "Choose source",
+      [
+        {
+          text: "Camera",
+          onPress: async () => {
+            const res = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              quality: 0.7,
+            });
+            if (!res.canceled && res.assets?.[0]?.uri) {
+              setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+            }
+          },
+        },
+        {
+          text: "Library",
+          onPress: async () => {
+            const res = await ImagePicker.launchImageLibraryAsync({
+              allowsEditing: true,
+              quality: 0.7,
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            });
+            if (!res.canceled && res.assets?.[0]?.uri) {
+              setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+            }
+          },
+        },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
 
   const sections: { key: string; title: string; items: { label: string; done: boolean }[] }[] = [
     {
@@ -95,22 +185,31 @@ export const VehicleInspectionScreen: React.FC = () => {
         <View style={styles.photosCard}>
           <Text style={styles.cardHeader}>Required Photos</Text>
           <View style={styles.photosGrid}>
-            <View style={styles.photoItem}>
-              <Image source={vehicleImg} style={styles.photoImage} />
-              <Text style={styles.photoLabel}>Vehicle</Text>
-            </View>
-            <View style={styles.photoItem}>
-              <View style={styles.photoPlaceholder} />
-              <Text style={styles.photoLabel}>Back view</Text>
-            </View>
-            <View style={styles.photoItem}>
-              <View style={styles.photoPlaceholder} />
-              <Text style={styles.photoLabel}>Left view</Text>
-            </View>
-            <View style={styles.photoItem}>
-              <View style={styles.photoPlaceholder} />
-              <Text style={styles.photoLabel}>Right view</Text>
-            </View>
+            <PhotoTile
+              uri={photos.front}
+              placeholderTitle="Front Side"
+              placeholderSubtitle="Tap to capture"
+              onPress={() => openPicker("front")}
+              isPrimary
+            />
+            <PhotoTile
+              uri={photos.back}
+              placeholderTitle="Back Side"
+              placeholderSubtitle="Tap to capture"
+              onPress={() => openPicker("back")}
+            />
+            <PhotoTile
+              uri={photos.left}
+              placeholderTitle="Left Side"
+              placeholderSubtitle="Tap to capture"
+              onPress={() => openPicker("left")}
+            />
+            <PhotoTile
+              uri={photos.right}
+              placeholderTitle="Right Side"
+              placeholderSubtitle="Tap to capture"
+              onPress={() => openPicker("right")}
+            />
           </View>
         </View>
 
@@ -235,7 +334,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  staffText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+  staffText: { color: "#000", fontWeight: "700", fontSize: 12 },
 
   photosCard: {
     backgroundColor: "#1E1E1E",
@@ -252,21 +351,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   photosGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  photoItem: {
-    width: "48%",
-    backgroundColor: "#2A2A2A",
-    borderRadius: 10,
-    padding: 10,
-    alignItems: "center",
-  },
-  photoImage: { width: "100%", height: 90, resizeMode: "contain" },
-  photoPlaceholder: {
-    width: "100%",
-    height: 90,
-    backgroundColor: "#3A3A3A",
-    borderRadius: 8,
-  },
-  photoLabel: { color: colors.text.secondary, fontSize: 12, marginTop: 6 },
+  tile: { width: '48%', backgroundColor: '#2A2A2A', borderRadius: 12, height: 120, overflow: 'hidden', position: 'relative' },
+  tilePrimary: { height: 120 },
+  tileImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  placeholderInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  placeholderTitle: { color: colors.text.secondary, marginTop: 10, textTransform: 'lowercase' },
+  placeholderSubtitle: { color: colors.text.secondary, fontSize: 12, marginTop: 4 },
+  retakeBadge: { position: 'absolute', top: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  retakeText: { color: '#fff', fontSize: 12 },
+  tileTopLabel: { position: 'absolute', bottom: 6, left: 8, color: '#fff', fontWeight: '600' },
 
   accordion: {
     backgroundColor: "#1E1E1E",
@@ -360,7 +453,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 6,
   },
-  primaryCtaText: { color: "#fff", fontWeight: "700" },
+  primaryCtaText: { color: "#000", fontWeight: "700" },
   secondaryCta: {
     marginHorizontal: 16,
     backgroundColor: "#2A2A2A",

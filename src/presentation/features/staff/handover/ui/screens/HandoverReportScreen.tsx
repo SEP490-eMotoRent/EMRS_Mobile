@@ -174,7 +174,7 @@ export const HandoverReportScreen: React.FC = () => {
 
         {/* Bottom CTA */}
         <TouchableOpacity style={styles.sendCta} onPress={() => navigation.navigate('AwaitingApproval')}>
-          <AntDesign name="send" size={16} color={colors.text.primary} />
+          <AntDesign name="send" size={16} color="#000" />
           <Text style={styles.sendCtaText}>Send to Customer</Text>
         </TouchableOpacity>
         <Text style={styles.noteText}>
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  staffText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+  staffText: { color: "#000", fontWeight: "700", fontSize: 12 },
 
   card: {
     backgroundColor: "#1E1E1E",
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
   },
-  sendCtaText: { color: "#fff", fontWeight: "700" },
+  sendCtaText: { color: "#000", fontWeight: "700" },
   noteText: {
     color: colors.text.secondary,
     fontSize: 12,

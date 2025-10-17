@@ -107,7 +107,7 @@ export const ScanResultScreen: React.FC = () => {
           onPress={handleContinueToHandover}
         >
           <Text style={styles.continueButtonText}>Continue to Handover</Text>
-          <AntDesign name="right" size={16} color="#FFFFFF" />
+          <AntDesign name="right" size={16} color="#000" />
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -307,7 +307,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   continueButtonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
     marginRight: 8,
