@@ -4,7 +4,7 @@ import { StaffBottomNavigationBar, StaffNavRoute } from '../../../common/compone
 import { ProfileNavigator } from '../HomeNav/ProfileNavigator';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StaffStackParamList } from '../StackParameters/types';
-import { HandoverScreen, ReturnScreen, ScanFaceScreen, ScanResultScreen, CustomerRentalsScreen, BookingDetailsScreen, SelectVehicleScreen, VehicleInspectionScreen, HandoverReportScreen, AwaitingApprovalScreen } from '../../../features/staff/handover/ui/screens';
+import { HandoverScreen, ReturnScreen, ScanFaceScreen, ScanResultScreen, CustomerRentalsScreen, BookingDetailsScreen, SelectVehicleScreen, VehicleInspectionScreen, HandoverReportScreen, AwaitingApprovalScreen, HandoverDocumentScreen, HandoverCompleteScreen } from '../../../features/staff/handover/ui/screens';
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -47,6 +47,8 @@ export const StaffNavigator: React.FC = () => {
         <Stack.Screen name="VehicleInspection" component={VehicleInspectionScreen} />
         <Stack.Screen name="HandoverReport" component={HandoverReportScreen} />
         <Stack.Screen name="AwaitingApproval" component={AwaitingApprovalScreen} />
+        <Stack.Screen name="HandoverDocument" component={HandoverDocumentScreen} />
+        <Stack.Screen name="HandoverComplete" component={HandoverCompleteScreen} />
         <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
       </Stack.Navigator>
     </View>

@@ -35,7 +35,9 @@ export type StaffStackParamList = {
   SelectVehicle: undefined;
   VehicleInspection: undefined;
   HandoverReport: undefined;
-  AwaitingApproval: undefined;
+  AwaitingApproval: { status?: 'pending' | 'approved' | 'denied' } | undefined;
+  HandoverDocument: undefined;
+  HandoverComplete: undefined;
   BookingDetails: undefined;
   Profile: undefined;
 };
