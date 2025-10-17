@@ -15,7 +15,6 @@ export const FeaturedBikesSection: React.FC<FeaturedBikesSectionProps> = ({ bike
             <Text style={styles.viewAll}>View all ›</Text>
         </TouchableOpacity>
         </View>
-
         <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

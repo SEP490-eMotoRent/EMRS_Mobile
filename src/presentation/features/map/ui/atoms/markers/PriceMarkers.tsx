@@ -6,51 +6,61 @@ interface PriceMarkerProps {
     isSelected?: boolean;
 }
 
-export const PriceMarker: React.FC<PriceMarkerProps> = ({ 
-    price,
-    isSelected = false
-}) => {
+export const PriceMarker: React.FC<PriceMarkerProps> = ({ price, isSelected = false }) => {
     return (
-        <View style={[styles.container, isSelected && styles.selected]}>
-        <Text style={styles.priceText}>${price}</Text>
-        <View style={styles.arrow} />
+        <View style={styles.wrapper}>
+            <View style={[styles.container, isSelected && styles.selected]}>
+                <Text style={[styles.priceText, isSelected && styles.priceTextSelected]}>${price}</Text>
+            </View>
+            <View style={[styles.arrow, isSelected && styles.arrowSelected]} />
         </View>
     );
 };
 
 const styles = StyleSheet.create({
+    wrapper: {
+        alignItems: "center",
+    },
     container: {
         backgroundColor: "#000",
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: "#fff",
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 18,
+        minWidth: 50,
+        maxWidth: 120,
         alignItems: "center",
         justifyContent: "center",
-        minWidth: 50,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.28,
+        shadowRadius: 3,
+        elevation: 5,
     },
     selected: {
         backgroundColor: "#b8a4ff",
-        borderColor: "#b8a4ff",
     },
     priceText: {
         color: "#fff",
-        fontWeight: "bold",
+        fontWeight: "800",
         fontSize: 14,
     },
+    priceTextSelected: {
+        color: "#1a1a1a",
+    },
     arrow: {
-        position: "absolute",
-        bottom: -8,
         width: 0,
         height: 0,
         backgroundColor: "transparent",
         borderStyle: "solid",
-        borderLeftWidth: 6,
-        borderRightWidth: 6,
-        borderTopWidth: 8,
+        borderLeftWidth: 8,
+        borderRightWidth: 8,
+        borderTopWidth: 10,
         borderLeftColor: "transparent",
         borderRightColor: "transparent",
         borderTopColor: "#000",
+        marginTop: 0,
+    },
+    arrowSelected: {
+        borderTopColor: "#b8a4ff",
     },
 });

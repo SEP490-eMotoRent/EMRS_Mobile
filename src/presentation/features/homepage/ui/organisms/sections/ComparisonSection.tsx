@@ -8,7 +8,7 @@ export const ComparisonSection: React.FC = () => {
         "Flexible plans starting week to week",
         "No depreciation or resell fees",
         "Maintenance included",
-        "Delivered to you, just like lunch"
+        "Delivered to you, just like lunch",
     ];
 
     const traditionalIssues = [
@@ -16,7 +16,7 @@ export const ComparisonSection: React.FC = () => {
         "Locked in for years",
         "Lose money with every mile",
         "Pay out of pocket for everything",
-        "Not delivered to you"
+        "Not delivered to you",
     ];
 
     return (
@@ -29,7 +29,6 @@ export const ComparisonSection: React.FC = () => {
             Why eMotoRent Subscriptions Beat Every other option
             </Text>
         </View>
-
         <View style={styles.comparisonContainer}>
             <View style={styles.comparisonColumn}>
             <Text style={styles.comparisonColumnTitle}>eMotoRent Subscription</Text>
@@ -37,7 +36,6 @@ export const ComparisonSection: React.FC = () => {
                 <ComparisonFeature key={index} text={feature} isPositive={true} />
             ))}
             </View>
-
             <View style={styles.comparisonColumn}>
             <Text style={styles.comparisonColumnTitle}>Traditional Ownership</Text>
             {traditionalIssues.map((issue, index) => (
