@@ -1,5 +1,10 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+
+type VehicleCardNavigationProp = StackNavigationProp<HomeStackParamList>;
 
 export interface ElectricVehicle {
     id: number;
@@ -21,8 +26,18 @@ interface VehicleCardProps {
 }
 
 export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }) => {
+    const navigation = useNavigation<VehicleCardNavigationProp>();
+
+    const handleCardPress = () => {
+        navigation.navigate('VehicleDetails', { vehicleId: vehicle.id });
+    };
+
     return (
-        <View style={styles.card}>
+        <TouchableOpacity 
+            style={styles.card} 
+            onPress={handleCardPress}
+            activeOpacity={0.9}
+        >
             {/* Header with Brand and Image */}
             <View style={styles.topSection}>
                 {/* Left: Brand Info */}
@@ -68,12 +83,15 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
                 </View>
                 <TouchableOpacity 
                     style={styles.bookButton}
-                    onPress={() => onBookPress(vehicle.id)}
+                    onPress={(e) => {
+                        e.stopPropagation();
+                        onBookPress(vehicle.id);
+                    }}
                 >
                     <Text style={styles.bookButtonText}>Book</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 

@@ -3,7 +3,7 @@ export const colors = {
   surface: '#000000',
   primary: '#FFFFFF',
   secondary: '#CCCCCC',
-  accent: '#9C27B0', 
+  accent: '#9C27B0',
   border: '#FFFFFF',
   text: {
     primary: '#FFFFFF',
