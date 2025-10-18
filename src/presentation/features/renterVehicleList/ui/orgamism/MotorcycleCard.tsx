@@ -1,11 +1,16 @@
 import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ColorBadge } from "../atoms/badges/ColorBadge";
 import { DeliveryBadge } from "../atoms/badges/DeliveryBadges";
 import { FeatureBadge } from "../atoms/badges/FeatureBadge";
 import { PriceText } from "../atoms/texts/PriceTexts";
 import { MotorcycleHeader } from "../molecules/MotorcycleHeader";
 import { SpecItem } from "../molecules/SpecItem";
+
+type MotorcycleCardNavigationProp = StackNavigationProp<HomeStackParamList>;
 
 export interface Motorcycle {
     id: number;
@@ -29,8 +34,18 @@ interface MotorcycleCardProps {
 }
 
 export const MotorcycleCard: React.FC<MotorcycleCardProps> = ({ motorcycle }) => {
+    const navigation = useNavigation<MotorcycleCardNavigationProp>();
+
+    const handleCardPress = () => {
+        navigation.navigate('VehicleDetails', { vehicleId: motorcycle.id });
+    };
+
     return (
-        <View style={styles.card}>
+        <TouchableOpacity 
+            style={styles.card} 
+            onPress={handleCardPress}
+            activeOpacity={0.9}
+        >
             {/* Distance & Delivery */}
             <View style={styles.topRow}>
                 <Text style={styles.distance}>
@@ -74,7 +89,7 @@ export const MotorcycleCard: React.FC<MotorcycleCardProps> = ({ motorcycle }) =>
                     ))}
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 

@@ -19,6 +19,8 @@ export type HomeStackParamList = {
     dateRange: string;
     address: string;
   };
+  VehicleDetails: { vehicleId: number };
+  ConfirmRentalDuration: { vehicleId: number }; // ✅ ADDED
 };
 
 export type ProfileStackParamList = {
