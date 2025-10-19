@@ -19,9 +19,41 @@ export type HomeStackParamList = {
     dateRange: string;
     address: string;
   };
-  VehicleDetails: { vehicleId: number };
-  ConfirmRentalDuration: { vehicleId: number }; // ✅ ADDED
+  VehicleDetails: { vehicleId: number }; 
+  ConfirmRentalDuration: { vehicleId: number };
+  InsurancePlans: {
+    vehicleId: number;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+  };
+  PaymentConfirmation: {
+    vehicleId: number;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    branchName: string;
+    insurancePlan: string;
+    rentalFee: string;
+    insuranceFee: string;
+    securityDeposit: string;
+    serviceFee: string;
+    total: string;
+  };
+  DigitalContract: {
+    vehicleId: number;
+    vehicleName: string;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    branchName: string;
+    totalAmount: string;
+    securityDeposit: string;
+    contractNumber: string;
+  };
 };
+
 
 export type ProfileStackParamList = {
   Profile: undefined;
