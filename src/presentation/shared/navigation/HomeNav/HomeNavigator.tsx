@@ -6,6 +6,9 @@ import { MapScreen } from '../../../features/map/ui/screens/MapScreen';
 import { ListView } from '../../../features/renterVehicleList/ui/screens/ListViewScreen';
 import { VehicleDetailsScreen } from '../../../features/vehicleDetails/ui/screens/VehicleDetailsScreen';
 import { HomeStackParamList } from '../StackParameters/types';
+import { InsurancePlansScreen } from '../../../features/booking/ui/screens/phase2/InsurancePlansScreen';
+import { PaymentConfirmationScreen } from '../../../features/booking/ui/screens/phase3/PaymentConfirmationScreen';
+import { DigitalContractScreen } from '../../../features/booking/ui/screens/phase4/DigitalContractScreen';
 
 const Stack = createStackNavigator<HomeStackParamList>();
 
@@ -18,7 +21,9 @@ export const HomeNavigator: React.FC = () => {
             <Stack.Screen name="ListView" component={ListView} />
             <Stack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
             <Stack.Screen name="ConfirmRentalDuration" component={ConfirmRentalDurationScreen} />
-
+            <Stack.Screen name="InsurancePlans" component={InsurancePlansScreen} />
+            <Stack.Screen name="PaymentConfirmation" component={PaymentConfirmationScreen} />
+            <Stack.Screen name="DigitalContract" component={DigitalContractScreen} />
         </Stack.Navigator>
     );
 };

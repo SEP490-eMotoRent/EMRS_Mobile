@@ -98,10 +98,15 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const handleContinue = () => {
         console.log("Continue to next step for vehicle:", vehicleId);
-        // TODO: Navigate to next booking step (step 2)
-        // navigation.navigate('BookingStep2', { vehicleId });
+        navigation.navigate('InsurancePlans', { 
+            vehicleId,
+            startDate,
+            endDate,
+            duration,
+            rentalDays,
+        });
     };
-
+    
     return (
         <View style={styles.container}>
             {/* Header */}
