@@ -2,7 +2,7 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { BookingButton } from "../atoms/buttons/BookingButton";
 import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
@@ -10,9 +10,8 @@ import { PickupLocationSection } from "../organisms/PickupLocationSection";
 import { PricingSection } from "../organisms/PricingSection";
 import { VehicleHeader } from "../organisms/VehicleHeader";
 
-type VehicleDetailsRouteProp = RouteProp<HomeStackParamList, 'VehicleDetails'>;
-type VehicleDetailsNavigationProp = StackNavigationProp<HomeStackParamList, 'VehicleDetails'>;
-
+type VehicleDetailsRouteProp = RouteProp<BrowseStackParamList, 'VehicleDetails'>;
+type VehicleDetailsNavigationProp = StackNavigationProp<HomeStackParamList>;
 export const VehicleDetailsScreen: React.FC = () => {
     const route = useRoute<VehicleDetailsRouteProp>();
     const navigation = useNavigation<VehicleDetailsNavigationProp>();
@@ -51,7 +50,10 @@ export const VehicleDetailsScreen: React.FC = () => {
 
     const handleBooking = () => {
         console.log("Proceed to booking for vehicle:", vehicleId);
-        navigation.navigate('ConfirmRentalDuration', { vehicleId });
+        navigation.navigate('Booking', {
+            screen: 'ConfirmRentalDuration',
+            params: { vehicleId }
+        });
     };
 
     return (

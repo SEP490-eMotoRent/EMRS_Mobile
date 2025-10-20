@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { StarIcon } from '../icons/StarIcon';
 
 interface RatingBadgeProps {
@@ -8,7 +8,7 @@ interface RatingBadgeProps {
 
 export const RatingBadge: React.FC<RatingBadgeProps> = ({ rating }) => (
     <View style={styles.container}>
-        <StarIcon style={styles.text}/> {/* gold star */}
+        <StarIcon />
         <Text style={styles.text}>{rating}</Text>
     </View>
 );
