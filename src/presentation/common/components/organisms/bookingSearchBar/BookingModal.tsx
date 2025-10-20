@@ -1,3 +1,5 @@
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
 import {
     Modal,
@@ -8,18 +10,15 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
+import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
-import { DateTimeModal } from "./DateTimeModal";
-import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { BuildingIcon } from "../../atoms/icons/searchBarIcons/BuildingIcon";
+import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { CityCard } from "../../molecules/cards/CityCard";
 import { InputField } from "../../molecules/InputField";
-import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { DateTimeModal } from "./DateTimeModal";
 
 type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
-
 interface BookingModalProps {
     visible: boolean;
     onClose: () => void;
@@ -74,14 +73,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
     };
 
     const handleSearch = () => {
-        // Close modal first
         onClose();
         
-        // Navigate to Map screen with search parameters
-        navigation.navigate('Map', {
-            location: address,
-            dateRange: formatDateRangeForDisplay(selectedDates),
-            address: address,
+        navigation.navigate('Browse', {
+            screen: 'Map',
+            params: {
+                location: address,
+                dateRange: formatDateRangeForDisplay(selectedDates),
+                address: address,
+            }
         });
     };
 

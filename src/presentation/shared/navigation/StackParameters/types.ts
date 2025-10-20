@@ -1,3 +1,5 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 export type AuthStackParamList = {
   Hello: undefined;
   Login: undefined;
@@ -7,8 +9,11 @@ export type AuthStackParamList = {
 
 export type HomeStackParamList = {
   Home: undefined;
-  Schedule: undefined;
-  Battery: undefined;
+  Browse: NavigatorScreenParams<BrowseStackParamList>; // NOT undefined
+  Booking: NavigatorScreenParams<BookingStackParamList>; // NOT undefined
+};
+
+export type BrowseStackParamList = {
   Map: {
     location: string;
     dateRange: string;
@@ -19,7 +24,10 @@ export type HomeStackParamList = {
     dateRange: string;
     address: string;
   };
-  VehicleDetails: { vehicleId: number }; 
+  VehicleDetails: { vehicleId: number };
+};
+
+export type BookingStackParamList = {
   ConfirmRentalDuration: { vehicleId: number };
   InsurancePlans: {
     vehicleId: number;
@@ -54,6 +62,9 @@ export type HomeStackParamList = {
   };
 };
 
+export type TripStackParamList = {
+  Trip: undefined;
+};
 
 export type ProfileStackParamList = {
   Profile: undefined;
@@ -78,7 +89,6 @@ export type StaffStackParamList = {
 
 export type RootStackParamList = {
   Auth: undefined;
-  Home: undefined;
-  Profile: undefined;
+  Home: undefined; // This is NavigationBarNavigator with all tabs
   Staff: undefined;
 };

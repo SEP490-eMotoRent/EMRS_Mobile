@@ -6,7 +6,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { MapSearchBar } from "../molecules/MapSearchBar";
 
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
-import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ListViewButton } from "../atoms/buttons/ListViewButton";
 import { ClusterMarker } from "../atoms/markers/ClusterMarkers";
 import { LocationPinMarker } from "../atoms/markers/LocationPinMarker";
@@ -15,8 +15,8 @@ import { ElectricVehicle } from "../molecules/VehicleCard";
 import { MapFilters } from "../orgamisms/MapFilters";
 import { VehicleBottomSheet } from "../orgamisms/VehicleBottomSheet";
 
-type MapScreenRouteProp = RouteProp<HomeStackParamList, 'Map'>;
-type MapScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Map'>;
+type MapScreenRouteProp = RouteProp<BrowseStackParamList, 'Map'>;
+type MapScreenNavigationProp = StackNavigationProp<BrowseStackParamList, 'Map'>;
 
 interface Branch {
     id: number;
