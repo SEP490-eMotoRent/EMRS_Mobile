@@ -1,3 +1,4 @@
+
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StatusBadge } from "../atoms/badges/StatusBadge";
@@ -33,7 +34,11 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
     onCancel,
 }) => {
     return (
-        <View style={styles.card}>
+        <TouchableOpacity 
+            style={styles.card}
+            onPress={onViewDetails}
+            activeOpacity={0.7}
+        >
             <StatusBadge status={trip.status} />
             
             <View style={styles.content}>
@@ -67,17 +72,35 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 {trip.status === "renting" && (
                     <>
                         <View style={styles.actions}>
-                            <TouchableOpacity style={styles.primaryButton} onPress={onViewDetails}>
+                            <TouchableOpacity 
+                                style={styles.primaryButton} 
+                                onPress={(e) => {
+                                    e.stopPropagation(); // ✅ ADDED
+                                    onViewDetails();
+                                }}
+                            >
                                 <Text style={styles.primaryButtonText}>View Details</Text>
                             </TouchableOpacity>
                             {onExtendRental && (
-                                <TouchableOpacity style={styles.primaryButton} onPress={onExtendRental}>
+                                <TouchableOpacity 
+                                    style={styles.primaryButton} 
+                                    onPress={(e) => {
+                                        e.stopPropagation(); // ✅ ADDED
+                                        onExtendRental();
+                                    }}
+                                >
                                     <Text style={styles.primaryButtonText}>Extend Rental</Text>
                                 </TouchableOpacity>
                             )}
                         </View>
                         {onReportIssue && (
-                            <TouchableOpacity style={styles.reportButton} onPress={onReportIssue}>
+                            <TouchableOpacity 
+                                style={styles.reportButton} 
+                                onPress={(e) => {
+                                    e.stopPropagation(); // ✅ ADDED
+                                    onReportIssue();
+                                }}
+                            >
                                 <Text style={styles.reportButtonText}>Report Issue</Text>
                             </TouchableOpacity>
                         )}
@@ -86,11 +109,23 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 
                 {trip.status === "confirmed" && (
                     <View style={styles.actions}>
-                        <TouchableOpacity style={styles.primaryButton} onPress={onViewDetails}>
+                        <TouchableOpacity 
+                            style={styles.primaryButton} 
+                            onPress={(e) => {
+                                e.stopPropagation(); // ✅ ADDED
+                                onViewDetails();
+                            }}
+                        >
                             <Text style={styles.primaryButtonText}>View Details</Text>
                         </TouchableOpacity>
                         {onCancel && (
-                            <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+                            <TouchableOpacity 
+                                style={styles.cancelButton} 
+                                onPress={(e) => {
+                                    e.stopPropagation(); // ✅ ADDED
+                                    onCancel();
+                                }}
+                            >
                                 <Text style={styles.cancelButtonText}>Cancel</Text>
                             </TouchableOpacity>
                         )}
@@ -98,12 +133,18 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 )}
                 
                 {trip.status === "returned" && (
-                    <TouchableOpacity style={styles.primaryButton} onPress={onViewDetails}>
+                    <TouchableOpacity 
+                        style={styles.primaryButton} 
+                        onPress={(e) => {
+                            e.stopPropagation(); // ✅ ADDED
+                            onViewDetails();
+                        }}
+                    >
                         <Text style={styles.primaryButtonText}>View Details</Text>
                     </TouchableOpacity>
                 )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 

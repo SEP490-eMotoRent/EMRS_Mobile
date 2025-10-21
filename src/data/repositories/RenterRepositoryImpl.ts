@@ -1,8 +1,8 @@
+import { Renter } from '../../domain/entities/account/Renter';
 import { RenterRepository } from '../../domain/repositories/RenterRepository';
 import { RenterLocalDataSource } from '../datasources/local/RenterLocalDataSource';
 import { RenterRemoteDataSource } from '../datasources/remote/RenterRemoteDataSource';
 import { RenterModel } from '../models/RenterModel';
-import { Renter } from '../../domain/entities/Renter';
 
 export class RenterRepositoryImpl implements RenterRepository {
     private readonly remote: RenterRemoteDataSource;

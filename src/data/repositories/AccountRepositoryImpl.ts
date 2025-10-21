@@ -1,8 +1,8 @@
-import { AccountModel } from '../models/AccountModel';
-import { Account } from '../../domain/entities/Account';
+import { Account } from '../../domain/entities/account/Account';
 import { AccountRepository } from '../../domain/repositories/AccountRepository';
-import { AccountRemoteDataSource } from '../datasources/remote/AccountRemoteDataSource';
 import { AccountLocalDataSource } from '../datasources/local/AccountLocalDataSource';
+import { AccountRemoteDataSource } from '../datasources/remote/AccountRemoteDataSource';
+import { AccountModel } from '../models/AccountModel';
 
 export class AccountRepositoryImpl implements AccountRepository {
     private readonly remote: AccountRemoteDataSource;
