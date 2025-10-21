@@ -1,3 +1,4 @@
+
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StatusBadge } from "../atoms/badges/StatusBadge";
@@ -16,6 +17,7 @@ export interface PastTrip {
 
 interface PastTripCardProps {
     trip: PastTrip;
+    onViewDetails?: () => void; // ✅ ADDED - Makes entire card tappable
     onRentAgain: () => void;
     onViewReceipt: () => void;
     onBookSimilar?: () => void;
@@ -23,12 +25,17 @@ interface PastTripCardProps {
 
 export const PastTripCard: React.FC<PastTripCardProps> = ({
     trip,
+    onViewDetails,
     onRentAgain,
     onViewReceipt,
     onBookSimilar,
 }) => {
     return (
-        <View style={styles.card}>
+        <TouchableOpacity 
+            style={styles.card} 
+            onPress={onViewDetails}
+            activeOpacity={0.7}
+        >
             <StatusBadge status={trip.status} />
             
             <View style={styles.content}>
@@ -56,21 +63,39 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 <View style={styles.actions}>
                     {trip.status === "completed" ? (
                         <>
-                            <TouchableOpacity style={styles.primaryButton} onPress={onRentAgain}>
+                            <TouchableOpacity 
+                                style={styles.primaryButton} 
+                                onPress={(e) => {
+                                    e.stopPropagation(); // ✅ Prevent card tap
+                                    onRentAgain();
+                                }}
+                            >
                                 <Text style={styles.primaryButtonText}>Rent Again</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.secondaryButton} onPress={onViewReceipt}>
+                            <TouchableOpacity 
+                                style={styles.secondaryButton} 
+                                onPress={(e) => {
+                                    e.stopPropagation(); // ✅ Prevent card tap
+                                    onViewReceipt();
+                                }}
+                            >
                                 <Text style={styles.secondaryButtonText}>📄 View Receipt</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
-                        <TouchableOpacity style={styles.primaryButton} onPress={onBookSimilar}>
+                        <TouchableOpacity 
+                            style={styles.primaryButton} 
+                            onPress={(e) => {
+                                e.stopPropagation(); // ✅ Prevent card tap
+                                onBookSimilar?.();
+                            }}
+                        >
                             <Text style={styles.primaryButtonText}>Book Similar</Text>
                         </TouchableOpacity>
                     )}
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 

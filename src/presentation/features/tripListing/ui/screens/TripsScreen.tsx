@@ -1,12 +1,16 @@
 import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
+import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { FilterTags } from "../molecules/FilterTags";
 import { SearchBar } from "../molecules/SearchBar";
 import { TabButton } from "../molecules/TabButton";
 import { CurrentTrip, CurrentTripCard } from "../orgamisms/CurrentTripCard ";
 import { PastTrip, PastTripCard } from "../orgamisms/PastTripCard";
 import { TripsHeader } from "../orgamisms/TripsHeader";
+
+type TripsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'Trip'>;
 
 type TabType = "current" | "past";
 type PastFilterType = "completed" | "cancelled" | null;
@@ -67,7 +71,7 @@ const mockPastTrips: PastTrip[] = [
 ];
 
 export const TripsScreen: React.FC = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<TripsScreenNavigationProp>();
     const [activeTab, setActiveTab] = useState<TabType>("current");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("Recent first");
@@ -81,6 +85,43 @@ export const TripsScreen: React.FC = () => {
     const handleSortPress = () => {
         console.log("Open sort options");
         // TODO: Show sort options modal
+    };
+
+    const handleViewDetails = (tripId: string, bookingReference: string) => {
+        navigation.navigate('BookingDetails', {
+            tripId,
+            bookingReference,
+        });
+    };
+
+    const handleExtendRental = (tripId: string) => {
+        console.log("Extend rental", tripId);
+        // TODO: Navigate to extend rental flow
+    };
+
+    const handleReportIssue = (tripId: string) => {
+        console.log("Report issue", tripId);
+        // TODO: Navigate to report issue screen
+    };
+
+    const handleCancelBooking = (tripId: string) => {
+        console.log("Cancel booking", tripId);
+        // TODO: Show cancel confirmation dialog
+    };
+
+    const handleRentAgain = (tripId: string) => {
+        console.log("Rent again", tripId);
+        // TODO: Navigate to booking flow with same vehicle
+    };
+
+    const handleViewReceipt = (tripId: string) => {
+        console.log("View receipt", tripId);
+        // TODO: Navigate to receipt screen or download PDF
+    };
+
+    const handleBookSimilar = (tripId: string) => {
+        console.log("Book similar", tripId);
+        // TODO: Navigate to search with similar vehicle filters
     };
 
     // Filter current trips
@@ -106,6 +147,7 @@ export const TripsScreen: React.FC = () => {
         { id: "completed", label: "Completed", count: mockPastTrips.filter(t => t.status === "completed").length },
         { id: "cancelled", label: "Cancelled", count: mockPastTrips.filter(t => t.status === "cancelled").length },
     ];
+
     const renderCurrentTrips = () => (
         <FlatList
             data={filteredCurrentTrips}
@@ -113,10 +155,10 @@ export const TripsScreen: React.FC = () => {
             renderItem={({ item }) => (
                 <CurrentTripCard
                     trip={item}
-                    onViewDetails={() => console.log("View details", item.id)}
-                    onExtendRental={item.status === "renting" ? () => console.log("Extend rental", item.id) : undefined}
-                    onReportIssue={item.status === "renting" ? () => console.log("Report issue", item.id) : undefined}
-                    onCancel={item.status === "confirmed" ? () => console.log("Cancel", item.id) : undefined}
+                    onViewDetails={() => handleViewDetails(item.id, item.reference)}
+                    onExtendRental={item.status === "renting" ? () => handleExtendRental(item.id) : undefined}
+                    onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id) : undefined}
+                    onCancel={item.status === "confirmed" ? () => handleCancelBooking(item.id) : undefined}
                 />
             )}
             contentContainerStyle={styles.listContentCurrent}
@@ -132,27 +174,26 @@ export const TripsScreen: React.FC = () => {
             data={filteredPastTrips}
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
-            <View style={{ marginTop: index === 0 ? 0 : 4 }}>
-                <PastTripCard
-                trip={item}
-                onRentAgain={() => console.log("Rent again", item.id)}
-                onViewReceipt={() => console.log("View receipt", item.id)}
-                onBookSimilar={
-                    item.status === "cancelled"
-                    ? () => console.log("Book similar", item.id)
-                    : undefined
-                }
-                />
-            </View>
+                <View style={{ marginTop: index === 0 ? 0 : 4 }}>
+                    <PastTripCard
+                        trip={item}
+                        onRentAgain={() => handleRentAgain(item.id)}
+                        onViewReceipt={() => handleViewReceipt(item.id)}
+                        onBookSimilar={
+                            item.status === "cancelled"
+                                ? () => handleBookSimilar(item.id)
+                                : undefined
+                        }
+                    />
+                </View>
             )}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
-            <Text style={styles.emptyText}>No past trips</Text>
+                <Text style={styles.emptyText}>No past trips</Text>
             }
         />
-        );
-
+    );
 
     return (
         <View style={styles.container}>
@@ -188,13 +229,12 @@ export const TripsScreen: React.FC = () => {
             {activeTab === "past" && (
                 <View style={{ marginTop: 8, marginBottom: 8 }}>
                     <FilterTags
-                    tags={pastFilterTags}
-                    activeTagId={pastFilter}
-                    onTagPress={(id) => setPastFilter(id as PastFilterType)}
+                        tags={pastFilterTags}
+                        activeTagId={pastFilter}
+                        onTagPress={(id) => setPastFilter(id as PastFilterType)}
                     />
                 </View>
             )}
-
 
             {/* Content - Wrapped in View */}
             <View style={styles.contentContainer}>

@@ -1,5 +1,5 @@
 import { parseISO } from 'date-fns';
-import { Renter } from '../../domain/entities/Renter';
+import { Renter } from '../../domain/entities/account/Renter';
 
 export class RenterModel {
     readonly id: string;

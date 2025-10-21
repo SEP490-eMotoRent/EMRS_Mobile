@@ -64,6 +64,10 @@ export type BookingStackParamList = {
 
 export type TripStackParamList = {
   Trip: undefined;
+  BookingDetails: {
+    tripId: string;
+    bookingReference: string;
+  };
 };
 
 export type ProfileStackParamList = {

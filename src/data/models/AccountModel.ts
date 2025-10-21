@@ -1,5 +1,5 @@
 import { parseISO } from 'date-fns';
-import { Account, UserRole } from '../../domain/entities/Account';
+import { Account, UserRole } from '../../domain/entities/account/Account';
 
 export class AccountModel {
     readonly id: string;
