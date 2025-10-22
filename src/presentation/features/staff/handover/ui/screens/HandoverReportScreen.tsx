@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -28,7 +29,11 @@ export const HandoverReportScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ScreenHeader title="Handover Report" subtitle="Ready to send" onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title="Handover Report"
+          subtitle="Ready to send"
+          onBack={() => navigation.goBack()}
+        />
 
         {/* Customer Information */}
         <View style={styles.card}>
@@ -154,7 +159,12 @@ export const HandoverReportScreen: React.FC = () => {
         </View>
 
         {/* Bottom CTA */}
-        <TouchableOpacity style={styles.sendCta} onPress={() => navigation.navigate('AwaitingApproval', { status: 'approved' })}>
+        <TouchableOpacity
+          style={styles.sendCta}
+          onPress={() =>
+            navigation.navigate("AwaitingApproval", { status: "approved" })
+          }
+        >
           <AntDesign name="send" size={16} color="#000" />
           <Text style={styles.sendCtaText}>Send to Customer</Text>
         </TouchableOpacity>
@@ -168,7 +178,11 @@ export const HandoverReportScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? 40 : 0,
+  },
   scrollContent: { paddingBottom: 40 },
   titleRow: {
     flexDirection: "row",
@@ -206,14 +220,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  cardHeader: { 
-    color: colors.text.primary, 
-    fontSize: 14, 
-    fontWeight: "700", 
+  cardHeader: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "700",
     marginBottom: 12,
     paddingLeft: 8,
     borderLeftWidth: 3,
-    borderLeftColor: "#C9B6FF"
+    borderLeftColor: "#C9B6FF",
   },
   infoRow: {
     flexDirection: "row",
@@ -249,11 +263,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#3A3A3A",
   },
-  galleryImage: { width: "100%", height: 80, resizeMode: "cover", borderRadius: 8 },
-  galleryLabel: { color: colors.text.secondary, fontSize: 12, marginTop: 8, fontWeight: "600" },
+  galleryImage: {
+    width: "100%",
+    height: 80,
+    resizeMode: "cover",
+    borderRadius: 8,
+  },
+  galleryLabel: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginTop: 8,
+    fontWeight: "600",
+  },
   tipText: { color: colors.text.secondary, fontSize: 12, textAlign: "right" },
 
-  metaRow: { flexDirection: "row", justifyContent: "space-between", gap: 12, marginBottom: 8 },
+  metaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 8,
+  },
   metaBox: {
     flex: 1,
     backgroundColor: "#2A2A2A",
@@ -262,7 +291,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#3A3A3A",
   },
-  metaLabel: { color: colors.text.secondary, fontSize: 12, marginBottom: 6, fontWeight: "500" },
+  metaLabel: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginBottom: 6,
+    fontWeight: "500",
+  },
   metaValue: { color: colors.text.primary, fontSize: 13, fontWeight: "600" },
 
   sendCta: {

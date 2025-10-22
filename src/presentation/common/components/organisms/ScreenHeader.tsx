@@ -25,6 +25,7 @@ interface ScreenHeaderProps {
   onBellPress?: () => void;
   badgeText?: string; // e.g., 'ST'
   onBack?: () => void;
+  showBackButton?: boolean;
 }
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
@@ -41,11 +42,14 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   onBellPress,
   badgeText = "ST",
   onBack,
+  showBackButton = true,
 }) => {
   return (
     <View style={[styles.container, containerStyle]}>
       <View style={styles.backButtonContainer}>
-        <BackButton onPress={onBack || (() => {})} />
+        {showBackButton && (
+          <BackButton onPress={onBack || (() => {})} />
+        )}
       </View>
 
       <View style={styles.center}>

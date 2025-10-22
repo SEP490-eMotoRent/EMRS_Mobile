@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
@@ -259,8 +260,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
+    paddingHorizontal: 16,
     paddingBottom: 100, // Space for bottom navigation
   },
   appHeader: {

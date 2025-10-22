@@ -31,9 +31,21 @@ type PhotoTileProps = {
   isPrimary?: boolean;
 };
 
-const PhotoTile: React.FC<PhotoTileProps> = ({ uri, labelTop, labelBottom, placeholderTitle, placeholderSubtitle, onPress, isPrimary }) => {
+const PhotoTile: React.FC<PhotoTileProps> = ({
+  uri,
+  labelTop,
+  labelBottom,
+  placeholderTitle,
+  placeholderSubtitle,
+  onPress,
+  isPrimary,
+}) => {
   return (
-    <TouchableOpacity style={[styles.tile, isPrimary && styles.tilePrimary]} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={[styles.tile, isPrimary && styles.tilePrimary]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       {uri ? (
         <>
           <Image source={{ uri }} style={styles.tileImage} />
@@ -47,8 +59,14 @@ const PhotoTile: React.FC<PhotoTileProps> = ({ uri, labelTop, labelBottom, place
       ) : (
         <View style={styles.placeholderInner}>
           <AntDesign name="camera" size={26} color={colors.text.secondary} />
-          {!!placeholderTitle && <Text style={styles.placeholderTitle}>{placeholderTitle}</Text>}
-          {!!placeholderSubtitle && <Text style={styles.placeholderSubtitle}>{placeholderSubtitle}</Text>}
+          {!!placeholderTitle && (
+            <Text style={styles.placeholderTitle}>{placeholderTitle}</Text>
+          )}
+          {!!placeholderSubtitle && (
+            <Text style={styles.placeholderSubtitle}>
+              {placeholderSubtitle}
+            </Text>
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -79,91 +97,119 @@ export const VehicleInspectionScreen: React.FC = () => {
   const openPicker = async (key: keyof typeof photos) => {
     const ok = await ensurePermissions();
     if (!ok) {
-      Alert.alert("Permission required", "Please grant camera and media permissions.");
+      Alert.alert(
+        "Permission required",
+        "Please grant camera and media permissions."
+      );
       return;
     }
 
-    Alert.alert(
-      "Add photo",
-      "Choose source",
-      [
-        {
-          text: "Camera",
-          onPress: async () => {
-            const res = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              quality: 0.7,
-            });
-            if (!res.canceled && res.assets?.[0]?.uri) {
-              setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
-            }
-          },
+    Alert.alert("Add photo", "Choose source", [
+      {
+        text: "Camera",
+        onPress: async () => {
+          const res = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 0.7,
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
         },
-        {
-          text: "Library",
-          onPress: async () => {
-            const res = await ImagePicker.launchImageLibraryAsync({
-              allowsEditing: true,
-              quality: 0.7,
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            });
-            if (!res.canceled && res.assets?.[0]?.uri) {
-              setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
-            }
-          },
+      },
+      {
+        text: "Library",
+        onPress: async () => {
+          const res = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            quality: 0.7,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
         },
-        { text: "Cancel", style: "cancel" },
-      ]
-    );
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
-  const sections: { key: string; title: string; items: { label: string; done: boolean }[] }[] = [
+  const sections: {
+    key: string;
+    title: string;
+    items: { label: string; done: boolean }[];
+  }[] = [
     {
-      key: 'bodyPaint',
-      title: 'Body & Paint (10 items)',
+      key: "bodyPaint",
+      title: "Body & Paint (10 items)",
       items: [
-        { label: 'Scratches or dents', done: true },
-        { label: 'Paint condition', done: true },
-        { label: 'Panel alignment', done: false },
-        { label: 'Stickers/decals', done: false },
-        { label: 'Overall cleanliness', done: true },
+        { label: "Scratches or dents", done: true },
+        { label: "Paint condition", done: true },
+        { label: "Panel alignment", done: false },
+        { label: "Stickers/decals", done: false },
+        { label: "Overall cleanliness", done: true },
       ],
     },
     {
-      key: 'batteryPower',
-      title: 'Battery & Power System (4 items)',
+      key: "batteryPower",
+      title: "Battery & Power System (4 items)",
       items: [
-        { label: 'Battery mounted securely', done: true },
-        { label: 'Charging port condition', done: true },
-        { label: 'Cables intact', done: false },
+        { label: "Battery mounted securely", done: true },
+        { label: "Charging port condition", done: true },
+        { label: "Cables intact", done: false },
       ],
     },
     {
-      key: 'cleanliness',
-      title: 'Cleanliness Assessment (6 items)',
+      key: "cleanliness",
+      title: "Cleanliness Assessment (6 items)",
       items: [
-        { label: 'Seat and floorboards clean', done: true },
-        { label: 'Mirrors clean', done: true },
-        { label: 'Mudguards clean', done: true },
+        { label: "Seat and floorboards clean", done: true },
+        { label: "Mirrors clean", done: true },
+        { label: "Mudguards clean", done: true },
       ],
     },
     {
-      key: 'wheelsTires',
-      title: 'Wheels & Tires (4 items)',
+      key: "wheelsTires",
+      title: "Wheels & Tires (4 items)",
       items: [
-        { label: 'Tread ok', done: true },
-        { label: 'Pressure ok', done: false },
+        { label: "Tread ok", done: true },
+        { label: "Pressure ok", done: false },
       ],
     },
-    { key: 'lights', title: 'Lights & Signals (6 items)', items: [ { label: 'Headlights', done: true }, { label: 'Turn signals', done: true } ] },
-    { key: 'controls', title: 'Controls & Dashboard (8 items)', items: [ { label: 'Horn works', done: true }, { label: 'Speedo works', done: false } ] },
-    { key: 'safety', title: 'Safety Equipment (3 items)', items: [ { label: 'Helmet available', done: true }, { label: 'Toolkit available', done: true } ] },
+    {
+      key: "lights",
+      title: "Lights & Signals (6 items)",
+      items: [
+        { label: "Headlights", done: true },
+        { label: "Turn signals", done: true },
+      ],
+    },
+    {
+      key: "controls",
+      title: "Controls & Dashboard (8 items)",
+      items: [
+        { label: "Horn works", done: true },
+        { label: "Speedo works", done: false },
+      ],
+    },
+    {
+      key: "safety",
+      title: "Safety Equipment (3 items)",
+      items: [
+        { label: "Helmet available", done: true },
+        { label: "Toolkit available", done: true },
+      ],
+    },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ScreenHeader title="Vehicle Inspection" subtitle="Pre-inspection Mode" onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title="Vehicle Inspection"
+          subtitle="Pre-inspection Mode"
+          onBack={() => navigation.goBack()}
+        />
 
         {/* Required Photos */}
         <View style={styles.photosCard}>
@@ -204,11 +250,20 @@ export const VehicleInspectionScreen: React.FC = () => {
             <View key={section.key} style={styles.accordion}>
               <TouchableOpacity
                 style={styles.accordionHeader}
-                onPress={() => setExpanded((prev) => ({ ...prev, [section.key]: !prev[section.key] }))}
+                onPress={() =>
+                  setExpanded((prev) => ({
+                    ...prev,
+                    [section.key]: !prev[section.key],
+                  }))
+                }
                 activeOpacity={0.7}
               >
                 <Text style={styles.accordionTitle}>{section.title}</Text>
-                <AntDesign name={isOpen ? "up" : "down"} size={14} color={colors.text.secondary} />
+                <AntDesign
+                  name={isOpen ? "up" : "down"}
+                  size={14}
+                  color={colors.text.secondary}
+                />
               </TouchableOpacity>
 
               {isOpen && (
@@ -217,7 +272,11 @@ export const VehicleInspectionScreen: React.FC = () => {
                     <View key={idx} style={styles.checkItemRow}>
                       <Text style={styles.checkItemText}>{item.label}</Text>
                       {item.done ? (
-                        <AntDesign name="check-circle" size={18} color="#67D16C" />
+                        <AntDesign
+                          name="check-circle"
+                          size={18}
+                          color="#67D16C"
+                        />
                       ) : (
                         <View style={styles.pendingCircle} />
                       )}
@@ -225,7 +284,11 @@ export const VehicleInspectionScreen: React.FC = () => {
                   ))}
 
                   <TouchableOpacity style={styles.addIssueRow}>
-                    <AntDesign name="exclamation-circle" size={14} color="#C9B6FF" />
+                    <AntDesign
+                      name="exclamation-circle"
+                      size={14}
+                      color="#C9B6FF"
+                    />
                     <Text style={styles.addIssueText}>Add Issue</Text>
                   </TouchableOpacity>
                 </View>
@@ -284,7 +347,10 @@ export const VehicleInspectionScreen: React.FC = () => {
         </View>
 
         {/* Bottom Actions */}
-        <TouchableOpacity style={styles.primaryCta} onPress={() => navigation.navigate('HandoverReport')}>
+        <TouchableOpacity
+          style={styles.primaryCta}
+          onPress={() => navigation.navigate("HandoverReport")}
+        >
           <Text style={styles.primaryCtaText}>Complete Inspection</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondaryCta}>
@@ -296,7 +362,11 @@ export const VehicleInspectionScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? 40 : 0,
+  },
   scrollContent: { paddingBottom: 40 },
   titleRow: {
     flexDirection: "row",
@@ -326,7 +396,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 12,
     marginBottom: 10,
-    marginTop: 10
+    marginTop: 10,
   },
   cardHeader: { color: colors.text.secondary, fontSize: 12, marginBottom: 10 },
   statusItem: {
@@ -336,15 +406,44 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   photosGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  tile: { width: '48%', backgroundColor: '#2A2A2A', borderRadius: 12, height: 120, overflow: 'hidden', position: 'relative' },
+  tile: {
+    width: "48%",
+    backgroundColor: "#2A2A2A",
+    borderRadius: 12,
+    height: 120,
+    overflow: "hidden",
+    position: "relative",
+  },
   tilePrimary: { height: 120 },
-  tileImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  placeholderInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  placeholderTitle: { color: colors.text.secondary, marginTop: 10, textTransform: 'lowercase' },
-  placeholderSubtitle: { color: colors.text.secondary, fontSize: 12, marginTop: 4 },
-  retakeBadge: { position: 'absolute', top: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  retakeText: { color: '#fff', fontSize: 12 },
-  tileTopLabel: { position: 'absolute', bottom: 6, left: 8, color: '#fff', fontWeight: '600' },
+  tileImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  placeholderInner: { flex: 1, alignItems: "center", justifyContent: "center" },
+  placeholderTitle: {
+    color: colors.text.secondary,
+    marginTop: 10,
+    textTransform: "lowercase",
+  },
+  placeholderSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  retakeBadge: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  retakeText: { color: "#fff", fontSize: 12 },
+  tileTopLabel: {
+    position: "absolute",
+    bottom: 6,
+    left: 8,
+    color: "#fff",
+    fontWeight: "600",
+  },
 
   accordion: {
     backgroundColor: "#1E1E1E",
@@ -364,11 +463,27 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   checklistWrap: { marginTop: 10 },
-  checkItemRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+  checkItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+  },
   checkItemText: { color: colors.text.primary, fontSize: 14 },
-  pendingCircle: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#3A3A3A' },
-  addIssueRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, marginTop: 6 },
-  addIssueText: { color: '#C9B6FF', fontSize: 14 },
+  pendingCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#3A3A3A",
+  },
+  addIssueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 6,
+    marginTop: 6,
+  },
+  addIssueText: { color: "#C9B6FF", fontSize: 14 },
 
   statusCard: {
     backgroundColor: "#1E1E1E",

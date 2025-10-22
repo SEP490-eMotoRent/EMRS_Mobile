@@ -7,10 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -289,7 +289,11 @@ export const SelectVehicleScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? 40 : 0,
+  },
   scrollContent: { paddingBottom: 40 },
   metaHeader: {
     flexDirection: "row",
