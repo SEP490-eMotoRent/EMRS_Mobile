@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { colors } from '../../../../../common/theme/colors';
 import { AntDesign } from '@expo/vector-icons';
@@ -109,8 +110,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
+    paddingHorizontal: 16,
     paddingBottom: 100, // Space for bottom navigation
   },
   appHeader: {

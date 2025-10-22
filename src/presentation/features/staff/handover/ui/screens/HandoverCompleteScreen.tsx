@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
@@ -127,7 +128,11 @@ export const HandoverCompleteScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? 40 : 0,
+  },
   scroll: { paddingBottom: 24 },
   successCard: {
     backgroundColor: "#1E1E1E",
