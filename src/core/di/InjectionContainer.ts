@@ -1,15 +1,15 @@
 import axios, {
-  AxiosInstance,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
+    AxiosInstance,
+    AxiosResponse,
+    InternalAxiosRequestConfig,
 } from "axios";
-import { ApiEndpoints } from "../network/APIEndpoint";
+import { AccountLocalDataSourceImpl } from "../../data/datasources/interfaces/local/AccountLocalDataSource";
+import { RenterLocalDataSourceImpl } from "../../data/datasources/interfaces/local/RenterLocalDataSource";
+import { AccountRemoteDataSourceImpl } from "../../data/datasources/interfaces/remote/AccountRemoteDataSource";
+import { RenterRemoteDataSourceImpl } from "../../data/datasources/interfaces/remote/RenterRemoteDataSource";
 import { ServerException } from "../errors/ServerException";
+import { ApiEndpoints } from "../network/APIEndpoint";
 import { AppLogger } from "../utils/Logger";
-import { AccountLocalDataSourceImpl } from "../../data/datasources/local/AccountLocalDataSource";
-import { RenterLocalDataSourceImpl } from "../../data/datasources/local/RenterLocalDataSource";
-import { AccountRemoteDataSourceImpl } from "../../data/datasources/remote/AccountRemoteDataSource";
-import { RenterRemoteDataSourceImpl } from "../../data/datasources/remote/RenterRemoteDataSource";
 
 export class AxiosClient {
   private readonly axiosInstance: AxiosInstance;
