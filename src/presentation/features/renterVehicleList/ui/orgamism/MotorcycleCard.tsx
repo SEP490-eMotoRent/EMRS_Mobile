@@ -2,7 +2,7 @@ import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ColorBadge } from "../atoms/badges/ColorBadge";
 import { DeliveryBadge } from "../atoms/badges/DeliveryBadges";
 import { FeatureBadge } from "../atoms/badges/FeatureBadge";
@@ -10,7 +10,7 @@ import { PriceText } from "../atoms/texts/PriceTexts";
 import { MotorcycleHeader } from "../molecules/MotorcycleHeader";
 import { SpecItem } from "../molecules/SpecItem";
 
-type MotorcycleCardNavigationProp = StackNavigationProp<HomeStackParamList>;
+type MotorcycleCardNavigationProp = StackNavigationProp<BrowseStackParamList>;
 
 export interface Motorcycle {
     id: number;
