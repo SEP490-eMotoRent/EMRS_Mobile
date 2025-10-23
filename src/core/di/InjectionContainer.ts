@@ -3,107 +3,34 @@ import axios, {
     AxiosResponse,
     InternalAxiosRequestConfig,
 } from "axios";
-import { AccountLocalDataSourceImpl } from "../../data/datasources/interfaces/local/AccountLocalDataSource";
-import { RenterLocalDataSourceImpl } from "../../data/datasources/interfaces/local/RenterLocalDataSource";
-import { AccountRemoteDataSourceImpl } from "../../data/datasources/interfaces/remote/AccountRemoteDataSource";
-import { RenterRemoteDataSourceImpl } from "../../data/datasources/interfaces/remote/RenterRemoteDataSource";
+
 import { ServerException } from "../errors/ServerException";
-import { ApiEndpoints } from "../network/APIEndpoint";
 import { AppLogger } from "../utils/Logger";
+import { AccountLocalDataSourceImpl } from "../../data/datasources/implementations/local/account/AccountLocalDataSourceImpl";
+import { RenterLocalDataSourceImpl } from "../../data/datasources/implementations/local/account/RenterLocalDataSourceImpl";
 
-export class AxiosClient {
-  private readonly axiosInstance: AxiosInstance;
+// ✅ NEW: Vehicle imports
+import { VehicleRepository } from '../../domain/repositories/vehicle/VehicleRepository';
+import { VehicleRepositoryImpl } from '../../data/repositories/vehicle/VehicleRepositoryImpl';
+import { VehicleRemoteDataSource } from '../../data/datasources/interfaces/remote/vehicle/VehicleRemoteDataSource';
+import { VehicleRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl';
+import { AxiosClient } from "../network/AxiosClient";
 
-  constructor() {
-    this.axiosInstance = axios.create({
-      baseURL: ApiEndpoints.baseUrl,
-      timeout: 10000,
-      headers: { "Content-Type": "application/json" },
-    });
-
-    this.axiosInstance.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        AppLogger.getInstance().info(
-          `➡️ [${config.method?.toUpperCase()}] ${config.url}`
-        );
-        return config;
-      },
-      (error) => {
-        AppLogger.getInstance().error(`❌ Request Error: ${error.message}`);
-        return Promise.reject(error);
-      }
-    );
-
-    this.axiosInstance.interceptors.response.use(
-      (response: AxiosResponse) => {
-        AppLogger.getInstance().info(
-          `✅ Response: ${response.status} ${JSON.stringify(response.data)}`
-        );
-        return response;
-      },
-      (error) => {
-        AppLogger.getInstance().error(`❌ Response Error: ${error.message}`);
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  async get<T>(
-    path: string,
-    params?: Record<string, any>
-  ): Promise<AxiosResponse<T>> {
-    try {
-      return await this.axiosInstance.get<T>(path, { params });
-    } catch (error: any) {
-      throw new ServerException(
-        error.message || "Unknown error",
-        error.response?.status
-      );
-    }
-  }
-
-  async post<T>(path: string, data?: any): Promise<AxiosResponse<T>> {
-    try {
-      return await this.axiosInstance.post<T>(path, data);
-    } catch (error: any) {
-      throw new ServerException(
-        error.message || "Unknown error",
-        error.response?.status
-      );
-    }
-  }
-
-  async put<T>(path: string, data?: any): Promise<AxiosResponse<T>> {
-    try {
-      return await this.axiosInstance.put<T>(path, data);
-    } catch (error: any) {
-      throw new ServerException(
-        error.message || "Unknown error",
-        error.response?.status
-      );
-    }
-  }
-
-  async delete<T>(path: string): Promise<AxiosResponse<T>> {
-    try {
-      return await this.axiosInstance.delete<T>(path);
-    } catch (error: any) {
-      throw new ServerException(
-        error.message || "Unknown error",
-        error.response?.status
-      );
-    }
-  }
-}
-
+/**
+ * Service Locator / Dependency Injection Container
+ * Manages all service instances and their dependencies
+ */
 class ServiceLocator {
   private static instance: ServiceLocator;
   private services: Map<string, any> = new Map();
 
   private constructor() {
-    // Register services
-    this.services.set("AxiosClient", new AxiosClient());
+    // Register core services
+    const axiosClient = new AxiosClient();
+    this.services.set("AxiosClient", axiosClient);
     this.services.set("AppLogger", AppLogger.getInstance());
+
+    // Register Account services (existing)
     this.services.set(
       "AccountLocalDataSource",
       new AccountLocalDataSourceImpl()
@@ -111,12 +38,21 @@ class ServiceLocator {
     this.services.set("RenterLocalDataSource", new RenterLocalDataSourceImpl());
     this.services.set(
       "AccountRemoteDataSource",
-      new AccountRemoteDataSourceImpl()
+      new AccountLocalDataSourceImpl()
     );
     this.services.set(
       "RenterRemoteDataSource",
-      new RenterRemoteDataSourceImpl()
+      new RenterLocalDataSourceImpl()
     );
+
+    // ✅ NEW: Register Vehicle services
+    // Data Source Layer
+    const vehicleRemoteDataSource = new VehicleRemoteDataSourceImpl(axiosClient);
+    this.services.set("VehicleRemoteDataSource", vehicleRemoteDataSource);
+
+    // Repository Layer
+    const vehicleRepository = new VehicleRepositoryImpl(vehicleRemoteDataSource);
+    this.services.set("VehicleRepository", vehicleRepository);
   }
 
   static getInstance(): ServiceLocator {
@@ -132,6 +68,15 @@ class ServiceLocator {
       throw new Error(`Service ${key} not found`);
     }
     return service as T;
+  }
+
+  // ✅ NEW: Type-safe convenience methods
+  getVehicleRepository(): VehicleRepository {
+    return this.get<VehicleRepository>('VehicleRepository');
+  }
+
+  getAxiosClient(): AxiosClient {
+    return this.get<AxiosClient>('AxiosClient');
   }
 }
 
