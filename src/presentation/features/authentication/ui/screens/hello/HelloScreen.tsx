@@ -1,9 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
-import { HelloBody } from '../../organism';
-import { HelloPageTemplate } from '../../templates';
+import { AuthStackParamList } from '../../../../../shared/navigation/Authentication/AuthNavigator';
 import { useAuth } from '../../../notifiers/AuthContext';
-import { AuthStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+import { HelloBody } from '../../organism/HelloBody';
+import { HelloPageTemplate } from '../../templates/HelloPageTemplate';
+
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Hello'>;
 

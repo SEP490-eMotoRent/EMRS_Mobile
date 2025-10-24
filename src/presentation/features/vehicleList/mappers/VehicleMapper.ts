@@ -31,7 +31,7 @@ export class VehicleMapper {
         const deliveryAvailable = vehicle.status === 'Available';
 
         return {
-            id: parseInt(vehicle.id.substring(0, 8), 16), // Convert UUID to number
+            id: vehicle.id,
             name: modelName,
             brand: this.extractBrand(modelName),
             variant: category,

@@ -1,7 +1,7 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 import { MapScreen } from '../../../features/map/ui/screens/MapScreen';
-import { ListView } from '../../../features/renterVehicleList/ui/screens/ListViewScreen';
+import { ListView } from '../../../features/vehicleList/ui/screens/ListViewScreen';
 import { VehicleDetailsScreen } from '../../../features/vehicleDetails/ui/screens/VehicleDetailsScreen';
 import { BrowseStackParamList } from '../StackParameters/types';
 

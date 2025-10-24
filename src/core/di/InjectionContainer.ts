@@ -20,6 +20,13 @@ import { VehicleRepository } from '../../domain/repositories/vehicle/VehicleRepo
 import { VehicleRepositoryImpl } from '../../data/repositories/vehicle/VehicleRepositoryImpl';
 import { VehicleRemoteDataSource } from '../../data/datasources/interfaces/remote/vehicle/VehicleRemoteDataSource';
 import { VehicleRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl';
+
+// ✅ Vehicle Model imports
+import { VehicleModelRepository } from "../../domain/repositories/vehicle/VehicleModelRepository";
+import { VehicleModelRepositoryImpl } from "../../data/repositories/vehicle/VehicleModelRepositoryImpl";
+import { VehicleModelRemoteDataSource } from "../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
+import { VehicleModelRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/vehicle/VehicleModelRemoteDataSourceImpl";
+
 import { AxiosClient } from "../network/AxiosClient";
 
 /**
@@ -54,6 +61,13 @@ class ServiceLocator {
 
     const vehicleRepository = new VehicleRepositoryImpl(vehicleRemoteDataSource);
     this.services.set("VehicleRepository", vehicleRepository);
+
+    // ✅ Register Vehicle Model services
+    const vehicleModelRemoteDataSource = new VehicleModelRemoteDataSourceImpl(axiosClient);
+    this.services.set("VehicleModelRemoteDataSource", vehicleModelRemoteDataSource);
+
+    const vehicleModelRepository = new VehicleModelRepositoryImpl(vehicleModelRemoteDataSource);
+    this.services.set("VehicleModelRepository", vehicleModelRepository);
   }
 
   static getInstance(): ServiceLocator {
@@ -78,6 +92,10 @@ class ServiceLocator {
 
   getVehicleRepository(): VehicleRepository {
     return this.get<VehicleRepository>('VehicleRepository');
+  }
+
+  getVehicleModelRepository(): VehicleModelRepository {
+    return this.get<VehicleModelRepository>('VehicleModelRepository');
   }
 
   getAxiosClient(): AxiosClient {
