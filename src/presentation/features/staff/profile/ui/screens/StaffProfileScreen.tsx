@@ -58,7 +58,7 @@ export const StaffProfileScreen: React.FC = () => {
     {
       id: 'edit-profile',
       title: 'Edit Profile',
-      icon: 'edit-2',
+      icon: 'edit',
       color: '#C9B6FF',
       onPress: () => console.log('Edit Profile'),
     },

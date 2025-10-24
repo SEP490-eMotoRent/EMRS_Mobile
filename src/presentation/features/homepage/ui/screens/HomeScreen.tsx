@@ -10,6 +10,7 @@ import { LocationsSection } from '../organisms/sections/LocationSection';
 import { ReviewsSection } from '../organisms/sections/ReviewsSection';
 import { TapBookGoSection } from '../organisms/sections/TapBookGoSection';
 import { WhyChooseSection } from '../organisms/whyChoose/WhyChooseSection';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const HomeScreen: React.FC = () => {
     const bikes: Bike[] = [
@@ -21,7 +22,7 @@ export const HomeScreen: React.FC = () => {
     const [modalVisible, setModalVisible] = useState(false);
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <ScrollView
                 style={styles.content}
                 contentContainerStyle={styles.scrollContent}
@@ -44,7 +45,7 @@ export const HomeScreen: React.FC = () => {
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
             />
-        </View>
+        </SafeAreaView>
     );
 };
 

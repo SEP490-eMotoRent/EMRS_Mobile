@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -18,6 +17,7 @@ import { AppHeader } from '../../../../../common/components/organisms/AppHeader'
 import { SectionHeader } from '../molecules/SectionHeader';
 import { InfoCard } from '../../../../../common/components/molecules/InfoCard';
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const vehicleImg = require("../../../../../../../assets/images/motor.png");
 
