@@ -81,6 +81,7 @@ export type TripStackParamList = {
 export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
+  Auth: NavigatorScreenParams<AuthStackParamList>;
 };
 
 export type StaffStackParamList = {
