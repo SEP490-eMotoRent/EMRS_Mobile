@@ -5,6 +5,7 @@ import { useAuth } from '../../../notifiers/AuthContext';
 import { HelloBody } from '../../organism/HelloBody';
 import { HelloPageTemplate } from '../../templates/HelloPageTemplate';
 
+
 type Props = NativeStackScreenProps<AuthStackParamList, 'Hello'>;
 
 export const HelloScreen: React.FC<Props> = ({ navigation }) => {

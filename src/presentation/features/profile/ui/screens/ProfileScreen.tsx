@@ -1,13 +1,14 @@
 import { StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { ProfileStackParamList } from '../../../../shared/navigation/StackParameters/types';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ProfileStackParamList, RootStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { ProfileHeader } from '../molecules/ProfileHeader';
 import { QuickSettings } from '../organisms/QuickSettings';
 import { TransactionList } from '../organisms/TransactionList';
 import { VerificationCard } from '../organisms/VerificationCard';
 import { WalletCard } from '../organisms/WalletCard';
 import { Transaction, Verification } from '../temp';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'Profile'>;
 
@@ -58,7 +59,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     };
     
     const handleSignOut = (): void => {
-        console.log('Sign out');
+        AsyncStorage.removeItem('authToken');
+        navigation.navigate('Auth', { screen: 'Login' });
     };
     
     return (
@@ -100,6 +102,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#000',
+        paddingTop: Platform.OS === "android" ? 40 : 0,
     },
     scrollView: {
         flex: 1,
