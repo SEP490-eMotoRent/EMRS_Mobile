@@ -23,6 +23,7 @@ import {
 } from "../../../features/staff/handover/ui/screens";
 import { ChargingScreen } from "../../../features/staff/charging/ui/screens";
 import { StaffHomeScreen, MotorbikeDetailScreen } from "../../../features/staff/home/ui/screens";
+import { StaffProfileScreen } from "../../../features/staff/profile/ui/screens";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -35,8 +36,8 @@ export const StaffNavigator: React.FC = () => {
         return <StaffHomeScreen />;
       case "handover":
         return <HandoverScreen />;
-      case "return":
-        return <ReturnScreen />;
+      case "profile":
+        return <StaffProfileScreen />;
       case "scanface":
         return <ScanFaceScreen />;
       case "charging":
