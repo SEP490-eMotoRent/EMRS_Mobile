@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -18,6 +17,7 @@ import { StaffStackParamList } from '../../../../../shared/navigation/StackParam
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAppDispatch, useAppSelector } from '../../../../authentication/store/hooks';
 import { removeAuth } from '../../../../authentication/store/slices/authSlice';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type StaffProfileScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Profile'>;
 
@@ -222,7 +222,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
     paddingBottom: 40,

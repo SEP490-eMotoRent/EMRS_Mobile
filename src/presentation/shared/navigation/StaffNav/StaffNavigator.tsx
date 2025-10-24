@@ -8,8 +8,6 @@ import { ProfileNavigator } from "../HomeNav/ProfileNavigator";
 import { createStackNavigator } from "@react-navigation/stack";
 import { StaffStackParamList } from "../StackParameters/types";
 import {
-  HandoverScreen,
-  ReturnScreen,
   ScanFaceScreen,
   ScanResultScreen,
   CustomerRentalsScreen,
@@ -24,7 +22,7 @@ import {
 import { ChargingScreen } from "../../../features/staff/charging/ui/screens";
 import { StaffHomeScreen, MotorbikeDetailScreen } from "../../../features/staff/home/ui/screens";
 import { StaffProfileScreen } from "../../../features/staff/profile/ui/screens";
-import { TransferScreen } from "../../../features/staff/transfer/ui/screens";
+import { RentalScreen } from "../../../features/staff/rental/ui/screens";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -35,8 +33,8 @@ export const StaffNavigator: React.FC = () => {
     switch (activeRoute) {
       case "home":
         return <StaffHomeScreen />;
-      case "transfer":
-        return <TransferScreen />;
+      case "rental":
+        return <RentalScreen />;
       case "profile":
         return <StaffProfileScreen />;
       case "scanface":
@@ -53,9 +51,9 @@ export const StaffNavigator: React.FC = () => {
       <Stack.Navigator
         id={undefined}
         screenOptions={{ headerShown: false }}
-        initialRouteName="Handover"
+        initialRouteName="Rental"
       >
-        <Stack.Screen name="Handover">
+        <Stack.Screen name="Rental">
           {() => (
             <View style={styles.tabContainer}>
               <View style={styles.content}>{renderScreen()}</View>

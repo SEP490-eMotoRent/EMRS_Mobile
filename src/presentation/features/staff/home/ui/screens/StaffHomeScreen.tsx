@@ -18,7 +18,7 @@ import { StaffStackParamList } from '../../../../../shared/navigation/StackParam
 import { StackNavigationProp } from '@react-navigation/stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type StaffHomeScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Handover'>;
+type StaffHomeScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Home'>;
 
 interface Motorbike {
   id: string;
@@ -334,7 +334,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
     paddingBottom: 40,

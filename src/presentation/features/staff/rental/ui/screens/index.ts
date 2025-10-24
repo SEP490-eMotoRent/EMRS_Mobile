@@ -1,0 +1,1 @@
+export { RentalScreen } from './RentalScreen';

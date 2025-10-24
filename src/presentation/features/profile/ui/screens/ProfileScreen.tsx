@@ -16,7 +16,6 @@ import {
   useAppDispatch,
   useAppSelector,
 } from "../../../authentication/store/hooks";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -85,7 +84,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -115,7 +114,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         />
         <QuickSettings onSignOut={handleSignOut} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

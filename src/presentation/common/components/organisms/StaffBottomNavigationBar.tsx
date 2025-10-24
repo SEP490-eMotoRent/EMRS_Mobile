@@ -4,7 +4,7 @@ import { colors } from '../../theme/colors';
 import { AntDesign } from '@expo/vector-icons';
 import { TextLabel } from '../atoms/navigationBarIcons/TextLabel';
 
-export type StaffNavRoute = 'home' | 'transfer' | 'profile' | 'scanface' | 'charging';
+export type StaffNavRoute = 'home' | 'rental' | 'profile' | 'scanface' | 'charging';
 
 interface StaffBottomNavigationBarProps {
   activeRoute: StaffNavRoute;
@@ -22,9 +22,9 @@ export const StaffBottomNavigationBar: React.FC<StaffBottomNavigationBarProps> =
       label: 'Home',
     },
     {
-      route: 'transfer' as StaffNavRoute,
-      icon: 'swap',
-      label: 'Transfer',
+      route: 'rental' as StaffNavRoute,
+      icon: 'car',
+      label: 'Rental',
     },
     {
       route: 'scanface' as StaffNavRoute,

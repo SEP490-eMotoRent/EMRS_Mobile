@@ -87,8 +87,7 @@ export type ProfileStackParamList = {
 export type StaffStackParamList = {
   Home: undefined;
   MotorbikeDetail: { motorbikeId: string } | undefined;
-  Handover: undefined;
-  Transfer: undefined;
+  Rental: undefined;
   Return: undefined;
   ScanFace: undefined;
   ScanResult: undefined;
