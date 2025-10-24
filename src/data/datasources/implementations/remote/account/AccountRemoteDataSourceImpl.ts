@@ -72,18 +72,24 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
         }
     }
 
-
     async login(request: LoginRequest): Promise<ApiResponse<string>> {
         try {
             this.logger.info('🔄 Logging in user...');
             
-            const response = await this.apiClient.post<ApiResponse<string>>(
+            const response = await this.apiClient.post<ApiResponse<{ accessToken: string; user: any }>>(
                 '/auth/login',
                 request
             );
 
             this.logger.info('✅ Login successful');
-            return response.data;
+            
+            // ✅ Extract accessToken (not token!)
+            return {
+                success: response.data.success,
+                message: response.data.message,
+                code: response.data.code,
+                data: response.data.data.accessToken  // ← Changed from .token to .accessToken
+            };
         } catch (error: any) {
             this.logger.error(`❌ Login failed: ${error.message}`);
             throw new ServerException(

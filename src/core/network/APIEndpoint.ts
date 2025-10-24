@@ -6,7 +6,9 @@ export const ApiEndpoints = {
         list: "/Vehicle/list",
         create: "/Vehicle/create",
         model: {
-            create: "/Vehicle/model/create"
+            create: "/Vehicle/model/create",
+            list: "/Vehicle/model/list",
+            detail: (id: string) => `/Vehicle/model/detail/${id}`,
         },
         pricing: {
             create: "/Vehicle/pricing/create"

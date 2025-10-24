@@ -32,20 +32,20 @@ export type BrowseStackParamList = {
     dateRange: string;
     address: string;
   };
-  VehicleDetails: { vehicleId: number };
+  VehicleDetails: { vehicleId: string };
 };
 
 export type BookingStackParamList = {
-  ConfirmRentalDuration: { vehicleId: number };
+  ConfirmRentalDuration: { vehicleId: string };
   InsurancePlans: {
-    vehicleId: number;
+    vehicleId: string;
     startDate: string;
     endDate: string;
     duration: string;
     rentalDays: number;
   };
   PaymentConfirmation: {
-    vehicleId: number;
+    vehicleId: string;
     startDate: string;
     endDate: string;
     duration: string;
@@ -58,7 +58,7 @@ export type BookingStackParamList = {
     total: string;
   };
   DigitalContract: {
-    vehicleId: number;
+    vehicleId: string;
     vehicleName: string;
     startDate: string;
     endDate: string;
