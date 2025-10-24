@@ -1,5 +1,6 @@
 // export { OnboardingScreen } from './OnboardingScreen';
-export { LoginScreen } from './LoginScreen';
-export { RegisterScreen } from './RegisterScreen';
 export { ForgotPasswordScreen } from './ForgotPasswordScreen';
-export { HelloScreen } from './HelloScreen';
+export { HelloScreen } from './hello/HelloScreen';
+export { LoginScreen } from './login/LoginScreen';
+export { RegisterScreen } from './register/RegisterScreen';
+

@@ -1,10 +1,15 @@
-import { Account } from "../../entities/account/Account";
+import { ApiResponse } from "../../../core/network/APIResponse";
 import { AccountRepository } from "../../repositories/account/AccountRepository";
+
+export interface LoginUseCaseInput {
+    username: string;
+    password: string;
+}
 
 export class LoginUseCase {
     constructor(private accountRepo: AccountRepository) {}
     
-    async execute(email: string): Promise<Account | null> {
-        return await this.accountRepo.getByEmail(email);
+    async execute(input: LoginUseCaseInput): Promise<ApiResponse<string>> {
+        return await this.accountRepo.login(input.username, input.password);
     }
 }

@@ -13,7 +13,11 @@ export const ApiEndpoints = {
         }
     },
     
-    // Other endpoints
-    accounts: "/accounts",
+    // Auth endpoints
+    auth: {
+        register: "/auth/register",
+        login: "/auth/login",
+    },
+
     renters: "/renters",
 };

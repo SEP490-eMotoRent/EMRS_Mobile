@@ -5,6 +5,14 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  AdditionalInfo: {
+    email: string;
+    password: string;
+  };
+  OTPVerification: {
+    email: string;
+    userId: string;
+  };
 };
 
 export type HomeStackParamList = {

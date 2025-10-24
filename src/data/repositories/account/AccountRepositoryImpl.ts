@@ -1,36 +1,36 @@
+import { ApiResponse } from "../../../core/network/APIResponse";
 import { Account } from "../../../domain/entities/account/Account";
 import { Renter } from "../../../domain/entities/account/Renter";
 import { Membership } from "../../../domain/entities/financial/Membership";
 import { AccountRepository } from "../../../domain/repositories/account/AccountRepository";
-import { AccountLocalDataSource } from "../../datasources/interfaces/local/account/AccountLocalDataSource";
+import { AccountRemoteDataSource } from "../../datasources/interfaces/remote/account/AccountRemoteDataSource";
 import { RegisterUserRequest } from "../../models/account/accountDTO/RegisterUserRequest";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-    export class AccountRepositoryImpl implements AccountRepository {
-    constructor(private local: AccountLocalDataSource) {}
+export class AccountRepositoryImpl implements AccountRepository {
+    constructor(private remote: AccountRemoteDataSource) {}
 
-    // ✅ FIXED: EXACT 3 METHODS
+    // ✅ FIXED: Now uses REMOTE data source
     async create(account: Account): Promise<void> {
         const request: RegisterUserRequest = {
-        phone: account.renter?.phone || '',
-        address: account.renter?.address || '',
-        dateOfBirth: account.renter?.dateOfBirth || '',
-        avatarUrl: account.renter?.avatarUrl || '',
-        email: account.renter?.email || '',
-        username: account.username,
-        fullname: account.fullname || '',
-        password: account.password
+            phone: account.renter?.phone || '',
+            address: account.renter?.address || '',
+            dateOfBirth: account.renter?.dateOfBirth || '',
+            avatarUrl: account.renter?.avatarUrl || '',
+            email: account.renter?.email || '',
+            username: account.username,
+            fullname: account.fullname || '',
+            password: account.password
         };
-        await this.local.create(request);
+        await this.remote.create(request);
     }
 
     async getAll(): Promise<Account[]> {
-        const models = await this.local.getAll();
+        const models = await this.remote.getAll();
         return models.map(model => this.mapToEntity(model));
     }
 
     async getByEmail(email: string): Promise<Account | null> {
-        const model = await this.local.getByEmail(email);
+        const model = await this.remote.getByEmail(email);
         return model ? this.mapToEntity(model) : null;
     }
 
@@ -38,59 +38,59 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
         // STEP 1: Create MINIMAL Renter
         const renterId = `renter_${model.username}`;
         const minimalRenter = new Renter(
-        renterId,
-        model.email,
-        model.phone,
-        model.address,
-        model.avatarUrl,
-        model.username,           // accountId
-        'default_membership',     // membershipId
-        null as any,              // account (link later)
-        null as any,              // membership (link later)
-        false,                    // isVerified
-        '',                       // verificationCode
-        model.dateOfBirth,
-        undefined,                // verificationCodeExpiry
-        undefined,                // wallet
-        new Date(),
-        null,
-        null,
-        false
+            renterId,
+            model.email,
+            model.phone,
+            model.address,
+            model.avatarUrl,
+            model.username,           // accountId
+            'default_membership',     // membershipId
+            null as any,              // account (link later)
+            null as any,              // membership (link later)
+            false,                    // isVerified
+            '',                       // verificationCode
+            model.dateOfBirth,
+            undefined,                // verificationCodeExpiry
+            undefined,                // wallet
+            new Date(),
+            null,
+            null,
+            false
         );
 
         // STEP 2: Create MINIMAL Membership
         const minimalMembership = new Membership(
-        'default_membership',
-        'Basic',
-        0,
-        0,
-        0,
-        'Basic membership',
-        [],
-        new Date(),
-        null,
-        null,
-        false
+            'default_membership',
+            'Basic',
+            0,
+            0,
+            0,
+            'Basic membership',
+            [],
+            new Date(),
+            null,
+            null,
+            false
         );
 
         // STEP 3: Create Account (EXACT 16 PARAMS)
         const account = new Account(
-        model.username,           // id
-        model.username,           // username
-        model.password,           // password
-        'Renter',                 // role
-        model.fullname,           // fullname
-        undefined,                // refreshToken
-        undefined,                // refreshTokenExpiry
-        false,                    // isRefreshTokenRevoked
-        undefined,                // resetPasswordToken
-        undefined,                // resetPasswordTokenExpiry
-        minimalRenter,            // renter
-        undefined,                // staff
-        new Date(),               // createdAt
-        null,                     // updatedAt
-        null,                     // deletedAt
-        false                     // isDeleted
+            model.username,           // id
+            model.username,           // username
+            model.password,           // password
+            'Renter',                 // role
+            model.fullname,           // fullname
+            undefined,                // refreshToken
+            undefined,                // refreshTokenExpiry
+            false,                    // isRefreshTokenRevoked
+            undefined,                // resetPasswordToken
+            undefined,                // resetPasswordTokenExpiry
+            minimalRenter,            // renter
+            undefined,                // staff
+            new Date(),               // createdAt
+            null,                     // updatedAt
+            null,                     // deletedAt
+            false                     // isDeleted
         );
 
         // STEP 4: LINK CIRCULAR REFERENCES
@@ -98,5 +98,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
         minimalRenter.membership = minimalMembership;
 
         return account;
+    }
+
+    async login(username: string, password: string): Promise<ApiResponse<string>> {
+        return await this.remote.login({ username, password });
     }
 }

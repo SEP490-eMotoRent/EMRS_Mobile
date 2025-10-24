@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, ImageSourcePropType, StyleSheet, View } from 'react-native';
-import { SlideshowImagePlaceholder } from '../atoms/SlideshowImagePlaceholder';
+import { SlideshowImagePlaceholder } from '../../atoms/SlideshowImagePlaceholder';
 
 interface HorizontalSlideshowProps {
     height: number;

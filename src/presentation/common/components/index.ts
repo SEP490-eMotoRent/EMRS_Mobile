@@ -1,4 +1,4 @@
-export { BackButton } from './atoms/BackButton';
+export { BackButton } from './atoms/buttons/BackButton';
 export { Button } from './atoms/Button';
 export { EmailIcon } from './atoms/EmailIcon';
 export { GoogleIcon } from './atoms/GoogleIcon';

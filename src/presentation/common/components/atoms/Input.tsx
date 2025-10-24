@@ -15,6 +15,8 @@ interface InputProps {
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  editable?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   error?: string;
@@ -26,6 +28,8 @@ export const Input: React.FC<InputProps> = ({
   onChangeText,
   secureTextEntry = false,
   keyboardType = 'default',
+  autoCapitalize = 'sentences',
+  editable = true,
   style,
   textStyle,
   error,
@@ -33,13 +37,20 @@ export const Input: React.FC<InputProps> = ({
   return (
     <View style={[styles.container, style]}>
       <TextInput
-        style={[styles.input, textStyle]}
+        style={[
+          styles.input, 
+          textStyle,
+          !editable && styles.disabledInput,
+          error && styles.inputError
+        ]}
         placeholder={placeholder}
         placeholderTextColor={colors.input.placeholder}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        editable={editable}
       />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
@@ -59,6 +70,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.input.text,
     backgroundColor: colors.input.background,
+  },
+  disabledInput: {
+    opacity: 0.5,
+    backgroundColor: '#1A1A1A',
+  },
+  inputError: {
+    borderColor: '#FF6B6B',
+    borderWidth: 2,
   },
   errorText: {
     color: '#FF6B6B',
