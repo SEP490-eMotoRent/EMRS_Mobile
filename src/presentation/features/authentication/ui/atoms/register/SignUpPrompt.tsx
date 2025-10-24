@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../../../common/theme/colors';
+import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../../../../common/theme/colors';
 
 interface SignUpPromptProps {
     onSignUpPress: () => void;

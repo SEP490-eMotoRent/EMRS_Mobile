@@ -1,3 +1,4 @@
+// src/common/components/atoms/Button.tsx
 import React from 'react';
 import {
   StyleSheet,
@@ -25,23 +26,25 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   disabled = false,
 }) => {
-  const buttonStyle = [
-    styles.button,
-    variant === 'primary' && styles.primaryButton,
-    variant === 'secondary' && styles.secondaryButton,
-    variant === 'outline' && styles.outlineButton,
-    disabled && styles.disabledButton,
-    style,
-  ];
+  // ✅ FIX: Flatten to proper ViewStyle object
+  const buttonStyle: ViewStyle = {
+    ...styles.button,
+    ...(variant === 'primary' && styles.primaryButton),
+    ...(variant === 'secondary' && styles.secondaryButton),
+    ...(variant === 'outline' && styles.outlineButton),
+    ...(disabled && styles.disabledButton),
+    ...style,
+  };
 
-  const textStyleCombined = [
-    styles.text,
-    variant === 'primary' && styles.primaryText,
-    variant === 'secondary' && styles.secondaryText,
-    variant === 'outline' && styles.outlineText,
-    disabled && styles.disabledText,
-    textStyle,
-  ];
+  // ✅ FIX: Flatten to proper TextStyle object
+  const textStyleCombined: TextStyle = {
+    ...styles.text,
+    ...(variant === 'primary' && styles.primaryText),
+    ...(variant === 'secondary' && styles.secondaryText),
+    ...(variant === 'outline' && styles.outlineText),
+    ...(disabled && styles.disabledText),
+    ...textStyle,
+  };
 
   return (
     <TouchableOpacity

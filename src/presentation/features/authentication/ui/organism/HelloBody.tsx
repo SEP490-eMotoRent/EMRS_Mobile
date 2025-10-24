@@ -5,7 +5,7 @@ import { AppColors } from '../../../../common/constants/AppColor';
 import { AuthStackParamList } from '../../../../shared/navigation/Authentication/AuthNavigator';
 import { AuthButtonGroup } from '../molecules/AuthButtonGroup';
 import { BrandHeader } from '../molecules/BrandHeader';
-import { HorizontalSlideshow } from '../molecules/HorizontalSlideshow';
+import { HorizontalSlideshow } from '../molecules/hello/HorizontalSlideshow';
 
 
 const onboarding1 = require('../../../../../../assets/images/onboarding1.png');

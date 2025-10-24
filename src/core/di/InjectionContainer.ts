@@ -9,7 +9,13 @@ import { AppLogger } from "../utils/Logger";
 import { AccountLocalDataSourceImpl } from "../../data/datasources/implementations/local/account/AccountLocalDataSourceImpl";
 import { RenterLocalDataSourceImpl } from "../../data/datasources/implementations/local/account/RenterLocalDataSourceImpl";
 
-// ✅ NEW: Vehicle imports
+// ✅ Account imports
+import { AccountRepository } from '../../domain/repositories/account/AccountRepository';
+import { AccountRepositoryImpl } from '../../data/repositories/account/AccountRepositoryImpl';
+import { AccountRemoteDataSource } from '../../data/datasources/interfaces/remote/account/AccountRemoteDataSource';
+import { AccountRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/account/AccountRemoteDataSourceImpl';
+
+// ✅ Vehicle imports
 import { VehicleRepository } from '../../domain/repositories/vehicle/VehicleRepository';
 import { VehicleRepositoryImpl } from '../../data/repositories/vehicle/VehicleRepositoryImpl';
 import { VehicleRemoteDataSource } from '../../data/datasources/interfaces/remote/vehicle/VehicleRemoteDataSource';
@@ -30,27 +36,22 @@ class ServiceLocator {
     this.services.set("AxiosClient", axiosClient);
     this.services.set("AppLogger", AppLogger.getInstance());
 
-    // Register Account services (existing)
-    this.services.set(
-      "AccountLocalDataSource",
-      new AccountLocalDataSourceImpl()
-    );
-    this.services.set("RenterLocalDataSource", new RenterLocalDataSourceImpl());
-    this.services.set(
-      "AccountRemoteDataSource",
-      new AccountLocalDataSourceImpl()
-    );
-    this.services.set(
-      "RenterRemoteDataSource",
-      new RenterLocalDataSourceImpl()
-    );
+    // ✅ Register Account Remote Data Source
+    const accountRemoteDataSource = new AccountRemoteDataSourceImpl(axiosClient);
+    this.services.set("AccountRemoteDataSource", accountRemoteDataSource);
 
-    // ✅ NEW: Register Vehicle services
-    // Data Source Layer
+    // ✅ Register Account Repository
+    const accountRepository = new AccountRepositoryImpl(accountRemoteDataSource);
+    this.services.set("AccountRepository", accountRepository);
+
+    // Register local data sources (if still needed)
+    this.services.set("AccountLocalDataSource", new AccountLocalDataSourceImpl());
+    this.services.set("RenterLocalDataSource", new RenterLocalDataSourceImpl());
+
+    // ✅ Register Vehicle services
     const vehicleRemoteDataSource = new VehicleRemoteDataSourceImpl(axiosClient);
     this.services.set("VehicleRemoteDataSource", vehicleRemoteDataSource);
 
-    // Repository Layer
     const vehicleRepository = new VehicleRepositoryImpl(vehicleRemoteDataSource);
     this.services.set("VehicleRepository", vehicleRepository);
   }
@@ -70,7 +71,11 @@ class ServiceLocator {
     return service as T;
   }
 
-  // ✅ NEW: Type-safe convenience methods
+  // ✅ Type-safe convenience methods
+  getAccountRepository(): AccountRepository {
+    return this.get<AccountRepository>('AccountRepository');
+  }
+
   getVehicleRepository(): VehicleRepository {
     return this.get<VehicleRepository>('VehicleRepository');
   }
