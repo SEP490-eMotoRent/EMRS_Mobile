@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -17,8 +16,9 @@ import { ScreenHeader } from '../../../../../common/components/organisms/ScreenH
 import { useNavigation } from '@react-navigation/native';
 import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-type StaffHomeScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Handover'>;
+type StaffHomeScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Home'>;
 
 interface Motorbike {
   id: string;
@@ -209,7 +209,7 @@ export const StaffHomeScreen: React.FC = () => {
         )}
         {item.status === 'charging' && (
           <TouchableOpacity style={[styles.actionButton, styles.chargingAction]}>
-            <AntDesign name="thunderbolt" size={16} color="#000" />
+            <AntDesign name="thunderbolt" size={16} color="#fff" />
             <Text style={[styles.actionText, styles.chargingActionText]}>Charging Status</Text>
           </TouchableOpacity>
         )}
@@ -334,7 +334,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
     paddingBottom: 40,
