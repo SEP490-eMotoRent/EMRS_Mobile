@@ -36,7 +36,9 @@ export type BrowseStackParamList = {
 };
 
 export type BookingStackParamList = {
-  ConfirmRentalDuration: { vehicleId: string };
+  ConfirmRentalDuration: {
+    vehicleId: string;
+  };
   InsurancePlans: {
     vehicleId: string;
     startDate: string;
@@ -49,8 +51,10 @@ export type BookingStackParamList = {
     startDate: string;
     endDate: string;
     duration: string;
+    rentalDays: number;
     branchName: string;
     insurancePlan: string;
+    insurancePlanId: string;
     rentalFee: string;
     insuranceFee: string;
     securityDeposit: string;
@@ -63,7 +67,9 @@ export type BookingStackParamList = {
     startDate: string;
     endDate: string;
     duration: string;
+    rentalDays: number;
     branchName: string;
+    insurancePlan: string;
     totalAmount: string;
     securityDeposit: string;
     contractNumber: string;

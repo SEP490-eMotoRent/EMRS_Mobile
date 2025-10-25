@@ -1,0 +1,221 @@
+// data/repositories/booking/BookingRepositoryImpl.ts
+import { Booking } from "../../../domain/entities/booking/Booking";
+import { Renter } from "../../../domain/entities/account/Renter";
+import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
+import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
+import { Branch } from "../../../domain/entities/operations/Branch";
+import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
+import { Account } from "../../../domain/entities/account/Account";
+import { Membership } from "../../../domain/entities/financial/Membership";
+import { BookingRepository } from "../../../domain/repositories/booking/BookingRepository";
+import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/booking/BookingRemoteDataSource";
+import { CreateBookingRequest } from "../../models/booking/CreateBookingRequest";
+import { BookingResponse } from "../../models/booking/BookingResponse";
+
+export class BookingRepositoryImpl implements BookingRepository {
+    constructor(private remote: BookingRemoteDataSource) {}
+
+    async create(booking: Booking): Promise<Booking> {
+        const request: CreateBookingRequest = {
+            startDatetime: booking.startDatetime?.toISOString() || new Date().toISOString(),
+            endDatetime: booking.endDatetime?.toISOString() || new Date().toISOString(),
+            baseRentalFee: booking.baseRentalFee,
+            depositAmount: booking.depositAmount,
+            rentalDays: booking.rentalDays,
+            rentalHours: booking.rentalHours,
+            rentingRate: booking.rentingRate,
+            vehicleModelId: booking.vehicleId,
+            averageRentalPrice: booking.averageRentalPrice,
+            totalRentalFee: booking.totalRentalFee,
+        };
+        
+        const response = await this.remote.create(request);
+        return this.mapToEntity(response);
+    }
+
+    async getById(id: string): Promise<Booking | null> {
+        const response = await this.remote.getById(id);
+        return response ? this.mapToEntity(response) : null;
+    }
+
+    async getByRenter(renterId: string): Promise<Booking[]> {
+        const responses = await this.remote.getByRenter(renterId);
+        return responses.map(r => this.mapToEntity(r));
+    }
+
+    private mapToEntity(dto: BookingResponse): Booking {
+        // Account constructor: id, username, password, role, fullname?, refreshToken?, refreshTokenExpiry?, isRefreshTokenRevoked, resetPasswordToken?, resetPasswordTokenExpiry?, renter?, staff?, createdAt, updatedAt, deletedAt, isDeleted
+        const mockAccount = new Account(
+            dto.renterId,
+            "",                  // username
+            "",                  // password
+            "Renter",            // role
+            undefined,           // fullname
+            undefined,           // refreshToken
+            undefined,           // refreshTokenExpiry
+            false,               // isRefreshTokenRevoked
+            undefined,           // resetPasswordToken
+            undefined,           // resetPasswordTokenExpiry
+            undefined,           // renter
+            undefined,           // staff
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        // Membership constructor: id, tierName, minBookings, discountPercentage, freeChargingPerMonth, description, renters[], createdAt, updatedAt, deletedAt, isDeleted
+        const mockMembership = new Membership(
+            "mock-membership-id",
+            "Basic",             // tierName
+            0,                   // minBookings
+            0,                   // discountPercentage
+            0,                   // freeChargingPerMonth
+            "",                  // description
+            [],                  // renters
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        // Renter constructor: id, email, phone, address, avatarUrl, accountId, membershipId, account, membership, isVerified, verificationCode, dateOfBirth?, verificationCodeExpiry?, wallet?, createdAt, updatedAt, deletedAt, isDeleted
+        const mockRenter = new Renter(
+            dto.renterId,
+            "",                  // email
+            "",                  // phone
+            "",                  // address
+            "",                  // avatarUrl
+            dto.renterId,        // accountId
+            "mock-membership-id", // membershipId
+            mockAccount,         // account
+            mockMembership,      // membership
+            false,               // isVerified
+            "",                  // verificationCode
+            undefined,           // dateOfBirth
+            undefined,           // verificationCodeExpiry
+            undefined,           // wallet
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        // RentalPricing mock
+        const mockRentalPricing = new RentalPricing(
+            "mock-pricing-id",
+            0,
+            0,
+            [],
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        // VehicleModel mock
+        const mockVehicleModel = new VehicleModel(
+            dto.vehicleModelId,
+            "",
+            "",
+            0,
+            0,
+            0,
+            "",
+            "",
+            mockRentalPricing,
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        // Branch constructor: id, branchName, address, city, phone, email, latitude, longitude, openingTime, closingTime, staffs[], vehicles[], chargingRecords[], sentTransferOrders[], receivedTransferOrders[], handoverBookings[], returnBookings[], createdAt, updatedAt, deletedAt, isDeleted
+        const mockBranch = new Branch(
+            "mock-branch-id",
+            "",              // branchName
+            "",              // address
+            "",              // city
+            "",              // phone
+            "",              // email
+            0,               // latitude
+            0,               // longitude
+            "09:00",         // openingTime
+            "18:00",         // closingTime
+            [],              // staffs
+            [],              // vehicles
+            [],              // chargingRecords
+            [],              // sentTransferOrders
+            [],              // receivedTransferOrders
+            [],              // handoverBookings
+            [],              // returnBookings
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        // Vehicle constructor: id, licensePlate, color, currentOdometerKm, batteryHealthPercentage, status, description, branchId, vehicleModelId, branch, vehicleModel, bookings[], maintenanceSchedules[], repairRequests[], yearOfManufacture?, lastMaintenanceDate?, nextMaintenanceDue?, purchaseDate?, createdAt, updatedAt, deletedAt, isDeleted
+        const mockVehicle = new Vehicle(
+            dto.vehicleModelId,
+            "",                  // licensePlate
+            "",                  // color
+            0,                   // currentOdometerKm
+            0,                   // batteryHealthPercentage
+            "",                  // status
+            "",                  // description
+            "",                  // branchId
+            dto.vehicleModelId,  // vehicleModelId
+            mockBranch,          // branch
+            mockVehicleModel,    // vehicleModel
+            [],                  // bookings
+            [],                  // maintenanceSchedules
+            [],                  // repairRequests
+            undefined,           // yearOfManufacture
+            undefined,           // lastMaintenanceDate
+            undefined,           // nextMaintenanceDue
+            undefined,           // purchaseDate
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        return new Booking(
+            dto.bookingId,
+            dto.baseRentalFee,
+            dto.depositAmount,
+            dto.rentalDays,
+            dto.rentalHours,
+            dto.rentingRate,
+            0,
+            dto.averageRentalPrice,
+            0,
+            0,
+            0,
+            0,
+            0,
+            dto.totalRentalFee,
+            dto.totalAmount,
+            0,
+            dto.bookingStatus,
+            dto.renterId,
+            dto.vehicleModelId,
+            mockRenter,
+            mockVehicle,
+            new Date(dto.startDatetime),
+            new Date(dto.endDatetime),
+            undefined,
+            dto.insurancePackageId,
+            undefined,
+            dto.handoverBranchId,
+            undefined,
+            dto.returnBranchId,
+            undefined,
+            new Date(dto.createdAt),
+            null,
+            null,
+            false
+        );
+    }
+}

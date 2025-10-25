@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
+import { jwtDecode } from "jwt-decode"; // ✅ Import jwt-decode
 import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { LoginForm } from "../../organism/login/LoginForm";
@@ -22,13 +23,23 @@ import { SignUpPrompt } from "../../atoms/register/SignUpPrompt";
 import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { addAuth } from "../../../store/slices/authSlice";
-import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
 import { useAppDispatch } from "../../../store/hooks";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   "Auth"
 >;
+
+// ✅ Define JWT payload structure
+interface JWTPayload {
+  Id: string;
+  UserId: string;
+  Username: string;
+  Role: string;
+  exp: number;
+  iat: number;
+  nbf: number;
+}
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -51,17 +62,29 @@ export const LoginScreen: React.FC = () => {
           password: data.password,
         });
 
-        // ✅ Use unwrapResponse helper to get LoginResponseData
+        // ✅ Unwrap to get the JWT token string
         // @ts-ignore
-        const loginData: LoginResponseData = unwrapResponse(response);
+        const token: string = unwrapResponse(response);
 
-        // Store auth data in Redux (will be persisted automatically)
+        console.log("📦 Token received:", token);
+
+        if (!token || typeof token !== 'string') {
+          throw new Error("Invalid token received from server");
+        }
+
+        // ✅ Decode JWT to extract user info
+        const decoded = jwtDecode<JWTPayload>(token);
+        console.log("🔓 Decoded JWT:", decoded);
+
+        // ✅ Store auth data in Redux
         dispatch(
           addAuth({
-            token: loginData.accessToken,
+            token: token,
             user: {
-              role: loginData.user.role,
-              fullName: loginData.user.fullName,
+              id: decoded.UserId,
+              username: decoded.Username,
+              role: decoded.Role,
+              fullName: "", // API doesn't provide fullName in JWT
             },
           })
         );

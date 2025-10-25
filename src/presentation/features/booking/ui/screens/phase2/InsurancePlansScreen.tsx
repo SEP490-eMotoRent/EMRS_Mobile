@@ -3,16 +3,15 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
-import { HomeStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { VehicleInfoHeader } from "../../molecules/VehicleInfoHeader";
 import { InsuranceBookingSummary } from "../../organisms/InsuranceBookingSummary";
 import { InsurancePlan, InsurancePlanCard } from "../../organisms/InsurancePlanCard";
 
-
-type InsurancePlansRouteProp = RouteProp<HomeStackParamList, 'InsurancePlans'>;
-type InsurancePlansNavigationProp = StackNavigationProp<HomeStackParamList, 'InsurancePlans'>;
+type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
+type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsurancePlans'>;
 
 const insurancePlans: InsurancePlan[] = [
     {
@@ -78,8 +77,8 @@ const insurancePlans: InsurancePlan[] = [
 ];
 
 export const InsurancePlansScreen: React.FC = () => {
-    const route = useRoute<InsurancePlansRouteProp>();
-    const navigation = useNavigation<InsurancePlansNavigationProp>();
+    const route = useRoute<RoutePropType>();
+    const navigation = useNavigation<NavigationPropType>();
     
     const { vehicleId, startDate, endDate, duration, rentalDays } = route.params;
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
@@ -93,9 +92,8 @@ export const InsurancePlansScreen: React.FC = () => {
 
     const selectedPlan = insurancePlans.find(p => p.id === selectedPlanId);
     const insuranceFee = selectedPlanId === "none" ? "FREE" : selectedPlan?.price || "0đ";
-    const rentalFee = "3,130,000đ"; // TODO: Calculate from rental days
+    const rentalFee = "3,130,000đ";
     
-    // Calculate total (parse numbers from strings)
     const parsePrice = (price: string) => {
         if (price === "FREE") return 0;
         return parseInt(price.replace(/[^0-9]/g, "")) || 0;
@@ -114,8 +112,10 @@ export const InsurancePlansScreen: React.FC = () => {
             startDate,
             endDate,
             duration,
+            rentalDays,
             branchName: "District 2, eMotoRent Branch",
             insurancePlan: selectedPlan?.title || "No Protection",
+            insurancePlanId: selectedPlanId,
             rentalFee: "1,130,000đ",
             insuranceFee: insuranceFee === "FREE" ? "0đ" : insuranceFee,
             securityDeposit: "2,000,000đ",
@@ -126,28 +126,21 @@ export const InsurancePlansScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
             <PageHeader title="Insurance Plans" onBack={handleBack} />
-
-            {/* Progress Indicator */}
             <ProgressIndicator currentStep={2} totalSteps={4} />
 
-            {/* Scrollable Content */}
             <ScrollView 
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Vehicle Info */}
                 <VehicleInfoHeader
                     vehicleName="VinFast Evo200"
                     rentalPeriod={`${startDate} - ${endDate}`}
                 />
 
-                {/* Section Title */}
                 <Text style={styles.sectionTitle}>Select Protection Plan</Text>
 
-                {/* Insurance Plans */}
                 {insurancePlans.map((plan) => (
                     <InsurancePlanCard
                         key={plan.id}
@@ -157,7 +150,6 @@ export const InsurancePlansScreen: React.FC = () => {
                     />
                 ))}
 
-                {/* Booking Summary */}
                 <InsuranceBookingSummary
                     rentalFee={rentalFee}
                     insuranceFee={insuranceFee}
@@ -165,7 +157,6 @@ export const InsurancePlansScreen: React.FC = () => {
                 />
             </ScrollView>
 
-            {/* Continue Button */}
             <View style={styles.footer}>
                 <PrimaryButton title="Continue" onPress={handleContinue} />
             </View>
@@ -174,17 +165,9 @@ export const InsurancePlansScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#000",
-    },
-    scrollView: {
-        flex: 1,
-    },
-    content: {
-        padding: 16,
-        paddingBottom: 100,
-    },
+    container: { flex: 1, backgroundColor: "#000" },
+    scrollView: { flex: 1 },
+    content: { padding: 16, paddingBottom: 100 },
     sectionTitle: {
         color: "#fff",
         fontSize: 16,
