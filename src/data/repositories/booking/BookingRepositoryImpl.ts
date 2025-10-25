@@ -1,4 +1,3 @@
-// data/repositories/booking/BookingRepositoryImpl.ts
 import { Booking } from "../../../domain/entities/booking/Booking";
 import { Renter } from "../../../domain/entities/account/Renter";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
@@ -43,65 +42,66 @@ export class BookingRepositoryImpl implements BookingRepository {
         return responses.map(r => this.mapToEntity(r));
     }
 
+    async getCurrentRenterBookings(): Promise<Booking[]> {
+        const responses = await this.remote.getCurrentRenterBookings();
+        return responses.map(r => this.mapToEntity(r));
+    }
+
     private mapToEntity(dto: BookingResponse): Booking {
-        // Account constructor: id, username, password, role, fullname?, refreshToken?, refreshTokenExpiry?, isRefreshTokenRevoked, resetPasswordToken?, resetPasswordTokenExpiry?, renter?, staff?, createdAt, updatedAt, deletedAt, isDeleted
         const mockAccount = new Account(
-            dto.renterId,
-            "",                  // username
-            "",                  // password
-            "Renter",            // role
-            undefined,           // fullname
-            undefined,           // refreshToken
-            undefined,           // refreshTokenExpiry
-            false,               // isRefreshTokenRevoked
-            undefined,           // resetPasswordToken
-            undefined,           // resetPasswordTokenExpiry
-            undefined,           // renter
-            undefined,           // staff
+            dto.renterId || "unknown",
+            "",
+            "",
+            "Renter",
+            undefined,
+            undefined,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
             new Date(),
             null,
             null,
             false
         );
 
-        // Membership constructor: id, tierName, minBookings, discountPercentage, freeChargingPerMonth, description, renters[], createdAt, updatedAt, deletedAt, isDeleted
         const mockMembership = new Membership(
             "mock-membership-id",
-            "Basic",             // tierName
-            0,                   // minBookings
-            0,                   // discountPercentage
-            0,                   // freeChargingPerMonth
-            "",                  // description
-            [],                  // renters
+            "Basic",
+            0,
+            0,
+            0,
+            "",
+            [],
             new Date(),
             null,
             null,
             false
         );
 
-        // Renter constructor: id, email, phone, address, avatarUrl, accountId, membershipId, account, membership, isVerified, verificationCode, dateOfBirth?, verificationCodeExpiry?, wallet?, createdAt, updatedAt, deletedAt, isDeleted
         const mockRenter = new Renter(
-            dto.renterId,
-            "",                  // email
-            "",                  // phone
-            "",                  // address
-            "",                  // avatarUrl
-            dto.renterId,        // accountId
-            "mock-membership-id", // membershipId
-            mockAccount,         // account
-            mockMembership,      // membership
-            false,               // isVerified
-            "",                  // verificationCode
-            undefined,           // dateOfBirth
-            undefined,           // verificationCodeExpiry
-            undefined,           // wallet
+            dto.renterId || "unknown",
+            "",
+            "",
+            "",
+            "",
+            dto.renterId || "unknown",
+            "mock-membership-id",
+            mockAccount,
+            mockMembership,
+            false,
+            "",
+            undefined,
+            undefined,
+            undefined,
             new Date(),
             null,
             null,
             false
         );
 
-        // RentalPricing mock
         const mockRentalPricing = new RentalPricing(
             "mock-pricing-id",
             0,
@@ -113,9 +113,8 @@ export class BookingRepositoryImpl implements BookingRepository {
             false
         );
 
-        // VehicleModel mock
         const mockVehicleModel = new VehicleModel(
-            dto.vehicleModelId,
+            dto.vehicleModelId || "unknown",
             "",
             "",
             0,
@@ -130,59 +129,58 @@ export class BookingRepositoryImpl implements BookingRepository {
             false
         );
 
-        // Branch constructor: id, branchName, address, city, phone, email, latitude, longitude, openingTime, closingTime, staffs[], vehicles[], chargingRecords[], sentTransferOrders[], receivedTransferOrders[], handoverBookings[], returnBookings[], createdAt, updatedAt, deletedAt, isDeleted
         const mockBranch = new Branch(
             "mock-branch-id",
-            "",              // branchName
-            "",              // address
-            "",              // city
-            "",              // phone
-            "",              // email
-            0,               // latitude
-            0,               // longitude
-            "09:00",         // openingTime
-            "18:00",         // closingTime
-            [],              // staffs
-            [],              // vehicles
-            [],              // chargingRecords
-            [],              // sentTransferOrders
-            [],              // receivedTransferOrders
-            [],              // handoverBookings
-            [],              // returnBookings
+            "",
+            "",
+            "",
+            "",
+            "",
+            0,
+            0,
+            "09:00",
+            "18:00",
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
             new Date(),
             null,
             null,
             false
         );
 
-        // Vehicle constructor: id, licensePlate, color, currentOdometerKm, batteryHealthPercentage, status, description, branchId, vehicleModelId, branch, vehicleModel, bookings[], maintenanceSchedules[], repairRequests[], yearOfManufacture?, lastMaintenanceDate?, nextMaintenanceDue?, purchaseDate?, createdAt, updatedAt, deletedAt, isDeleted
         const mockVehicle = new Vehicle(
-            dto.vehicleModelId,
-            "",                  // licensePlate
-            "",                  // color
-            0,                   // currentOdometerKm
-            0,                   // batteryHealthPercentage
-            "",                  // status
-            "",                  // description
-            "",                  // branchId
-            dto.vehicleModelId,  // vehicleModelId
-            mockBranch,          // branch
-            mockVehicleModel,    // vehicleModel
-            [],                  // bookings
-            [],                  // maintenanceSchedules
-            [],                  // repairRequests
-            undefined,           // yearOfManufacture
-            undefined,           // lastMaintenanceDate
-            undefined,           // nextMaintenanceDue
-            undefined,           // purchaseDate
+            dto.vehicleModelId || "unknown",
+            "",
+            "",
+            0,
+            0,
+            "",
+            "",
+            "",
+            dto.vehicleModelId || "unknown",
+            mockBranch,
+            mockVehicleModel,
+            [],
+            [],
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
             new Date(),
             null,
             null,
             false
         );
 
+        // ✅ FIXED: Use dto.id instead of dto.bookingId
         return new Booking(
-            dto.bookingId,
+            dto.id, // ✅ CHANGED FROM dto.bookingId
             dto.baseRentalFee,
             dto.depositAmount,
             dto.rentalDays,
@@ -199,8 +197,8 @@ export class BookingRepositoryImpl implements BookingRepository {
             dto.totalAmount,
             0,
             dto.bookingStatus,
-            dto.renterId,
-            dto.vehicleModelId,
+            dto.renterId || "unknown",
+            dto.vehicleModelId || "unknown",
             mockRenter,
             mockVehicle,
             new Date(dto.startDatetime),
@@ -212,7 +210,7 @@ export class BookingRepositoryImpl implements BookingRepository {
             undefined,
             dto.returnBranchId,
             undefined,
-            new Date(dto.createdAt),
+            new Date(dto.createdAt || dto.startDatetime),
             null,
             null,
             false

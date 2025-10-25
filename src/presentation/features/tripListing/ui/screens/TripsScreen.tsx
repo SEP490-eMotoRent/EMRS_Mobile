@@ -1,8 +1,12 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import sl from "../../../../../core/di/InjectionContainer";
+import { Booking } from "../../../../../domain/entities/booking/Booking";
+import { GetCurrentRenterBookingsUseCase } from "../../../../../domain/usecases/booking/GetCurrentRenterBookingsUseCase";
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { useGetCurrentRenterBookings } from "../../hooks/useGetCurrentRenterBookings";
 import { FilterTags } from "../molecules/FilterTags";
 import { SearchBar } from "../molecules/SearchBar";
 import { TabButton } from "../molecules/TabButton";
@@ -15,68 +19,105 @@ type TripsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'Trip'>
 type TabType = "current" | "past";
 type PastFilterType = "completed" | "cancelled" | null;
 
-// Mock data
-const mockCurrentTrips: CurrentTrip[] = [
-    {
-        id: "1",
-        vehicleName: "VinFast Evo200",
-        dates: "Sep 01 - Sep 07, 2025",
-        status: "renting",
-        timeInfo: "5 days 12 hours left",
-        reference: "#EMR240915001",
-        location: "VINFAST DONG SAI GON - CN",
-    },
-    {
-        id: "2",
-        vehicleName: "VinFast Klara",
-        dates: "Sep 24 - Sep 26, 2025",
-        status: "confirmed",
-        timeInfo: "Starts in 3 days",
-        reference: "#EMR240920002",
-        totalAmount: "1,750,000đ",
-    },
-    {
-        id: "3",
-        vehicleName: "Pega NewTech",
-        dates: "Sep 15 - Sep 18, 2025",
-        status: "returned",
-        reference: "#EMR240918003",
-    },
-];
-
-const mockPastTrips: PastTrip[] = [
-    {
-        id: "4",
-        vehicleName: "VinFast Evo200",
-        dates: "Aug 20 - Aug 25, 2025",
-        status: "completed",
-        rating: 5,
-        totalAmount: "1,450,000đ",
-    },
-    {
-        id: "5",
-        vehicleName: "Klara S",
-        dates: "Aug 05 - Aug 07, 2025",
-        status: "completed",
-        rating: 4,
-        totalAmount: "950,000đ",
-    },
-    {
-        id: "6",
-        vehicleName: "VinFast Evo200",
-        dates: "Jun 20 - Jun 22, 2025",
-        status: "cancelled",
-        refundedAmount: "850,000đ",
-    },
-];
-
 export const TripsScreen: React.FC = () => {
     const navigation = useNavigation<TripsScreenNavigationProp>();
     const [activeTab, setActiveTab] = useState<TabType>("current");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("Recent first");
-    
     const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
+
+    // ✅ Get bookings from API
+    const getCurrentRenterBookingsUseCase = useMemo(
+        () => sl.get<GetCurrentRenterBookingsUseCase>("GetCurrentRenterBookingsUseCase"),
+        []
+    );
+    
+    const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(getCurrentRenterBookingsUseCase);
+
+    // ✅ Map Booking entities to UI models
+    const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
+        console.log("🔍 Mapping booking:", booking.id, "Status:", booking.bookingStatus);
+        
+        // ✅ FIXED: Handle actual status values from API
+        let status: "renting" | "confirmed" | "returned";
+        const bookingStatus = booking.bookingStatus?.toUpperCase();
+        
+        if (bookingStatus === "ACTIVE" || bookingStatus === "RENTING") {
+            status = "renting";
+        } else if (bookingStatus === "CONFIRMED" || bookingStatus === "BOOKED") {
+            status = "confirmed";
+        } else if (bookingStatus === "COMPLETED" || bookingStatus === "RETURNED") {
+            status = "returned";
+        } else if (bookingStatus === "CANCELLED") {
+            return null; // Don't show cancelled in current trips
+        } else {
+            // ✅ For any unknown status, show as confirmed
+            status = "confirmed";
+        }
+
+        const formatDate = (date: Date) => {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}`;
+        };
+
+        const startDate = booking.startDatetime ? formatDate(booking.startDatetime) : "";
+        const endDate = booking.endDatetime ? formatDate(booking.endDatetime) : "";
+
+        return {
+            id: booking.id,
+            vehicleName: "Vehicle", // TODO: Get from vehicle model when available
+            dates: `${startDate} - ${endDate}, ${booking.startDatetime?.getFullYear() || ""}`,
+            status,
+            timeInfo: status === "renting" ? "Active rental" : `Starts ${startDate}`,
+            reference: `#${booking.id.substring(0, 12)}`,
+            location: "Branch", // TODO: Get from branch when available
+            totalAmount: booking.totalAmount ? `${booking.totalAmount.toLocaleString()}đ` : undefined,
+        };
+    };
+
+    const mapBookingToPastTrip = (booking: Booking): PastTrip | null => {
+        const bookingStatus = booking.bookingStatus?.toUpperCase();
+        
+        if (bookingStatus !== "COMPLETED" && bookingStatus !== "CANCELLED") {
+            return null; // Only show completed or cancelled in past trips
+        }
+
+        const formatDate = (date: Date) => {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}`;
+        };
+
+        const startDate = booking.startDatetime ? formatDate(booking.startDatetime) : "";
+        const endDate = booking.endDatetime ? formatDate(booking.endDatetime) : "";
+
+        return {
+            id: booking.id,
+            vehicleName: "Vehicle",
+            dates: `${startDate} - ${endDate}, ${booking.startDatetime?.getFullYear() || ""}`,
+            status: bookingStatus === "COMPLETED" ? "completed" : "cancelled",
+            rating: bookingStatus === "COMPLETED" ? 5 : undefined,
+            totalAmount: booking.totalAmount ? `${booking.totalAmount.toLocaleString()}đ` : undefined,
+            refundedAmount: bookingStatus === "CANCELLED" && booking.depositAmount 
+                ? `${booking.depositAmount.toLocaleString()}đ` 
+                : undefined,
+        };
+    };
+
+    const currentTrips = useMemo(() => {
+        const trips = bookings
+            .map(mapBookingToCurrentTrip)
+            .filter((trip): trip is CurrentTrip => trip !== null);
+        console.log("📊 Current trips count:", trips.length);
+        return trips;
+    }, [bookings]);
+
+    const pastTrips = useMemo(() => {
+        const trips = bookings
+            .map(mapBookingToPastTrip)
+            .filter((trip): trip is PastTrip => trip !== null);
+        console.log("📊 Past trips count:", trips.length);
+        return trips;
+    }, [bookings]);
 
     const handleNotification = () => {
         console.log("Open notifications");
@@ -84,7 +125,6 @@ export const TripsScreen: React.FC = () => {
 
     const handleSortPress = () => {
         console.log("Open sort options");
-        // TODO: Show sort options modal
     };
 
     const handleViewDetails = (tripId: string, bookingReference: string) => {
@@ -96,36 +136,30 @@ export const TripsScreen: React.FC = () => {
 
     const handleExtendRental = (tripId: string) => {
         console.log("Extend rental", tripId);
-        // TODO: Navigate to extend rental flow
     };
 
     const handleReportIssue = (tripId: string) => {
         console.log("Report issue", tripId);
-        // TODO: Navigate to report issue screen
     };
 
     const handleCancelBooking = (tripId: string) => {
         console.log("Cancel booking", tripId);
-        // TODO: Show cancel confirmation dialog
     };
 
     const handleRentAgain = (tripId: string) => {
         console.log("Rent again", tripId);
-        // TODO: Navigate to booking flow with same vehicle
     };
 
     const handleViewReceipt = (tripId: string) => {
         console.log("View receipt", tripId);
-        // TODO: Navigate to receipt screen or download PDF
     };
 
     const handleBookSimilar = (tripId: string) => {
         console.log("Book similar", tripId);
-        // TODO: Navigate to search with similar vehicle filters
     };
 
     // Filter current trips
-    const filteredCurrentTrips = mockCurrentTrips.filter(trip => {
+    const filteredCurrentTrips = currentTrips.filter(trip => {
         if (searchQuery) {
             return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     trip.reference.toLowerCase().includes(searchQuery.toLowerCase());
@@ -134,7 +168,7 @@ export const TripsScreen: React.FC = () => {
     });
 
     // Filter past trips
-    const filteredPastTrips = mockPastTrips.filter(trip => {
+    const filteredPastTrips = pastTrips.filter(trip => {
         if (pastFilter && trip.status !== pastFilter) return false;
         if (searchQuery) {
             return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -144,66 +178,102 @@ export const TripsScreen: React.FC = () => {
 
     // Past trips filter tags
     const pastFilterTags = [
-        { id: "completed", label: "Completed", count: mockPastTrips.filter(t => t.status === "completed").length },
-        { id: "cancelled", label: "Cancelled", count: mockPastTrips.filter(t => t.status === "cancelled").length },
+        { id: "completed", label: "Completed", count: pastTrips.filter(t => t.status === "completed").length },
+        { id: "cancelled", label: "Cancelled", count: pastTrips.filter(t => t.status === "cancelled").length },
     ];
 
-    const renderCurrentTrips = () => (
-        <FlatList
-            data={filteredCurrentTrips}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-                <CurrentTripCard
-                    trip={item}
-                    onViewDetails={() => handleViewDetails(item.id, item.reference)}
-                    onExtendRental={item.status === "renting" ? () => handleExtendRental(item.id) : undefined}
-                    onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id) : undefined}
-                    onCancel={item.status === "confirmed" ? () => handleCancelBooking(item.id) : undefined}
-                />
-            )}
-            contentContainerStyle={styles.listContentCurrent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-                <Text style={styles.emptyText}>No current trips</Text>
-            }
-        />
-    );
-
-    const renderPastTrips = () => (
-        <FlatList
-            data={filteredPastTrips}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => (
-                <View style={{ marginTop: index === 0 ? 0 : 4 }}>
-                    <PastTripCard
-                        trip={item}
-                        onRentAgain={() => handleRentAgain(item.id)}
-                        onViewReceipt={() => handleViewReceipt(item.id)}
-                        onBookSimilar={
-                            item.status === "cancelled"
-                                ? () => handleBookSimilar(item.id)
-                                : undefined
-                        }
-                    />
+    const renderCurrentTrips = () => {
+        if (loading) {
+            return (
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color="#00ff00" />
+                    <Text style={styles.loadingText}>Loading trips...</Text>
                 </View>
-            )}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-                <Text style={styles.emptyText}>No past trips</Text>
-            }
-        />
-    );
+            );
+        }
+
+        if (error) {
+            return (
+                <View style={styles.centerContainer}>
+                    <Text style={styles.errorText}>Error: {error}</Text>
+                </View>
+            );
+        }
+
+        return (
+            <FlatList
+                data={filteredCurrentTrips}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <CurrentTripCard
+                        trip={item}
+                        onViewDetails={() => handleViewDetails(item.id, item.reference)}
+                        onExtendRental={item.status === "renting" ? () => handleExtendRental(item.id) : undefined}
+                        onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id) : undefined}
+                        onCancel={item.status === "confirmed" ? () => handleCancelBooking(item.id) : undefined}
+                    />
+                )}
+                contentContainerStyle={styles.listContentCurrent}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>No current trips</Text>
+                }
+            />
+        );
+    };
+
+    const renderPastTrips = () => {
+        if (loading) {
+            return (
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color="#00ff00" />
+                    <Text style={styles.loadingText}>Loading trips...</Text>
+                </View>
+            );
+        }
+
+        if (error) {
+            return (
+                <View style={styles.centerContainer}>
+                    <Text style={styles.errorText}>Error: {error}</Text>
+                </View>
+            );
+        }
+
+        return (
+            <FlatList
+                data={filteredPastTrips}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item, index }) => (
+                    <View style={{ marginTop: index === 0 ? 0 : 4 }}>
+                        <PastTripCard
+                            trip={item}
+                            onRentAgain={() => handleRentAgain(item.id)}
+                            onViewReceipt={() => handleViewReceipt(item.id)}
+                            onBookSimilar={
+                                item.status === "cancelled"
+                                    ? () => handleBookSimilar(item.id)
+                                    : undefined
+                            }
+                        />
+                    </View>
+                )}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>No past trips</Text>
+                }
+            />
+        );
+    };
 
     return (
         <View style={styles.container}>
-            {/* Header */}
             <TripsHeader
                 onNotification={handleNotification}
                 notificationCount={3}
             />
 
-            {/* Search Bar */}
             <SearchBar
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -211,7 +281,6 @@ export const TripsScreen: React.FC = () => {
                 onSortPress={handleSortPress}
             />
 
-            {/* Tabs */}
             <View style={styles.tabsContainer}>
                 <TabButton
                     label="Current Trips"
@@ -225,7 +294,6 @@ export const TripsScreen: React.FC = () => {
                 />
             </View>
 
-            {/* Filter Tags - Only for Past Trips */}
             {activeTab === "past" && (
                 <View style={{ marginTop: 8, marginBottom: 8 }}>
                     <FilterTags
@@ -236,7 +304,6 @@ export const TripsScreen: React.FC = () => {
                 </View>
             )}
 
-            {/* Content - Wrapped in View */}
             <View style={styles.contentContainer}>
                 {activeTab === "current" ? renderCurrentTrips() : renderPastTrips()}
             </View>
@@ -268,6 +335,23 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 0,
         paddingBottom: 20,
+    },
+    centerContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingTop: 40,
+    },
+    loadingText: {
+        color: "#666",
+        fontSize: 14,
+        marginTop: 12,
+    },
+    errorText: {
+        color: "#ff4444",
+        fontSize: 14,
+        textAlign: "center",
+        paddingHorizontal: 20,
     },
     emptyText: {
         color: "#666",

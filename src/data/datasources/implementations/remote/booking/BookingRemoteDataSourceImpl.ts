@@ -43,4 +43,16 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
             return [];
         }
     }
+
+    async getCurrentRenterBookings(): Promise<BookingResponse[]> {
+        try {
+            const response = await this.axiosClient.get<ApiResponse<BookingResponse[]>>(
+                ApiEndpoints.booking.byCurrentRenter
+            );
+            return unwrapResponse(response.data);
+        } catch (error: any) {
+            console.error("Failed to fetch current renter bookings:", error);
+            return [];
+        }
+    }
 }
