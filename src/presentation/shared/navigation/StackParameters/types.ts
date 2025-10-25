@@ -107,6 +107,9 @@ export type StaffStackParamList = {
   BookingDetails: undefined;
   Charging: undefined;
   Profile: undefined;
+  VehicleConfirmation: undefined;
+  ReturnInspection: undefined;
+  AIAnalysis: undefined;
 };
 
 export type RootStackParamList = {
