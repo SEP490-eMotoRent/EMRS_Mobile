@@ -3,10 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
@@ -15,6 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type HandoverCompleteScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -131,7 +130,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scroll: { paddingBottom: 24 },
   successCard: {

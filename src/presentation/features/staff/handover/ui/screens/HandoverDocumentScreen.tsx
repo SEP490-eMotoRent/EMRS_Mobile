@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -20,6 +19,7 @@ import { ScreenHeader } from "../../../../../common/components/organisms/ScreenH
 const leftImage = require("../../../../../../../assets/images/left.png");
 const rightImage = require("../../../../../../../assets/images/right.png");
 const frontImage = require("../../../../../../../assets/images/front.png");
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Nav = StackNavigationProp<StaffStackParamList, "HandoverDocument">;
 
@@ -184,7 +184,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scroll: { paddingBottom: 24 },
   brandTitle: {

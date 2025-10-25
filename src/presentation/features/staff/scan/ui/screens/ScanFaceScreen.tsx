@@ -3,10 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { colors } from '../../../../../common/theme/colors';
 import { AntDesign } from '@expo/vector-icons';
@@ -14,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ScanFaceScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'ScanFace'>;
 
@@ -110,7 +109,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
     paddingHorizontal: 16,

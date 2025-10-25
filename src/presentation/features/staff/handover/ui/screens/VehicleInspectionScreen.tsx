@@ -1,25 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import * as MediaLibrary from "expo-media-library";
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
   Alert,
   Platform,
 } from "react-native";
+import { captureRef } from "react-native-view-shot";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
-
-const vehicleImg = require("../../../../../../../assets/images/motor.png");
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -87,6 +86,11 @@ export const VehicleInspectionScreen: React.FC = () => {
     left: null,
     right: null,
   });
+  const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [isCapturing, setIsCapturing] = useState(false);
+  const checklistRef = useRef<View>(null);
 
   const ensurePermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
@@ -137,212 +141,337 @@ export const VehicleInspectionScreen: React.FC = () => {
   const sections: {
     key: string;
     title: string;
-    items: { label: string; done: boolean }[];
+    items: { label: string; key: string }[];
   }[] = [
     {
       key: "bodyPaint",
-      title: "Body & Paint (10 items)",
+      title: "Thân xe & Sơn (10 mục)",
       items: [
-        { label: "Scratches or dents", done: true },
-        { label: "Paint condition", done: true },
-        { label: "Panel alignment", done: false },
-        { label: "Stickers/decals", done: false },
-        { label: "Overall cleanliness", done: true },
+        { label: "Vết xước hoặc lõm", key: "scratches_dents" },
+        { label: "Tình trạng sơn", key: "paint_condition" },
+        { label: "Căn chỉnh tấm", key: "panel_alignment" },
+        { label: "Nhãn dán/decals", key: "stickers_decals" },
+        { label: "Độ sạch tổng thể", key: "overall_cleanliness" },
       ],
     },
     {
       key: "batteryPower",
-      title: "Battery & Power System (4 items)",
+      title: "Pin & Hệ thống điện (4 mục)",
       items: [
-        { label: "Battery mounted securely", done: true },
-        { label: "Charging port condition", done: true },
-        { label: "Cables intact", done: false },
+        { label: "Pin được lắp chắc chắn", key: "battery_mounted" },
+        { label: "Tình trạng cổng sạc", key: "charging_port" },
+        { label: "Dây cáp nguyên vẹn", key: "cables_intact" },
       ],
     },
     {
       key: "cleanliness",
-      title: "Cleanliness Assessment (6 items)",
+      title: "Đánh giá độ sạch (6 mục)",
       items: [
-        { label: "Seat and floorboards clean", done: true },
-        { label: "Mirrors clean", done: true },
-        { label: "Mudguards clean", done: true },
+        { label: "Ghế và sàn sạch", key: "seat_floorboards" },
+        { label: "Gương sạch", key: "mirrors_clean" },
+        { label: "Chắn bùn sạch", key: "mudguards_clean" },
       ],
     },
     {
       key: "wheelsTires",
-      title: "Wheels & Tires (4 items)",
+      title: "Bánh xe & Lốp (4 mục)",
       items: [
-        { label: "Tread ok", done: true },
-        { label: "Pressure ok", done: false },
+        { label: "Gai lốp OK", key: "tread_ok" },
+        { label: "Áp suất OK", key: "pressure_ok" },
       ],
     },
     {
       key: "lights",
-      title: "Lights & Signals (6 items)",
+      title: "Đèn & Tín hiệu (6 mục)",
       items: [
-        { label: "Headlights", done: true },
-        { label: "Turn signals", done: true },
+        { label: "Đèn pha", key: "headlights" },
+        { label: "Đèn xi nhan", key: "turn_signals" },
       ],
     },
     {
       key: "controls",
-      title: "Controls & Dashboard (8 items)",
+      title: "Điều khiển & Bảng điều khiển (8 mục)",
       items: [
-        { label: "Horn works", done: true },
-        { label: "Speedo works", done: false },
+        { label: "Còi hoạt động", key: "horn_works" },
+        { label: "Đồng hồ tốc độ hoạt động", key: "speedo_works" },
       ],
     },
     {
       key: "safety",
-      title: "Safety Equipment (3 items)",
+      title: "Thiết bị an toàn (3 mục)",
       items: [
-        { label: "Helmet available", done: true },
-        { label: "Toolkit available", done: true },
+        { label: "Có mũ bảo hiểm", key: "helmet_available" },
+        { label: "Có bộ dụng cụ", key: "toolkit_available" },
       ],
     },
   ];
+
+  const toggleChecklistItem = (itemKey: string) => {
+    setChecklistItems((prev) => ({
+      ...prev,
+      [itemKey]: !prev[itemKey],
+    }));
+  };
+
+  const getCompletedCount = () => {
+    return Object.values(checklistItems).filter(Boolean).length;
+  };
+
+  const getTotalCount = () => {
+    return sections.reduce((total, section) => total + section.items.length, 0);
+  };
+
+  const captureChecklistScreenshot = async () => {
+    try {
+      setIsCapturing(true);
+
+      // Wait a bit to ensure the view is fully rendered
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      if (!checklistRef.current) {
+        Alert.alert("Lỗi", "Không thể chụp ảnh checklist - ref không tồn tại");
+        return;
+      }
+
+      console.log("Attempting to capture checklist...");
+
+      const uri = await captureRef(checklistRef.current, {
+        format: "png",
+        quality: 0.8,
+        result: "tmpfile",
+      });
+
+      console.log("Checklist screenshot captured:", uri);
+
+      // 🔹 Copy ảnh từ temp sang thư viện
+      const asset = await MediaLibrary.createAssetAsync(uri);
+      await MediaLibrary.createAlbumAsync("Checklists", asset, false);
+      console.log("✅ Ảnh đã lưu vào thư viện:", asset.uri);
+
+      Alert.alert(
+        "Thành công",
+        "Ảnh checklist đã được lưu vào thư viện của bạn 🎉",
+        [{ text: "Đóng", style: "cancel" }]
+      );
+
+      // Save to database via API
+      // await saveChecklistToDatabase(uri, checklistItems);
+    } catch (error) {
+      console.error("Error capturing checklist:", error);
+      Alert.alert("Lỗi", `Không thể chụp ảnh checklist: ${error.message}`);
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+  const saveChecklistToDatabase = async (
+    screenshotUri: string,
+    checklistData: Record<string, boolean>
+  ) => {
+    try {
+      // Prepare data for API
+      const inspectionData = {
+        vehicleId: "VEHICLE_001", // This should come from props or context
+        staffId: "STAFF_001", // This should come from auth context
+        inspectionDate: new Date().toISOString(),
+        completedItems: getCompletedCount(),
+        totalItems: getTotalCount(),
+        completionPercentage: Math.round(
+          (getCompletedCount() / getTotalCount()) * 100
+        ),
+        checklistData: checklistData,
+        screenshotUri: screenshotUri,
+        photos: {
+          front: photos.front,
+          back: photos.back,
+          left: photos.left,
+          right: photos.right,
+        },
+      };
+
+      console.log("Saving inspection data to API:", inspectionData);
+
+      // TODO: Replace with actual API endpoint
+      const response = await fetch("https://api.emotorent.com/inspections", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer YOUR_TOKEN_HERE", // Get from auth context
+        },
+        body: JSON.stringify(inspectionData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Inspection saved successfully:", result);
+    } catch (error) {
+      console.error("Error saving to database:", error);
+      throw error;
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Vehicle Inspection"
-          subtitle="Pre-inspection Mode"
+          title="Kiểm tra xe"
+          subtitle="Chế độ kiểm tra trước"
           onBack={() => navigation.goBack()}
         />
 
         {/* Required Photos */}
         <View style={styles.photosCard}>
-          <Text style={styles.cardHeader}>Required Photos</Text>
+          <Text style={styles.cardHeader}>Ảnh bắt buộc</Text>
           <View style={styles.photosGrid}>
             <PhotoTile
               uri={photos.front}
-              placeholderTitle="Front Side"
-              placeholderSubtitle="Tap to capture"
+              placeholderTitle="Mặt trước"
+              placeholderSubtitle="Chạm để chụp"
               onPress={() => openPicker("front")}
               isPrimary
             />
             <PhotoTile
               uri={photos.back}
-              placeholderTitle="Back Side"
-              placeholderSubtitle="Tap to capture"
+              placeholderTitle="Mặt sau"
+              placeholderSubtitle="Chạm để chụp"
               onPress={() => openPicker("back")}
             />
             <PhotoTile
               uri={photos.left}
-              placeholderTitle="Left Side"
-              placeholderSubtitle="Tap to capture"
+              placeholderTitle="Bên trái"
+              placeholderSubtitle="Chạm để chụp"
               onPress={() => openPicker("left")}
             />
             <PhotoTile
               uri={photos.right}
-              placeholderTitle="Right Side"
-              placeholderSubtitle="Tap to capture"
+              placeholderTitle="Bên phải"
+              placeholderSubtitle="Chạm để chụp"
               onPress={() => openPicker("right")}
             />
           </View>
         </View>
 
         {/* Inspection Checklist - Accordions */}
-        {sections.map((section) => {
-          const isOpen = !!expanded[section.key];
-          return (
-            <View key={section.key} style={styles.accordion}>
-              <TouchableOpacity
-                style={styles.accordionHeader}
-                onPress={() =>
-                  setExpanded((prev) => ({
-                    ...prev,
-                    [section.key]: !prev[section.key],
-                  }))
-                }
-                activeOpacity={0.7}
-              >
-                <Text style={styles.accordionTitle}>{section.title}</Text>
-                <AntDesign
-                  name={isOpen ? "up" : "down"}
-                  size={14}
-                  color={colors.text.secondary}
-                />
-              </TouchableOpacity>
+        <View
+          ref={checklistRef}
+          style={styles.checklistContainer}
+          collapsable={false}
+        >
+          <Text style={styles.checklistTitle}>Danh sách kiểm tra</Text>
+          {sections.map((section) => {
+            const isOpen = !!expanded[section.key];
+            return (
+              <View key={section.key} style={styles.accordion}>
+                <TouchableOpacity
+                  style={styles.accordionHeader}
+                  onPress={() =>
+                    setExpanded((prev) => ({
+                      ...prev,
+                      [section.key]: !prev[section.key],
+                    }))
+                  }
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.accordionTitle}>{section.title}</Text>
+                  <AntDesign
+                    name={isOpen ? "up" : "down"}
+                    size={14}
+                    color={colors.text.secondary}
+                  />
+                </TouchableOpacity>
 
-              {isOpen && (
-                <View style={styles.checklistWrap}>
-                  {section.items.map((item, idx) => (
-                    <View key={idx} style={styles.checkItemRow}>
-                      <Text style={styles.checkItemText}>{item.label}</Text>
-                      {item.done ? (
-                        <AntDesign
-                          name="check-circle"
-                          size={18}
-                          color="#67D16C"
-                        />
-                      ) : (
-                        <View style={styles.pendingCircle} />
-                      )}
-                    </View>
-                  ))}
+                {isOpen && (
+                  <View style={styles.checklistWrap}>
+                    {section.items.map((item, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={styles.checkItemRow}
+                        onPress={() => toggleChecklistItem(item.key)}
+                      >
+                        <Text style={styles.checkItemText}>{item.label}</Text>
+                        {checklistItems[item.key] ? (
+                          <AntDesign
+                            name="check-circle"
+                            size={18}
+                            color="#67D16C"
+                          />
+                        ) : (
+                          <View style={styles.pendingCircle} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
 
-                  <TouchableOpacity style={styles.addIssueRow}>
-                    <AntDesign
-                      name="exclamation-circle"
-                      size={14}
-                      color="#C9B6FF"
-                    />
-                    <Text style={styles.addIssueText}>Add Issue</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          );
-        })}
+                    <TouchableOpacity style={styles.addIssueRow}>
+                      <AntDesign
+                        name="exclamation-circle"
+                        size={14}
+                        color="#C9B6FF"
+                      />
+                      <Text style={styles.addIssueText}>Thêm vấn đề</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
 
         {/* Current Status Summary */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.statusItem}>
-              <Text style={styles.statusNumber}>22 of 33</Text>
-              <Text style={styles.statusCaption}>checks completed</Text>
-            </View>
-            <View style={styles.statusItem}>
-              <Text style={styles.statusNumber}>3</Text>
-              <Text style={styles.statusCaption}>items issues</Text>
+              <Text style={styles.statusNumber}>
+                {getCompletedCount()} / {getTotalCount()}
+              </Text>
+              <Text style={styles.statusCaption}>kiểm tra hoàn thành</Text>
             </View>
             <View style={styles.statusItem}>
               <Text style={styles.statusNumber}>0</Text>
-              <Text style={styles.statusCaption}>ready holds</Text>
+              <Text style={styles.statusCaption}>vấn đề</Text>
+            </View>
+            <View style={styles.statusItem}>
+              <Text style={styles.statusNumber}>0</Text>
+              <Text style={styles.statusCaption}>tạm giữ</Text>
             </View>
           </View>
-          <Text style={styles.readyLabel}>Ready for handover</Text>
+          <Text style={styles.readyLabel}>Sẵn sàng bàn giao</Text>
           <View style={styles.readyProgress}>
-            <View style={[styles.readyFill, { width: "67%" }]} />
+            <View
+              style={[
+                styles.readyFill,
+                { width: `${(getCompletedCount() / getTotalCount()) * 100}%` },
+              ]}
+            />
           </View>
           <View style={styles.timeRow}>
             <View style={styles.tag}>
-              <Text style={styles.tagText}>Inspection Time</Text>
+              <Text style={styles.tagText}>Thời gian kiểm tra</Text>
             </View>
-            <Text style={styles.timeText}>12 minutes</Text>
+            <Text style={styles.timeText}>12 phút</Text>
           </View>
         </View>
 
         {/* Inspection Summary */}
         <View style={styles.summaryCard}>
-          <Text style={styles.cardHeader}>Inspection Summary</Text>
+          <Text style={styles.cardHeader}>Tóm tắt kiểm tra</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Overall condition</Text>
-            <Text style={styles.okText}>Excellent</Text>
+            <Text style={styles.summaryLabel}>Tình trạng tổng thể</Text>
+            <Text style={styles.okText}>Tuyệt vời</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Battery status</Text>
-            <Text style={styles.okText}>92% – Excellent</Text>
+            <Text style={styles.summaryLabel}>Tình trạng pin</Text>
+            <Text style={styles.okText}>92% – Tuyệt vời</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Photos</Text>
-            <Text style={styles.okText}>Ready for handover</Text>
+            <Text style={styles.summaryLabel}>Ảnh</Text>
+            <Text style={styles.okText}>Sẵn sàng bàn giao</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Issues found</Text>
-            <Text style={styles.summaryValue}>0 critical, 3 minor</Text>
+            <Text style={styles.summaryLabel}>Vấn đề phát hiện</Text>
+            <Text style={styles.summaryValue}>0 nghiêm trọng, 0 nhỏ</Text>
           </View>
         </View>
 
@@ -351,10 +480,19 @@ export const VehicleInspectionScreen: React.FC = () => {
           style={styles.primaryCta}
           onPress={() => navigation.navigate("HandoverReport")}
         >
-          <Text style={styles.primaryCtaText}>Complete Inspection</Text>
+          <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryCta}>
-          <Text style={styles.secondaryCtaText}>Save & Continue Later</Text>
+        <TouchableOpacity
+          style={[styles.secondaryCta, isCapturing && styles.disabledButton]}
+          onPress={captureChecklistScreenshot}
+          disabled={isCapturing}
+        >
+          <Text style={styles.secondaryCtaText}>
+            {isCapturing ? "Đang chụp ảnh..." : "Chụp ảnh checklist"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tertiaryCta}>
+          <Text style={styles.tertiaryCtaText}>Lưu & Tiếp tục sau</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -365,7 +503,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: { paddingBottom: 40 },
   titleRow: {
@@ -561,7 +698,32 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     marginTop: 8,
-    marginBottom: 12,
   },
   secondaryCtaText: { color: colors.text.primary, fontWeight: "600" },
+  tertiaryCta: {
+    marginHorizontal: 16,
+    backgroundColor: "transparent",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginTop: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#444444",
+  },
+  tertiaryCtaText: { color: colors.text.secondary, fontWeight: "600" },
+  checklistContainer: {
+    backgroundColor: "transparent",
+    paddingHorizontal: 16,
+  },
+  checklistTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.text.primary,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
 });

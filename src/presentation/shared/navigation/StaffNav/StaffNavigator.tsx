@@ -8,8 +8,6 @@ import { ProfileNavigator } from "../HomeNav/ProfileNavigator";
 import { createStackNavigator } from "@react-navigation/stack";
 import { StaffStackParamList } from "../StackParameters/types";
 import {
-  ScanFaceScreen,
-  ScanResultScreen,
   CustomerRentalsScreen,
   BookingDetailsScreen,
   SelectVehicleScreen,
@@ -20,9 +18,17 @@ import {
   HandoverCompleteScreen,
 } from "../../../features/staff/handover/ui/screens";
 import { ChargingScreen } from "../../../features/staff/charging/ui/screens";
-import { StaffHomeScreen, MotorbikeDetailScreen } from "../../../features/staff/home/ui/screens";
+import {
+  StaffHomeScreen,
+  MotorbikeDetailScreen,
+} from "../../../features/staff/home/ui/screens";
 import { StaffProfileScreen } from "../../../features/staff/profile/ui/screens";
 import { RentalScreen } from "../../../features/staff/rental/ui/screens";
+import { VehicleConfirmationScreen, ReturnInspectionScreen, AIAnalysisScreen } from "../../../features/staff/return/ui/screens";
+import {
+  ScanFaceScreen,
+  ScanResultScreen,
+} from "../../../features/staff/scan/ui/screens";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -88,7 +94,16 @@ export const StaffNavigator: React.FC = () => {
           component={HandoverCompleteScreen}
         />
         <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
-        <Stack.Screen name="MotorbikeDetail" component={MotorbikeDetailScreen} />
+        <Stack.Screen
+          name="MotorbikeDetail"
+          component={MotorbikeDetailScreen}
+        />
+        <Stack.Screen
+          name="VehicleConfirmation"
+          component={VehicleConfirmationScreen}
+        />
+        <Stack.Screen name="ReturnInspection" component={ReturnInspectionScreen} />
+        <Stack.Screen name="AIAnalysis" component={AIAnalysisScreen} />
       </Stack.Navigator>
     </View>
   );
