@@ -6,9 +6,11 @@ export const colors = {
   accent: '#9C27B0',
   border: '#FFFFFF',
   text: {
+    primaryLight: '#E0D7FF',
     primary: '#FFFFFF',
     secondary: '#CCCCCC',
     accent: '#9C27B0',
+    dark: '#000000',
   },
   button: {
     primary: '#D8B4FE', // purple-300 - for primary action buttons

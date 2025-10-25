@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -17,6 +16,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 const customerAvatar = require("../../../../../../../assets/images/avatar.png");
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ScanResultScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -29,6 +29,11 @@ export const ScanResultScreen: React.FC = () => {
   const handleContinueToHandover = () => {
     console.log("Continue to handover");
     navigation.navigate("CustomerRentals");
+  };
+
+  const handleContinueToReturn = () => {
+    console.log("Continue to return");
+    navigation.navigate("VehicleConfirmation");
   };
 
   return (
@@ -101,14 +106,40 @@ export const ScanResultScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Continue Button */}
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={handleContinueToHandover}
-        >
-          <Text style={styles.continueButtonText}>Continue to Handover</Text>
-          <AntDesign name="right" size={16} color="#000" />
-        </TouchableOpacity>
+        {/* Action Buttons */}
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={styles.returnButton}
+            onPress={handleContinueToReturn}
+          >
+            <View style={styles.buttonContent}>
+              <View style={styles.buttonIconContainer}>
+                <AntDesign name="swap" size={24} color="#FFFFFF" />
+              </View>
+              <View style={styles.buttonTextContainer}>
+                <Text style={styles.returnButtonText}>Continue to Return</Text>
+                <Text style={styles.returnButtonSubtext}>Vehicle return process</Text>
+              </View>
+              <AntDesign name="right" size={16} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.handoverButton}
+            onPress={handleContinueToHandover}
+          >
+            <View style={styles.buttonContent}>
+              <View style={styles.buttonIconContainer}>
+                <AntDesign name="car" size={24} color="#000000" />
+              </View>
+              <View style={styles.buttonTextContainer}>
+                <Text style={styles.handoverButtonText}>Continue to Handover</Text>
+                <Text style={styles.handoverButtonSubtext}>Vehicle pickup process</Text>
+              </View>
+              <AntDesign name="right" size={16} color="#000000" />
+            </View>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -118,7 +149,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
     paddingBottom: 40,
@@ -297,20 +327,71 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#4CAF50",
   },
-  continueButton: {
+  actionButtonsContainer: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+    gap: 16,
+  },
+  returnButton: {
+    backgroundColor: "#FF6B35",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#FF6B35",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  handoverButton: {
     backgroundColor: "#C9B6FF",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#C9B6FF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  buttonContent: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginTop: 20,
   },
-  continueButtonText: {
-    fontSize: 16,
+  buttonIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  buttonTextContainer: {
+    flex: 1,
+  },
+  returnButtonText: {
+    fontSize: 18,
     fontWeight: "bold",
-    marginRight: 8,
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  returnButtonSubtext: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  handoverButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000000",
+    marginBottom: 4,
+  },
+  handoverButtonSubtext: {
+    fontSize: 14,
+    color: "rgba(0, 0, 0, 0.7)",
   },
 });
