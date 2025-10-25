@@ -27,6 +27,13 @@ import { VehicleModelRepositoryImpl } from "../../data/repositories/vehicle/Vehi
 import { VehicleModelRemoteDataSource } from "../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { VehicleModelRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/vehicle/VehicleModelRemoteDataSourceImpl";
 
+// ✅ Booking imports
+import { BookingRepository } from '../../domain/repositories/booking/BookingRepository';
+import { BookingRepositoryImpl } from '../../data/repositories/booking/BookingRepositoryImpl';
+import { BookingRemoteDataSource } from '../../data/datasources/interfaces/remote/booking/BookingRemoteDataSource';
+import { BookingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/booking/BookingRemoteDataSourceImpl';
+import { CreateBookingUseCase } from '../../domain/usecases/booking/CreateBookingUseCase';
+
 import { AxiosClient } from "../network/AxiosClient";
 
 /**
@@ -43,15 +50,14 @@ class ServiceLocator {
     this.services.set("AxiosClient", axiosClient);
     this.services.set("AppLogger", AppLogger.getInstance());
 
-    // ✅ Register Account Remote Data Source
+    // ✅ Register Account services
     const accountRemoteDataSource = new AccountRemoteDataSourceImpl(axiosClient);
     this.services.set("AccountRemoteDataSource", accountRemoteDataSource);
 
-    // ✅ Register Account Repository
     const accountRepository = new AccountRepositoryImpl(accountRemoteDataSource);
     this.services.set("AccountRepository", accountRepository);
 
-    // Register local data sources (if still needed)
+    // Register local data sources
     this.services.set("AccountLocalDataSource", new AccountLocalDataSourceImpl());
     this.services.set("RenterLocalDataSource", new RenterLocalDataSourceImpl());
 
@@ -68,6 +74,16 @@ class ServiceLocator {
 
     const vehicleModelRepository = new VehicleModelRepositoryImpl(vehicleModelRemoteDataSource);
     this.services.set("VehicleModelRepository", vehicleModelRepository);
+
+    // ✅ Register Booking services
+    const bookingRemoteDataSource = new BookingRemoteDataSourceImpl(axiosClient);
+    this.services.set("BookingRemoteDataSource", bookingRemoteDataSource);
+
+    const bookingRepository = new BookingRepositoryImpl(bookingRemoteDataSource);
+    this.services.set("BookingRepository", bookingRepository);
+
+    const createBookingUseCase = new CreateBookingUseCase(bookingRepository);
+    this.services.set("CreateBookingUseCase", createBookingUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -96,6 +112,14 @@ class ServiceLocator {
 
   getVehicleModelRepository(): VehicleModelRepository {
     return this.get<VehicleModelRepository>('VehicleModelRepository');
+  }
+
+  getBookingRepository(): BookingRepository {
+    return this.get<BookingRepository>('BookingRepository');
+  }
+
+  getCreateBookingUseCase(): CreateBookingUseCase {
+    return this.get<CreateBookingUseCase>('CreateBookingUseCase');
   }
 
   getAxiosClient(): AxiosClient {

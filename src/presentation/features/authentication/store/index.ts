@@ -4,18 +4,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { combineReducers } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 
+// ✅ FIXED: Persist the entire auth slice
 const persistConfig = {
-  key: "auth",
+  key: "root", // ✅ Changed from "auth" to "root"
   storage: AsyncStorage,
-  whitelist: ["token", "user"], // chỉ lưu 2 field này
+  whitelist: ["auth"], // ✅ Whitelist the auth slice itself
 };
 
 const rootReducer = combineReducers({
-  auth: persistReducer(persistConfig, authReducer),
+  auth: authReducer, // ✅ Don't wrap individual reducers
 });
 
+// ✅ Wrap the ROOT reducer with persistReducer
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
 export const store = configureStore({
-  reducer: rootReducer,
+  reducer: persistedReducer, // ✅ Use the persisted reducer
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

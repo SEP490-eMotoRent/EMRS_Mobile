@@ -1,25 +1,21 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
-import { HomeStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { ContractDetailsCard } from "../../organisms/ContractDetailsCard";
 import { ContractGenerationProgress } from "../../organisms/ContractGenerationProgress";
 import { NextStepsCard } from "../../organisms/NextStepsCard";
-import { OTPVerification } from "../../organisms/OTPVerification";
 import { PaymentSuccessHeader } from "../../organisms/PaymentSuccessHeader";
-import { TermsAgreement } from "../../organisms/TermsAgreement";
-import { TermsHighlights } from "../../organisms/TermsHighlights";
 
-
-type DigitalContractRouteProp = RouteProp<HomeStackParamList, 'DigitalContract'>;
-type DigitalContractNavigationProp = StackNavigationProp<HomeStackParamList, 'DigitalContract'>;
+type RoutePropType = RouteProp<BookingStackParamList, 'DigitalContract'>;
+type NavigationPropType = StackNavigationProp<BookingStackParamList, 'DigitalContract'>;
 
 export const DigitalContractScreen: React.FC = () => {
-    const route = useRoute<DigitalContractRouteProp>();
-    const navigation = useNavigation<DigitalContractNavigationProp>();
+    const route = useRoute<RoutePropType>();
+    const navigation = useNavigation<NavigationPropType>();
     
     const {
         vehicleId,
@@ -27,6 +23,7 @@ export const DigitalContractScreen: React.FC = () => {
         startDate,
         endDate,
         duration,
+        rentalDays,
         branchName,
         totalAmount,
         securityDeposit,
@@ -34,47 +31,28 @@ export const DigitalContractScreen: React.FC = () => {
     } = route.params;
 
     const [contractGenerated, setContractGenerated] = useState(false);
-    const [termsAgreed, setTermsAgreed] = useState(false);
-
-    const terms = [
-        "RENTAL TERMS: Lessee agrees to rent the vehicle identified above for the period and at the rate indicated.",
-        "CONDITION OF VEHICLE: Lessee acknowledges that the vehicle is in good condition. Lessee will return the vehicle in the same condition.",
-    ];
 
     const handleContractComplete = () => {
         setContractGenerated(true);
     };
 
-    const handleReadFullTerms = () => {
-        console.log("Open full terms modal");
-        // TODO: Open full terms modal or navigate to terms page
+    const handleViewBooking = () => {
+        console.log("View booking details:", contractNumber);
+        // Navigate to Trips tab to see booking
+        navigation.getParent()?.getParent()?.navigate('Trips');
     };
 
-    const handleResendOTP = () => {
-        console.log("Resending OTP");
-        // TODO: Call API to resend OTP
-    };
-
-    const handleSignContract = () => {
-        console.log("Contract signed for vehicle:", vehicleId);
-        // TODO: Navigate to success/home screen
-        // navigation.navigate('BookingSuccess');
-    };
-
-    const handleCancelBooking = () => {
-        console.log("Cancel booking");
-        // TODO: Show confirmation dialog, then navigate back
-        navigation.navigate('Home');
+    const handleGoHome = () => {
+        console.log("Go home");
+        navigation.getParent()?.getParent()?.navigate('Home');
     };
 
     return (
         <View style={styles.container}>
-            {/* Progress Indicator */}
             <View style={styles.progressContainer}>
                 <ProgressIndicator currentStep={4} totalSteps={4} />
             </View>
 
-            {/* Scrollable Content */}
             <ScrollView 
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}
@@ -88,7 +66,7 @@ export const DigitalContractScreen: React.FC = () => {
                     <ContractGenerationProgress onComplete={handleContractComplete} />
                 )}
 
-                {/* Contract Details (shown after generation) */}
+                {/* Booking Details (shown after generation) */}
                 {contractGenerated && (
                     <>
                         <ContractDetailsCard
@@ -101,26 +79,48 @@ export const DigitalContractScreen: React.FC = () => {
                             securityDeposit={`${securityDeposit} (refundable)`}
                         />
 
-                        {/* Terms Highlights */}
-                        <TermsHighlights
-                            terms={terms}
-                            onReadFullTerms={handleReadFullTerms}
-                        />
-
-                        {/* Terms Agreement Checkbox */}
-                        <TermsAgreement
-                            checked={termsAgreed}
-                            onToggle={() => setTermsAgreed(!termsAgreed)}
-                        />
+                        {/* Booking Confirmation Message */}
+                        <View style={styles.confirmationCard}>
+                            <Text style={styles.confirmationTitle}>🎉 Booking Confirmed!</Text>
+                            <Text style={styles.confirmationText}>
+                                Your booking has been successfully created. You will receive a confirmation email shortly.
+                            </Text>
+                            <Text style={styles.bookingReference}>
+                                Booking Reference: {contractNumber}
+                            </Text>
+                        </View>
 
                         {/* Next Steps */}
                         <NextStepsCard />
 
-                        {/* OTP Verification */}
-                        <OTPVerification
-                            phoneNumber="***8901"
-                            onResend={handleResendOTP}
-                        />
+                        {/* Important Information */}
+                        <View style={styles.infoCard}>
+                            <Text style={styles.infoTitle}>📋 Important Information</Text>
+                            <View style={styles.infoItem}>
+                                <Text style={styles.infoBullet}>•</Text>
+                                <Text style={styles.infoText}>
+                                    Please arrive at the branch 15 minutes before your pickup time
+                                </Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Text style={styles.infoBullet}>•</Text>
+                                <Text style={styles.infoText}>
+                                    Bring your ID card and driving license
+                                </Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Text style={styles.infoBullet}>•</Text>
+                                <Text style={styles.infoText}>
+                                    Security deposit will be refunded within 3-5 business days after return
+                                </Text>
+                            </View>
+                            <View style={styles.infoItem}>
+                                <Text style={styles.infoBullet}>•</Text>
+                                <Text style={styles.infoText}>
+                                    You can view your booking details in the "Trips" tab
+                                </Text>
+                            </View>
+                        </View>
                     </>
                 )}
             </ScrollView>
@@ -129,16 +129,14 @@ export const DigitalContractScreen: React.FC = () => {
             {contractGenerated && (
                 <View style={styles.footer}>
                     <PrimaryButton 
-                        title="Sign Contract" 
-                        onPress={handleSignContract}
-                        style={{ opacity: termsAgreed ? 1 : 0.5 }}
+                        title="View My Bookings" 
+                        onPress={handleViewBooking}
                     />
-                    <TouchableOpacity 
-                        style={styles.cancelButton} 
-                        onPress={handleCancelBooking}
-                    >
-                        <Text style={styles.cancelText}>Cancel Booking</Text>
-                    </TouchableOpacity>
+                    <PrimaryButton 
+                        title="Back to Home" 
+                        onPress={handleGoHome}
+                        style={styles.secondaryButton}
+                    />
                 </View>
             )}
         </View>
@@ -146,19 +144,62 @@ export const DigitalContractScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
+    container: { flex: 1, backgroundColor: "#000" },
+    progressContainer: { paddingTop: 50 },
+    scrollView: { flex: 1 },
+    content: { padding: 16, paddingBottom: 100 },
+    confirmationCard: {
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "#22c55e",
+    },
+    confirmationTitle: {
+        color: "#22c55e",
+        fontSize: 20,
+        fontWeight: "700",
+        marginBottom: 12,
+    },
+    confirmationText: {
+        color: "#fff",
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 12,
+    },
+    bookingReference: {
+        color: "#4169E1",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    infoCard: {
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 20,
+    },
+    infoTitle: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "700",
+        marginBottom: 16,
+    },
+    infoItem: {
+        flexDirection: "row",
+        marginBottom: 12,
+    },
+    infoBullet: {
+        color: "#4169E1",
+        fontSize: 16,
+        marginRight: 8,
+        width: 20,
+    },
+    infoText: {
+        color: "#999",
+        fontSize: 14,
+        lineHeight: 20,
         flex: 1,
-        backgroundColor: "#000",
-    },
-    progressContainer: {
-        paddingTop: 50,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    content: {
-        padding: 16,
-        paddingBottom: 100,
     },
     footer: {
         padding: 16,
@@ -167,14 +208,8 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
     },
-    cancelButton: {
-        alignItems: "center",
-        paddingVertical: 12,
+    secondaryButton: {
         marginTop: 12,
-    },
-    cancelText: {
-        color: "#ef4444",
-        fontSize: 15,
-        fontWeight: "600",
+        backgroundColor: "#1a1a1a",
     },
 });

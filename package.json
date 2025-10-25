@@ -27,6 +27,7 @@
     "expo-media-library": "~18.2.0",
     "expo-sharing": "^14.0.7",
     "expo-status-bar": "~3.0.8",
+    "jwt-decode": "^4.0.0",
     "loglevel": "^1.9.2",
     "react": "19.1.0",
     "react-native": "0.81.4",
@@ -38,6 +39,8 @@
     "react-native-screens": "^4.5.0",
     "react-native-svg": "^15.12.1",
     "react-native-vector-icons": "^10.3.0",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1",
     "react-native-view-shot": "^4.0.3",
     "redux-persist": "^6.0.0"
   },

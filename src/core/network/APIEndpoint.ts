@@ -15,6 +15,13 @@ export const ApiEndpoints = {
         }
     },
     
+    // Booking endpoints
+    booking: {
+        create: "/Booking/create",
+        detail: (id: string) => `/Booking/${id}`,
+        byRenter: (renterId: string) => `/Booking/renter/${renterId}`,
+    },
+    
     // Auth endpoints
     auth: {
         register: "/auth/register",

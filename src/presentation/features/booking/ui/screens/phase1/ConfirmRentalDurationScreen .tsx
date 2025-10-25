@@ -3,19 +3,19 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
-import { HomeStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { DurationText } from "../../atoms/text/DurationText";
 import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { BookingSummary } from "../../organisms/BookingSummary";
 
-type ConfirmRentalDurationRouteProp = RouteProp<HomeStackParamList, 'ConfirmRentalDuration'>;
-type ConfirmRentalDurationNavigationProp = StackNavigationProp<HomeStackParamList, 'ConfirmRentalDuration'>;
+type RoutePropType = RouteProp<BookingStackParamList, 'ConfirmRentalDuration'>;
+type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRentalDuration'>;
 
 export const ConfirmRentalDurationScreen: React.FC = () => {
-    const route = useRoute<ConfirmRentalDurationRouteProp>();
-    const navigation = useNavigation<ConfirmRentalDurationNavigationProp>();
+    const route = useRoute<RoutePropType>();
+    const navigation = useNavigation<NavigationPropType>();
     const { vehicleId } = route.params;
     
     const [startDate, setStartDate] = useState("Sep 01 5:00 PM");
@@ -30,7 +30,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     };
 
     const parseTime = (timeStr: string) => {
-        // Parse "6:00 PM" or "10:00 AM"
         const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if (!match) return { hours: 0, minutes: 0 };
         
@@ -38,7 +37,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         const minutes = parseInt(match[2]);
         const period = match[3].toUpperCase();
         
-        // Convert to 24-hour format
         if (period === 'PM' && hours !== 12) {
             hours += 12;
         } else if (period === 'AM' && hours === 12) {
@@ -75,24 +73,21 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const handleDateRangeChange = (dateRange: string) => {
         console.log("Date range changed:", dateRange);
         
-        // Parse: "2025-10-27 - 2025-11-01 (6:00 PM - 10:00 AM)"
         const match = dateRange.match(/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})\s*\((.+?)\s*-\s*(.+?)\)/);
         
         if (match) {
             const [, startDateStr, endDateStr, startTimeStr, endTimeStr] = match;
             
-            // Format display strings
             const formattedStart = formatDateDisplay(startDateStr, startTimeStr);
             const formattedEnd = formatDateDisplay(endDateStr, endTimeStr);
             
             setStartDate(formattedStart);
             setEndDate(formattedEnd);
             
-            // Calculate duration with proper time parsing
             const { days, hours } = calculateDuration(startDateStr, endDateStr, startTimeStr, endTimeStr);
             
             setDuration(`${days} Days ${hours} Hours`);
-            setRentalDays(days > 0 ? days : 1); // Minimum 1 day for rental
+            setRentalDays(days > 0 ? days : 1);
         }
     };
 
@@ -109,29 +104,20 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     
     return (
         <View style={styles.container}>
-            {/* Header */}
             <PageHeader title="Renting Duration" onBack={handleBack} />
-
-            {/* Progress Indicator */}
             <ProgressIndicator currentStep={1} totalSteps={4} />
 
-            {/* Scrollable Content */}
             <ScrollView 
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Date Time Selector */}
                 <DateTimeSelector
                     startDate={startDate}
                     endDate={endDate}
                     onDateRangeChange={handleDateRangeChange}
                 />
-
-                {/* Duration Display */}
                 <DurationText duration={duration} />
-
-                {/* Booking Summary */}
                 <BookingSummary
                     rentalDays={rentalDays}
                     rentalPrice="1,050,000đ"
@@ -140,7 +126,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 />
             </ScrollView>
 
-            {/* Continue Button */}
             <View style={styles.footer}>
                 <PrimaryButton title="Continue" onPress={handleContinue} />
             </View>
@@ -149,17 +134,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#000",
-    },
-    scrollView: {
-        flex: 1,
-    },
-    content: {
-        padding: 16,
-        paddingBottom: 100,
-    },
+    container: { flex: 1, backgroundColor: "#000" },
+    scrollView: { flex: 1 },
+    content: { padding: 16, paddingBottom: 100 },
     footer: {
         padding: 16,
         paddingBottom: 32,
