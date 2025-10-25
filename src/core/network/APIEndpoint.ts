@@ -20,6 +20,7 @@ export const ApiEndpoints = {
         create: "/Booking/create",
         detail: (id: string) => `/Booking/${id}`,
         byRenter: (renterId: string) => `/Booking/renter/${renterId}`,
+        byCurrentRenter: "/Booking/renter/get", // ✅ NEW - uses token
     },
     
     // Auth endpoints

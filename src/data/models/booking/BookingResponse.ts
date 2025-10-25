@@ -1,5 +1,5 @@
 export interface BookingResponse {
-    bookingId: string;
+    id: string;
     startDatetime: string;
     endDatetime: string;
     baseRentalFee: number;

@@ -33,6 +33,7 @@ import { BookingRepositoryImpl } from '../../data/repositories/booking/BookingRe
 import { BookingRemoteDataSource } from '../../data/datasources/interfaces/remote/booking/BookingRemoteDataSource';
 import { BookingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/booking/BookingRemoteDataSourceImpl';
 import { CreateBookingUseCase } from '../../domain/usecases/booking/CreateBookingUseCase';
+import { GetCurrentRenterBookingsUseCase } from '../../domain/usecases/booking/GetCurrentRenterBookingsUseCase'; // ✅ NEW
 
 import { AxiosClient } from "../network/AxiosClient";
 
@@ -84,6 +85,10 @@ class ServiceLocator {
 
     const createBookingUseCase = new CreateBookingUseCase(bookingRepository);
     this.services.set("CreateBookingUseCase", createBookingUseCase);
+
+    // ✅ NEW - Register GetCurrentRenterBookingsUseCase
+    const getCurrentRenterBookingsUseCase = new GetCurrentRenterBookingsUseCase(bookingRepository);
+    this.services.set("GetCurrentRenterBookingsUseCase", getCurrentRenterBookingsUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -120,6 +125,11 @@ class ServiceLocator {
 
   getCreateBookingUseCase(): CreateBookingUseCase {
     return this.get<CreateBookingUseCase>('CreateBookingUseCase');
+  }
+
+  // ✅ NEW
+  getCurrentRenterBookingsUseCase(): GetCurrentRenterBookingsUseCase {
+    return this.get<GetCurrentRenterBookingsUseCase>('GetCurrentRenterBookingsUseCase');
   }
 
   getAxiosClient(): AxiosClient {

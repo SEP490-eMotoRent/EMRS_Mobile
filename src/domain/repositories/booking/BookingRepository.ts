@@ -4,4 +4,5 @@ export interface BookingRepository {
     create(booking: Booking): Promise<Booking>;
     getById(id: string): Promise<Booking | null>;
     getByRenter(renterId: string): Promise<Booking[]>;
+    getCurrentRenterBookings(): Promise<Booking[]>;
 }
