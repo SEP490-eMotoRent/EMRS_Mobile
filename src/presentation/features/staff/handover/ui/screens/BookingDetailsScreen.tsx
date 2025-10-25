@@ -3,10 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -19,6 +17,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type BookingDetailsScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -104,7 +103,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: {
     paddingBottom: 40,

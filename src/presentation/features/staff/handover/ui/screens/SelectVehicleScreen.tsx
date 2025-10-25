@@ -3,11 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
@@ -15,6 +13,7 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const banner = require("../../../../../../../assets/images/motor-bg.png");
 
@@ -292,7 +291,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollContent: { paddingBottom: 40 },
   metaHeader: {

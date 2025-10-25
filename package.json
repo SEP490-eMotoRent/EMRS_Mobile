@@ -24,6 +24,8 @@
     "date-fns": "^4.1.0",
     "expo": "~54.0.13",
     "expo-image-picker": "^17.0.8",
+    "expo-media-library": "~18.2.0",
+    "expo-sharing": "^14.0.7",
     "expo-status-bar": "~3.0.8",
     "loglevel": "^1.9.2",
     "react": "19.1.0",
@@ -36,6 +38,7 @@
     "react-native-screens": "^4.5.0",
     "react-native-svg": "^15.12.1",
     "react-native-vector-icons": "^10.3.0",
+    "react-native-view-shot": "^4.0.3",
     "redux-persist": "^6.0.0"
   },
   "private": true,
