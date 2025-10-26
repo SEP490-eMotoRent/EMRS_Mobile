@@ -42,7 +42,7 @@ export const CustomerRentalsScreen: React.FC = () => {
       );
       const response = await getBookingListUseCase.execute(
         "",
-        "019a1512-51a8-7626-b6f5-2b9bbdfa2e30",
+        "019a15be-38b0-7746-b665-f07bca082855",
         "Booked",
         pageNum,
         pageSize
@@ -55,15 +55,6 @@ export const CustomerRentalsScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
   };
 
   const formatTime = (dateString: string) => {
@@ -115,10 +106,10 @@ export const CustomerRentalsScreen: React.FC = () => {
           </Text>
           <View style={styles.dateInfo}>
             <Text style={styles.dateText}>
-              From: {formatDate(booking.startDatetime?.toString() || "")}
+              From: {booking.startDatetime?.toLocaleDateString("en-GB")}
             </Text>
             <Text style={styles.dateText}>
-              To: {formatDate(booking.endDatetime?.toString() || "")}
+              To: {booking.endDatetime?.toLocaleDateString("en-GB")}
             </Text>
           </View>
         </View>
@@ -246,7 +237,7 @@ export const CustomerRentalsScreen: React.FC = () => {
           }
           submeta={
             bookings?.[0]
-              ? formatDate(bookings?.[0]?.startDatetime?.toISOString() || "")
+              ? bookings?.[0]?.startDatetime?.toLocaleDateString("en-GB") || ""
               : "Loading..."
           }
           onBack={() => navigation.goBack()}

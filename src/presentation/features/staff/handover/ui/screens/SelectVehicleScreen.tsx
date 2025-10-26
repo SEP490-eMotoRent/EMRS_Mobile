@@ -30,7 +30,6 @@ export const SelectVehicleScreen: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const navigation = useNavigation<SelectVehicleScreenNavigationProp>();
 
   useEffect(() => {
@@ -273,23 +272,11 @@ export const SelectVehicleScreen: React.FC = () => {
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      styles.selectBtn,
-                      selectedId === vehicleCard.id && styles.selectBtnActive,
-                    ]}
-                    onPress={() => setSelectedId(vehicleCard.id)}
+                    style={styles.inspectionBtn}
+                    onPress={() => navigation.navigate("VehicleInspection")}
                   >
-                    <Text
-                      style={
-                        selectedId === vehicleCard.id
-                          ? styles.selectBtnTextActive
-                          : styles.selectBtnText
-                      }
-                    >
-                      {selectedId === vehicleCard.id
-                        ? "Selected"
-                        : "Select for Inspection"}
-                    </Text>
+                    <AntDesign name="camera" size={16} color="#000" />
+                    <Text style={styles.inspectionBtnText}>Inspection</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -300,18 +287,6 @@ export const SelectVehicleScreen: React.FC = () => {
             <Text style={styles.emptyText}>No vehicles available</Text>
           </View>
         )}
-
-        {/* Bottom CTA */}
-        <TouchableOpacity
-          style={styles.bottomCta}
-          onPress={() => navigation.navigate("VehicleInspection")}
-        >
-          <Text style={styles.bottomCtaText}>Inspection Motorbikes</Text>
-        </TouchableOpacity>
-        <Text style={styles.expireNote}>
-          Only pre-inspected vehicles can be selected. Selection expires in 10
-          minutes
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -473,16 +448,29 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     fontSize: 12,
   },
-  selectBtn: {
-    backgroundColor: "#2A2A2A",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+  inspectionBtn: {
+    backgroundColor: "#C9B6FF",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#C9B6FF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  selectBtnActive: { backgroundColor: "#C9B6FF" },
-  selectBtnDisabled: { backgroundColor: "#333" },
-  selectBtnText: { color: "#FFFFFF", fontWeight: "600" },
-  selectBtnTextActive: { color: "#000", fontWeight: "700" },
+  inspectionBtnText: {
+    color: "#000000",
+    fontWeight: "700",
+    fontSize: 14,
+    marginLeft: 6,
+  },
 
   disabledNote: {
     backgroundColor: "#1A1A1A",
@@ -492,21 +480,6 @@ const styles = StyleSheet.create({
   },
   disabledNoteText: { color: colors.text.secondary, fontSize: 12 },
 
-  bottomCta: {
-    marginHorizontal: 16,
-    backgroundColor: "#C9B6FF",
-    borderRadius: 10,
-    alignItems: "center",
-    paddingVertical: 14,
-    marginTop: 8,
-  },
-  bottomCtaText: { color: "#000", fontWeight: "700" },
-  expireNote: {
-    color: colors.text.secondary,
-    textAlign: "center",
-    fontSize: 12,
-    marginTop: 8,
-  },
   loadingContainer: {
     padding: 40,
     alignItems: "center",
