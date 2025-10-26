@@ -1,5 +1,6 @@
 import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
 import { Branch } from "../../../domain/entities/operations/Branch";
+import { PaginatedVehicleResponse } from "../../../domain/entities/vehicle/PaginatedVehicle";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
 import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
 import { VehicleRepository } from "../../../domain/repositories/vehicle/VehicleRepository";
@@ -53,13 +54,43 @@ export class VehicleRepositoryImpl implements VehicleRepository {
         return response ? this.mapToEntity(response) : null;
     }
 
+    async getVehicles(
+        licensePlate: string,
+        color: string,
+        currentOdometerKm: number,
+        batteryHealthPercentage: number,
+        status: string,
+        pageSize: number,
+        pageNum: number
+    ): Promise<PaginatedVehicleResponse> {
+        const response = await this.remote.getVehicles(
+            licensePlate,
+            color,
+            currentOdometerKm,
+            batteryHealthPercentage,
+            status,
+            pageSize,
+            pageNum
+        );
+        return {
+            currentPage: response.currentPage,
+            pageSize: response.pageSize,
+            totalItems: response.totalItems,
+            totalPages: response.totalPages,
+            items: response.items.map((item) => this.mapToEntity(item)),
+        };
+    }
+
     private mapToEntity(model: VehicleResponse): Vehicle {
         // Create RentalPricing from response if available
         const rentalPricing = model.rentalPricing 
             ? new RentalPricing(
-                model.rentalPricing.id,
-                model.rentalPricing.rentalPrice,
-                model.rentalPricing.excessKmPrice,
+                // model.rentalPricing.id,
+                // model.rentalPricing.rentalPrice,
+                // model.rentalPricing.excessKmPrice,
+                undefined,
+                undefined,
+                undefined,
                 []
               )
             : new RentalPricing('default_pricing', 0, 0, []);
@@ -121,6 +152,7 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             model.description,
             branch.id,
             vehicleModel.id,
+            model?.rentalPricing,
             branch,
             vehicleModel,
             [],
@@ -129,6 +161,7 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             yearOfManufacture,
             lastMaintenanceDate,
             nextMaintenanceDue,
+            model?.fileUrl,
             purchaseDate,
             new Date(),
             null,

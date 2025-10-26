@@ -4,13 +4,15 @@ export interface VehicleResponse {
     id: string;
     licensePlate: string;
     color: string;
-    yearOfManufacture?: string;
+    yearOfManufacture?: Date;
     currentOdometerKm: number;
     batteryHealthPercentage: number;
     status: string;
-    lastMaintenanceDate?: string;
-    nextMaintenanceDue?: string;
-    purchaseDate?: string;
+    lastMaintenanceDate?: Date;
+    nextMaintenanceDue?: Date;
+    fileUrl?: string[];
+    purchaseDate?: Date;
     description: string;
-    rentalPricing?: RentalPricingResponse;
+    // rentalPricing?: RentalPricingResponse;
+    rentalPricing?: number;
 }

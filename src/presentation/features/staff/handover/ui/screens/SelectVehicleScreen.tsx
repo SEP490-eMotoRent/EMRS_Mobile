@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import sl from "../../../../../../core/di/InjectionContainer";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
@@ -14,58 +15,10 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Vehicle } from "../../../../../../domain/entities/vehicle/Vehicle";
+import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
 
 const banner = require("../../../../../../../assets/images/motor-bg.png");
-
-type VehicleCard = {
-  id: string;
-  plate: string;
-  badge: "Excellent" | "Good" | "InspectionRequired";
-  inspector: string;
-  inspectedAt: string;
-  batteryPct: number;
-  rangeKm: number;
-  physicalStatus: "Ready" | "Good shape" | "Not Ready";
-  priority: "High" | "Normal";
-  disabled?: boolean;
-};
-
-const mockVehicles: VehicleCard[] = [
-  {
-    id: "v1",
-    plate: "59X1-12345",
-    badge: "Excellent",
-    inspector: "Minh Phan",
-    inspectedAt: "Sep 15, 8:45 AM",
-    batteryPct: 92,
-    rangeKm: 108,
-    physicalStatus: "Ready",
-    priority: "Normal",
-  },
-  {
-    id: "v2",
-    plate: "59X1-23456",
-    badge: "Good",
-    inspector: "Minh Phan",
-    inspectedAt: "Sep 15, 9:15 AM",
-    batteryPct: 85,
-    rangeKm: 103,
-    physicalStatus: "Ready",
-    priority: "High",
-  },
-  {
-    id: "v3",
-    plate: "59X1-45678",
-    badge: "InspectionRequired",
-    inspector: "—",
-    inspectedAt: "—",
-    batteryPct: 86,
-    rangeKm: 120,
-    physicalStatus: "Not Ready",
-    priority: "Normal",
-    disabled: true,
-  },
-];
 
 type SelectVehicleScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -73,18 +26,63 @@ type SelectVehicleScreenNavigationProp = StackNavigationProp<
 >;
 
 export const SelectVehicleScreen: React.FC = () => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pageNum, setPageNum] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigation<SelectVehicleScreenNavigationProp>();
 
-  const renderBadge = (badge: VehicleCard["badge"]) => {
-    if (badge === "Excellent")
-      return (
-        <Text style={[styles.badge, styles.badgeExcellent]}>Excellent</Text>
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
+
+  const fetchVehicles = async () => {
+    setLoading(true);
+    try {
+      const getVehicleListUseCase = new GetVehicleListUseCase(
+        sl.get("VehicleRepository")
       );
-    if (badge === "Good")
-      return <Text style={[styles.badge, styles.badgeGood]}>Good</Text>;
+
+      const response = await getVehicleListUseCase.execute(
+        "",
+        "",
+        undefined,
+        undefined,
+        "",
+        pageSize,
+        pageNum
+      );
+      setVehicles(response.items);
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mapVehicleToCard = (vehicle: Vehicle) => {
+    return {
+      id: vehicle.id,
+      plate: vehicle.licensePlate || "Unknown",
+      badge: vehicle.status === "Available" ? "Available" : "Unavailable",
+      batteryPct: vehicle.batteryHealthPercentage || 0,
+      currentOdometerKm: vehicle?.currentOdometerKm || 0,
+      color: vehicle.color || "Unknown",
+      status: vehicle.status || "Unknown",
+      fileUrl: vehicle.fileUrl || [],
+      rentalPricing: vehicle.rentalPricing,
+      disabled: vehicle.status === "Unavailable",
+      nextMaintenanceDue: vehicle.nextMaintenanceDue,
+    };
+  };
+
+  const renderBadge = (status: string) => {
+    if (status === "Available")
+      return (
+        <Text style={[styles.badge, styles.badgeAvailable]}>Available</Text>
+      );
     return (
-      <Text style={[styles.badge, styles.badgeWarn]}>Inspection Required</Text>
+      <Text style={[styles.badge, styles.badgeUnavailable]}>Unavailable</Text>
     );
   };
 
@@ -108,180 +106,187 @@ export const SelectVehicleScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {mockVehicles.map((vehicle) => (
-          <View
-            key={vehicle.id}
-            style={[styles.card, vehicle.disabled && styles.cardDisabled]}
-          >
-            {/* Badges row */}
-            <View style={styles.badgesRow}>
-              {renderBadge(vehicle.badge)}
-              {vehicle.badge !== "InspectionRequired" && (
-                <Text style={[styles.badge, styles.badgeMuted]}>
-                  Recently inspected
-                </Text>
-              )}
-              {vehicle.badge !== "InspectionRequired" && (
-                <Text style={[styles.badge, styles.badgeMuted]}>
-                  Best overall condition
-                </Text>
-              )}
-            </View>
-
-            {/* Banner image */}
-            <Image source={banner} style={styles.banner} />
-
-            {/* Plate + right link */}
-            <View style={styles.rowBetween}>
-              <Text style={styles.plate}>{vehicle.plate}</Text>
-              <TouchableOpacity disabled={vehicle.disabled}>
-                <Text style={styles.link}>View inspection details</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Inspector and status header */}
-            <View style={styles.preInspectRow}>
-              <View style={styles.rowLeft}>
-                <AntDesign name="check-circle" size={14} color="#67D16C" />
-                <Text style={[styles.mutedText, styles.boldText]}>
-                  {" "}
-                  Pre-inspected
-                </Text>
-                <Text style={styles.mutedText}> By {vehicle.inspector} </Text>
-                <AntDesign
-                  name="calendar"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.mutedText}> {vehicle.inspectedAt}</Text>
-              </View>
-            </View>
-
-            {/* Battery summary */}
-            <View style={styles.batterySummaryRow}>
-              <View style={styles.rowLeft}>
-                <FontAwesome
-                  name="battery-4"
-                  size={14}
-                  color={colors.text.primary}
-                />
-                <Text style={styles.metricText}> {vehicle.batteryPct} %</Text>
-              </View>
-              <Text style={styles.positiveText}>Fully charged</Text>
-            </View>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${vehicle.batteryPct}%` },
-                ]}
-              />
-            </View>
-            <Text style={styles.rangeText}>
-              Estimated range:{" "}
-              <Text style={styles.rangeValue}>{vehicle.rangeKm}km</Text>
-            </Text>
-
-            {/* Detail chips grid */}
-            <View style={styles.detailGrid}>
-              <View style={styles.detailCard}>
-                <View style={styles.detailHeaderRow}>
-                  <Text style={styles.detailLabel}>Physical Status</Text>
-                  <View style={styles.valueRight}>
-                    <Text style={styles.okText}>Ready</Text>
-                    <AntDesign
-                      name="check-circle"
-                      size={12}
-                      color="#67D16C"
-                      style={styles.valueIcon}
-                    />
-                  </View>
-                </View>
-              </View>
-              <View style={styles.detailCard}>
-                <View style={styles.detailHeaderRow}>
-                  <Text style={styles.detailLabel}>Photos</Text>
-                  <View style={styles.valueRight}>
-                    <Text style={styles.okText}>Prepared</Text>
-                    <AntDesign
-                      name="check-circle"
-                      size={12}
-                      color="#67D16C"
-                      style={styles.valueIcon}
-                    />
-                  </View>
-                </View>
-              </View>
-              <View style={styles.detailCard}>
-                <View style={styles.detailHeaderRow}>
-                  <Text style={styles.detailLabel}>Safety</Text>
-                  <View style={styles.valueRight}>
-                    <Text style={styles.okText}>Ready</Text>
-                    <AntDesign
-                      name="check-circle"
-                      size={12}
-                      color="#67D16C"
-                      style={styles.valueIcon}
-                    />
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Footer actions */}
-            <View style={styles.footerRow}>
-              <TouchableOpacity disabled={vehicle.disabled}>
-                <Text style={styles.link}>
-                  View Details{" "}
-                  <AntDesign
-                    name="arrow-right"
-                    size={12}
-                    color={colors.text.primary}
-                  />
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                disabled={vehicle.disabled}
-                style={[
-                  styles.selectBtn,
-                  selectedId === vehicle.id && styles.selectBtnActive,
-                  vehicle.disabled && styles.selectBtnDisabled,
-                ]}
-                onPress={() => setSelectedId(vehicle.id)}
-              >
-                <Text
-                  style={
-                    selectedId === vehicle.id
-                      ? styles.selectBtnTextActive
-                      : styles.selectBtnText
-                  }
-                >
-                  {selectedId === vehicle.id ? "Selected" : "Select"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {vehicle.disabled && (
-              <View style={styles.disabledNote}>
-                <Text style={styles.disabledNoteText}>
-                  Cannot select: Pre-inspection needed
-                </Text>
-              </View>
-            )}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading vehicles...</Text>
           </View>
-        ))}
+        ) : vehicles.length > 0 ? (
+          vehicles.map((vehicle) => {
+            const vehicleCard = mapVehicleToCard(vehicle);
+            return (
+              <View
+                key={vehicleCard.id}
+                style={[
+                  styles.card,
+                  !vehicleCard.disabled && styles.cardDisabled,
+                ]}
+              >
+                {/* Badges row */}
+                <View style={styles.badgesRow}>
+                  {renderBadge(vehicleCard.badge)}
+                  <Text style={[styles.badge, styles.badgeMuted]}>
+                    Ready for inspection
+                  </Text>
+                </View>
 
-        {/* Bottom CTA */}
-        <TouchableOpacity
-          style={styles.bottomCta}
-          onPress={() => navigation.navigate("VehicleInspection")}
-        >
-          <Text style={styles.bottomCtaText}>Inspection Motorbikes</Text>
-        </TouchableOpacity>
-        <Text style={styles.expireNote}>
-          Only pre-inspected vehicles can be selected. Selection expires in 10
-          minutes
-        </Text>
+                {/* Vehicle image */}
+                <Image
+                  source={
+                    vehicleCard.fileUrl.length > 0
+                      ? { uri: vehicleCard.fileUrl[0] }
+                      : banner
+                  }
+                  style={styles.banner}
+                />
+
+                {/* Plate + right link */}
+                <View style={styles.rowBetween}>
+                  <Text style={styles.plate}>{vehicleCard.plate}</Text>
+                  <TouchableOpacity disabled={vehicleCard.disabled}>
+                    <Text style={styles.link}>View details</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Vehicle info */}
+                <View style={styles.preInspectRow}>
+                  <View style={styles.rowLeft}>
+                    <AntDesign
+                      name="car"
+                      size={14}
+                      color={colors.text.primary}
+                    />
+                    <Text style={[styles.mutedText, styles.boldText]}>
+                      {vehicleCard.color} • {vehicleCard.status}
+                    </Text>
+                  </View>
+                  <View style={styles.rowRight}>
+                    <Text style={styles.mutedText}>
+                      Next maintenance:{" "}
+                      {vehicleCard.nextMaintenanceDue.toLocaleDateString(
+                        "en-GB"
+                      )}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Battery summary */}
+                <View style={styles.batterySummaryRow}>
+                  <View style={styles.rowLeft}>
+                    <FontAwesome
+                      name="battery-4"
+                      size={14}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.metricText}>
+                      {" "}
+                      {vehicleCard.batteryPct} %
+                    </Text>
+                  </View>
+                  <Text style={styles.positiveText}>
+                    {vehicleCard.batteryPct >= 80
+                      ? "Fully charged"
+                      : "Charging needed"}
+                  </Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${vehicleCard.batteryPct}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.rangeText}>
+                  Current odometer:{" "}
+                  <Text style={styles.rangeValue}>
+                    {vehicleCard.currentOdometerKm}km
+                  </Text>
+                </Text>
+
+                {/* Detail chips grid */}
+                <View style={styles.detailGrid}>
+                  <View style={styles.detailCard}>
+                    <View style={styles.detailHeaderRow}>
+                      <Text style={styles.detailLabel}>Status</Text>
+                      <View style={styles.valueRight}>
+                        <Text
+                          style={
+                            vehicleCard.status === "Available"
+                              ? styles.okText
+                              : styles.warnText
+                          }
+                        >
+                          {vehicleCard.status}
+                        </Text>
+                        <AntDesign
+                          name={
+                            vehicleCard.status === "Available"
+                              ? "check-circle"
+                              : "exclamation-circle"
+                          }
+                          size={12}
+                          color={
+                            vehicleCard.status === "Available"
+                              ? "#67D16C"
+                              : "#FFB300"
+                          }
+                          style={styles.valueIcon}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <View style={styles.detailHeaderRow}>
+                      <Text style={styles.detailLabel}>Color</Text>
+                      <View style={styles.valueRight}>
+                        <Text
+                          style={[styles.okText, { color: vehicleCard.color }]}
+                        >
+                          {vehicleCard.color}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.detailCard}>
+                    <View style={styles.detailHeaderRow}>
+                      <Text style={styles.detailLabel}>Pricing</Text>
+                      <View style={styles.valueRight}>
+                        <Text style={styles.okText}>
+                          {vehicleCard.rentalPricing}.000 đ/h
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Footer actions */}
+                <View style={styles.footerRow}>
+                  <TouchableOpacity disabled={vehicleCard.disabled}>
+                    <Text style={styles.link}>
+                      View Details{" "}
+                      <AntDesign
+                        name="arrow-right"
+                        size={12}
+                        color={colors.text.primary}
+                      />
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.inspectionBtn}
+                    onPress={() => navigation.navigate("VehicleInspection")}
+                  >
+                    <AntDesign name="camera" size={16} color="#000" />
+                    <Text style={styles.inspectionBtnText}>Inspection</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No vehicles available</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -345,9 +350,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: "hidden",
   },
-  badgeExcellent: { backgroundColor: "#4CAF50", color: "#fff" },
-  badgeGood: { backgroundColor: "#FFB300", color: "#000" },
-  badgeWarn: { backgroundColor: "#FF8A80", color: "#000" },
+  badgeAvailable: { backgroundColor: "#4CAF50", color: "#fff" },
+  badgeUnavailable: { backgroundColor: "#FF8A80", color: "#000" },
   badgeMuted: { backgroundColor: "#2A2A2A", color: colors.text.secondary },
   banner: {
     width: "100%",
@@ -373,7 +377,7 @@ const styles = StyleSheet.create({
   mutedText: { color: colors.text.secondary, fontSize: 12 },
   statusRight: { marginLeft: "auto", fontSize: 12 },
   goodStatus: { color: "#67D16C" },
-
+  rowRight: { marginLeft: "auto", fontSize: 12 },
   metricText: { color: colors.text.primary, fontSize: 12 },
   metricTextSmall: {
     color: colors.text.secondary,
@@ -444,16 +448,29 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     fontSize: 12,
   },
-  selectBtn: {
-    backgroundColor: "#2A2A2A",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+  inspectionBtn: {
+    backgroundColor: "#C9B6FF",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#C9B6FF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  selectBtnActive: { backgroundColor: "#C9B6FF" },
-  selectBtnDisabled: { backgroundColor: "#333" },
-  selectBtnText: { color: "#FFFFFF", fontWeight: "600" },
-  selectBtnTextActive: { color: "#000", fontWeight: "700" },
+  inspectionBtnText: {
+    color: "#000000",
+    fontWeight: "700",
+    fontSize: 14,
+    marginLeft: 6,
+  },
 
   disabledNote: {
     backgroundColor: "#1A1A1A",
@@ -463,19 +480,24 @@ const styles = StyleSheet.create({
   },
   disabledNoteText: { color: colors.text.secondary, fontSize: 12 },
 
-  bottomCta: {
-    marginHorizontal: 16,
-    backgroundColor: "#C9B6FF",
-    borderRadius: 10,
+  loadingContainer: {
+    padding: 40,
     alignItems: "center",
-    paddingVertical: 14,
-    marginTop: 8,
   },
-  bottomCtaText: { color: "#000", fontWeight: "700" },
-  expireNote: {
+  loadingText: {
     color: colors.text.secondary,
-    textAlign: "center",
-    fontSize: 12,
-    marginTop: 8,
+    fontSize: 16,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyText: {
+    color: colors.text.secondary,
+    fontSize: 16,
+  },
+  warnText: {
+    color: "#FFB300",
+    marginRight: 6,
   },
 });

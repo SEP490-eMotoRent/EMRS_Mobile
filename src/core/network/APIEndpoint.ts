@@ -3,6 +3,7 @@ export const ApiEndpoints = {
     
     // Vehicle endpoints
     vehicle: {
+        paginatedList: "/Vehicle",
         list: "/Vehicle/list",
         create: "/Vehicle/create",
         model: {
@@ -12,7 +13,7 @@ export const ApiEndpoints = {
         },
         pricing: {
             create: "/Vehicle/pricing/create"
-        }
+        },
     },
     
     // Booking endpoints
@@ -21,6 +22,7 @@ export const ApiEndpoints = {
         detail: (id: string) => `/Booking/${id}`,
         byRenter: (renterId: string) => `/Booking/renter/${renterId}`,
         byCurrentRenter: "/Booking/renter/get", // ✅ NEW - uses token
+        list: "/Booking",
     },
     
     // Auth endpoints

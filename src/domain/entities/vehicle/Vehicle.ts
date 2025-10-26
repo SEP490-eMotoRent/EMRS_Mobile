@@ -23,10 +23,12 @@ export class Vehicle implements BaseEntity {
     public status: string;
     public lastMaintenanceDate?: Date;
     public nextMaintenanceDue?: Date;
+    public fileUrl?: string[];
     public purchaseDate?: Date;
     public description: string;
     public branchId: string;
     public vehicleModelId: string;
+    public rentalPricing: number;
 
     // ✅ 5 RELATIONS ADDED (LINE 22-26)
     public branch: Branch;
@@ -45,6 +47,7 @@ export class Vehicle implements BaseEntity {
         description: string,
         branchId: string,
         vehicleModelId: string,
+        rentalPricing: number,
         // ✅ RELATIONS PARAMS (LINE 36-40)
         branch: Branch,
         vehicleModel: VehicleModel,
@@ -54,6 +57,7 @@ export class Vehicle implements BaseEntity {
         yearOfManufacture?: Date,
         lastMaintenanceDate?: Date,
         nextMaintenanceDue?: Date,
+        fileUrl?: string[],
         purchaseDate?: Date,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
@@ -75,11 +79,12 @@ export class Vehicle implements BaseEntity {
         this.description = description;
         this.branchId = branchId;
         this.vehicleModelId = vehicleModelId;
-
+        this.rentalPricing = rentalPricing;
         // Optional fields
         this.yearOfManufacture = yearOfManufacture;
         this.lastMaintenanceDate = lastMaintenanceDate;
         this.nextMaintenanceDue = nextMaintenanceDue;
+        this.fileUrl = fileUrl;
         this.purchaseDate = purchaseDate;
 
         // ✅ RELATIONS ASSIGNED (LINE 64-68)

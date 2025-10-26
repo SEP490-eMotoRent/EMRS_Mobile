@@ -3,6 +3,7 @@ import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { AppLogger } from "../../../../../core/utils/Logger";
 import { LoginRequest } from "../../../../models/account/accountDTO/LoginRequest";
+import { LoginResponseData } from "../../../../models/account/accountDTO/LoginResponse";
 import { RegisterUserRequest } from "../../../../models/account/accountDTO/RegisterUserRequest";
 import { AccountRemoteDataSource } from "../../../interfaces/remote/account/AccountRemoteDataSource";
 
@@ -72,7 +73,7 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
         }
     }
 
-    async login(request: LoginRequest): Promise<ApiResponse<string>> {
+    async login(request: LoginRequest): Promise<ApiResponse<LoginResponseData>> {
         try {
             this.logger.info('🔄 Logging in user...');
             
@@ -88,7 +89,7 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
                 success: response.data.success,
                 message: response.data.message,
                 code: response.data.code,
-                data: response.data.data.accessToken  // ← Changed from .token to .accessToken
+                data: response.data.data  // ← Changed from .token to .accessToken
             };
         } catch (error: any) {
             this.logger.error(`❌ Login failed: ${error.message}`);

@@ -10,7 +10,6 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { jwtDecode } from "jwt-decode"; // ✅ Import jwt-decode
 import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { LoginForm } from "../../organism/login/LoginForm";
@@ -24,6 +23,7 @@ import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { addAuth } from "../../../store/slices/authSlice";
 import { useAppDispatch } from "../../../store/hooks";
+import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -63,28 +63,17 @@ export const LoginScreen: React.FC = () => {
         });
 
         // ✅ Unwrap to get the JWT token string
-        // @ts-ignore
-        const token: string = unwrapResponse(response);
-
-        console.log("📦 Token received:", token);
-
-        if (!token || typeof token !== 'string') {
-          throw new Error("Invalid token received from server");
-        }
-
-        // ✅ Decode JWT to extract user info
-        const decoded = jwtDecode<JWTPayload>(token);
-        console.log("🔓 Decoded JWT:", decoded);
+        const loginData: LoginResponseData  = unwrapResponse(response);
 
         // ✅ Store auth data in Redux
         dispatch(
           addAuth({
-            token: token,
+            token: loginData.accessToken,
             user: {
-              id: decoded.UserId,
-              username: decoded.Username,
-              role: decoded.Role,
-              fullName: "", // API doesn't provide fullName in JWT
+              id: loginData.user.id,
+              username: loginData.user.username,
+              role: loginData.user.role,
+              fullName: loginData.user.fullName,
             },
           })
         );
