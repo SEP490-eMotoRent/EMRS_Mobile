@@ -1,4 +1,4 @@
-import { PaginatedVehicleResponse } from "../../entities/vehicle/PaginatedVehicle";
+import { PaginatedVehicleResponse } from "../../../data/models/vehicle/PaginatedVehicle";
 import { VehicleRepository } from "../../repositories/vehicle/VehicleRepository";
 
 export class GetVehicleListUseCase {

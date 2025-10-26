@@ -1,11 +1,11 @@
 
-import { AxiosClient } from '../../../../../core/network/AxiosClient';
 import { ApiEndpoints } from '../../../../../core/network/APIEndpoint';
-import { VehicleRemoteDataSource } from '../../../interfaces/remote/vehicle/VehicleRemoteDataSource';
-import { CreateVehicleRequest } from '../../../../models/vehicle/CreateVehicleRequest';
-import { VehicleResponse } from '../../../../models/vehicle/VehicleResponse';
 import { ApiResponse, unwrapResponse } from '../../../../../core/network/APIResponse';
-import { PaginatedVehicleResponse } from '../../../../../domain/entities/vehicle/PaginatedVehicle';
+import { AxiosClient } from '../../../../../core/network/AxiosClient';
+import { CreateVehicleRequest } from '../../../../models/vehicle/CreateVehicleRequest';
+import { PaginatedVehicleResponse } from '../../../../models/vehicle/PaginatedVehicle';
+import { VehicleResponse } from '../../../../models/vehicle/VehicleResponse';
+import { VehicleRemoteDataSource } from '../../../interfaces/remote/vehicle/VehicleRemoteDataSource';
 
 export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
     constructor(private axiosClient: AxiosClient) {}

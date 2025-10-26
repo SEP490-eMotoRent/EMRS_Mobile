@@ -1,9 +1,9 @@
-import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { HomeNavigator } from './HomeNavigator';
-import { ProfileNavigator } from './ProfileNavigator';
-import { TripNavigator } from './TripNavigator';
-import { BottomNavigationBar } from '../../../common/components/organisms/BottomNavigationBar';
+import React from 'react';
+import { BottomNavigationBar } from '../../../../common/components/organisms/BottomNavigationBar';
+import { HomeNavigator } from '../HomeNav/HomeNavigator';
+import { ProfileNavigator } from '../Profile/ProfileNavigator';
+import { TripNavigator } from '../Trip/TripNavigator';
 
 const Tab = createBottomTabNavigator();
 

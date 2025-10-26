@@ -1,4 +1,4 @@
-import { Vehicle } from "./Vehicle";
+import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
 
 export interface PaginatedVehicleResponse {
   currentPage: number;

@@ -1,8 +1,9 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { BookingDetailsScreen } from '../../../features/tripDetails/ui/screens/BookingDetailsScreen';
-import { TripsScreen } from '../../../features/tripListing/ui/screens/TripsScreen';
-import { TripStackParamList } from '../StackParameters/types';
+import { BookingDetailsScreen } from '../../../../features/staff/handover/ui/screens';
+import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
+import { TripStackParamList } from '../../StackParameters/types';
+
 
 const Stack = createStackNavigator<TripStackParamList>();
 

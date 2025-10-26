@@ -1,11 +1,11 @@
 import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
 import { Branch } from "../../../domain/entities/operations/Branch";
-import { PaginatedVehicleResponse } from "../../../domain/entities/vehicle/PaginatedVehicle";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
 import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
 import { VehicleRepository } from "../../../domain/repositories/vehicle/VehicleRepository";
 import { VehicleRemoteDataSource } from "../../datasources/interfaces/remote/vehicle/VehicleRemoteDataSource";
 import { CreateVehicleRequest } from "../../models/vehicle/CreateVehicleRequest";
+import { PaginatedVehicleResponse } from "../../models/vehicle/PaginatedVehicle";
 import { VehicleResponse } from "../../models/vehicle/VehicleResponse";
 
 export class VehicleRepositoryImpl implements VehicleRepository {

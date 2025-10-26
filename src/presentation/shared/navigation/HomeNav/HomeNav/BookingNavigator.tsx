@@ -1,10 +1,10 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { ConfirmRentalDurationScreen } from '../../../features/booking/ui/screens/phase1/ConfirmRentalDurationScreen ';
-import { InsurancePlansScreen } from '../../../features/booking/ui/screens/phase2/InsurancePlansScreen';
-import { PaymentConfirmationScreen } from '../../../features/booking/ui/screens/phase3/PaymentConfirmationScreen';
-import { DigitalContractScreen } from '../../../features/booking/ui/screens/phase4/DigitalContractScreen';
-import { BookingStackParamList } from '../StackParameters/types';
+import { ConfirmRentalDurationScreen } from '../../../../features/booking/ui/screens/phase1/ConfirmRentalDurationScreen ';
+import { InsurancePlansScreen } from '../../../../features/booking/ui/screens/phase2/InsurancePlansScreen';
+import { PaymentConfirmationScreen } from '../../../../features/booking/ui/screens/phase3/PaymentConfirmationScreen';
+import { DigitalContractScreen } from '../../../../features/booking/ui/screens/phase4/DigitalContractScreen';
+import { BookingStackParamList } from '../../StackParameters/types';
 
 const Stack = createStackNavigator<BookingStackParamList>();
 
