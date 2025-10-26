@@ -5,6 +5,7 @@ import { Membership } from "../../../domain/entities/financial/Membership";
 import { AccountRepository } from "../../../domain/repositories/account/AccountRepository";
 import { AccountRemoteDataSource } from "../../datasources/interfaces/remote/account/AccountRemoteDataSource";
 import { RegisterUserRequest } from "../../models/account/accountDTO/RegisterUserRequest";
+import { LoginResponseData } from "../../models/account/accountDTO/LoginResponse";
 
 export class AccountRepositoryImpl implements AccountRepository {
     constructor(private remote: AccountRemoteDataSource) {}
@@ -100,7 +101,7 @@ export class AccountRepositoryImpl implements AccountRepository {
         return account;
     }
 
-    async login(username: string, password: string): Promise<ApiResponse<string>> {
+    async login(username: string, password: string): Promise<ApiResponse<LoginResponseData>> {
         return await this.remote.login({ username, password });
     }
 }

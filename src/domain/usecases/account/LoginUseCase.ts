@@ -1,4 +1,5 @@
 import { ApiResponse } from "../../../core/network/APIResponse";
+import { LoginResponseData } from "../../../data/models/account/accountDTO/LoginResponse";
 import { AccountRepository } from "../../repositories/account/AccountRepository";
 
 export interface LoginUseCaseInput {
@@ -9,7 +10,7 @@ export interface LoginUseCaseInput {
 export class LoginUseCase {
     constructor(private accountRepo: AccountRepository) {}
     
-    async execute(input: LoginUseCaseInput): Promise<ApiResponse<string>> {
+    async execute(input: LoginUseCaseInput): Promise<ApiResponse<LoginResponseData>> {
         return await this.accountRepo.login(input.username, input.password);
     }
 }
