@@ -5,6 +5,7 @@ import { VehicleRemoteDataSource } from '../../../interfaces/remote/vehicle/Vehi
 import { CreateVehicleRequest } from '../../../../models/vehicle/CreateVehicleRequest';
 import { VehicleResponse } from '../../../../models/vehicle/VehicleResponse';
 import { ApiResponse, unwrapResponse } from '../../../../../core/network/APIResponse';
+import { PaginatedVehicleResponse } from '../../../../../domain/entities/vehicle/PaginatedVehicle';
 
 export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
     constructor(private axiosClient: AxiosClient) {}
@@ -47,4 +48,40 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
             return null;
         }
     }
+
+    async getVehicles(
+        licensePlate: string,
+        color: string,
+        currentOdometerKm: number,
+        batteryHealthPercentage: number,
+        status: string,
+        pageSize: number,
+        pageNum: number
+    ): Promise<PaginatedVehicleResponse> {
+        try {
+            const response = await this.axiosClient.get<
+              ApiResponse<PaginatedVehicleResponse>
+            >(ApiEndpoints.vehicle.paginatedList, {
+              licensePlate,
+              color,
+              currentOdometerKm,
+              batteryHealthPercentage,
+              status,
+              pageSize,
+              pageNum,
+            });
+            return unwrapResponse(response.data);
+          } catch (error: any) {
+            console.error("Failed to fetch bookings:", error);
+            // Return empty paginated response on error
+            return {
+              currentPage: 1,
+              pageSize: pageSize,
+              totalItems: 0,
+              totalPages: 0,
+              items: [],
+            };
+          }
+    }
+
 }

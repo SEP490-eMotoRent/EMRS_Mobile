@@ -3,6 +3,7 @@ export const ApiEndpoints = {
     
     // Vehicle endpoints
     vehicle: {
+        paginatedList: "/Vehicle",
         list: "/Vehicle/list",
         create: "/Vehicle/create",
         model: {
@@ -12,7 +13,7 @@ export const ApiEndpoints = {
         },
         pricing: {
             create: "/Vehicle/pricing/create"
-        }
+        },
     },
     
     // Booking endpoints

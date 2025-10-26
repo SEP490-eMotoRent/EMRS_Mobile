@@ -1,4 +1,3 @@
-import { Booking } from "../../entities/booking/Booking";
 import { PaginatedBooking } from "../../entities/booking/PaginatedBooking";
 import { BookingRepository } from "../../repositories/booking/BookingRepository";
 

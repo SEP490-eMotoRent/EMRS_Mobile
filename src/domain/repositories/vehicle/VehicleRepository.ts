@@ -1,3 +1,4 @@
+import { PaginatedVehicle } from '../../entities/vehicle/PaginatedVehicle';
 import { Vehicle } from '../../entities/vehicle/Vehicle';
 
 export interface VehicleRepository {
@@ -7,4 +8,13 @@ export interface VehicleRepository {
     getById(id: string): Promise<Vehicle | null>;
     update(vehicle: Vehicle): Promise<void>;
     getWithReferences(vehicleId: string, vehicleModelId: string): Promise<Vehicle | null>;
+    getVehicles(
+        licensePlate: string,
+        color: string,
+        currentOdometerKm: number,
+        batteryHealthPercentage: number,
+        status: string,
+        pageSize: number,
+        pageNum: number
+    ): Promise<PaginatedVehicle>;
 }

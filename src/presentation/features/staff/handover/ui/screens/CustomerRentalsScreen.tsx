@@ -9,16 +9,13 @@ import {
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import sl from "../../../../../../core/di/InjectionContainer";
-import { AntDesign, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
+import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { PaginatedBooking } from "../../../../../../domain/entities/booking/PaginatedBooking";
 import { GetBookingListUseCase } from "../../../../../../domain/usecases/booking/GetBookingListUseCase";
-import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 
 type CustomerRentalsScreenNavigationProp = StackNavigationProp<
