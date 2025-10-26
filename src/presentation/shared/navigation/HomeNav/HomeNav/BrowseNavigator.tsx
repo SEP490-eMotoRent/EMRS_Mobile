@@ -1,9 +1,9 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { MapScreen } from '../../../features/map/ui/screens/MapScreen';
-import { ListView } from '../../../features/vehicleList/ui/screens/ListViewScreen';
-import { VehicleDetailsScreen } from '../../../features/vehicleDetails/ui/screens/VehicleDetailsScreen';
-import { BrowseStackParamList } from '../StackParameters/types';
+import { MapScreen } from '../../../../features/map/ui/screens/MapScreen';
+import { VehicleDetailsScreen } from '../../../../features/vehicleDetails/ui/screens/VehicleDetailsScreen';
+import { ListView } from '../../../../features/vehicleList/ui/screens/ListViewScreen';
+import { BrowseStackParamList } from '../../StackParameters/types';
 
 const Stack = createStackNavigator<BrowseStackParamList>();
 

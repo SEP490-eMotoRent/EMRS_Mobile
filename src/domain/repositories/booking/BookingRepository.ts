@@ -1,5 +1,5 @@
+import { PaginatedBooking } from "../../../data/models/booking/PaginatedBooking";
 import { Booking } from "../../entities/booking/Booking";
-import { PaginatedBooking } from "../../entities/booking/PaginatedBooking";
 
 export interface BookingRepository {
   create(booking: Booking): Promise<Booking>;

@@ -1,5 +1,5 @@
-import { PaginatedVehicleResponse } from '../../../../../domain/entities/vehicle/PaginatedVehicle';
 import { CreateVehicleRequest } from '../../../../models/vehicle/CreateVehicleRequest';
+import { PaginatedVehicleResponse } from '../../../../models/vehicle/PaginatedVehicle';
 import { VehicleResponse } from '../../../../models/vehicle/VehicleResponse';
 
 export interface VehicleRemoteDataSource {

@@ -1,4 +1,4 @@
-import { PaginatedVehicle } from '../../entities/vehicle/PaginatedVehicle';
+import { PaginatedVehicle } from '../../../data/models/vehicle/PaginatedVehicle';
 import { Vehicle } from '../../entities/vehicle/Vehicle';
 
 export interface VehicleRepository {

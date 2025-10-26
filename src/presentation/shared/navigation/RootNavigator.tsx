@@ -1,10 +1,10 @@
 import { createStackNavigator } from "@react-navigation/stack";
 import React from "react";
-import { AuthNavigator } from "./Authentication/AuthNavigator";
-import { NavigationBarNavigator } from "./HomeNav/NavigationBarNavigator";
-import { StaffNavigator } from "./StaffNav/StaffNavigator";
-import { RootStackParamList } from "./StackParameters/types";
 import { useAppSelector } from "../../features/authentication/store/hooks";
+import { AuthNavigator } from "./Authentication/AuthNavigator";
+import { NavigationBarNavigator } from "./HomeNav/NavigationBarNav/NavigationBarNavigator";
+import { RootStackParamList } from "./StackParameters/types";
+import { StaffNavigator } from "./StaffNav/StaffNavigator";
 
 const Stack = createStackNavigator<RootStackParamList>();
 

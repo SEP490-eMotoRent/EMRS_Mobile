@@ -1,9 +1,10 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { HomeScreen } from '../../../features/homepage/ui/screens/HomeScreen';
-import { HomeStackParamList } from '../StackParameters/types';
+
 import { BookingNavigator } from './BookingNavigator';
 import { BrowseNavigator } from './BrowseNavigator';
+import { HomeScreen } from '../../../../features/homepage/ui/screens/HomeScreen';
+import { HomeStackParamList } from '../../StackParameters/types';
 
 const Stack = createStackNavigator<HomeStackParamList>();
 

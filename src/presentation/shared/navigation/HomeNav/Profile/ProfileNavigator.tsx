@@ -1,8 +1,9 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { EditProfileScreen } from '../../../features/profile/ui/screens/EditProfileScreen';
-import { ProfileScreen } from '../../../features/profile/ui/screens/ProfileScreen';
-import { ProfileStackParamList } from '../StackParameters/types';
+import { EditProfileScreen } from '../../../../features/profile/ui/screens/EditProfileScreen';
+import { ProfileScreen } from '../../../../features/profile/ui/screens/ProfileScreen';
+import { ProfileStackParamList } from '../../StackParameters/types';
+
 
 const Stack = createStackNavigator<ProfileStackParamList>();
 
