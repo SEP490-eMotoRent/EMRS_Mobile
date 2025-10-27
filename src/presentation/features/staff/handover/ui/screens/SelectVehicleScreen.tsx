@@ -11,12 +11,13 @@ import sl from "../../../../../../core/di/InjectionContainer";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Vehicle } from "../../../../../../domain/entities/vehicle/Vehicle";
 import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
+import { VehicleBookingResponse } from "../../../../../../data/models/booking/staffResponse/BookingResponseForStaff";
 
 const banner = require("../../../../../../../assets/images/motor-bg.png");
 
@@ -25,7 +26,14 @@ type SelectVehicleScreenNavigationProp = StackNavigationProp<
   "SelectVehicle"
 >;
 
+type SelectVehicleScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "SelectVehicle"
+>;
+
 export const SelectVehicleScreen: React.FC = () => {
+  const route = useRoute<SelectVehicleScreenRouteProp>();
+  const { bookingId } = route.params;
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -70,7 +78,6 @@ export const SelectVehicleScreen: React.FC = () => {
       color: vehicle.color || "Unknown",
       status: vehicle.status || "Unknown",
       fileUrl: vehicle.fileUrl || [],
-      rentalPricing: vehicle.rentalPricing,
       disabled: vehicle.status === "Unavailable",
       nextMaintenanceDue: vehicle.nextMaintenanceDue,
     };
@@ -162,7 +169,7 @@ export const SelectVehicleScreen: React.FC = () => {
                   <View style={styles.rowRight}>
                     <Text style={styles.mutedText}>
                       Next maintenance:{" "}
-                      {vehicleCard.nextMaintenanceDue.toLocaleDateString(
+                      {vehicleCard.nextMaintenanceDue?.toLocaleDateString(
                         "en-GB"
                       )}
                     </Text>
@@ -252,7 +259,7 @@ export const SelectVehicleScreen: React.FC = () => {
                       <Text style={styles.detailLabel}>Pricing</Text>
                       <View style={styles.valueRight}>
                         <Text style={styles.okText}>
-                          {vehicleCard.rentalPricing}.000 đ/h
+                          {/* {vehicleCard.rentalPricing || 0}.000 đ/h */}
                         </Text>
                       </View>
                     </View>
@@ -273,7 +280,13 @@ export const SelectVehicleScreen: React.FC = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.inspectionBtn}
-                    onPress={() => navigation.navigate("VehicleInspection")}
+                    onPress={() =>
+                      navigation.navigate("VehicleInspection", {
+                        bookingId: bookingId,
+                        currentOdometerKm: vehicle.currentOdometerKm,
+                        batteryHealthPercentage: vehicle.batteryHealthPercentage,
+                      })
+                    }
                   >
                     <AntDesign name="camera" size={16} color="#000" />
                     <Text style={styles.inspectionBtnText}>Inspection</Text>

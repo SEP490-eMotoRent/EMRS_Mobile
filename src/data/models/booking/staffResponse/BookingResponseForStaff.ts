@@ -1,8 +1,8 @@
 export interface BookingForStaffResponse {
     id: string;
-    startDatetime?: string;
-    endDatetime?: string;
-    actualReturnDatetime?: string;
+    startDatetime?: Date;
+    endDatetime?: Date;
+    actualReturnDatetime?: Date;
     baseRentalFee: number;
     depositAmount: number;
     rentalDays: number;
@@ -19,16 +19,16 @@ export interface BookingForStaffResponse {
 
 export interface RenterBookingResponse {
     id: string;
-    email: string;
-    phone: string; // ✅ Note: backend has lowercase 'phone'
-    address: string;
-    account: AccountBookingResponse; // ✅ Nested
+    email?: string;
+    phone?: string; // ✅ Note: backend has lowercase 'phone'
+    address?: string;
+    account?: AccountBookingResponse; // ✅ Nested
 }
 
 export interface AccountBookingResponse {
     id: string;
-    username: string;
-    role: string;
+    username?: string;
+    role?: string;
     fullname?: string; // ✅ Note: backend has lowercase 'fullname'
 }
 
@@ -39,17 +39,17 @@ export interface VehicleBookingResponse {
     batteryHealthPercentage: number;
     status: string;
     licensePlate: string;
-    nextMaintenanceDue?: string;
+    nextMaintenanceDue?: Date;
     fileUrl?: string[];
     rentalPricing: number; // ✅ This is the rental price, not ID
-    vehicleModel: VehicleModelBookingResponse; // ✅ Nested
+    vehicleModel?: VehicleModelBookingResponse; // ✅ Nested
 }
 
 export interface VehicleModelBookingResponse {
     id: string;
-    modelName: string;
-    category: string;
-    batteryCapacityKwh: number;
-    maxRangeKm: number;
-    maxSpeedKmh: number;
+    modelName?: string;
+    category?: string;
+    batteryCapacityKwh?: number;
+    maxRangeKm?: number;
+    maxSpeedKmh?: number;
 }

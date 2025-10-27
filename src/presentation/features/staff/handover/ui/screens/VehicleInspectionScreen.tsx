@@ -1,5 +1,4 @@
 import React, { useState, useRef } from "react";
-import * as MediaLibrary from "expo-media-library";
 import {
   View,
   Text,
@@ -8,17 +7,20 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  Platform,
+  TextInput,
 } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { CreateHandoverReceiptUseCase } from "../../../../../../domain/usecases/receipt/CreateHandoverReceiptUseCase";
+import { useAppSelector } from "../../../../authentication/store/hooks";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -77,7 +79,15 @@ type InspectionNav = StackNavigationProp<
   "VehicleInspection"
 >;
 
+type VehicleInspectionScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "VehicleInspection"
+>;
+
 export const VehicleInspectionScreen: React.FC = () => {
+  const route = useRoute<VehicleInspectionScreenRouteProp>();
+  const { bookingId, currentOdometerKm, batteryHealthPercentage } = route.params || {};
+  const user = useAppSelector((state) => state.auth.user);
   const navigation = useNavigation<InspectionNav>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [photos, setPhotos] = useState<Record<string, string | null>>({
@@ -89,9 +99,11 @@ export const VehicleInspectionScreen: React.FC = () => {
   const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>(
     {}
   );
-  const [isCapturing, setIsCapturing] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [startOdometerKm, setStartOdometerKm] = useState(currentOdometerKm?.toString() || "");
+  const [startBatteryPercentage, setStartBatteryPercentage] = useState(batteryHealthPercentage?.toString() || "");
   const checklistRef = useRef<View>(null);
-
+  
   const ensurePermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
     const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -127,7 +139,7 @@ export const VehicleInspectionScreen: React.FC = () => {
           const res = await ImagePicker.launchImageLibraryAsync({
             allowsEditing: true,
             quality: 0.7,
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ["images"],
           });
           if (!res.canceled && res.assets?.[0]?.uri) {
             setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
@@ -221,95 +233,149 @@ export const VehicleInspectionScreen: React.FC = () => {
     return sections.reduce((total, section) => total + section.items.length, 0);
   };
 
-  const captureChecklistScreenshot = async () => {
+  const getPhotosCount = () => {
+    return Object.values(photos).filter(Boolean).length;
+  };
+
+  const getIssuesCount = () => {
+    // Count unchecked items as issues
+    return getTotalCount() - getCompletedCount();
+  };
+
+  const getCompletionPercentage = () => {
+    const total = getTotalCount();
+    return total > 0 ? Math.round((getCompletedCount() / total) * 100) : 0;
+  };
+
+  const getOverallCondition = () => {
+    const percentage = getCompletionPercentage();
+    if (percentage >= 90) return { text: "Tuyệt vời", color: "#67D16C" };
+    if (percentage >= 70) return { text: "Tốt", color: "#FFD700" };
+    if (percentage >= 50) return { text: "Trung bình", color: "#FF8C00" };
+    return { text: "Cần kiểm tra", color: "#FF4444" };
+  };
+
+  const getBatteryCondition = () => {
+    const battery = parseInt(startBatteryPercentage) || 0;
+    if (battery >= 80) return { text: `${battery}% – Tuyệt vời`, color: "#67D16C" };
+    if (battery >= 60) return { text: `${battery}% – Tốt`, color: "#FFD700" };
+    if (battery >= 40) return { text: `${battery}% – Trung bình`, color: "#FF8C00" };
+    return { text: `${battery}% – Thấp`, color: "#FF4444" };
+  };
+
+  const getPhotosStatus = () => {
+    const photoCount = getPhotosCount();
+    if (photoCount === 4) return { text: "Hoàn thành", color: "#67D16C" };
+    if (photoCount >= 2) return { text: "Thiếu ảnh", color: "#FFD700" };
+    return { text: "Cần chụp thêm", color: "#FF4444" };
+  };
+
+  const isReadyForHandover = () => {
+    return getPhotosCount() === 4 && 
+           getCompletedCount() >= getTotalCount() * 0.8 && 
+           startOdometerKm && 
+           startBatteryPercentage;
+  };
+
+  const handleCompleteInspection = async () => {
     try {
-      setIsCapturing(true);
-
-      // Wait a bit to ensure the view is fully rendered
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      if (!checklistRef.current) {
-        Alert.alert("Lỗi", "Không thể chụp ảnh checklist - ref không tồn tại");
+      // Validate required fields
+      if (!startOdometerKm || !startBatteryPercentage) {
+        Alert.alert("Lỗi", "Vui lòng nhập số km và % pin bắt đầu");
         return;
       }
 
-      console.log("Attempting to capture checklist...");
-
-      const uri = await captureRef(checklistRef.current, {
-        format: "png",
-        quality: 0.8,
-        result: "tmpfile",
-      });
-
-      console.log("Checklist screenshot captured:", uri);
-
-      // 🔹 Copy ảnh từ temp sang thư viện
-      const asset = await MediaLibrary.createAssetAsync(uri);
-      await MediaLibrary.createAlbumAsync("Checklists", asset, false);
-      console.log("✅ Ảnh đã lưu vào thư viện:", asset.uri);
-
-      Alert.alert(
-        "Thành công",
-        "Ảnh checklist đã được lưu vào thư viện của bạn 🎉",
-        [{ text: "Đóng", style: "cancel" }]
-      );
-
-      // Save to database via API
-      // await saveChecklistToDatabase(uri, checklistItems);
-    } catch (error) {
-      console.error("Error capturing checklist:", error);
-      Alert.alert("Lỗi", `Không thể chụp ảnh checklist: ${error.message}`);
-    } finally {
-      setIsCapturing(false);
-    }
-  };
-
-  const saveChecklistToDatabase = async (
-    screenshotUri: string,
-    checklistData: Record<string, boolean>
-  ) => {
-    try {
-      // Prepare data for API
-      const inspectionData = {
-        vehicleId: "VEHICLE_001", // This should come from props or context
-        staffId: "STAFF_001", // This should come from auth context
-        inspectionDate: new Date().toISOString(),
-        completedItems: getCompletedCount(),
-        totalItems: getTotalCount(),
-        completionPercentage: Math.round(
-          (getCompletedCount() / getTotalCount()) * 100
-        ),
-        checklistData: checklistData,
-        screenshotUri: screenshotUri,
-        photos: {
-          front: photos.front,
-          back: photos.back,
-          left: photos.left,
-          right: photos.right,
-        },
-      };
-
-      console.log("Saving inspection data to API:", inspectionData);
-
-      // TODO: Replace with actual API endpoint
-      const response = await fetch("https://api.emotorent.com/inspections", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer YOUR_TOKEN_HERE", // Get from auth context
-        },
-        body: JSON.stringify(inspectionData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      if (getPhotosCount() < 4) {
+        Alert.alert("Lỗi", "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)");
+        return;
       }
 
-      const result = await response.json();
-      console.log("Inspection saved successfully:", result);
+      if (getCompletedCount() < getTotalCount() * 0.8) {
+        Alert.alert("Lỗi", "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra");
+        return;
+      }
+
+      // Create FormData for multipart/form-data
+      const formData = new FormData();
+
+      // Add text fields
+      formData.append("Notes", notes);
+      formData.append("StartOdometerKm", startOdometerKm);
+      formData.append("StartBatteryPercentage", startBatteryPercentage);
+      formData.append("BookingId", bookingId);
+
+      // Add photos as files
+      if (photos.front) {
+        formData.append("VehicleFiles", {
+          uri: photos.front,
+          type: "image/jpeg",
+          name: "front.jpg",
+        } as any);
+      }
+      if (photos.back) {
+        formData.append("VehicleFiles", {
+          uri: photos.back,
+          type: "image/jpeg",
+          name: "back.jpg",
+        } as any);
+      }
+      if (photos.left) {
+        formData.append("VehicleFiles", {
+          uri: photos.left,
+          type: "image/jpeg",
+          name: "left.jpg",
+        } as any);
+      }
+      if (photos.right) {
+        formData.append("VehicleFiles", {
+          uri: photos.right,
+          type: "image/jpeg",
+          name: "right.jpg",
+        } as any);
+      }
+
+      // Capture and add checklist file
+      let checklistUri: string | null = null;
+      if (checklistRef.current) {
+        checklistUri = await captureRef(checklistRef.current, {
+          format: "png",
+          quality: 0.8,
+          result: "tmpfile", // tạo file thật để upload
+        });
+
+        formData.append("CheckListFile", {
+          uri: checklistUri,
+          type: "image/png",
+          name: "checklist.png",
+        } as any);
+      }
+
+      // Submit to API using UseCase
+      console.log("Submitting inspection data...");
+
+      const createHandoverReceiptUseCase = sl.get<CreateHandoverReceiptUseCase>(
+        "CreateHandoverReceiptUseCase"
+      );
+
+      await createHandoverReceiptUseCase.execute({
+        notes: notes,
+        startOdometerKm: parseInt(startOdometerKm),
+        startBatteryPercentage: parseInt(startBatteryPercentage),
+        bookingId: bookingId,
+        vehicleFiles: [
+          photos.front,
+          photos.back,
+          photos.left,
+          photos.right,
+        ].filter(Boolean) as string[],
+        checkListFile: checklistUri,
+      });
+
+      Alert.alert("Thành công", "Kiểm tra đã được hoàn thành");
+      navigation.navigate("HandoverReport");
     } catch (error) {
-      console.error("Error saving to database:", error);
-      throw error;
+      console.error("Error submitting inspection:", error);
+      Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
     }
   };
 
@@ -419,6 +485,58 @@ export const VehicleInspectionScreen: React.FC = () => {
           })}
         </View>
 
+        {/* Inspection Inputs */}
+        <View style={styles.inputCard}>
+          <Text style={styles.cardHeader}>Thông tin kiểm tra</Text>
+
+          {/* Notes Input */}
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Ghi chú</Text>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Nhập ghi chú về tình trạng xe..."
+              placeholderTextColor={colors.text.secondary}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Odometer Input */}
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Số km bắt đầu</Text>
+            <View style={styles.inputWithUnit}>
+              <TextInput
+                style={styles.numberInput}
+                placeholder="Nhập số km"
+                placeholderTextColor={colors.text.secondary}
+                value={startOdometerKm}
+                onChangeText={setStartOdometerKm}
+                keyboardType="numeric"
+              />
+              <Text style={styles.inputUnit}>km</Text>
+            </View>
+          </View>
+
+          {/* Battery Percentage Input */}
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Pin bắt đầu</Text>
+            <View style={styles.inputWithUnit}>
+              <TextInput
+                style={styles.numberInput}
+                placeholder="Nhập % pin"
+                placeholderTextColor={colors.text.secondary}
+                value={startBatteryPercentage}
+                onChangeText={setStartBatteryPercentage}
+                keyboardType="numeric"
+              />
+              <Text style={styles.inputUnit}>%</Text>
+            </View>
+          </View>
+        </View>
+
         {/* Current Status Summary */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
@@ -429,66 +547,105 @@ export const VehicleInspectionScreen: React.FC = () => {
               <Text style={styles.statusCaption}>kiểm tra hoàn thành</Text>
             </View>
             <View style={styles.statusItem}>
-              <Text style={styles.statusNumber}>0</Text>
+              <Text style={[styles.statusNumber, { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" }]}>
+                {getIssuesCount()}
+              </Text>
               <Text style={styles.statusCaption}>vấn đề</Text>
             </View>
             <View style={styles.statusItem}>
-              <Text style={styles.statusNumber}>0</Text>
-              <Text style={styles.statusCaption}>tạm giữ</Text>
+              <Text style={[styles.statusNumber, { color: getPhotosCount() === 4 ? "#67D16C" : "#FFD700" }]}>
+                {getPhotosCount()}/4
+              </Text>
+              <Text style={styles.statusCaption}>ảnh</Text>
             </View>
           </View>
-          <Text style={styles.readyLabel}>Sẵn sàng bàn giao</Text>
-          <View style={styles.readyProgress}>
-            <View
-              style={[
-                styles.readyFill,
-                { width: `${(getCompletedCount() / getTotalCount()) * 100}%` },
-              ]}
-            />
+          
+          <View style={styles.progressSection}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.readyLabel}>
+                {isReadyForHandover() ? "Sẵn sàng bàn giao" : "Chưa sẵn sàng"}
+              </Text>
+              <Text style={[styles.progressPercentage, { color: isReadyForHandover() ? "#67D16C" : "#FFD700" }]}>
+                {getCompletionPercentage()}%
+              </Text>
+            </View>
+            <View style={styles.readyProgress}>
+              <View
+                style={[
+                  styles.readyFill,
+                  { 
+                    width: `${getCompletionPercentage()}%`,
+                    backgroundColor: isReadyForHandover() ? "#67D16C" : "#FFD700"
+                  },
+                ]}
+              />
+            </View>
           </View>
+
           <View style={styles.timeRow}>
             <View style={styles.tag}>
               <Text style={styles.tagText}>Thời gian kiểm tra</Text>
             </View>
-            <Text style={styles.timeText}>12 phút</Text>
+            <Text style={styles.timeText}>~{Math.max(5, Math.round(getTotalCount() * 0.5))} phút</Text>
           </View>
         </View>
 
         {/* Inspection Summary */}
         <View style={styles.summaryCard}>
           <Text style={styles.cardHeader}>Tóm tắt kiểm tra</Text>
+          
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tình trạng tổng thể</Text>
-            <Text style={styles.okText}>Tuyệt vời</Text>
+            <Text style={[styles.summaryValue, { color: getOverallCondition().color }]}>
+              {getOverallCondition().text}
+            </Text>
           </View>
+          
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tình trạng pin</Text>
-            <Text style={styles.okText}>92% – Tuyệt vời</Text>
+            <Text style={[styles.summaryValue, { color: getBatteryCondition().color }]}>
+              {getBatteryCondition().text}
+            </Text>
           </View>
+          
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Ảnh</Text>
-            <Text style={styles.okText}>Sẵn sàng bàn giao</Text>
+            <Text style={styles.summaryLabel}>Ảnh xe</Text>
+            <Text style={[styles.summaryValue, { color: getPhotosStatus().color }]}>
+              {getPhotosStatus().text}
+            </Text>
           </View>
+          
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Vấn đề phát hiện</Text>
-            <Text style={styles.summaryValue}>0 nghiêm trọng, 0 nhỏ</Text>
+            <Text style={[styles.summaryValue, { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" }]}>
+              {getIssuesCount()} vấn đề cần xử lý
+            </Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Trạng thái bàn giao</Text>
+            <View style={styles.statusBadge}>
+              <Text style={[styles.statusBadgeText, { color: isReadyForHandover() ? "#67D16C" : "#FFD700" }]}>
+                {isReadyForHandover() ? "✓ Sẵn sàng" : "⚠ Chưa sẵn sàng"}
+              </Text>
+            </View>
           </View>
         </View>
 
         {/* Bottom Actions */}
         <TouchableOpacity
-          style={styles.primaryCta}
-          onPress={() => navigation.navigate("HandoverReport")}
+          style={[
+            styles.primaryCta,
+            !isReadyForHandover() && styles.primaryCtaDisabled
+          ]}
+          onPress={handleCompleteInspection}
+          disabled={!isReadyForHandover()}
         >
-          <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.secondaryCta, isCapturing && styles.disabledButton]}
-          onPress={captureChecklistScreenshot}
-          disabled={isCapturing}
-        >
-          <Text style={styles.secondaryCtaText}>
-            {isCapturing ? "Đang chụp ảnh..." : "Chụp ảnh checklist"}
+          <Text style={[
+            styles.primaryCtaText,
+            !isReadyForHandover() && styles.primaryCtaTextDisabled
+          ]}>
+            {isReadyForHandover() ? "Hoàn thành kiểm tra" : "Chưa sẵn sàng"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tertiaryCta}>
@@ -529,19 +686,20 @@ const styles = StyleSheet.create({
 
   photosCard: {
     backgroundColor: "#1E1E1E",
-    borderRadius: 12,
+    borderRadius: 16,
     marginHorizontal: 16,
-    padding: 12,
-    marginBottom: 10,
-    marginTop: 10,
+    padding: 16,
+    marginBottom: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   cardHeader: { color: colors.text.secondary, fontSize: 12, marginBottom: 10 },
-  statusItem: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 10,
-    padding: 20,
-    alignItems: "center",
-  },
   photosGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
     width: "48%",
@@ -584,10 +742,16 @@ const styles = StyleSheet.create({
 
   accordion: {
     backgroundColor: "#1E1E1E",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    padding: 12,
-    marginBottom: 10,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   accordionHeader: {
     flexDirection: "row",
@@ -624,29 +788,74 @@ const styles = StyleSheet.create({
 
   statusCard: {
     backgroundColor: "#1E1E1E",
-    borderRadius: 12,
+    borderRadius: 16,
     marginHorizontal: 16,
-    padding: 12,
-    marginBottom: 10,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statusHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 16,
+  },
+  statusItem: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    flex: 1,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
   },
   statusNumber: {
     color: colors.text.primary,
     fontWeight: "700",
+    fontSize: 18,
     textAlign: "center",
   },
   statusCaption: {
     color: colors.text.secondary,
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "center",
+    marginTop: 4,
   },
-  readyLabel: { color: colors.text.secondary, fontSize: 12, marginBottom: 6 },
-  readyProgress: { height: 8, backgroundColor: "#3A3A3A", borderRadius: 4 },
-  readyFill: { height: 8, backgroundColor: "#67D16C", borderRadius: 4 },
+  progressSection: {
+    marginBottom: 12,
+  },
+  progressHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  readyLabel: { 
+    color: colors.text.primary, 
+    fontSize: 14, 
+    fontWeight: "600" 
+  },
+  progressPercentage: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  readyProgress: { 
+    height: 10, 
+    backgroundColor: "#3A3A3A", 
+    borderRadius: 5,
+    overflow: "hidden",
+  },
+  readyFill: { 
+    height: 10, 
+    borderRadius: 5,
+    // transition: "all 0.3s ease",
+  },
   timeRow: {
     backgroundColor: "#2A2A2A",
     borderRadius: 10,
@@ -667,39 +876,77 @@ const styles = StyleSheet.create({
 
   summaryCard: {
     backgroundColor: "#1E1E1E",
-    borderRadius: 12,
+    borderRadius: 16,
     marginHorizontal: 16,
-    padding: 12,
-    marginBottom: 10,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   summaryRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 6,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2A2A2A",
   },
-  summaryLabel: { color: colors.text.secondary, fontSize: 12 },
-  okText: { color: "#67D16C", fontWeight: "600" },
-  summaryValue: { color: colors.text.primary },
+  summaryLabel: { 
+    color: colors.text.secondary, 
+    fontSize: 13,
+    fontWeight: "500",
+    flex: 1,
+  },
+  summaryValue: { 
+    color: colors.text.primary,
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "right",
+  },
+  statusBadge: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
 
   primaryCta: {
     marginHorizontal: 16,
     backgroundColor: "#C9B6FF",
     alignItems: "center",
-    paddingVertical: 14,
-    borderRadius: 10,
-    marginTop: 6,
-  },
-  primaryCtaText: { color: "#000", fontWeight: "700" },
-  secondaryCta: {
-    marginHorizontal: 16,
-    backgroundColor: "#2A2A2A",
-    alignItems: "center",
-    paddingVertical: 14,
-    borderRadius: 10,
+    paddingVertical: 16,
+    borderRadius: 12,
     marginTop: 8,
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  secondaryCtaText: { color: colors.text.primary, fontWeight: "600" },
+  primaryCtaDisabled: {
+    backgroundColor: "#3A3A3A",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  primaryCtaText: { 
+    color: "#000", 
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  primaryCtaTextDisabled: {
+    color: "#666666",
+  },
   tertiaryCta: {
     marginHorizontal: 16,
     backgroundColor: "transparent",
@@ -723,7 +970,59 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
   },
-  disabledButton: {
-    opacity: 0.6,
+  inputCard: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    marginHorizontal: 16,
+    padding: 16,
+    marginBottom: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  inputRow: {
+    marginBottom: 12,
+  },
+  inputLabel: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  inputWithUnit: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  textArea: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 8,
+    padding: 12,
+    color: colors.text.primary,
+    fontSize: 14,
+    minHeight: 80,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+  },
+  numberInput: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 8,
+    padding: 12,
+    color: colors.text.primary,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    flex: 1,
+  },
+  inputUnit: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    marginLeft: 8,
   },
 });
+

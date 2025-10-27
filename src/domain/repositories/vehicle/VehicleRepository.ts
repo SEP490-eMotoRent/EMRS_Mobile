@@ -1,4 +1,4 @@
-import { PaginatedVehicle } from '../../../data/models/vehicle/PaginatedVehicle';
+import { PaginatedVehicleResponse } from '../../../data/models/vehicle/PaginatedVehicle';
 import { Vehicle } from '../../entities/vehicle/Vehicle';
 
 export interface VehicleRepository {
@@ -16,5 +16,5 @@ export interface VehicleRepository {
         status: string,
         pageSize: number,
         pageNum: number
-    ): Promise<PaginatedVehicle>;
+    ): Promise<PaginatedVehicleResponse>;
 }

@@ -74,6 +74,8 @@ export const LoginScreen: React.FC = () => {
               username: loginData.user.username,
               role: loginData.user.role,
               fullName: loginData.user.fullName,
+              branchId: loginData.user.branchId,
+              branchName: loginData.user.branchName,
             },
           })
         );

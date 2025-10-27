@@ -32,4 +32,9 @@ export const ApiEndpoints = {
     },
 
     renters: "/renters",
+
+    // Receipt endpoints
+    receipt: {
+        create: "/rental/receipt",
+    },
 };

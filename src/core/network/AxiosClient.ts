@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 
 import { ApiEndpoints } from '../network/APIEndpoint';
 import { ServerException } from '../errors/ServerException';
 import { AppLogger } from '../utils/Logger';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { store } from '../../presentation/features/authentication/store';
 
 export class AxiosClient {
     private readonly axiosInstance: AxiosInstance;
@@ -10,49 +10,33 @@ export class AxiosClient {
     constructor() {
         this.axiosInstance = axios.create({
             baseURL: ApiEndpoints.baseUrl,
-            timeout: 10000,
             headers: { 'Content-Type': 'application/json' },
         });
 
         this.axiosInstance.interceptors.request.use(
             async (config: InternalAxiosRequestConfig) => {
+                const token = store.getState().auth.token;
                 console.log('🔍 Interceptor running for:', config.url);
                 
-                // ✅ Get token from Redux Persist storage
-                try {
-                    const persistedState = await AsyncStorage.getItem('persist:root');
-                    console.log('🔍 Persisted state exists:', !!persistedState);
-                    
-                    if (persistedState) {
-                        const parsedState = JSON.parse(persistedState);
-                        console.log('🔍 Parsed state keys:', Object.keys(parsedState));
-                        
-                        if (parsedState.auth) {
-                            const authState = JSON.parse(parsedState.auth);
-                            console.log('🔍 Auth state:', authState);
-                            const token = authState.token;
-                            
-                            if (token) {
-                                config.headers.Authorization = `Bearer ${token}`;
-                                console.log('🔑 Token attached to request');
-                                console.log('🔑 Token preview:', token.substring(0, 50) + '...');
-                            } else {
-                                console.warn('⚠️ No token found in auth state');
-                            }
-                        } else {
-                            console.warn('⚠️ No auth key in persisted state');
-                        }
-                    } else {
-                        console.warn('⚠️ No persisted state found in AsyncStorage');
-                    }
-                } catch (error) {
-                    console.error('❌ Failed to get token:', error);
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                    console.log('🔑 Token attached to request');
+                    console.log('🔑 Token preview:', token.substring(0, 50) + '...');
+                } else {
+                    console.warn('⚠️ No token found in auth state');
+                }
+                
+                if (config.data instanceof FormData) {
+                    delete config.headers['Content-Type'];
+                    console.log('📤 Request contains FormData - Content-Type will be set automatically');
                 }
                 
                 AppLogger.getInstance().info(`➡️ [${config.method?.toUpperCase()}] ${config.url}`);
-                if (config.data) {
+                
+                if (config.data && !(config.data instanceof FormData)) {
                     console.log(`📤 Request Body:`, JSON.stringify(config.data, null, 2));
                 }
+                
                 console.log('📤 Request Headers:', JSON.stringify(config.headers, null, 2));
                 return config;
             },

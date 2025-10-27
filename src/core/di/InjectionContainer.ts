@@ -35,6 +35,13 @@ import { BookingRemoteDataSourceImpl } from '../../data/datasources/implementati
 import { CreateBookingUseCase } from '../../domain/usecases/booking/CreateBookingUseCase';
 import { GetCurrentRenterBookingsUseCase } from '../../domain/usecases/booking/GetCurrentRenterBookingsUseCase'; // ✅ NEW
 
+// ✅ Receipt imports
+import { ReceiptRepository } from '../../domain/repositories/receipt/ReceiptRepository';
+import { ReceiptRepositoryImpl } from '../../data/repositories/receipt/ReceiptRepositoryImpl';
+import { ReceiptRemoteDataSource } from '../../data/datasources/interfaces/remote/receipt/ReceiptRemoteDataSource';
+import { ReceiptRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/receipt/ReceiptRemoteDataSourceImpl';
+import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/CreateHandoverReceiptUseCase';
+
 import { AxiosClient } from "../network/AxiosClient";
 
 /**
@@ -89,6 +96,16 @@ class ServiceLocator {
     // ✅ NEW - Register GetCurrentRenterBookingsUseCase
     const getCurrentRenterBookingsUseCase = new GetCurrentRenterBookingsUseCase(bookingRepository);
     this.services.set("GetCurrentRenterBookingsUseCase", getCurrentRenterBookingsUseCase);
+
+    // ✅ Register Receipt services
+    const receiptRemoteDataSource = new ReceiptRemoteDataSourceImpl(axiosClient);
+    this.services.set("ReceiptRemoteDataSource", receiptRemoteDataSource);
+
+    const receiptRepository = new ReceiptRepositoryImpl(receiptRemoteDataSource);
+    this.services.set("ReceiptRepository", receiptRepository);
+
+    const createHandoverReceiptUseCase = new CreateHandoverReceiptUseCase(receiptRepository);
+    this.services.set("CreateHandoverReceiptUseCase", createHandoverReceiptUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -130,6 +147,14 @@ class ServiceLocator {
   // ✅ NEW
   getCurrentRenterBookingsUseCase(): GetCurrentRenterBookingsUseCase {
     return this.get<GetCurrentRenterBookingsUseCase>('GetCurrentRenterBookingsUseCase');
+  }
+
+  getReceiptRepository(): ReceiptRepository {
+    return this.get<ReceiptRepository>('ReceiptRepository');
+  }
+
+  getCreateHandoverReceiptUseCase(): CreateHandoverReceiptUseCase {
+    return this.get<CreateHandoverReceiptUseCase>('CreateHandoverReceiptUseCase');
   }
 
   getAxiosClient(): AxiosClient {

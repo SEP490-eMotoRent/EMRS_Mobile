@@ -98,13 +98,13 @@ export type StaffStackParamList = {
   ScanFace: undefined;
   ScanResult: undefined;
   CustomerRentals: undefined;
-  SelectVehicle: undefined;
-  VehicleInspection: undefined;
+  SelectVehicle: { bookingId: string };
+  VehicleInspection: { bookingId: string, currentOdometerKm: number, batteryHealthPercentage: number };
   HandoverReport: undefined;
   AwaitingApproval: { status?: 'pending' | 'approved' | 'denied' } | undefined;
   HandoverDocument: undefined;
   HandoverComplete: undefined;
-  BookingDetails: undefined;
+  BookingDetails: { bookingId: string };
   Charging: undefined;
   Profile: undefined;
   VehicleConfirmation: undefined;

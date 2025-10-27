@@ -76,19 +76,22 @@ export const CustomerRentalsScreen: React.FC = () => {
 
   const handleSelectVehicle = (booking: Booking) => {
     console.log("Select booking:", booking.id);
-    navigation.navigate("SelectVehicle", undefined);
+    navigation.navigate("SelectVehicle", { bookingId: booking.id });
   };
 
   const handleViewDetails = (booking: Booking) => {
     console.log("View details:", booking.id);
-    navigation.navigate("BookingDetails", undefined);
+    navigation.navigate("BookingDetails", { bookingId: booking.id });
   };
 
   const renderBookingCard = (booking: Booking) => {
     const hasVehicle = booking.vehicle && booking.vehicle.id;
-    
+
     return (
-      <View key={booking.id} style={[styles.rentalCard, !hasVehicle && styles.pendingCard]}>
+      <View
+        key={booking.id}
+        style={[styles.rentalCard, !hasVehicle && styles.pendingCard]}
+      >
         {/* Status Badge */}
         {!hasVehicle && (
           <View style={styles.statusBadge}>
@@ -99,7 +102,11 @@ export const CustomerRentalsScreen: React.FC = () => {
 
         {/* Time and Date Section */}
         <View style={styles.timeSection}>
-          <AntDesign name="clock-circle" size={16} color={colors.text.primary} />
+          <AntDesign
+            name="clock-circle"
+            size={16}
+            color={colors.text.primary}
+          />
           <Text style={styles.timeText}>
             {formatTime(booking.startDatetime?.toString() || "")} -{" "}
             {formatTime(booking.endDatetime?.toString() || "")}
@@ -133,7 +140,8 @@ export const CustomerRentalsScreen: React.FC = () => {
               />
               <View style={styles.vehicleInfo}>
                 <Text style={styles.vehicleName}>
-                  {booking.vehicle?.vehicleModel?.modelName || "Unknown Vehicle"}
+                  {booking.vehicle?.vehicleModel?.modelName ||
+                    "Unknown Vehicle"}
                 </Text>
                 <Text style={styles.rentalDuration}>
                   {calculateRentalDuration(
@@ -169,21 +177,13 @@ export const CustomerRentalsScreen: React.FC = () => {
             </View>
             <View style={styles.specsGrid}>
               <View style={styles.specCard}>
-                <AntDesign
-                  name="thunderbolt"
-                  size={16}
-                  color="#4CAF50"
-                />
+                <AntDesign name="thunderbolt" size={16} color="#4CAF50" />
                 <Text style={styles.specText}>
                   {booking.vehicle?.batteryHealthPercentage} %
                 </Text>
               </View>
               <View style={styles.specCard}>
-                <AntDesign
-                  name="dashboard"
-                  size={16}
-                  color="#2196F3"
-                />
+                <AntDesign name="dashboard" size={16} color="#2196F3" />
                 <Text style={styles.specText}>
                   {booking.vehicle?.currentOdometerKm} km
                 </Text>
@@ -207,10 +207,18 @@ export const CustomerRentalsScreen: React.FC = () => {
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={[styles.selectButton, !hasVehicle && styles.selectButtonPending]}
+            style={[
+              styles.selectButton,
+              !hasVehicle && styles.selectButtonPending,
+            ]}
             onPress={() => handleSelectVehicle(booking)}
           >
-            <Text style={[styles.buttonText, !hasVehicle && styles.buttonTextPending]}>
+            <Text
+              style={[
+                styles.buttonText,
+                !hasVehicle && styles.buttonTextPending,
+              ]}
+            >
               {hasVehicle ? "Change Vehicle" : "Select Vehicle"}
             </Text>
           </TouchableOpacity>
@@ -258,8 +266,7 @@ export const CustomerRentalsScreen: React.FC = () => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               List Rental of{" "}
-              {bookings?.[0]?.renter?.account?.fullname ??
-                "Customer"}
+              {bookings?.[0]?.renter?.account?.fullname ?? "Customer"}
             </Text>
             <View style={styles.countBadge}>
               <Text style={styles.countText}>{bookings?.length ?? 0}</Text>
