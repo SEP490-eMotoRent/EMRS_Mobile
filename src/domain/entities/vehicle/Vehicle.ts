@@ -1,6 +1,4 @@
 import { BaseEntity, CreateEntityInput, UpdateEntityInput } from '../shared/BaseEntity';
-
-// ✅ DIRECT IMPORTS
 import { VehicleModel } from "./VehicleModel";
 import { Booking } from "../booking/Booking";
 import { MaintenanceSchedule } from "../maintenance/MaintenanceSchedule";
@@ -14,7 +12,6 @@ export class Vehicle implements BaseEntity {
     public deletedAt: Date | null;
     public isDeleted: boolean;
 
-    // C# FIELDS - EXACT MATCH
     public licensePlate: string;
     public color: string;
     public yearOfManufacture?: Date;
@@ -28,9 +25,10 @@ export class Vehicle implements BaseEntity {
     public description: string;
     public branchId: string;
     public vehicleModelId: string;
-    public rentalPricing: number;
+    // ✅ REMOVED: rentalPricing property (doesn't exist in backend)
+    // Backend doesn't have this field, rental pricing is on VehicleModel -> RentalPricing
 
-    // ✅ 5 RELATIONS ADDED (LINE 22-26)
+    // ✅ 5 RELATIONS (matching backend exactly)
     public branch: Branch;
     public vehicleModel: VehicleModel;
     public bookings: Booking[] = [];
@@ -47,8 +45,7 @@ export class Vehicle implements BaseEntity {
         description: string,
         branchId: string,
         vehicleModelId: string,
-        rentalPricing: number,
-        // ✅ RELATIONS PARAMS (LINE 36-40)
+        // ✅ RELATIONS PARAMS (matching backend)
         branch: Branch,
         vehicleModel: VehicleModel,
         bookings: Booking[] = [],
@@ -70,7 +67,6 @@ export class Vehicle implements BaseEntity {
         this.deletedAt = deletedAt;
         this.isDeleted = isDeleted;
 
-        // Required fields
         this.licensePlate = licensePlate;
         this.color = color;
         this.currentOdometerKm = currentOdometerKm;
@@ -79,7 +75,7 @@ export class Vehicle implements BaseEntity {
         this.description = description;
         this.branchId = branchId;
         this.vehicleModelId = vehicleModelId;
-        this.rentalPricing = rentalPricing;
+        
         // Optional fields
         this.yearOfManufacture = yearOfManufacture;
         this.lastMaintenanceDate = lastMaintenanceDate;
@@ -87,7 +83,7 @@ export class Vehicle implements BaseEntity {
         this.fileUrl = fileUrl;
         this.purchaseDate = purchaseDate;
 
-        // ✅ RELATIONS ASSIGNED (LINE 64-68)
+        // Relations
         this.branch = branch;
         this.vehicleModel = vehicleModel;
         this.bookings = bookings;
@@ -108,7 +104,6 @@ export class Vehicle implements BaseEntity {
         this.updatedAt = new Date();
     }
 
-    // ✅ NEW BUSINESS METHODS
     modelName(): string {
         return this.vehicleModel.modelName;
     }
@@ -119,6 +114,11 @@ export class Vehicle implements BaseEntity {
 
     totalBookings(): number {
         return this.bookings.length;
+    }
+
+    // ✅ NEW: Access rental pricing through VehicleModel
+    dailyRentalPrice(): number {
+        return this.vehicleModel.dailyRentalPrice();
     }
 
     delete(): void {

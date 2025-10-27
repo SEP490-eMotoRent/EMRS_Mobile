@@ -1,6 +1,7 @@
 import { BaseEntity, CreateEntityInput, UpdateEntityInput } from "../shared/BaseEntity";
 import { Renter } from "../account/Renter";
 import { Vehicle } from "../vehicle/Vehicle";
+import { VehicleModel } from "../vehicle/VehicleModel"; // ✅ NEW IMPORT
 import { InsurancePackage } from "../insurance/InsurancePackage";
 import { RentalContract } from "./RentalContract";
 import { RentalReceipt } from "./RentalReceipt";
@@ -36,15 +37,19 @@ export class Booking implements BaseEntity {
     public totalAmount: number;
     public refundAmount: number;
     public bookingStatus: string;
+    
+    // ✅ UPDATED: VehicleModelId is now REQUIRED, VehicleId is OPTIONAL
+    public vehicleModelId: string;
     public renterId: string;
-    public vehicleId: string;
+    public vehicleId?: string; // ✅ Changed to optional
     public insurancePackageId?: string;
     public handoverBranchId?: string;
     public returnBranchId?: string;
 
-    // ✅ 11 RELATIONS
+    // ✅ 12 RELATIONS (added VehicleModel)
     public renter: Renter;
-    public vehicle: Vehicle;
+    public vehicleModel: VehicleModel; // ✅ NEW REQUIRED RELATION
+    public vehicle?: Vehicle; // ✅ Changed to optional
     public handoverBranch?: Branch;
     public returnBranch?: Branch;
     public insurancePackage?: InsurancePackage;
@@ -73,19 +78,21 @@ export class Booking implements BaseEntity {
         totalAmount: number,
         refundAmount: number,
         bookingStatus: string,
+        vehicleModelId: string, // ✅ NEW REQUIRED PARAM
         renterId: string,
-        vehicleId: string,
-        renter: Renter,                    // ✅ ADDED
-        vehicle: Vehicle,                  // ✅ ADDED
+        renter: Renter,
+        vehicleModel: VehicleModel, // ✅ NEW REQUIRED RELATION
+        vehicleId?: string, // ✅ Changed to optional
+        vehicle?: Vehicle, // ✅ Changed to optional
         startDatetime?: Date,
         endDatetime?: Date,
         actualReturnDatetime?: Date,
         insurancePackageId?: string,
-        insurancePackage?: InsurancePackage, // ✅ ADDED
+        insurancePackage?: InsurancePackage,
         handoverBranchId?: string,
-        handoverBranch?: Branch,           // ✅ ADDED
+        handoverBranch?: Branch,
         returnBranchId?: string,
-        returnBranch?: Branch,             // ✅ ADDED
+        returnBranch?: Branch,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
@@ -114,10 +121,11 @@ export class Booking implements BaseEntity {
         this.totalAmount = totalAmount;
         this.refundAmount = refundAmount;
         this.bookingStatus = bookingStatus;
+        this.vehicleModelId = vehicleModelId; // ✅ NEW
         this.renterId = renterId;
-        this.vehicleId = vehicleId;
 
         // Optional fields
+        this.vehicleId = vehicleId; // ✅ Now optional
         this.startDatetime = startDatetime;
         this.endDatetime = endDatetime;
         this.actualReturnDatetime = actualReturnDatetime;
@@ -127,7 +135,8 @@ export class Booking implements BaseEntity {
 
         // ✅ RELATIONS ASSIGNED
         this.renter = renter;
-        this.vehicle = vehicle;
+        this.vehicleModel = vehicleModel; // ✅ NEW
+        this.vehicle = vehicle; // ✅ Now optional
         this.insurancePackage = insurancePackage;
         this.handoverBranch = handoverBranch;
         this.returnBranch = returnBranch;
@@ -139,6 +148,11 @@ export class Booking implements BaseEntity {
     isActive(): boolean { return this.bookingStatus === 'Active'; }
     totalAdditionalFees(): number { return this.additionalFees.reduce((sum, f) => sum + f.amount, 0); }
     totalCharging(): number { return this.chargingRecords.reduce((sum, c) => sum + c.fee, 0); }
+    
+    // ✅ NEW BUSINESS METHOD
+    modelName(): string {
+        return this.vehicleModel.modelName;
+    }
 
     delete(): void {
         this.updatedAt = new Date();

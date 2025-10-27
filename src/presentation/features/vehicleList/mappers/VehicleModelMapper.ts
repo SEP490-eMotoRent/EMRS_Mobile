@@ -15,11 +15,21 @@ export class VehicleModelMapper {
 
         const dailyPrice = rentalPricing?.rentalPrice ?? 0;
 
-        const imageUrl = this.generatePlaceholderImage(modelName, "black");
+        // ✅ Use actual image from API if available, otherwise placeholder
+        const imageUrl = (model as any).imageUrl?.trim() 
+            ? (model as any).imageUrl 
+            : this.generatePlaceholderImage(modelName, "black");
 
-        // Hide 0 values
-        const range = maxRangeKm > 0 ? `${maxRangeKm} Km` : "";
-        const battery = batteryCapacityKwh > 0 ? `${batteryCapacityKwh} kWh` : "";
+        // ✅ Show values even if 0
+        const range = `${maxRangeKm} Km`;
+        const battery = `${batteryCapacityKwh} kWh`;
+
+        // ✅ Get color from availableColors array
+        const availableColors = (model as any).availableColors || [];
+        const firstColor = availableColors.length > 0 
+            ? availableColors[0].colorName 
+            : "Blue";
+        const colorHex = this.getColorHex(firstColor);
 
         const features = ["GPS Tracking", "Smart Lock", "USB Charging"];
 
@@ -28,16 +38,16 @@ export class VehicleModelMapper {
             name: modelName,
             brand: this.extractBrand(modelName),
             variant: category,
-            image: imageUrl,
+            image: imageUrl, // ✅ Real image URL
             price: dailyPrice,
             distance,
-            range,
-            battery,
+            range, // ✅ Always shows, even if 0
+            battery, // ✅ Always shows, even if 0
             seats: 2,
             features,
             deliveryAvailable: true,
             branchName: "Available at multiple locations",
-            color: "#4169E1", // default blue
+            color: colorHex, // ✅ Actual color from API
         };
     }
 
@@ -59,17 +69,17 @@ export class VehicleModelMapper {
 
     private static getColorHex(name: string): string {
         const map: Record<string, string> = {
-        black: "#1a1a1a",
-        white: "#ffffff",
-        red: "#FF4444",
-        blue: "#4169E1",
-        yellow: "#FFD700",
-        green: "#28a745",
-        silver: "#C0C0C0",
-        gray: "#808080",
-        grey: "#808080",
+            black: "#1a1a1a",
+            white: "#ffffff",
+            red: "#FF4444",
+            blue: "#4169E1",
+            yellow: "#FFD700",
+            green: "#28a745",
+            silver: "#C0C0C0",
+            gray: "#808080",
+            grey: "#808080",
         };
-        return map[name.toLowerCase()] ?? "#1a1a1a";
+        return map[name.toLowerCase()] ?? "#4169E1"; // Default to blue
     }
 
     private static isLightColor(hex: string): boolean {
@@ -79,9 +89,5 @@ export class VehicleModelMapper {
         const b = rgb & 0xff;
         const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
         return luma > 128;
-    }
-
-    private static uuidToNumber(uuid: string): number {
-        return parseInt(uuid.substring(0, 8), 16);
     }
 }
