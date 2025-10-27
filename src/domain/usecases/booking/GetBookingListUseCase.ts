@@ -1,4 +1,4 @@
-import { PaginatedBooking } from "../../entities/booking/PaginatedBooking";
+import { PaginatedBooking } from "../../../data/models/booking/PaginatedBooking";
 import { BookingRepository } from "../../repositories/booking/BookingRepository";
 
 export class GetBookingListUseCase {

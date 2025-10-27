@@ -1,19 +1,21 @@
-import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import {
   ApiResponse,
   unwrapResponse,
 } from "../../../../../core/network/APIResponse";
+import { AxiosClient } from "../../../../../core/network/AxiosClient";
+import { 
+  BookingResponse, 
+} from "../../../../models/booking/BookingResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
-import { BookingResponse } from "../../../../models/booking/BookingResponse";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
+import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
 import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/BookingRemoteDataSource";
 
 export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
 
   async create(request: CreateBookingRequest): Promise<BookingResponse> {
-    // ✅ Log the request being sent
     console.log(
       "🚀 Sending booking request to API:",
       JSON.stringify(request, null, 2)
@@ -31,12 +33,12 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     return unwrapResponse(response.data);
   }
 
-  async getById(id: string): Promise<BookingResponse | null> {
+  async getById(id: string): Promise<BookingForStaffResponse | null> {
     try {
       const endpoint = ApiEndpoints.booking.detail(id);
-      const response = await this.axiosClient.get<ApiResponse<BookingResponse>>(
-        endpoint
-      );
+      const response = await this.axiosClient.get<
+        ApiResponse<BookingForStaffResponse>
+      >(endpoint);
       return unwrapResponse(response.data);
     } catch (error: any) {
       if (error.response?.status === 404) return null;
@@ -45,11 +47,11 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async getByRenter(renterId: string): Promise<BookingResponse[]> {
+  async getByRenter(renterId: string): Promise<BookingForStaffResponse[]> {
     try {
       const endpoint = ApiEndpoints.booking.byRenter(renterId);
       const response = await this.axiosClient.get<
-        ApiResponse<BookingResponse[]>
+        ApiResponse<BookingForStaffResponse[]>
       >(endpoint);
       return unwrapResponse(response.data);
     } catch (error: any) {
@@ -58,10 +60,10 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async getCurrentRenterBookings(): Promise<BookingResponse[]> {
+  async getCurrentRenterBookings(): Promise<BookingForStaffResponse[]> {
     try {
       const response = await this.axiosClient.get<
-        ApiResponse<BookingResponse[]>
+        ApiResponse<BookingForStaffResponse[]>
       >(ApiEndpoints.booking.byCurrentRenter);
       return unwrapResponse(response.data);
     } catch (error: any) {
@@ -81,11 +83,13 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       const response = await this.axiosClient.get<
         ApiResponse<PaginatedBookingResponse>
       >(ApiEndpoints.booking.list, {
-        vehicleModelId,
-        renterId,
-        bookingStatus,
-        pageNum,
-        pageSize,
+        params: {
+          vehicleModelId,
+          renterId,
+          bookingStatus,
+          pageNum,
+          pageSize,
+        },
       });
       return unwrapResponse(response.data);
     } catch (error: any) {

@@ -1,9 +1,9 @@
-import { Booking } from "./Booking";
+import { Booking } from "../../../domain/entities/booking/Booking";
 
 export interface PaginatedBooking {
   currentPage: number;
   pageSize: number;
   totalItems: number;
   totalPages: number;
-  items: Booking[];
+  items: Booking[]; // Domain entities
 }

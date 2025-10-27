@@ -1,32 +1,38 @@
 import { Booking } from "../../../domain/entities/booking/Booking";
-import { PaginatedBooking } from "../../../domain/entities/booking/PaginatedBooking";
-import { Renter } from "../../../domain/entities/account/Renter";
-import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
-import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
-import { Branch } from "../../../domain/entities/operations/Branch";
-import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
-import { Account } from "../../../domain/entities/account/Account";
-import { Membership } from "../../../domain/entities/financial/Membership";
 import { BookingRepository } from "../../../domain/repositories/booking/BookingRepository";
 import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/booking/BookingRemoteDataSource";
 import { CreateBookingRequest } from "../../models/booking/CreateBookingRequest";
+import { PaginatedBooking } from "../../models/booking/PaginatedBooking";
+import { 
+  BookingForStaffResponse,
+  RenterBookingResponse,
+  VehicleBookingResponse,
+  VehicleModelBookingResponse
+} from "../../models/booking/staffResponse/BookingResponseForStaff";
+import { Renter } from "../../../domain/entities/account/Renter";
+import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
+import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
+import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
+import { Branch } from "../../../domain/entities/operations/Branch";
 import { BookingResponse } from "../../models/booking/BookingResponse";
+import { PaginatedBookingResponse } from "../../models/booking/PaginatedBookingResponse";
 
 export class BookingRepositoryImpl implements BookingRepository {
   constructor(private remote: BookingRemoteDataSource) {}
 
+  // =========================================================================
+  // CREATE
+  // =========================================================================
   async create(booking: Booking): Promise<Booking> {
     const request: CreateBookingRequest = {
-      startDatetime:
-        booking.startDatetime?.toISOString() || new Date().toISOString(),
-      endDatetime:
-        booking.endDatetime?.toISOString() || new Date().toISOString(),
+      startDatetime: booking.startDatetime?.toISOString(),
+      endDatetime: booking.endDatetime?.toISOString(),
       baseRentalFee: booking.baseRentalFee,
       depositAmount: booking.depositAmount,
       rentalDays: booking.rentalDays,
       rentalHours: booking.rentalHours,
       rentingRate: booking.rentingRate,
-      vehicleModelId: booking.vehicleId,
+      vehicleModelId: booking.vehicleModelId,
       averageRentalPrice: booking.averageRentalPrice,
       totalRentalFee: booking.totalRentalFee,
     };
@@ -35,6 +41,9 @@ export class BookingRepositoryImpl implements BookingRepository {
     return this.mapToEntity(response);
   }
 
+  // =========================================================================
+  // READ
+  // =========================================================================
   async getById(id: string): Promise<Booking | null> {
     const response = await this.remote.getById(id);
     return response ? this.mapToEntity(response) : null;
@@ -42,12 +51,12 @@ export class BookingRepositoryImpl implements BookingRepository {
 
   async getByRenter(renterId: string): Promise<Booking[]> {
     const responses = await this.remote.getByRenter(renterId);
-    return responses.map((r) => this.mapToEntity(r));
+    return responses.map(r => this.mapToEntity(r));
   }
 
   async getCurrentRenterBookings(): Promise<Booking[]> {
     const responses = await this.remote.getCurrentRenterBookings();
-    return responses.map((r) => this.mapToEntity(r));
+    return responses.map(r => this.mapToEntity(r));
   }
 
   async getBookings(
@@ -57,7 +66,7 @@ export class BookingRepositoryImpl implements BookingRepository {
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBooking> {
-    const response = await this.remote.getBookings(
+    const paginatedResponse: PaginatedBookingResponse = await this.remote.getBookings(
       vehicleModelId,
       renterId,
       bookingStatus,
@@ -65,171 +74,249 @@ export class BookingRepositoryImpl implements BookingRepository {
       pageSize
     );
 
+    const items = paginatedResponse.items.map(item => {
+      if (this.isStaffResponse(item)) {
+        return this.mapStaffResponseToEntity(item);
+      }
+      return this.mapSimpleResponseToEntity(item);
+    });
+
     return {
-      currentPage: response.currentPage,
-      pageSize: response.pageSize,
-      totalItems: response.totalItems,
-      totalPages: response.totalPages,
-      items: response.items.map((item) => this.mapToEntity(item)),
+      currentPage: paginatedResponse.currentPage,
+      pageSize: paginatedResponse.pageSize,
+      totalItems: paginatedResponse.totalItems,
+      totalPages: paginatedResponse.totalPages,
+      items,
     };
   }
 
-  private mapToEntity(dto: BookingResponse): Booking {
-    const mockAccount = new Account(
-      dto.renter?.account?.id || "unknown",
-      dto.renter?.account?.username || "",
-      "",
-      dto.renter?.account?.role || "RENTER",
-      dto.renter?.account?.fullname || "",
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    );
+  // =========================================================================
+  // TYPE GUARD
+  // =========================================================================
+  private isStaffResponse(item: any): item is BookingForStaffResponse {
+    return 'renter' in item && 'vehicle' in item;
+  }
 
-    const mockMembership = new Membership(
-      "mock-membership-id",
-      "Basic",
-      0,
-      0,
-      0,
-      "",
-      [],
-      new Date(),
-      null,
-      null,
-      false
-    );
+  // =========================================================================
+  // MAP SIMPLE RESPONSE (BookingResponse - only IDs)
+  // =========================================================================
+  private mapSimpleResponseToEntity(dto: BookingResponse): Booking {
+    const mockRenter = this.createMockRenter(dto.renterId);
+    const mockVehicleModel = this.createMockVehicleModel(dto.vehicleModelId);
+    const mockVehicle = dto.vehicleId 
+      ? this.createMockVehicle(dto.vehicleId, dto.vehicleModelId)
+      : undefined;
 
-    const mockRenter = new Renter(
-      dto.renter?.id || "unknown",
-      dto.renter?.email || "",
-      dto.renter?.phone || "",
-      dto.renter?.address || "",
-      "",
-      "",
-      "",
-      mockAccount,
-      mockMembership,
-      false,
-      "",
-      undefined,
-      undefined
-    );
-
-    const mockRentalPricing = new RentalPricing(
-      "mock-pricing-id",
-      0,
-      0,
-      [],
-      new Date(),
-      null,
-      null,
-      false
-    );
-
-    const mockVehicleModel = new VehicleModel(
-      dto.vehicle?.vehicleModel?.id || "unknown",
-      dto.vehicle?.vehicleModel?.modelName || "",
-      dto.vehicle?.vehicleModel?.category || "",
-      dto.vehicle?.vehicleModel?.batteryCapacityKwh || 0,
-      dto.vehicle?.vehicleModel?.maxRangeKm || 0,
-      dto.vehicle?.vehicleModel?.maxSpeedKmh || 0,
-      "",
-      "",
-      mockRentalPricing,
-      new Date(),
-      null,
-      null,
-      false
-    );
-
-    const mockBranch = new Branch(
-      "mock-branch-id",
-      "",
-      "",
-      "",
-      "",
-      "",
-      0,
-      0,
-      "09:00",
-      "18:00",
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      new Date(),
-      null,
-      null,
-      false
-    );
-
-    const mockVehicle = new Vehicle(
-      dto.vehicle?.id || undefined,
-      dto.vehicle?.licensePlate || "",
-      dto.vehicle?.color || "",
-      dto.vehicle?.currentOdometerKm || 0,
-      dto.vehicle?.batteryHealthPercentage || 0,
-      dto.vehicle?.status || "",
-      "",
-      "",
-      "",
-      mockBranch,
-      mockVehicleModel,
-      [],
-      [],
-      [],
-      undefined,
-      undefined,
-      undefined,
-      dto.vehicle?.fileUrl,
-      undefined,
-      new Date(),
-      null,
-      null,
-      false
-    );
-
-    // ✅ FIXED: Use dto.id instead of dto.bookingId
     return new Booking(
-      dto.id, // ✅ CHANGED FROM dto.bookingId
+      dto.id,
       dto.baseRentalFee,
       dto.depositAmount,
       dto.rentalDays,
       dto.rentalHours,
       dto.rentingRate,
-      0,
+      dto.lateReturnFee || 0,
       dto.averageRentalPrice,
-      0,
-      0,
-      0,
-      0,
-      0,
+      0, // excessKmFee
+      0, // cleaningFee
+      0, // crossBranchFee
+      0, // totalChargingFee
+      0, // totalAdditionalFee
       dto.totalRentalFee,
       dto.totalAmount,
-      0,
+      0, // refundAmount
       dto.bookingStatus,
-      dto.renter?.id || "unknown",
-      dto.vehicle?.id || "unknown",
-      mockRenter,
-      mockVehicle,
-      new Date(dto.startDatetime),
-      new Date(dto.endDatetime),
-      undefined,
-      dto.insurancePackageId,
-      undefined,
-      dto.handoverBranchId,
-      undefined,
-      dto.returnBranchId,
-      undefined,
-      new Date(dto.createdAt),
+      dto.vehicleModelId,     // REQUIRED
+      dto.renterId,           // REQUIRED
+      mockRenter,             // REQUIRED
+      mockVehicleModel,       // REQUIRED
+      dto.vehicleId,          // optional
+      mockVehicle,            // optional
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      undefined, // insurancePackageId
+      undefined, // insurancePackage
+      undefined, // handoverBranchId
+      undefined, // handoverBranch
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      new Date(),
       null,
       null,
       false
     );
+  }
+
+  // =========================================================================
+  // MAP STAFF RESPONSE (BookingForStaffResponse - nested)
+  // =========================================================================
+  private mapStaffResponseToEntity(dto: BookingForStaffResponse): Booking {
+    const renter = this.mapRenterFromStaffResponse(dto.renter);
+    const vehicle = this.mapVehicleFromStaffResponse(dto.vehicle);
+    const vehicleModel = vehicle.vehicleModel;
+
+    return new Booking(
+      dto.id,
+      dto.baseRentalFee,
+      dto.depositAmount,
+      dto.rentalDays,
+      dto.rentalHours,
+      dto.rentingRate,
+      dto.lateReturnFee || 0,
+      dto.averageRentalPrice,
+      0, // excessKmFee
+      0, // cleaningFee
+      0, // crossBranchFee
+      0, // totalChargingFee
+      0, // totalAdditionalFee
+      dto.totalRentalFee,
+      dto.totalAmount,
+      0, // refundAmount
+      dto.bookingStatus,
+      dto.vehicle.vehicleModel.id, // vehicleModelId
+      dto.renter.id,               // renterId
+      renter,                      // REQUIRED
+      vehicleModel,                // REQUIRED
+      dto.vehicle.id,              // vehicleId
+      vehicle,                     // vehicle
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      undefined, // insurancePackageId
+      undefined, // insurancePackage
+      undefined, // handoverBranchId
+      undefined, // handoverBranch
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  // =========================================================================
+  // MAPPERS: Renter (aligned with C# backend)
+  // =========================================================================
+  private mapRenterFromStaffResponse(dto: RenterBookingResponse): Renter {
+    return new Renter(
+      dto.id,
+      dto.email || "",
+      dto.phone || "",
+      dto.address || "",
+      dto.account.id,        // accountId
+      "unknown",             // membershipId (not in DTO)
+      false,
+      "",
+      undefined,
+      undefined,
+      ""
+    );
+  }
+
+  // =========================================================================
+  // MAPPERS: Vehicle
+  // =========================================================================
+  private mapVehicleFromStaffResponse(dto: VehicleBookingResponse): Vehicle {
+    const vehicleModel = new VehicleModel(
+      dto.vehicleModel.id,
+      dto.vehicleModel.modelName,
+      dto.vehicleModel.category,
+      dto.vehicleModel.batteryCapacityKwh,
+      dto.vehicleModel.maxRangeKm,
+      dto.vehicleModel.maxSpeedKmh,
+      "",
+      "unknown",
+      this.createMockRentalPricing(dto.rentalPricing),
+      new Date()
+    );
+
+    const mockBranch = this.createMockBranch();
+
+    return new Vehicle(
+      dto.id,
+      dto.licensePlate,
+      dto.color,
+      dto.currentOdometerKm,
+      dto.batteryHealthPercentage,
+      dto.status,
+      "",
+      "unknown",
+      dto.vehicleModel.id,
+      mockBranch,
+      vehicleModel,
+      [],
+      [],
+      [],
+      undefined,
+      undefined,
+      dto.nextMaintenanceDue ? new Date(dto.nextMaintenanceDue) : undefined,
+      dto.fileUrl,
+      undefined,
+      new Date()
+    );
+  }
+
+  // =========================================================================
+  // MOCK HELPERS (only for simple responses)
+  // =========================================================================
+  private createMockRenter(id: string): Renter {
+    return new Renter(
+      id,
+      "unknown@email.com",
+      "",
+      "",
+      id,           // accountId
+      "mock-membership",
+      false,
+      ""
+    );
+  }
+
+  private createMockVehicleModel(id: string): VehicleModel {
+    return new VehicleModel(
+      id,
+      "Unknown Model",
+      "Unknown",
+      0, 0, 0, "", "", this.createMockRentalPricing(0), new Date()
+    );
+  }
+
+  private createMockVehicle(vehicleId: string, vehicleModelId: string): Vehicle {
+    const mockBranch = this.createMockBranch();
+    const mockVehicleModel = this.createMockVehicleModel(vehicleModelId);
+
+    return new Vehicle(
+      vehicleId,
+      "UNKNOWN",
+      "Unknown",
+      0,
+      100,
+      "Available",
+      "",
+      "unknown",
+      vehicleModelId,
+      mockBranch,
+      mockVehicleModel,
+      [], [], [], undefined, undefined, undefined, undefined, undefined, new Date()
+    );
+  }
+
+  private createMockRentalPricing(price: number): RentalPricing {
+    return { id: "mock", rentalPrice: price, createdAt: new Date() } as RentalPricing;
+  }
+
+  private createMockBranch(): Branch {
+    return { id: "mock", branchName: "Unknown", createdAt: new Date() } as Branch;
+  }
+
+  // =========================================================================
+  // UNIFIED MAPPER
+  // =========================================================================
+  private mapToEntity(dto: BookingResponse | BookingForStaffResponse): Booking {
+    if (this.isStaffResponse(dto)) {
+      return this.mapStaffResponseToEntity(dto);
+    }
+    return this.mapSimpleResponseToEntity(dto);
   }
 }
