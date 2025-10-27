@@ -3,12 +3,13 @@ import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { CreateHandoverReceiptRequest } from "../../../../models/receipt/CreateHandoverReceiptRequest";
+import { HandoverReceiptResponse } from "../../../../models/receipt/HandoverReceiptResponse";
 import { ReceiptRemoteDataSource } from "../../../interfaces/remote/receipt/ReceiptRemoteDataSource";
 
 export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
     constructor(private axiosClient: AxiosClient) {}
 
-    async createHandoverReceipt(request: CreateHandoverReceiptRequest): Promise<ApiResponse<void>> {
+    async createHandoverReceipt(request: CreateHandoverReceiptRequest): Promise<ApiResponse<HandoverReceiptResponse>> {
         try {
             const formData = new FormData();
 
@@ -26,12 +27,12 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
             // Add checklist file
             formData.append("CheckListFile", request.checkListFile);
 
-            const response = await this.axiosClient.post<void>(ApiEndpoints.receipt.create, formData);
+            const response = await this.axiosClient.post<ApiResponse<HandoverReceiptResponse>>(ApiEndpoints.receipt.create, formData);
             
             return {
                 success: true,
                 message: "Handover receipt created successfully",
-                data: undefined,
+                data: response.data.data,
                 code: response.status,
             };
         } catch (error: any) {

@@ -1,3 +1,5 @@
+import { ApiResponse } from "../../../core/network/APIResponse";
+import { HandoverReceiptResponse } from "../../../data/models/receipt/HandoverReceiptResponse";
 import { ReceiptRepository } from "../../repositories/receipt/ReceiptRepository";
 
 export interface CreateHandoverReceiptUseCaseInput {
@@ -12,7 +14,7 @@ export interface CreateHandoverReceiptUseCaseInput {
 export class CreateHandoverReceiptUseCase {
     constructor(private receiptRepo: ReceiptRepository) {}
     
-    async execute(input: CreateHandoverReceiptUseCaseInput): Promise<void> {
-        await this.receiptRepo.createHandoverReceipt(input);
+    async execute(input: CreateHandoverReceiptUseCaseInput): Promise<ApiResponse<HandoverReceiptResponse>> {
+        return await this.receiptRepo.createHandoverReceipt(input);
     }
 }

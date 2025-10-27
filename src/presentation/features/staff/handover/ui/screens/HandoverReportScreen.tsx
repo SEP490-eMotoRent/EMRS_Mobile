@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
@@ -22,8 +22,24 @@ type HandoverReportNav = StackNavigationProp<
   "HandoverReport"
 >;
 
+type HandoverReportRouteProp = RouteProp<
+  StaffStackParamList,
+  "HandoverReport"
+>;
+
 export const HandoverReportScreen: React.FC = () => {
   const navigation = useNavigation<HandoverReportNav>();
+  const route = useRoute<HandoverReportRouteProp>();
+  const { 
+    receiptId,
+    notes,
+    startOdometerKm,
+    startBatteryPercentage,
+    bookingId,
+    vehicleFiles,
+    checkListFile
+  } = route.params || {};
+  console.log("Receipt data:", route.params);
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -64,23 +80,25 @@ export const HandoverReportScreen: React.FC = () => {
 
         {/* Vehicle Specifications */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Vehicle Specifications</Text>
+          <Text style={styles.cardHeader}>Inspection Details</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Motorbike Type</Text>
-            <Text style={styles.infoValue}>VinFast Evo200</Text>
+            <Text style={styles.infoLabel}>Booking ID</Text>
+            <Text style={styles.infoValue}>{bookingId || "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Battery</Text>
-            <Text style={styles.infoValue}>92% • 180km range</Text>
+            <Text style={styles.infoLabel}>Battery Level</Text>
+            <Text style={styles.infoValue}>{startBatteryPercentage || 0}%</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Odometer</Text>
-            <Text style={styles.infoValue}>2,487 km</Text>
+            <Text style={styles.infoLabel}>Odometer Reading</Text>
+            <Text style={styles.infoValue}>{startOdometerKm || 0} km</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Number plate</Text>
-            <Text style={styles.infoValue}>59X1-12345</Text>
-          </View>
+          {notes && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Notes</Text>
+              <Text style={styles.infoValue}>{notes}</Text>
+            </View>
+          )}
         </View>
 
         {/* Inspection Results */}
@@ -111,25 +129,57 @@ export const HandoverReportScreen: React.FC = () => {
         </View>
 
         {/* Photo Gallery */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeader}>Photo Gallery</Text>
-          <View style={styles.galleryRow}>
-            {["Front", "Back"].map((t, i) => (
-              <View key={i} style={styles.galleryItem}>
-                <Image source={vehicleImg} style={styles.galleryImage} />
-                <Text style={styles.galleryLabel}>{t}</Text>
+        {vehicleFiles && vehicleFiles.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Photo Gallery</Text>
+            <View style={styles.galleryRow}>
+              {vehicleFiles.slice(0, 2).map((imageUrl, index) => {
+                const labels = ["Front", "Back"];
+                return (
+                  <View key={index} style={styles.galleryItem}>
+                    <Image 
+                      source={{ uri: imageUrl }} 
+                      style={styles.galleryImage}
+                      resizeMode="cover"
+                    />
+                    <Text style={styles.galleryLabel}>{labels[index]}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            {vehicleFiles.length > 2 && (
+              <View style={styles.galleryRow}>
+                {vehicleFiles.slice(2, 4).map((imageUrl, index) => {
+                  const labels = ["Left", "Right"];
+                  return (
+                    <View key={index + 2} style={styles.galleryItem}>
+                      <Image 
+                        source={{ uri: imageUrl }} 
+                        style={styles.galleryImage}
+                        resizeMode="cover"
+                      />
+                      <Text style={styles.galleryLabel}>{labels[index]}</Text>
+                    </View>
+                  );
+                })}
               </View>
-            ))}
-          </View>
-          <View style={styles.galleryRow}>
-            {["Left", "Right"].map((t, i) => (
-              <View key={i} style={styles.galleryItem}>
-                <Image source={vehicleImg} style={styles.galleryImage} />
-                <Text style={styles.galleryLabel}>{t}</Text>
+            )}
+            
+            {/* Checklist File */}
+            {checkListFile && (
+              <View style={styles.galleryRow}>
+                <View style={[styles.galleryItem, { width: "100%" }]}>
+                  <Image 
+                    source={{ uri: checkListFile }} 
+                    style={styles.galleryImage}
+                    resizeMode="cover"
+                  />
+                  <Text style={styles.galleryLabel}>Checklist</Text>
+                </View>
               </View>
-            ))}
+            )}
           </View>
-        </View>
+        )}
 
         {/* Report Verification */}
         <View style={styles.card}>
@@ -151,7 +201,7 @@ export const HandoverReportScreen: React.FC = () => {
             </View>
             <View style={styles.metaBox}>
               <Text style={styles.metaLabel}>Report ID</Text>
-              <Text style={styles.metaValue}>REP-15-240915-001</Text>
+              <Text style={styles.metaValue}>{receiptId || "N/A"}</Text>
             </View>
           </View>
         </View>

@@ -1,7 +1,9 @@
-import { CreateHandoverReceiptRequest } from "../../models/receipt/CreateHandoverReceiptRequest";
-import { ApiResponse } from "../../../../core/network/APIResponse";
+import { ApiResponse } from "../../../../../core/network/APIResponse";
+import { CreateHandoverReceiptRequest } from "../../../../models/receipt/CreateHandoverReceiptRequest";
+import { HandoverReceiptResponse } from "../../../../models/receipt/HandoverReceiptResponse";
+
 
 export interface ReceiptRemoteDataSource {
-    createHandoverReceipt(request: CreateHandoverReceiptRequest): Promise<ApiResponse<void>>;
+    createHandoverReceipt(request: CreateHandoverReceiptRequest): Promise<ApiResponse<HandoverReceiptResponse>>;
 }
 

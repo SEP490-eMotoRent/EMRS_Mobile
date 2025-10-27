@@ -1,12 +1,14 @@
+import { ApiResponse } from "../../../core/network/APIResponse";
 import { ReceiptRepository } from "../../../domain/repositories/receipt/ReceiptRepository";
 import { CreateHandoverReceiptUseCaseInput } from "../../../domain/usecases/receipt/CreateHandoverReceiptUseCase";
 import { ReceiptRemoteDataSource } from "../../datasources/interfaces/remote/receipt/ReceiptRemoteDataSource";
 import { CreateHandoverReceiptRequest } from "../../models/receipt/CreateHandoverReceiptRequest";
+import { HandoverReceiptResponse } from "../../models/receipt/HandoverReceiptResponse";
 
 export class ReceiptRepositoryImpl implements ReceiptRepository {
     constructor(private remote: ReceiptRemoteDataSource) {}
 
-    async createHandoverReceipt(input: CreateHandoverReceiptUseCaseInput): Promise<void> {
+    async createHandoverReceipt(input: CreateHandoverReceiptUseCaseInput): Promise<ApiResponse<HandoverReceiptResponse> > {
         const request: CreateHandoverReceiptRequest = {
             notes: input.notes,
             startOdometerKm: input.startOdometerKm,
@@ -24,7 +26,7 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
             } as any,
         };
 
-        await this.remote.createHandoverReceipt(request);
+        return await this.remote.createHandoverReceipt(request);
     }
 }
 

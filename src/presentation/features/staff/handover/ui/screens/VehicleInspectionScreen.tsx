@@ -21,6 +21,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { CreateHandoverReceiptUseCase } from "../../../../../../domain/usecases/receipt/CreateHandoverReceiptUseCase";
 import { useAppSelector } from "../../../../authentication/store/hooks";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import { HandoverReceiptResponse } from "../../../../../../data/models/receipt/HandoverReceiptResponse";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -357,7 +359,7 @@ export const VehicleInspectionScreen: React.FC = () => {
         "CreateHandoverReceiptUseCase"
       );
 
-      await createHandoverReceiptUseCase.execute({
+      const response = await createHandoverReceiptUseCase.execute({
         notes: notes,
         startOdometerKm: parseInt(startOdometerKm),
         startBatteryPercentage: parseInt(startBatteryPercentage),
@@ -371,8 +373,20 @@ export const VehicleInspectionScreen: React.FC = () => {
         checkListFile: checklistUri,
       });
 
+      const receiptData: HandoverReceiptResponse = unwrapResponse(response);
+
+      console.log("receiptData", receiptData);
       Alert.alert("Thành công", "Kiểm tra đã được hoàn thành");
-      navigation.navigate("HandoverReport");
+      
+      navigation.navigate("HandoverReport", {
+        receiptId: receiptData.id,
+        notes: receiptData.notes,
+        startOdometerKm: receiptData.startOdometerKm,
+        startBatteryPercentage: receiptData.startBatteryPercentage,
+        bookingId: receiptData.bookingId,
+        vehicleFiles: receiptData.vehicleFiles,
+        checkListFile: receiptData.checkListFile,
+      });
     } catch (error) {
       console.error("Error submitting inspection:", error);
       Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
