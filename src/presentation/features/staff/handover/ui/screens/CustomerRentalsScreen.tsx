@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  RefreshControl,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import sl from "../../../../../../core/di/InjectionContainer";
@@ -235,7 +236,7 @@ export const CustomerRentalsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.scrollContent}>
         <ScreenHeader
           title="Customer Rentals"
           subtitle={
@@ -251,41 +252,47 @@ export const CustomerRentalsScreen: React.FC = () => {
           onBack={() => navigation.goBack()}
         />
 
-        <View style={styles.header}>
-          <View style={styles.branchRow}>
-            <Text style={styles.branchText}>
-              {bookings?.[0]?.vehicle?.branch?.branchName ||
-                "Loading Branch..."}
-            </Text>
-            <AntDesign name="down" size={12} color={colors.text.primary} />
-          </View>
-        </View>
-
-        {/* Rental List Section */}
-        <View style={styles.rentalSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              List Rental of{" "}
-              {bookings?.[0]?.renter?.account?.fullname ?? "Customer"}
-            </Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{bookings?.length ?? 0}</Text>
+        <ScrollView
+          refreshControl={
+            <RefreshControl colors={["white"]} refreshing={loading} onRefresh={fetchBookings} />
+          }
+        >
+          <View style={styles.header}>
+            <View style={styles.branchRow}>
+              <Text style={styles.branchText}>
+                {bookings?.[0]?.vehicle?.branch?.branchName ||
+                  "Loading Branch..."}
+              </Text>
+              <AntDesign name="down" size={12} color={colors.text.primary} />
             </View>
           </View>
 
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading bookings...</Text>
+          {/* Rental List Section */}
+          <View style={styles.rentalSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                List Rental of{" "}
+                {bookings?.[0]?.renter?.account?.fullname ?? "Customer"}
+              </Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{bookings?.length ?? 0}</Text>
+              </View>
             </View>
-          ) : bookings && bookings.length > 0 ? (
-            bookings.map(renderBookingCard)
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No bookings found</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Loading bookings...</Text>
+              </View>
+            ) : bookings && bookings.length > 0 ? (
+              bookings.map(renderBookingCard)
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No bookings found</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };

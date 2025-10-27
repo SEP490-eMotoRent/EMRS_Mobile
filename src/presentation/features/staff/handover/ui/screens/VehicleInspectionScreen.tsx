@@ -104,6 +104,7 @@ export const VehicleInspectionScreen: React.FC = () => {
   const [notes, setNotes] = useState("");
   const [startOdometerKm, setStartOdometerKm] = useState(currentOdometerKm?.toString() || "");
   const [startBatteryPercentage, setStartBatteryPercentage] = useState(batteryHealthPercentage?.toString() || "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const checklistRef = useRef<View>(null);
   
   const ensurePermissions = async () => {
@@ -280,20 +281,28 @@ export const VehicleInspectionScreen: React.FC = () => {
   };
 
   const handleCompleteInspection = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
     try {
+      setIsSubmitting(true);
+      
       // Validate required fields
       if (!startOdometerKm || !startBatteryPercentage) {
         Alert.alert("Lỗi", "Vui lòng nhập số km và % pin bắt đầu");
+        setIsSubmitting(false);
         return;
       }
 
       if (getPhotosCount() < 4) {
         Alert.alert("Lỗi", "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)");
+        setIsSubmitting(false);
         return;
       }
 
       if (getCompletedCount() < getTotalCount() * 0.8) {
         Alert.alert("Lỗi", "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra");
+        setIsSubmitting(false);
         return;
       }
 
@@ -390,6 +399,8 @@ export const VehicleInspectionScreen: React.FC = () => {
     } catch (error) {
       console.error("Error submitting inspection:", error);
       Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -650,16 +661,21 @@ export const VehicleInspectionScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.primaryCta,
-            !isReadyForHandover() && styles.primaryCtaDisabled
+            (!isReadyForHandover() || isSubmitting) && styles.primaryCtaDisabled
           ]}
           onPress={handleCompleteInspection}
-          disabled={!isReadyForHandover()}
+          disabled={!isReadyForHandover() || isSubmitting}
         >
           <Text style={[
             styles.primaryCtaText,
-            !isReadyForHandover() && styles.primaryCtaTextDisabled
+            (!isReadyForHandover() || isSubmitting) && styles.primaryCtaTextDisabled
           ]}>
-            {isReadyForHandover() ? "Hoàn thành kiểm tra" : "Chưa sẵn sàng"}
+            {isSubmitting 
+              ? "Đang gửi..." 
+              : isReadyForHandover() 
+                ? "Hoàn thành kiểm tra" 
+                : "Chưa sẵn sàng"
+            }
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tertiaryCta}>

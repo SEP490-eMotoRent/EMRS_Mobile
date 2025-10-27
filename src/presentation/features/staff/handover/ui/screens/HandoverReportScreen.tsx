@@ -14,8 +14,7 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const vehicleImg = require("../../../../../../../assets/images/motor.png");
+import { useAppSelector } from "../../../../authentication/store/hooks";
 
 type HandoverReportNav = StackNavigationProp<
   StaffStackParamList,
@@ -28,6 +27,7 @@ type HandoverReportRouteProp = RouteProp<
 >;
 
 export const HandoverReportScreen: React.FC = () => {
+  const user = useAppSelector((state) => state.auth.user);
   const navigation = useNavigation<HandoverReportNav>();
   const route = useRoute<HandoverReportRouteProp>();
   const { 
@@ -39,7 +39,6 @@ export const HandoverReportScreen: React.FC = () => {
     vehicleFiles,
     checkListFile
   } = route.params || {};
-  console.log("Receipt data:", route.params);
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -102,7 +101,7 @@ export const HandoverReportScreen: React.FC = () => {
         </View>
 
         {/* Inspection Results */}
-        <View style={styles.card}>
+        {/* <View style={styles.card}>
           <Text style={styles.cardHeader}>Inspection Results</Text>
           {[
             ["Body & Paint", "No issues"],
@@ -126,7 +125,7 @@ export const HandoverReportScreen: React.FC = () => {
               </View>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* Photo Gallery */}
         {vehicleFiles && vehicleFiles.length > 0 && (
@@ -171,7 +170,7 @@ export const HandoverReportScreen: React.FC = () => {
                 <View style={[styles.galleryItem, { width: "100%" }]}>
                   <Image 
                     source={{ uri: checkListFile }} 
-                    style={styles.galleryImage}
+                    style={styles.checklistImage}
                     resizeMode="cover"
                   />
                   <Text style={styles.galleryLabel}>Checklist</Text>
@@ -187,7 +186,7 @@ export const HandoverReportScreen: React.FC = () => {
           <View style={styles.metaRow}>
             <View style={styles.metaBox}>
               <Text style={styles.metaLabel}>Staff member</Text>
-              <Text style={styles.metaValue}>Minh Pham</Text>
+              <Text style={styles.metaValue}>{user?.fullName}</Text>
             </View>
             <View style={styles.metaBox}>
               <Text style={styles.metaLabel}>Inspection time</Text>
@@ -197,7 +196,7 @@ export const HandoverReportScreen: React.FC = () => {
           <View style={styles.metaRow}>
             <View style={styles.metaBox}>
               <Text style={styles.metaLabel}>Location</Text>
-              <Text style={styles.metaValue}>District 2 Branch</Text>
+              <Text style={styles.metaValue}>{user?.branchName} Branch</Text>
             </View>
             <View style={styles.metaBox}>
               <Text style={styles.metaLabel}>Report ID</Text>
@@ -312,7 +311,13 @@ const styles = StyleSheet.create({
   },
   galleryImage: {
     width: "100%",
-    height: 80,
+    height: 120,
+    resizeMode: "cover",
+    borderRadius: 8,
+  },
+  checklistImage: {
+    width: "100%",
+    height: 1200,
     resizeMode: "cover",
     borderRadius: 8,
   },
