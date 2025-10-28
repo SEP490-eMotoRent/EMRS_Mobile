@@ -6,21 +6,29 @@ interface ButtonProps {
     children: React.ReactNode;
     style?: ViewStyle | ViewStyle[];
     variant?: 'primary' | 'secondary' | 'ghost';
+    disabled?: boolean; // ADD THIS
 }
 
 export const Button: React.FC<ButtonProps> = ({
     onPress,
     children,
     style,
-    variant = 'primary'
-    }) => {
+    variant = 'primary',
+    disabled = false
+}) => {
     return (
         <TouchableOpacity
-        style={[styles.button, styles[variant], style]}
-        onPress={onPress}
-        activeOpacity={0.7}
+            style={[
+                styles.button,
+                styles[variant],
+                style,
+                disabled && styles.disabled // ADD disabled style
+            ]}
+            onPress={disabled ? undefined : onPress} // BLOCK onPress
+            activeOpacity={0.7}
+            disabled={disabled} // NATIVE disabled support
         >
-        {children}
+            {children}
         </TouchableOpacity>
     );
 };
@@ -40,5 +48,8 @@ const styles = StyleSheet.create({
     },
     ghost: {
         backgroundColor: 'transparent',
+    },
+    disabled: {
+        opacity: 0.5, // VISUAL feedback
     },
 });
