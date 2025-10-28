@@ -12,7 +12,6 @@ import {
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
 import { ColorBadge } from "../atoms/badges/ColorBadge";
-import { DeliveryBadge } from "../atoms/badges/DeliveryBadges";
 import { FeatureBadge } from "../atoms/badges/FeatureBadge";
 import { PriceText } from "../atoms/texts/PriceTexts";
 import { MotorcycleHeader } from "../molecules/MotorcycleHeader";
@@ -32,16 +31,15 @@ export interface Motorcycle {
     battery: string;
     seats: number;
     features: string[];
-    deliveryAvailable: boolean;
     branchName: string;
     color: string;
-    }
+}
 
-    interface Props {
+interface Props {
     motorcycle: Motorcycle;
-    }
+}
 
-    export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
+export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
     const navigation = useNavigation<NavProp>();
 
     const handlePress = () => {
@@ -50,65 +48,68 @@ export interface Motorcycle {
 
     const hasImage = motorcycle.image && motorcycle.image.trim() !== "";
 
+    // Filter features to only show Support Charging and GPS Tracking
+    const validFeatures = motorcycle.features.filter(f => 
+        f === "Support Charging" || f === "GPS Tracking"
+    );
+
     return (
         <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.85}>
-        {/* Top Row */}
-        <View style={styles.topRow}>
-            <Text style={styles.distance}>
-            {motorcycle.distance.toFixed(2)} Miles From Address
-            </Text>
-            {motorcycle.deliveryAvailable && <DeliveryBadge />}
-        </View>
+            {/* Distance Badge */}
+            <View style={styles.topRow}>
+                <Text style={styles.distance}>
+                    {motorcycle.distance.toFixed(2)} Miles Away
+                </Text>
+            </View>
 
-        {/* Image */}
-        <View style={styles.imageContainer}>
-            {hasImage ? (
-            <Image source={{ uri: motorcycle.image }} style={styles.image} />
-            ) : (
-            <ImageBackground
-                style={styles.image}
-                source={{ uri: motorcycle.image }}
-            >
-                <View style={styles.placeholderOverlay}>
-                <Text style={styles.placeholderText}>{motorcycle.name}</Text>
+            {/* Image */}
+            <View style={styles.imageContainer}>
+                {hasImage ? (
+                    <Image source={{ uri: motorcycle.image }} style={styles.image} />
+                ) : (
+                    <ImageBackground style={styles.image} source={{ uri: motorcycle.image }}>
+                        <View style={styles.placeholderOverlay}>
+                            <Text style={styles.placeholderText}>{motorcycle.name}</Text>
+                        </View>
+                    </ImageBackground>
+                )}
+                <View style={styles.colorBadgeContainer}>
+                    <ColorBadge color={motorcycle.color} />
                 </View>
-            </ImageBackground>
-            )}
-            <View style={styles.colorBadgeContainer}>
-            <ColorBadge color={motorcycle.color} />
-            </View>
-        </View>
-
-        {/* Info */}
-        <View style={styles.infoSection}>
-            <View style={styles.headerRow}>
-            <MotorcycleHeader
-                brand={motorcycle.brand}
-                name={motorcycle.name}
-                variant={motorcycle.variant}
-                branchName={motorcycle.branchName}
-            />
-            <PriceText price={motorcycle.price} total={motorcycle.price * 3} />
             </View>
 
-            {/* Specs Grid */}
-            <View style={styles.specsGrid}>
-                {motorcycle.range && <SpecItem icon="⚡" label={motorcycle.range} />}
-                {motorcycle.battery && <SpecItem icon="🔋" label={motorcycle.battery} />}
-            </View>
+            {/* Info */}
+            <View style={styles.infoSection}>
+                <View style={styles.headerRow}>
+                    <MotorcycleHeader
+                        brand={motorcycle.brand}
+                        name={motorcycle.name}
+                        variant={motorcycle.variant}
+                        branchName={motorcycle.branchName}
+                    />
+                    <PriceText price={motorcycle.price} total={motorcycle.price * 3} />
+                </View>
 
-            {/* Features */}
-            <View style={styles.featuresRow}>
-            {motorcycle.features.slice(0, 3).map((f, i) => (
-                <FeatureBadge key={i} label={f} />
-            ))}
+                {/* Specs Row */}
+                <View style={styles.specsRow}>
+                    <SpecItem icon="⚡" label={motorcycle.range} iconColor="#10b981" />
+                    <SpecItem icon="🔋" label={motorcycle.battery} iconColor="#3b82f6" />
+                </View>
+
+                {/* Features */}
+                {validFeatures.length > 0 && (
+                    <View style={styles.featuresRow}>
+                        {validFeatures.map((f, i) => (
+                            <FeatureBadge key={i} label={f} />
+                        ))}
+                    </View>
+                )}
             </View>
-        </View>
         </TouchableOpacity>
     );
-    };
+};
 
-    const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     card: {
         backgroundColor: "#1a1a1a",
         borderRadius: 20,
@@ -122,20 +123,18 @@ export interface Motorcycle {
         shadowRadius: 6,
     },
     topRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
         paddingHorizontal: 16,
         paddingTop: 12,
         paddingBottom: 6,
     },
     distance: {
-        color: "#bbb",
-        fontSize: 13,
+        color: "#9ca3af",
+        fontSize: 12,
         fontWeight: "500",
     },
     imageContainer: {
         margin: 16,
+        marginTop: 8,
         height: 140,
         borderRadius: 16,
         overflow: "hidden",
@@ -170,11 +169,10 @@ export interface Motorcycle {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        marginBottom: 10,
+        marginBottom: 12,
     },
-    specsGrid: {
+    specsRow: {
         flexDirection: "row",
-        flexWrap: "wrap",
         gap: 8,
         marginBottom: 12,
     },

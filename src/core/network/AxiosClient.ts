@@ -1,4 +1,9 @@
-import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios, {
+    AxiosInstance,
+    AxiosResponse,
+    InternalAxiosRequestConfig,
+    AxiosRequestConfig,
+} from 'axios';
 import { ApiEndpoints } from '../network/APIEndpoint';
 import { ServerException } from '../errors/ServerException';
 import { AppLogger } from '../utils/Logger';
@@ -9,151 +14,114 @@ export class AxiosClient {
 
     constructor() {
         this.axiosInstance = axios.create({
-            baseURL: ApiEndpoints.baseUrl,
-            headers: { 'Content-Type': 'application/json' },
+        baseURL: ApiEndpoints.baseUrl,
+        headers: { 'Content-Type': 'application/json' },
         });
 
+        /* ------------------- REQUEST INTERCEPTOR ------------------- */
         this.axiosInstance.interceptors.request.use(
-            async (config: InternalAxiosRequestConfig) => {
-                const token = store.getState().auth.token;
-                console.log('🔍 Interceptor running for:', config.url);
-                
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                    console.log('🔑 Token attached to request');
-                    console.log('🔑 Token preview:', token.substring(0, 50) + '...');
-                } else {
-                    console.warn('⚠️ No token found in auth state');
-                }
-                
-                if (config.data instanceof FormData) {
-                    delete config.headers['Content-Type'];
-                    console.log('📤 Request contains FormData - Content-Type will be set automatically');
-                }
-                
-                AppLogger.getInstance().info(`➡️ [${config.method?.toUpperCase()}] ${config.url}`);
-                
-                if (config.data && !(config.data instanceof FormData)) {
-                    console.log(`📤 Request Body:`, JSON.stringify(config.data, null, 2));
-                }
-                
-                console.log('📤 Request Headers:', JSON.stringify(config.headers, null, 2));
-                return config;
-            },
-            error => {
-                AppLogger.getInstance().error(`❌ Request Error: ${error.message}`);
-                return Promise.reject(error);
+        async (config: InternalAxiosRequestConfig) => {
+            const token = store.getState().auth.token;
+            console.log('Interceptor running for:', config.url);
+
+            if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+            console.log('Token attached to request');
+            } else {
+            console.warn('No token found in auth state');
             }
+
+            // Let Axios set the multipart boundary automatically
+            if (config.data instanceof FormData) {
+            delete (config.headers as any)['Content-Type'];
+            console.log('Request contains FormData - Content-Type will be set automatically');
+            }
+
+            AppLogger.getInstance().info(`[${config.method?.toUpperCase()}] ${config.url}`);
+
+            if (config.data && !(config.data instanceof FormData)) {
+            console.log(`Request Body:`, JSON.stringify(config.data, null, 2));
+            }
+
+            console.log('Request Headers:', JSON.stringify(config.headers, null, 2));
+            return config;
+        },
+        (error) => {
+            AppLogger.getInstance().error(`Request Error: ${error.message}`);
+            return Promise.reject(error);
+        }
         );
 
+        /* ------------------- RESPONSE INTERCEPTOR ------------------- */
         this.axiosInstance.interceptors.response.use(
-            (response: AxiosResponse) => {
-                AppLogger.getInstance().info(`✅ Response: ${response.status} ${JSON.stringify(response.data)}`);
-                return response;
-            },
-            error => {
-                console.error('❌ =================================');
-                console.error('❌ AXIOS ERROR DETAILS:');
-                console.error('❌ =================================');
-                console.error('❌ Error Message:', error.message);
-                console.error('❌ Error Code:', error.code);
-                
-                if (error.response) {
-                    console.error('❌ Response Status:', error.response.status);
-                    console.error('❌ Response Headers:', JSON.stringify(error.response.headers, null, 2));
-                    console.error('❌ Response Data:', JSON.stringify(error.response.data, null, 2));
-                } else if (error.request) {
-                    console.error('❌ No Response Received');
-                    console.error('❌ Request:', error.request);
-                } else {
-                    console.error('❌ Error Config:', error.config);
-                }
-                console.error('❌ =================================');
-                
-                AppLogger.getInstance().error(`❌ Response Error: ${error.message}`);
-                return Promise.reject(error);
+        (response: AxiosResponse) => {
+            AppLogger.getInstance().info(`Response: ${response.status} ${JSON.stringify(response.data)}`);
+            return response;
+        },
+        (error) => {
+            console.error('AXIOS ERROR DETAILS:');
+            console.error('Error Message:', error.message);
+            if (error.response) {
+            console.error('Status:', error.response.status);
+            console.error('Data:', JSON.stringify(error.response.data, null, 2));
+            } else if (error.request) {
+            console.error('No response received');
             }
+            AppLogger.getInstance().error(`Response Error: ${error.message}`);
+            return Promise.reject(error);
+        }
         );
     }
 
-    async get<T>(path: string, params?: Record<string, any>): Promise<AxiosResponse<T>> {
-        try {
-            return await this.axiosInstance.get<T>(path, { params });
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.message 
-                || error.response?.data?.error
-                || error.message 
-                || 'Unknown error';
-            
-            const serverError = new ServerException(
-                errorMessage,
-                error.response?.status
-            );
-            
-            (serverError as any).responseData = error.response?.data;
-            throw serverError;
-        }
+    /* ------------------- PUBLIC METHODS ------------------- */
+
+    async get<T>(
+        path: string,
+        config?: AxiosRequestConfig
+    ): Promise<AxiosResponse<T>> {
+        return this._handle<T>(this.axiosInstance.get<T>(path, config));
     }
 
-    async post<T>(path: string, data?: any): Promise<AxiosResponse<T>> {
-        try {
-            return await this.axiosInstance.post<T>(path, data);
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.message 
-                || error.response?.data?.error
-                || error.message 
-                || 'Unknown error';
-            
-            const serverError = new ServerException(
-                errorMessage,
-                error.response?.status
-            );
-            
-            (serverError as any).responseData = error.response?.data;
-            throw serverError;
-        }
+    async post<T>(
+        path: string,
+        data?: any,
+        config?: AxiosRequestConfig
+    ): Promise<AxiosResponse<T>> {
+        return this._handle<T>(this.axiosInstance.post<T>(path, data, config));
     }
 
-    async put<T>(path: string, data?: any): Promise<AxiosResponse<T>> {
-        try {
-            return await this.axiosInstance.put<T>(path, data);
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.message 
-                || error.response?.data?.error
-                || error.message 
-                || 'Unknown error';
-            
-            const serverError = new ServerException(
-                errorMessage,
-                error.response?.status
-            );
-            
-            (serverError as any).responseData = error.response?.data;
-            throw serverError;
-        }
+    async put<T>(
+        path: string,
+        data?: any,
+        config?: AxiosRequestConfig
+    ): Promise<AxiosResponse<T>> {
+        return this._handle<T>(this.axiosInstance.put<T>(path, data, config));
     }
 
-    async delete<T>(path: string): Promise<AxiosResponse<T>> {
+    async delete<T>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        return this._handle<T>(this.axiosInstance.delete<T>(path, config));
+    }
+
+    /* ------------------- PRIVATE HELPER ------------------- */
+    private async _handle<T>(promise: Promise<AxiosResponse<T>>): Promise<AxiosResponse<T>> {
         try {
-            return await this.axiosInstance.delete<T>(path);
+        return await promise;
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message 
-                || error.response?.data?.error
-                || error.message 
-                || 'Unknown error';
-            
-            const serverError = new ServerException(
-                errorMessage,
-                error.response?.status
-            );
-            
-            (serverError as any).responseData = error.response?.data;
-            throw serverError;
+        const msg =
+            error.response?.data?.message ??
+            error.response?.data?.error ??
+            error.message ??
+            'Unknown error';
+
+        const serverError = new ServerException(msg, error.response?.status);
+        (serverError as any).responseData = error.response?.data;
+        throw serverError;
         }
     }
-}
+    }
 
-class ServiceLocator {
+    /* ------------------- SERVICE LOCATOR (unchanged) ------------------- */
+    class ServiceLocator {
     private static instance: ServiceLocator;
     private services: Map<string, any> = new Map();
 
@@ -164,7 +132,7 @@ class ServiceLocator {
 
     static getInstance(): ServiceLocator {
         if (!ServiceLocator.instance) {
-            ServiceLocator.instance = new ServiceLocator();
+        ServiceLocator.instance = new ServiceLocator();
         }
         return ServiceLocator.instance;
     }
@@ -172,7 +140,7 @@ class ServiceLocator {
     get<T>(key: string): T {
         const service = this.services.get(key);
         if (!service) {
-            throw new Error(`Service ${key} not found`);
+        throw new Error(`Service ${key} not found`);
         }
         return service as T;
     }

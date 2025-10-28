@@ -43,16 +43,14 @@ export class AccountRepositoryImpl implements AccountRepository {
             model.email,
             model.phone,
             model.address,
-            model.avatarUrl,
-            model.username,           // accountId
-            'default_membership',     // membershipId
-            null as any,              // account (link later)
-            null as any,              // membership (link later)
-            false,                    // isVerified
-            '',                       // verificationCode
+            model.username,
+            'default_membership',
+            false,
+            '',
             model.dateOfBirth,
-            undefined,                // verificationCodeExpiry
-            undefined,                // wallet
+            undefined,
+            model.avatarUrl,
+            undefined,
             new Date(),
             null,
             null,

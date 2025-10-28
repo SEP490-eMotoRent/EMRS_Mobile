@@ -1,10 +1,9 @@
-// presentation/features/vehicleDetails/hooks/useVehicleDetail.ts
 import { useEffect, useState, useRef } from "react";
 import { VehicleModelRemoteDataSource } from "../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
-import { VehicleDetailMapper } from "../mappers/VehicleDetailsMapper";
+import { VehicleDetailMapper, VehicleDetailUI } from "../mappers/VehicleDetailsMapper";
 
 export const useVehicleDetail = (id: string, remote: VehicleModelRemoteDataSource) => {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<VehicleDetailUI | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const abortController = useRef<AbortController | null>(null);
@@ -18,14 +17,44 @@ export const useVehicleDetail = (id: string, remote: VehicleModelRemoteDataSourc
                 setLoading(true);
                 setError(null);
                 
-                const dto = await remote.getDetail(id);
+                // Call both APIs in parallel
+                const [detailDto, listResponse] = await Promise.all([
+                    remote.getDetail(id),
+                    remote.getAll()
+                ]);
                 
-                if (mounted && dto) {
-                    setData(VehicleDetailMapper.toUI(dto));
+                if (!mounted) return;
+
+                if (!detailDto) {
+                    throw new Error("Vehicle not found");
+                }
+
+                // Find matching vehicle from list API
+                const listItem = listResponse.find(
+                    (item) => item.vehicleModelId === id
+                );
+
+                // Create base data from detail API
+                const baseData = VehicleDetailMapper.toUI(detailDto);
+
+                // Merge with list API data if found
+                if (listItem) {
+                    const enhancedData: VehicleDetailUI = {
+                        ...baseData,
+                        imageUrl: listItem.imageUrl || baseData.imageUrl,
+                        pricePerDay: listItem.rentalPrice ?? baseData.pricePerDay,
+                        colors: (listItem.availableColors || []).map(c => 
+                            VehicleDetailMapper.nameToHex(c.colorName)
+                        ),
+                    };
+                    setData(enhancedData);
+                } else {
+                    // If not found in list, just use detail data
+                    setData(baseData);
                 }
             } catch (err: any) {
                 if (mounted) {
-                    setError(err.message || 'Failed to load');
+                    setError(err.message || 'Failed to load vehicle details');
                 }
             } finally {
                 if (mounted) {
@@ -40,7 +69,7 @@ export const useVehicleDetail = (id: string, remote: VehicleModelRemoteDataSourc
             mounted = false;
             abortController.current?.abort();
         };
-    }, [id]); // ✅ Removed 'remote' dependency - it shouldn't change
+    }, [id]);
 
     return { data, loading, error };
 };

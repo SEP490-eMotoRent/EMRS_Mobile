@@ -1,4 +1,5 @@
-import { VehicleModel } from '../../entities/vehicle/VehicleModel';
+import { VehicleModel } from "../../entities/vehicle/VehicleModel";
+import { VehicleModelResponse } from "../../../data/models/vehicle_model/VehicleModelResponse";
 
 export interface VehicleModelRepository {
     create(model: VehicleModel): Promise<void>;
@@ -6,4 +7,5 @@ export interface VehicleModelRepository {
     getAll(): Promise<VehicleModel[]>;
     getDetail(id: string): Promise<VehicleModel | null>;
     update(model: VehicleModel): Promise<void>;
+    getAllRaw(): Promise<VehicleModelResponse[]>;
 }

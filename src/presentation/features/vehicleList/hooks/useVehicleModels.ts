@@ -1,46 +1,45 @@
+// src/presentation/features/vehicleList/hooks/useVehicleModels.ts
 import { useState, useEffect } from 'react';
 import { VehicleModel } from '../../../../domain/entities/vehicle/VehicleModel';
+import { VehicleModelResponse } from '../../../../data/models/vehicle_model/VehicleModelResponse';
 import sl from '../../../../core/di/InjectionContainer';
 import { GetAllVehicleModelsUseCase } from '../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ';
 
 interface UseVehicleModelsResult {
     vehicleModels: VehicleModel[];
+    rawDtos: VehicleModelResponse[];
     loading: boolean;
     error: string | null;
     refetch: () => Promise<void>;
 }
 
-/**
- * Custom React Native Hook for fetching vehicle models from API
- * Replaces useVehicles to fetch from /Vehicle/model/list endpoint
- * 
- * @example
- * const { vehicleModels, loading, error, refetch } = useVehicleModels();
- */
 export function useVehicleModels(): UseVehicleModelsResult {
     const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
+    const [rawDtos, setRawDtos] = useState<VehicleModelResponse[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchVehicleModels = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
-            // Get repository from DI container
-            const vehicleModelRepo = sl.getVehicleModelRepository();
-            
-            // Create and execute use case
-            const useCase = new GetAllVehicleModelsUseCase(vehicleModelRepo);
-            const result = await useCase.execute();
-            
-            setVehicleModels(result);
+        const repo = sl.getVehicleModelRepository();
+        const useCase = new GetAllVehicleModelsUseCase(repo);
+
+        const [models, dtos] = await Promise.all([
+            useCase.execute(),
+            repo.getAllRaw()
+        ]);
+
+        setVehicleModels(models);
+        setRawDtos(dtos);
         } catch (err: any) {
-            const errorMessage = err.message || 'Failed to fetch vehicle models';
-            setError(errorMessage);
-            console.error('❌ Error fetching vehicle models:', err);
+        const errorMessage = err.message || 'Failed to fetch vehicle models';
+        setError(errorMessage);
+        console.error('Error fetching vehicle models:', err);
         } finally {
-            setLoading(false);
+        setLoading(false);
         }
     };
 
@@ -50,6 +49,7 @@ export function useVehicleModels(): UseVehicleModelsResult {
 
     return {
         vehicleModels,
+        rawDtos,
         loading,
         error,
         refetch: fetchVehicleModels

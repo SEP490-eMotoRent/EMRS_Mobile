@@ -20,14 +20,14 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 10,
-        marginBottom: 8,
+        paddingVertical: 6,
     },
     icon: {
         fontSize: 16,
     },
     text: {
         color: "#d1d5db",
-        fontSize: 13,
+        fontSize: 14,
         flex: 1,
     },
 });
