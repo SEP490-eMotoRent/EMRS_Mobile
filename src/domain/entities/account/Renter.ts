@@ -47,6 +47,7 @@ export class Renter implements BaseEntity {
     verificationCodeExpiry?: Date,
     avatarUrl?: string,
     wallet?: Wallet,
+    account?: Account,
     createdAt: Date = new Date(),
     updatedAt: Date | null = null,
     deletedAt: Date | null = null,
@@ -64,7 +65,7 @@ export class Renter implements BaseEntity {
     this.verificationCodeExpiry = verificationCodeExpiry;
     this.avatarUrl = avatarUrl || "";
     this.wallet = wallet;
-
+    this.account = account;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.deletedAt = deletedAt;

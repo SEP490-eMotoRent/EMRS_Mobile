@@ -25,6 +25,7 @@
     "expo": "~54.0.13",
     "expo-image-picker": "^17.0.8",
     "expo-media-library": "~18.2.0",
+    "expo-print": "^15.0.7",
     "expo-sharing": "^14.0.7",
     "expo-status-bar": "~3.0.8",
     "jwt-decode": "^4.0.0",
@@ -39,9 +40,9 @@
     "react-native-screens": "^4.5.0",
     "react-native-svg": "^15.12.1",
     "react-native-vector-icons": "^10.3.0",
+    "react-native-view-shot": "^4.0.3",
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
-    "react-native-view-shot": "^4.0.3",
     "redux-persist": "^6.0.0"
   },
   "private": true,

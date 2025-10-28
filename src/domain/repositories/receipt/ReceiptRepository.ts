@@ -6,4 +6,5 @@ export interface ReceiptRepository {
   createHandoverReceipt(
     input: CreateHandoverReceiptUseCaseInput
   ): Promise<ApiResponse<HandoverReceiptResponse>>;
+  generateContract(bookingId: string): Promise<ApiResponse<string>>;
 }

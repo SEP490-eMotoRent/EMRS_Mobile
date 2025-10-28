@@ -22,6 +22,7 @@ export interface RenterBookingResponse {
     email?: string;
     phone?: string; // ✅ Note: backend has lowercase 'phone'
     address?: string;
+    dateOfBirth?: string;
     account?: AccountBookingResponse; // ✅ Nested
 }
 
@@ -41,7 +42,7 @@ export interface VehicleBookingResponse {
     licensePlate: string;
     nextMaintenanceDue?: Date;
     fileUrl?: string[];
-    rentalPricing: number; // ✅ This is the rental price, not ID
+    rentalPricing?: number; // ✅ This is the rental price, not ID
     vehicleModel?: VehicleModelBookingResponse; // ✅ Nested
 }
 

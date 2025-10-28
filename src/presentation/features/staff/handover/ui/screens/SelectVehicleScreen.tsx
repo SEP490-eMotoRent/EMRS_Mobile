@@ -294,6 +294,7 @@ export const SelectVehicleScreen: React.FC = () => {
                       style={styles.inspectionBtn}
                       onPress={() =>
                         navigation.navigate("VehicleInspection", {
+                          vehicleId: vehicle.id,
                           bookingId: bookingId,
                           currentOdometerKm: vehicle.currentOdometerKm,
                           batteryHealthPercentage:
