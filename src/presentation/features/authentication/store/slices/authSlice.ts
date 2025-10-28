@@ -5,6 +5,8 @@ interface User {
   username?: string;  // ✅ Added
   role: string;
   fullName: string;
+  branchId?: string;
+  branchName?: string;
 }
 
 interface AuthState {

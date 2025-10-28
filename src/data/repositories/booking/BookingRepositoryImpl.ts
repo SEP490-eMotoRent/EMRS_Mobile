@@ -3,11 +3,11 @@ import { BookingRepository } from "../../../domain/repositories/booking/BookingR
 import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/booking/BookingRemoteDataSource";
 import { CreateBookingRequest } from "../../models/booking/CreateBookingRequest";
 import { PaginatedBooking } from "../../models/booking/PaginatedBooking";
-import { 
+import {
   BookingForStaffResponse,
   RenterBookingResponse,
   VehicleBookingResponse,
-  VehicleModelBookingResponse
+  VehicleModelBookingResponse,
 } from "../../models/booking/staffResponse/BookingResponseForStaff";
 import { Renter } from "../../../domain/entities/account/Renter";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
@@ -51,12 +51,12 @@ export class BookingRepositoryImpl implements BookingRepository {
 
   async getByRenter(renterId: string): Promise<Booking[]> {
     const responses = await this.remote.getByRenter(renterId);
-    return responses.map(r => this.mapToEntity(r));
+    return responses.map((r) => this.mapToEntity(r));
   }
 
   async getCurrentRenterBookings(): Promise<Booking[]> {
     const responses = await this.remote.getCurrentRenterBookings();
-    return responses.map(r => this.mapToEntity(r));
+    return responses.map((r) => this.mapToEntity(r));
   }
 
   async getBookings(
@@ -66,15 +66,16 @@ export class BookingRepositoryImpl implements BookingRepository {
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBooking> {
-    const paginatedResponse: PaginatedBookingResponse = await this.remote.getBookings(
-      vehicleModelId,
-      renterId,
-      bookingStatus,
-      pageNum,
-      pageSize
-    );
+    const paginatedResponse: PaginatedBookingResponse =
+      await this.remote.getBookings(
+        vehicleModelId,
+        renterId,
+        bookingStatus,
+        pageNum,
+        pageSize
+      );
 
-    const items = paginatedResponse.items.map(item => {
+    const items = paginatedResponse.items.map((item) => {
       if (this.isStaffResponse(item)) {
         return this.mapStaffResponseToEntity(item);
       }
@@ -94,7 +95,7 @@ export class BookingRepositoryImpl implements BookingRepository {
   // TYPE GUARD
   // =========================================================================
   private isStaffResponse(item: any): item is BookingForStaffResponse {
-    return 'renter' in item && 'vehicle' in item;
+    return "renter" in item && "vehicle" in item;
   }
 
   // =========================================================================
@@ -103,7 +104,7 @@ export class BookingRepositoryImpl implements BookingRepository {
   private mapSimpleResponseToEntity(dto: BookingResponse): Booking {
     const mockRenter = this.createMockRenter(dto.renterId);
     const mockVehicleModel = this.createMockVehicleModel(dto.vehicleModelId);
-    const mockVehicle = dto.vehicleId 
+    const mockVehicle = dto.vehicleId
       ? this.createMockVehicle(dto.vehicleId, dto.vehicleModelId)
       : undefined;
 
@@ -125,12 +126,12 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.totalAmount,
       0, // refundAmount
       dto.bookingStatus,
-      dto.vehicleModelId,     // REQUIRED
-      dto.renterId,           // REQUIRED
-      mockRenter,             // REQUIRED
-      mockVehicleModel,       // REQUIRED
-      dto.vehicleId,          // optional
-      mockVehicle,            // optional
+      dto.vehicleModelId, // REQUIRED
+      dto.renterId, // REQUIRED
+      mockRenter, // REQUIRED
+      mockVehicleModel, // REQUIRED
+      dto.vehicleId, // optional
+      mockVehicle, // optional
       dto.startDatetime ? new Date(dto.startDatetime) : undefined,
       dto.endDatetime ? new Date(dto.endDatetime) : undefined,
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
@@ -152,8 +153,11 @@ export class BookingRepositoryImpl implements BookingRepository {
   // =========================================================================
   private mapStaffResponseToEntity(dto: BookingForStaffResponse): Booking {
     const renter = this.mapRenterFromStaffResponse(dto.renter);
-    const vehicle = this.mapVehicleFromStaffResponse(dto.vehicle);
-    const vehicleModel = vehicle.vehicleModel;
+    const vehicle = dto?.vehicle
+      ? this.mapVehicleFromStaffResponse(dto.vehicle)
+      : undefined;
+
+    const vehicleModel = vehicle?.vehicleModel ?? undefined;
 
     return new Booking(
       dto.id,
@@ -173,12 +177,12 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.totalAmount,
       0, // refundAmount
       dto.bookingStatus,
-      dto.vehicle.vehicleModel.id, // vehicleModelId
-      dto.renter.id,               // renterId
-      renter,                      // REQUIRED
-      vehicleModel,                // REQUIRED
-      dto.vehicle.id,              // vehicleId
-      vehicle,                     // vehicle
+      vehicleModel?.id ?? "unknown-model",
+      dto.renter.id, // renterId
+      renter, // REQUIRED
+      vehicleModel, // REQUIRED
+      vehicle?.id, // vehicleId
+      vehicle, // vehicle
       dto.startDatetime ? new Date(dto.startDatetime) : undefined,
       dto.endDatetime ? new Date(dto.endDatetime) : undefined,
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
@@ -204,8 +208,8 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.email || "",
       dto.phone || "",
       dto.address || "",
-      dto.account.id,        // accountId
-      "unknown",             // membershipId (not in DTO)
+      dto.account.id, // accountId
+      "unknown", // membershipId (not in DTO)
       false,
       "",
       undefined,
@@ -266,7 +270,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       "unknown@email.com",
       "",
       "",
-      id,           // accountId
+      id, // accountId
       "mock-membership",
       false,
       ""
@@ -278,11 +282,20 @@ export class BookingRepositoryImpl implements BookingRepository {
       id,
       "Unknown Model",
       "Unknown",
-      0, 0, 0, "", "", this.createMockRentalPricing(0), new Date()
+      0,
+      0,
+      0,
+      "",
+      "",
+      this.createMockRentalPricing(0),
+      new Date()
     );
   }
 
-  private createMockVehicle(vehicleId: string, vehicleModelId: string): Vehicle {
+  private createMockVehicle(
+    vehicleId: string,
+    vehicleModelId: string
+  ): Vehicle {
     const mockBranch = this.createMockBranch();
     const mockVehicleModel = this.createMockVehicleModel(vehicleModelId);
 
@@ -298,16 +311,32 @@ export class BookingRepositoryImpl implements BookingRepository {
       vehicleModelId,
       mockBranch,
       mockVehicleModel,
-      [], [], [], undefined, undefined, undefined, undefined, undefined, new Date()
+      [],
+      [],
+      [],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new Date()
     );
   }
 
   private createMockRentalPricing(price: number): RentalPricing {
-    return { id: "mock", rentalPrice: price, createdAt: new Date() } as RentalPricing;
+    return {
+      id: "mock",
+      rentalPrice: price,
+      createdAt: new Date(),
+    } as RentalPricing;
   }
 
   private createMockBranch(): Branch {
-    return { id: "mock", branchName: "Unknown", createdAt: new Date() } as Branch;
+    return {
+      id: "mock",
+      branchName: "Unknown",
+      createdAt: new Date(),
+    } as Branch;
   }
 
   // =========================================================================

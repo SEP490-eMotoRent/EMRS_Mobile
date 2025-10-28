@@ -152,7 +152,6 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             model.description,
             branch.id,
             vehicleModel.id,
-            model?.rentalPricing,
             branch,
             vehicleModel,
             [],

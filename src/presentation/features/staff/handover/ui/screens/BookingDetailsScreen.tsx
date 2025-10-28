@@ -12,7 +12,7 @@ import { BackButton } from "../../../../../common/components/atoms/buttons/BackB
 import { SectionHeader } from "../molecules/SectionHeader";
 import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
 import { InfoItem } from "../../../../../common/components/molecules/InfoItem";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
@@ -24,9 +24,15 @@ type BookingDetailsScreenNavigationProp = StackNavigationProp<
   "BookingDetails"
 >;
 
-export const BookingDetailsScreen: React.FC = () => {
-  const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
+type BookingDetailsScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "BookingDetails"
+>;
 
+export const BookingDetailsScreen: React.FC = () => {
+  const route = useRoute<BookingDetailsScreenRouteProp>();
+  const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
+  const { bookingId } = route.params;
   const handleProceedToCheck = () => {
     console.log("Proceed to check car");
   };

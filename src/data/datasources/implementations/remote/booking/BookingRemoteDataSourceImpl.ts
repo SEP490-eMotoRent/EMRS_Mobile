@@ -4,9 +4,7 @@ import {
   unwrapResponse,
 } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
-import { 
-  BookingResponse, 
-} from "../../../../models/booking/BookingResponse";
+import { BookingResponse } from "../../../../models/booking/BookingResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
@@ -80,17 +78,16 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     pageSize: number
   ): Promise<PaginatedBookingResponse> {
     try {
+      const params = {
+        vehicleModelId,
+        renterId,
+        bookingStatus,
+        pageNum,
+        pageSize,
+      };
       const response = await this.axiosClient.get<
         ApiResponse<PaginatedBookingResponse>
-      >(ApiEndpoints.booking.list, {
-        params: {
-          vehicleModelId,
-          renterId,
-          bookingStatus,
-          pageNum,
-          pageSize,
-        },
-      });
+      >(ApiEndpoints.booking.list, params);
       return unwrapResponse(response.data);
     } catch (error: any) {
       console.error("Failed to fetch bookings:", error);

@@ -5,5 +5,7 @@ export interface LoginResponseData {
         username: string;
         role: string;
         fullName: string;
+        branchId?: string;
+        branchName?: string;
     };
 }
