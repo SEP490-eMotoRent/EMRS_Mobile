@@ -15,7 +15,7 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
   async create(request: CreateBookingRequest): Promise<BookingResponse> {
     console.log(
-      "🚀 Sending booking request to API:",
+      "Sending booking request to API:",
       JSON.stringify(request, null, 2)
     );
 
@@ -25,7 +25,7 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     );
 
     console.log(
-      "📥 Booking API response:",
+      "Booking API response:",
       JSON.stringify(response.data, null, 2)
     );
     return unwrapResponse(response.data);
@@ -78,23 +78,23 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     pageSize: number
   ): Promise<PaginatedBookingResponse> {
     try {
-      const params = {
-        vehicleModelId,
-        renterId,
-        bookingStatus,
-        pageNum,
-        pageSize,
-      };
       const response = await this.axiosClient.get<
         ApiResponse<PaginatedBookingResponse>
-      >(ApiEndpoints.booking.list, params);
+      >(ApiEndpoints.booking.list, {
+        params: {
+          vehicleModelId,
+          renterId,
+          bookingStatus,
+          pageNum,
+          pageSize,
+        },
+      });
       return unwrapResponse(response.data);
     } catch (error: any) {
       console.error("Failed to fetch bookings:", error);
-      // Return empty paginated response on error
       return {
         currentPage: 1,
-        pageSize: pageSize,
+        pageSize,
         totalItems: 0,
         totalPages: 0,
         items: [],

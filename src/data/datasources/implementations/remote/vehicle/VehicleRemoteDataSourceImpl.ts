@@ -33,8 +33,7 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
         `${ApiEndpoints.vehicle.list}/${id}`
       );
       return unwrapResponse(response.data);
-    } catch (error) {
-      // If 404, return null instead of throwing
+    } catch {
       return null;
     }
   }
@@ -46,10 +45,10 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
     try {
       const response = await this.axiosClient.get<ApiResponse<VehicleResponse>>(
         `${ApiEndpoints.vehicle.list}/${vehicleId}`,
-        { vehicleModelId }
+        { params: { vehicleModelId } }   // ← fixed
       );
       return unwrapResponse(response.data);
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -67,21 +66,22 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
       const response = await this.axiosClient.get<
         ApiResponse<PaginatedVehicleResponse>
       >(ApiEndpoints.vehicle.paginatedList, {
-        licensePlate,
-        color,
-        currentOdometerKm,
-        batteryHealthPercentage,
-        status,
-        pageSize,
-        pageNum,
+        params: {
+          licensePlate,
+          color,
+          currentOdometerKm,
+          batteryHealthPercentage,
+          status,
+          pageSize,
+          pageNum,
+        },
       });
       return unwrapResponse(response.data);
     } catch (error: any) {
-      console.error("Failed to fetch bookings:", error);
-      // Return empty paginated response on error
+      console.error("Failed to fetch vehicles:", error);
       return {
         currentPage: 1,
-        pageSize: pageSize,
+        pageSize,
         totalItems: 0,
         totalPages: 0,
         items: [],

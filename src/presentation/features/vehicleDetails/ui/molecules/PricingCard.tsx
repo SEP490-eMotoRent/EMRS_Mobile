@@ -8,7 +8,7 @@ interface PricingCardProps {
 
 export const PricingCard: React.FC<PricingCardProps> = ({ duration, price }) => {
     return (
-        <View style={styles.container}>
+        <View style={styles.card}>
             <Text style={styles.duration}>{duration}</Text>
             <Text style={styles.price}>{price}</Text>
         </View>
@@ -16,18 +16,21 @@ export const PricingCard: React.FC<PricingCardProps> = ({ duration, price }) => 
 };
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: "#1a1a1a",
-        padding: 16,
-        borderRadius: 16,
+    card: {
+        backgroundColor: "#000",
         borderWidth: 1,
         borderColor: "#333",
-        minWidth: 160,
+        borderRadius: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        minWidth: 130,
+        alignItems: "center",
+        gap: 6,
     },
     duration: {
-        color: "#999",
-        fontSize: 13,
-        marginBottom: 6,
+        color: "#9ca3af",
+        fontSize: 12,
+        fontWeight: "500",
     },
     price: {
         color: "#fff",

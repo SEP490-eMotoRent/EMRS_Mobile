@@ -1,58 +1,62 @@
-// src/presentation/features/vehicleList/mappers/VehicleModelMapper.ts
 import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
+import { VehicleModelResponse } from "../../../../data/models/vehicle_model/VehicleModelResponse";
 import { Motorcycle } from "../ui/orgamism/MotorcycleCard";
 
 export class VehicleModelMapper {
-    static toMotorcycle(model: VehicleModel, distance: number = 0): Motorcycle {
+    static toMotorcycle(
+        model: VehicleModel,
+        dto: VehicleModelResponse,
+        distance: number = 0
+    ): Motorcycle {
         const {
             id,
             modelName = "Unnamed Model",
             category = "",
             batteryCapacityKwh = 0,
             maxRangeKm = 0,
-            rentalPricing,
         } = model;
 
-        const dailyPrice = rentalPricing?.rentalPrice ?? 0;
+        const dailyPrice = model.rentalPricing?.rentalPrice ?? 0;
 
-        // ✅ Use actual image from API if available, otherwise placeholder
-        const imageUrl = (model as any).imageUrl?.trim() 
-            ? (model as any).imageUrl 
-            : this.generatePlaceholderImage(modelName, "black");
+        const imageUrl = dto.imageUrl?.trim() || this.generatePlaceholderImage(modelName, "black");
 
-        // ✅ Show values even if 0
-        const range = `${maxRangeKm} Km`;
-        const battery = `${batteryCapacityKwh} kWh`;
+        const range = maxRangeKm > 0 ? `${maxRangeKm} Km` : "N/A";
+        const battery = batteryCapacityKwh > 0 ? `${batteryCapacityKwh} kWh` : "N/A";
 
-        // ✅ Get color from availableColors array
-        const availableColors = (model as any).availableColors || [];
-        const firstColor = availableColors.length > 0 
-            ? availableColors[0].colorName 
-            : "Blue";
+        const availableColors = dto.availableColors || [];
+        const firstColor = availableColors.length > 0 ? availableColors[0].colorName : "Blue";
         const colorHex = this.getColorHex(firstColor);
 
-        const features = ["GPS Tracking", "Smart Lock", "USB Charging"];
+        // Only include Support Charging and GPS Tracking
+        const features: string[] = [];
+        if (batteryCapacityKwh > 0) {
+            features.push("Support Charging");
+        }
+        features.push("GPS Tracking");
 
         return {
-            id: id,
+            id,
             name: modelName,
             brand: this.extractBrand(modelName),
             variant: category,
-            image: imageUrl, // ✅ Real image URL
+            image: imageUrl,
             price: dailyPrice,
             distance,
-            range, // ✅ Always shows, even if 0
-            battery, // ✅ Always shows, even if 0
+            range,
+            battery,
             seats: 2,
             features,
-            deliveryAvailable: true,
             branchName: "Available at multiple locations",
-            color: colorHex, // ✅ Actual color from API
+            color: colorHex,
         };
     }
 
-    static toMotorcycles(models: VehicleModel[], distances: number[] = []): Motorcycle[] {
-        return models.map((m, i) => this.toMotorcycle(m, distances[i] ?? 0));
+    static toMotorcycles(
+        models: VehicleModel[],
+        dtos: VehicleModelResponse[],
+        distances: number[] = []
+    ): Motorcycle[] {
+        return models.map((m, i) => this.toMotorcycle(m, dtos[i], distances[i] ?? 0));
     }
 
     private static extractBrand(name: string): string {
@@ -79,7 +83,7 @@ export class VehicleModelMapper {
             gray: "#808080",
             grey: "#808080",
         };
-        return map[name.toLowerCase()] ?? "#4169E1"; // Default to blue
+        return map[name.toLowerCase()] ?? "#4169E1";
     }
 
     private static isLightColor(hex: string): boolean {

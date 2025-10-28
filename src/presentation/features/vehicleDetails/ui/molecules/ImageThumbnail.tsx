@@ -4,17 +4,13 @@ import { Image, StyleSheet, TouchableOpacity } from "react-native";
 interface ImageThumbnailProps {
     uri: string;
     onPress: () => void;
-    isSelected?: boolean;
+    isSelected: boolean;
 }
 
-export const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ 
-    uri, 
-    onPress, 
-    isSelected = false 
-}) => {
+export const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ uri, onPress, isSelected }) => {
     return (
         <TouchableOpacity 
-            style={[styles.container, isSelected && styles.selected]} 
+            style={[styles.thumbnail, isSelected && styles.selected]} 
             onPress={onPress}
             activeOpacity={0.7}
         >
@@ -24,19 +20,20 @@ export const ImageThumbnail: React.FC<ImageThumbnailProps> = ({
 };
 
 const styles = StyleSheet.create({
-    container: {
-        width: 70,
-        height: 70,
+    thumbnail: {
+        width: 80,
+        height: 80,
         borderRadius: 12,
         overflow: "hidden",
         borderWidth: 2,
         borderColor: "transparent",
     },
     selected: {
-        borderColor: "#a855f7",
+        borderColor: "#a78bfa",
     },
     image: {
         width: "100%",
         height: "100%",
+        resizeMode: "cover",
     },
 });
