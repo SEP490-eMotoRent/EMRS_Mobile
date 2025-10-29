@@ -240,21 +240,11 @@ export const MapScreen: React.FC = () => {
                 {searchedLocation && (
                     <Marker
                         coordinate={searchedLocation}
-                        anchor={{ x: 0.5, y: 0.5 }}
+                        anchor={{ x: 0.5, y: 0.92 }}
                     >
                         <LocationPinMarker />
                     </Marker>
                 )}
-                {/* SEARCHED LOCATION PIN/FLAG */}
-                {searchedLocation && (
-                    <Marker
-                        coordinate={searchedLocation}
-                        anchor={{ x: 0.5, y: 0.75 }}
-                    >
-                        <LocationPinMarker />
-                    </Marker>
-                )}
-
                 {/* Individual branch markers */}
                 {branches.map((branch) => (
                     <Marker

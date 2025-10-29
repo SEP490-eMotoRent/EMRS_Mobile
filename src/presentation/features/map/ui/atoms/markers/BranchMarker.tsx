@@ -16,7 +16,8 @@ export const BranchMarker: React.FC<BranchMarkerProps> = ({ isSelected = false }
                     color={isSelected ? "#1a1a1a" : "#fff"} 
                 />
             </View>
-            <View style={[styles.arrow, isSelected && styles.arrowSelected]} />
+            {/* Pointed tail like LocationPinMarker */}
+            <View style={[styles.pointer, isSelected && styles.pointerSelected]} />
         </View>
     );
 };
@@ -33,25 +34,26 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 1.5,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
         elevation: 3,
     },
     bubbleSelected: {
         backgroundColor: "#b8a4ff",
     },
-    arrow: {
+    pointer: {
+        marginTop: -4, // Overlap for seamless connection
         width: 0,
         height: 0,
-        borderLeftWidth: 6,
-        borderRightWidth: 6,
-        borderTopWidth: 6,
+        borderLeftWidth: 10,
+        borderRightWidth: 10,
+        borderTopWidth: 18, // Nice long pointer
         borderLeftColor: "transparent",
         borderRightColor: "transparent",
         borderTopColor: "#000",
     },
-    arrowSelected: {
+    pointerSelected: {
         borderTopColor: "#b8a4ff",
     },
 });
