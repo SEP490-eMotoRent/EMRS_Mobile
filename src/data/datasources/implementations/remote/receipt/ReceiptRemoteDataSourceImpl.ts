@@ -2,6 +2,7 @@ import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { CreateHandoverReceiptRequest } from "../../../../models/receipt/CreateHandoverReceiptRequest";
+import { GetContractResponse } from "../../../../models/receipt/GetContractResponse";
 import { HandoverReceiptResponse } from "../../../../models/receipt/HandoverReceiptResponse";
 import { ReceiptRemoteDataSource } from "../../../interfaces/remote/receipt/ReceiptRemoteDataSource";
 
@@ -55,6 +56,18 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
       return response.data;
     } catch (error: any) {
       console.error("Error generating contract:", error);
+      throw error;
+    }
+  }
+
+  async getContract(bookingId: string): Promise<ApiResponse<GetContractResponse>> {
+    try {
+      const response = await this.axiosClient.get<ApiResponse<GetContractResponse>>(
+        ApiEndpoints.receipt.getContract(bookingId)
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error getting contract:", error);
       throw error;
     }
   }

@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
+  Modal,
+  TextInput,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import sl from "../../../../../../core/di/InjectionContainer";
@@ -17,6 +19,8 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GetBookingListUseCase } from "../../../../../../domain/usecases/booking/GetBookingListUseCase";
+import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
+import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 
 type CustomerRentalsScreenNavigationProp = StackNavigationProp<
@@ -30,32 +34,72 @@ export const CustomerRentalsScreen: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterVehicleModelId, setFilterVehicleModelId] = useState<string>("");
+  const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
+  const [showModelList, setShowModelList] = useState<boolean>(false);
+  const [shouldRefetch, setShouldRefetch] = useState<boolean>(false);
   useEffect(() => {
-    fetchBookings();
+    fetchBookings(1);
+    fetchVehicleModels();
   }, []);
 
-  const fetchBookings = async () => {
+  useEffect(() => {
+    if (showFilter) {
+      return;
+    }
+    if (shouldRefetch) {
+      fetchBookings(1);
+      setShouldRefetch(false);
+    }
+  }, [shouldRefetch]);
+
+  const fetchVehicleModels = async () => {
+    try {
+      const uc = new GetAllVehicleModelsUseCase(
+        sl.get("VehicleModelRepository")
+      );
+      const res = await uc.execute();
+      setVehicleModels(res);
+    } catch {}
+  };
+
+  const fetchBookings = async (page: number = pageNum) => {
     setLoading(true);
     try {
       const getBookingListUseCase = new GetBookingListUseCase(
         sl.get("BookingRepository")
       );
       const response = await getBookingListUseCase.execute(
-        "",
+        filterVehicleModelId || (undefined as any),
         "019a15be-38b0-7746-b665-f07bca082855",
-        "Booked",
-        pageNum,
+        filterStatus || (undefined as any),
+        page,
         pageSize
       );
 
       // const bookingsData = unwrapResponse(response);
       setBookings(response.items);
+      setPageNum(page);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetFilters = () => {
+    setFilterStatus("");
+    setFilterVehicleModelId("");
+    setShowModelList(false);
+    setShowFilter(false);
+    setShouldRefetch(true);
+  };
+
+  const applyFilters = () => {
+    setShowFilter(false);
+    fetchBookings(1);
   };
 
   const formatTime = (dateString: string) => {
@@ -76,8 +120,12 @@ export const CustomerRentalsScreen: React.FC = () => {
   };
 
   const handleSelectVehicle = (booking: Booking) => {
-    console.log("Select booking:", booking.id);
-    navigation.navigate("SelectVehicle", { bookingId: booking.id });
+    console.log("booking vehicle model", booking.vehicleModel);
+    navigation.navigate("SelectVehicle", {
+      bookingId: booking.id,
+      renterName: booking.renter.account.fullname,
+      vehicleModel: booking.vehicleModel,
+    });
   };
 
   const handleViewDetails = (booking: Booking) => {
@@ -128,7 +176,7 @@ export const CustomerRentalsScreen: React.FC = () => {
           <Text style={styles.customerName}>
             {booking.renter?.account?.fullname || "Unknown Customer"}
           </Text>
-          <Text style={styles.bookingId}>#{booking.id.slice(0, 12)}</Text>
+          <Text style={styles.bookingId}>#{booking.id.slice(-10)}</Text>
         </View>
 
         {/* Vehicle Section */}
@@ -233,7 +281,6 @@ export const CustomerRentalsScreen: React.FC = () => {
       </View>
     );
   };
-  console.log("bookings", bookings[0]?.renter.account?.fullname);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -255,7 +302,11 @@ export const CustomerRentalsScreen: React.FC = () => {
 
         <ScrollView
           refreshControl={
-            <RefreshControl colors={["white"]} refreshing={loading} onRefresh={fetchBookings} />
+            <RefreshControl
+              colors={["white"]}
+              refreshing={loading}
+              onRefresh={fetchBookings}
+            />
           }
         >
           <View style={styles.header}>
@@ -266,6 +317,13 @@ export const CustomerRentalsScreen: React.FC = () => {
               </Text>
               <AntDesign name="down" size={12} color={colors.text.primary} />
             </View>
+            <TouchableOpacity
+              style={styles.filterRow}
+              onPress={() => setShowFilter(true)}
+            >
+              <AntDesign name="filter" size={16} color={colors.text.primary} />
+              <Text style={styles.filterText}>Filter & Sort</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Rental List Section */}
@@ -294,6 +352,127 @@ export const CustomerRentalsScreen: React.FC = () => {
           </View>
         </ScrollView>
       </View>
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilter}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFilter(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filter Rentals</Text>
+              <TouchableOpacity onPress={() => setShowFilter(false)}>
+                <AntDesign name="close" size={18} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Vehicle Model</Text>
+              <View style={styles.selectContainer}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[styles.input, styles.selectLike]}
+                  onPress={() => setShowModelList((p) => !p)}
+                >
+                  <Text style={{ color: colors.text.primary }}>
+                    {vehicleModels.find((m) => m.id === filterVehicleModelId)
+                      ?.modelName || "All models"}
+                  </Text>
+                  <AntDesign
+                    name={showModelList ? "up" : "down"}
+                    size={12}
+                    color={colors.text.secondary}
+                  />
+                </TouchableOpacity>
+                {showModelList && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView style={{ maxHeight: 160 }}>
+                      <TouchableOpacity
+                        key={"all"}
+                        style={[
+                          styles.dropdownItem,
+                          !filterVehicleModelId && styles.dropdownItemSelected,
+                        ]}
+                        onPress={() => {
+                          setFilterVehicleModelId("");
+                          setShowModelList(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>All models</Text>
+                      </TouchableOpacity>
+                      {vehicleModels.map((m) => (
+                        <TouchableOpacity
+                          key={m.id}
+                          style={[
+                            styles.dropdownItem,
+                            filterVehicleModelId === m.id &&
+                              styles.dropdownItemSelected,
+                          ]}
+                          onPress={() => {
+                            setFilterVehicleModelId(m.id);
+                            setShowModelList(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>
+                            {m.modelName}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Booking Status</Text>
+              <View style={styles.statusRow}>
+                {["Booked", "Unavailable", "Available"].map((s) => {
+                  const active = filterStatus === s;
+                  return (
+                    <TouchableOpacity
+                      key={s}
+                      style={[
+                        styles.statusChip,
+                        active && styles.statusChipActive,
+                      ]}
+                      onPress={() => setFilterStatus(active ? "" : s)}
+                    >
+                      <Text
+                        style={[
+                          styles.statusChipText,
+                          active && styles.statusChipTextActive,
+                        ]}
+                      >
+                        {s}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.resetBtn]}
+                onPress={resetFilters}
+              >
+                <Text style={styles.modalBtnText}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.applyBtn]}
+                onPress={applyFilters}
+              >
+                <Text style={[styles.modalBtnText, { color: "#000" }]}>
+                  Apply
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -307,6 +486,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 20,
     paddingHorizontal: 16,
   },
@@ -352,6 +534,102 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginRight: 4,
   },
+  filterRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  filterText: { color: colors.text.primary, marginLeft: 6 },
+  // Modal styles (reused pattern)
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: "#1E1E1E",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    overflow: "visible",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalTitle: { color: colors.text.primary, fontSize: 16, fontWeight: "700" },
+  fieldRow: { marginBottom: 12 },
+  fieldLabel: { color: colors.text.secondary, marginBottom: 6, fontSize: 12 },
+  input: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: colors.text.primary,
+  },
+  selectContainer: { position: "relative" },
+  selectLike: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  dropdownList: {
+    position: "absolute",
+    bottom: 46,
+    left: 0,
+    right: 0,
+    backgroundColor: "#262626",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#333333",
+    overflow: "hidden",
+    zIndex: 1000,
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333333",
+  },
+  dropdownItemSelected: { backgroundColor: "#313131" },
+  dropdownItemText: { color: colors.text.primary, fontSize: 12 },
+  modalActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  modalBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+  },
+  resetBtn: { backgroundColor: "#2A2A2A" },
+  applyBtn: { backgroundColor: "#C9B6FF", borderColor: "#C9B6FF" },
+  modalBtnText: { color: colors.text.primary, fontWeight: "700" },
+  statusRow: { flexDirection: "row", gap: 8 },
+  statusChip: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#2A2A2A",
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+  },
+  statusChipActive: { backgroundColor: "#C9B6FF", borderColor: "#C9B6FF" },
+  statusChipText: {
+    color: colors.text.primary,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  statusChipTextActive: { color: "#000" },
   rentalSection: {
     paddingHorizontal: 16,
   },

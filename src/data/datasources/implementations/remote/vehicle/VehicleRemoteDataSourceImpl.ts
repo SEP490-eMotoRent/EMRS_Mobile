@@ -59,6 +59,8 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
     currentOdometerKm: number,
     batteryHealthPercentage: number,
     status: string,
+    branchId: string,
+    vehicleModelId: string,
     pageSize: number,
     pageNum: number
   ): Promise<PaginatedVehicleResponse> {
@@ -72,6 +74,8 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
           currentOdometerKm,
           batteryHealthPercentage,
           status,
+          branchId,
+          vehicleModelId,
           pageSize,
           pageNum,
         },

@@ -15,6 +15,7 @@ export interface BookingForStaffResponse {
     bookingStatus: string;
     renter: RenterBookingResponse; // ✅ Nested
     vehicle: VehicleBookingResponse; // ✅ Nested
+    vehicleModel: VehicleModelBookingResponse; // ✅ Nested
 }
 
 export interface RenterBookingResponse {

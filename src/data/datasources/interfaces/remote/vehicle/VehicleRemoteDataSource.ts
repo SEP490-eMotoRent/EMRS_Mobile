@@ -13,6 +13,8 @@ export interface VehicleRemoteDataSource {
         currentOdometerKm: number,
         batteryHealthPercentage: number,
         status: string,
+        branchId: string,
+        vehicleModelId: string,
         pageSize: number,
         pageNum: number
     ): Promise<PaginatedVehicleResponse>;
