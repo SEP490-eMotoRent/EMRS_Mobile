@@ -60,6 +60,8 @@ export class VehicleRepositoryImpl implements VehicleRepository {
         currentOdometerKm: number,
         batteryHealthPercentage: number,
         status: string,
+        branchId: string,
+        vehicleModelId: string,
         pageSize: number,
         pageNum: number
     ): Promise<PaginatedVehicleResponse> {
@@ -69,6 +71,8 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             currentOdometerKm,
             batteryHealthPercentage,
             status,
+            branchId,
+            vehicleModelId,
             pageSize,
             pageNum
         );
@@ -85,13 +89,14 @@ export class VehicleRepositoryImpl implements VehicleRepository {
         // Create RentalPricing from response if available
         const rentalPricing = model.rentalPricing 
             ? new RentalPricing(
-                // model.rentalPricing.id,
-                // model.rentalPricing.rentalPrice,
-                // model.rentalPricing.excessKmPrice,
+                model.rentalPricing.id,
+                model.rentalPricing.rentalPrice,
+                model.rentalPricing.excessKmPrice,
                 undefined,
                 undefined,
                 undefined,
-                []
+                undefined,
+                undefined,
               )
             : new RentalPricing('default_pricing', 0, 0, []);
 

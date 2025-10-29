@@ -13,6 +13,5 @@ export interface VehicleResponse {
     fileUrl?: string[];
     purchaseDate?: Date;
     description: string;
-    // rentalPricing?: RentalPricingResponse;
-    rentalPricing?: number;
+    rentalPricing?: RentalPricingResponse;
 }

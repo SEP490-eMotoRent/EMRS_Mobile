@@ -46,6 +46,7 @@ import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/Crea
 import { UpdateRenterProfileUseCase } from "../../domain/usecases/account/Profile/UpdateRenterProfileUseCase";
 
 import { GenerateContractUseCase } from "../../domain/usecases/receipt/GenerateContractUseCase";
+import { GetContractUseCase } from "../../domain/usecases/receipt/GetContractUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -111,6 +112,9 @@ class ServiceLocator {
 
     const generateContractUseCase = new GenerateContractUseCase(receiptRepository);
     this.services.set("GenerateContractUseCase", generateContractUseCase);
+
+    const getContractUseCase = new GetContractUseCase(receiptRepository);
+    this.services.set("GetContractUseCase", getContractUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -171,6 +175,10 @@ class ServiceLocator {
 
   getGenerateContractUseCase(): GenerateContractUseCase {
     return this.get<GenerateContractUseCase>('GenerateContractUseCase');
+  }
+
+  getGetContractUseCase(): GetContractUseCase {
+    return this.get<GetContractUseCase>('GetContractUseCase');
   }
 
   getAxiosClient(): AxiosClient {
