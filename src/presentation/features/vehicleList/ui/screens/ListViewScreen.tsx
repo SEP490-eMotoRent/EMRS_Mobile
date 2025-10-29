@@ -1,4 +1,3 @@
-// src/presentation/features/vehicleList/ui/ListView.tsx
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState, useMemo } from "react";
@@ -24,7 +23,8 @@ export const ListView: React.FC = () => {
     const route = useRoute<ListViewRouteProp>();
     const navigation = useNavigation<ListViewNavigationProp>();
 
-    const { vehicleModels, loading, error, refetch } = useVehicleModels();
+    // Updated hook returns both domain models + raw DTOs
+    const { vehicleModels, rawDtos, loading, error, refetch } = useVehicleModels();
 
     const [sortBy, setSortBy] = useState<SortType>("closest");
     const [bookingModalVisible, setBookingModalVisible] = useState(false);
@@ -35,9 +35,10 @@ export const ListView: React.FC = () => {
         address: "Ho Chi Minh City, Vietnam",
     };
 
+    // Pass both domain models and raw DTOs to mapper
     const motorcycles = useMemo(() => {
-        return VehicleModelMapper.toMotorcycles(vehicleModels);
-    }, [vehicleModels]);
+        return VehicleModelMapper.toMotorcycles(vehicleModels, rawDtos);
+    }, [vehicleModels, rawDtos]);
 
     const sortedMotorcycles = useMemo(() => {
         const sorted = [...motorcycles].sort((a, b) => {
@@ -79,7 +80,7 @@ export const ListView: React.FC = () => {
         <View style={styles.container}>
         <FlatList
             data={sortedMotorcycles}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item.id}
             renderItem={({ item }) => <MotorcycleCard motorcycle={item} />}
             ListHeaderComponent={
             <>
@@ -117,9 +118,9 @@ export const ListView: React.FC = () => {
         />
         </View>
     );
-    };
+};
 
-    const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#000",

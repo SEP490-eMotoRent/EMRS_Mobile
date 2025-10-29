@@ -21,7 +21,7 @@ export const ApiEndpoints = {
         create: "/Booking/create",
         detail: (id: string) => `/Booking/${id}`,
         byRenter: (renterId: string) => `/Booking/renter/${renterId}`,
-        byCurrentRenter: "/Booking/renter/get", // ✅ NEW - uses token
+        byCurrentRenter: "/Booking/renter/get",
         list: "/Booking",
         assignVehicle: (vehicleId: string, bookingId: string) => `/Booking/${bookingId}/${vehicleId}`,
     },
@@ -32,7 +32,11 @@ export const ApiEndpoints = {
         login: "/auth/login",
     },
 
-    renters: "/renters",
+    // Renter endpoints
+    renter: {
+        list: "/renters",
+        update: "/account/renter",
+    },
 
     // Receipt endpoints
     receipt: {
