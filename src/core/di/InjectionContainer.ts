@@ -45,7 +45,6 @@ import { ReceiptRemoteDataSourceImpl } from '../../data/datasources/implementati
 import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/CreateHandoverReceiptUseCase';
 import { UpdateRenterProfileUseCase } from "../../domain/usecases/account/Profile/UpdateRenterProfileUseCase";
 
-import { AxiosClient } from "../network/AxiosClient";
 import { GenerateContractUseCase } from "../../domain/usecases/receipt/GenerateContractUseCase";
 
 /**
