@@ -1,4 +1,5 @@
-import { NavigatorScreenParams } from '@react-navigation/native';
+import { NavigatorScreenParams } from "@react-navigation/native";
+import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
 
 export type AuthStackParamList = {
   Hello: undefined;
@@ -98,9 +99,18 @@ export type StaffStackParamList = {
   ScanFace: undefined;
   ScanResult: undefined;
   CustomerRentals: undefined;
-  SelectVehicle: { bookingId: string };
-  VehicleInspection: { vehicleId: string, bookingId: string, currentOdometerKm: number, batteryHealthPercentage: number };
-  HandoverReport: { 
+  SelectVehicle: {
+    bookingId: string;
+    renterName: string;
+    vehicleModel: VehicleModel;
+  };
+  VehicleInspection: {
+    vehicleId: string;
+    bookingId: string;
+    currentOdometerKm: number;
+    batteryHealthPercentage: number;
+  };
+  HandoverReport: {
     receiptId: string;
     notes: string;
     startOdometerKm: number;
@@ -109,7 +119,7 @@ export type StaffStackParamList = {
     vehicleFiles: string[];
     checkListFile: string;
   };
-  AwaitingApproval: { status?: 'pending' | 'approved' | 'denied' } | undefined;
+  AwaitingApproval: { status?: "pending" | "approved" | "denied" } | undefined;
   HandoverDocument: undefined;
   HandoverComplete: undefined;
   BookingDetails: { bookingId?: string; booking?: any };

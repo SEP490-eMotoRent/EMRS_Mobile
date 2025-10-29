@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -39,16 +39,24 @@ export const HandoverReportScreen: React.FC = () => {
     vehicleFiles,
     checkListFile,
   } = route.params || {};
+  const [isLoading, setIsLoading] = useState(false);
 
   const generateConstract = async () => {
     try {
+      setIsLoading(true);
       const generateContractUseCase = new GenerateContractUseCase(
         sl.get("ReceiptRepository")
       );
-      const response = await generateContractUseCase.execute("6efd06f2-540d-4a68-9b77-c6903de14a17");
-      const contractData: string = unwrapResponse(response);
-      console.log("contractData", contractData);
-    } catch (error) {}
+      const response = await generateContractUseCase.execute(bookingId);
+      console.log("response", response);
+      // if (response.success) {
+        navigation.navigate("AwaitingApproval");
+      // }
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

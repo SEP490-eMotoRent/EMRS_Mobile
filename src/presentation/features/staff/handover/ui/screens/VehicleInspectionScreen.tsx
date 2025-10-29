@@ -377,11 +377,6 @@ export const VehicleInspectionScreen: React.FC = () => {
         } as any);
       }
 
-      // Submit to API using UseCase
-      console.log("Submitting inspection data...");
-      console.log("vehicleId", vehicleId);
-      console.log("bookingId", bookingId);
-
       const createHandoverReceiptUseCase = new CreateHandoverReceiptUseCase(
         sl.get("ReceiptRepository")
       );

@@ -76,8 +76,12 @@ export const CustomerRentalsScreen: React.FC = () => {
   };
 
   const handleSelectVehicle = (booking: Booking) => {
-    console.log("Select booking:", booking.id);
-    navigation.navigate("SelectVehicle", { bookingId: booking.id });
+    console.log("booking vehicle model", booking.vehicleModel);
+    navigation.navigate("SelectVehicle", {
+      bookingId: booking.id,
+      renterName: booking.renter.account.fullname,
+      vehicleModel: booking.vehicleModel,
+    });
   };
 
   const handleViewDetails = (booking: Booking) => {
@@ -128,7 +132,7 @@ export const CustomerRentalsScreen: React.FC = () => {
           <Text style={styles.customerName}>
             {booking.renter?.account?.fullname || "Unknown Customer"}
           </Text>
-          <Text style={styles.bookingId}>#{booking.id.slice(0, 12)}</Text>
+          <Text style={styles.bookingId}>#{booking.id.slice(-10)}</Text>
         </View>
 
         {/* Vehicle Section */}
@@ -233,7 +237,6 @@ export const CustomerRentalsScreen: React.FC = () => {
       </View>
     );
   };
-  console.log("bookings", bookings[0]?.renter.account?.fullname);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -255,7 +258,11 @@ export const CustomerRentalsScreen: React.FC = () => {
 
         <ScrollView
           refreshControl={
-            <RefreshControl colors={["white"]} refreshing={loading} onRefresh={fetchBookings} />
+            <RefreshControl
+              colors={["white"]}
+              refreshing={loading}
+              onRefresh={fetchBookings}
+            />
           }
         >
           <View style={styles.header}>
