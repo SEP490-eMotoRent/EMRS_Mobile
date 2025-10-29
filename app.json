@@ -28,7 +28,8 @@
         "googleMaps": {
           "apiKey": "NOTHING_HERE"
         }
-      }
+      },
+      "package": "com.phuuthanh2003.eMotoRent_Mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"

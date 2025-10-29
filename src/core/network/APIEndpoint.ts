@@ -41,5 +41,6 @@ export const ApiEndpoints = {
     receipt: {
         create: "/rental/receipt",
         generateContract: (bookingId: string) => `/rental/contract/${bookingId}`,
+        getContract: (bookingId: string) => `/rental/contract/${bookingId}`,
     },
 };

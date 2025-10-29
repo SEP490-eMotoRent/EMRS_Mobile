@@ -10,6 +10,8 @@ export class GetVehicleListUseCase {
     currentOdometerKm: number,
     batteryHealthPercentage: number,
     status: string,
+    branchId: string,
+    vehicleModelId: string,
     pageSize: number,
     pageNum: number
   ): Promise<PaginatedVehicleResponse> {
@@ -19,6 +21,8 @@ export class GetVehicleListUseCase {
       currentOdometerKm,
       batteryHealthPercentage,
       status,
+      branchId,
+      vehicleModelId,
       pageSize,
       pageNum
     );
