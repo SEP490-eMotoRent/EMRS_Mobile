@@ -1,16 +1,20 @@
+import { FontAwesome } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-interface PriceMarkerProps {
-    price: number;
+interface BranchMarkerProps {
     isSelected?: boolean;
 }
 
-export const PriceMarker: React.FC<PriceMarkerProps> = ({ price, isSelected = false }) => {
+export const BranchMarker: React.FC<BranchMarkerProps> = ({ isSelected = false }) => {
     return (
         <View style={styles.container}>
             <View style={[styles.bubble, isSelected && styles.bubbleSelected]}>
-                <Text style={[styles.priceText, isSelected && styles.priceTextSelected]}>${price}</Text>
+                <FontAwesome 
+                    name="motorcycle" 
+                    size={16} 
+                    color={isSelected ? "#1a1a1a" : "#fff"} 
+                />
             </View>
             <View style={[styles.arrow, isSelected && styles.arrowSelected]} />
         </View>
@@ -23,9 +27,11 @@ const styles = StyleSheet.create({
     },
     bubble: {
         backgroundColor: "#000",
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: "center",
+        justifyContent: "center",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.2,
@@ -34,14 +40,6 @@ const styles = StyleSheet.create({
     },
     bubbleSelected: {
         backgroundColor: "#b8a4ff",
-    },
-    priceText: {
-        color: "#fff",
-        fontWeight: "800",
-        fontSize: 13,
-    },
-    priceTextSelected: {
-        color: "#1a1a1a",
     },
     arrow: {
         width: 0,

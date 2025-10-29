@@ -5,5 +5,6 @@ import { HandoverReceiptResponse } from "../../../../models/receipt/HandoverRece
 
 export interface ReceiptRemoteDataSource {
     createHandoverReceipt(request: CreateHandoverReceiptRequest): Promise<ApiResponse<HandoverReceiptResponse>>;
+    generateContract(bookingId: string): Promise<ApiResponse<string>>;
 }
 

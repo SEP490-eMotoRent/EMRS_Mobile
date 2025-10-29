@@ -23,6 +23,7 @@ import { CreateHandoverReceiptUseCase } from "../../../../../../domain/usecases/
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { HandoverReceiptResponse } from "../../../../../../data/models/receipt/HandoverReceiptResponse";
+import { AssignVehicleToBookingUseCase } from "../../../../../../domain/usecases/booking/AssignVehicleToBookingUseCase";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -88,7 +89,8 @@ type VehicleInspectionScreenRouteProp = RouteProp<
 
 export const VehicleInspectionScreen: React.FC = () => {
   const route = useRoute<VehicleInspectionScreenRouteProp>();
-  const { bookingId, currentOdometerKm, batteryHealthPercentage } = route.params || {};
+  const { vehicleId, bookingId, currentOdometerKm, batteryHealthPercentage } =
+    route.params || {};
   const user = useAppSelector((state) => state.auth.user);
   const navigation = useNavigation<InspectionNav>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -102,11 +104,15 @@ export const VehicleInspectionScreen: React.FC = () => {
     {}
   );
   const [notes, setNotes] = useState("");
-  const [startOdometerKm, setStartOdometerKm] = useState(currentOdometerKm?.toString() || "");
-  const [startBatteryPercentage, setStartBatteryPercentage] = useState(batteryHealthPercentage?.toString() || "");
+  const [startOdometerKm, setStartOdometerKm] = useState(
+    currentOdometerKm?.toString() || ""
+  );
+  const [startBatteryPercentage, setStartBatteryPercentage] = useState(
+    batteryHealthPercentage?.toString() || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const checklistRef = useRef<View>(null);
-  
+
   const ensurePermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
     const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -260,9 +266,11 @@ export const VehicleInspectionScreen: React.FC = () => {
 
   const getBatteryCondition = () => {
     const battery = parseInt(startBatteryPercentage) || 0;
-    if (battery >= 80) return { text: `${battery}% – Tuyệt vời`, color: "#67D16C" };
+    if (battery >= 80)
+      return { text: `${battery}% – Tuyệt vời`, color: "#67D16C" };
     if (battery >= 60) return { text: `${battery}% – Tốt`, color: "#FFD700" };
-    if (battery >= 40) return { text: `${battery}% – Trung bình`, color: "#FF8C00" };
+    if (battery >= 40)
+      return { text: `${battery}% – Trung bình`, color: "#FF8C00" };
     return { text: `${battery}% – Thấp`, color: "#FF4444" };
   };
 
@@ -274,19 +282,21 @@ export const VehicleInspectionScreen: React.FC = () => {
   };
 
   const isReadyForHandover = () => {
-    return getPhotosCount() === 4 && 
-           getCompletedCount() >= getTotalCount() * 0.8 && 
-           startOdometerKm && 
-           startBatteryPercentage;
+    return (
+      getPhotosCount() === 4 &&
+      getCompletedCount() >= getTotalCount() * 0.8 &&
+      startOdometerKm &&
+      startBatteryPercentage
+    );
   };
 
   const handleCompleteInspection = async () => {
     // Prevent multiple submissions
     if (isSubmitting) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       // Validate required fields
       if (!startOdometerKm || !startBatteryPercentage) {
         Alert.alert("Lỗi", "Vui lòng nhập số km và % pin bắt đầu");
@@ -295,13 +305,19 @@ export const VehicleInspectionScreen: React.FC = () => {
       }
 
       if (getPhotosCount() < 4) {
-        Alert.alert("Lỗi", "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)");
+        Alert.alert(
+          "Lỗi",
+          "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)"
+        );
         setIsSubmitting(false);
         return;
       }
 
       if (getCompletedCount() < getTotalCount() * 0.8) {
-        Alert.alert("Lỗi", "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra");
+        Alert.alert(
+          "Lỗi",
+          "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra"
+        );
         setIsSubmitting(false);
         return;
       }
@@ -363,30 +379,33 @@ export const VehicleInspectionScreen: React.FC = () => {
 
       // Submit to API using UseCase
       console.log("Submitting inspection data...");
+      console.log("vehicleId", vehicleId);
+      console.log("bookingId", bookingId);
 
-      const createHandoverReceiptUseCase = sl.get<CreateHandoverReceiptUseCase>(
-        "CreateHandoverReceiptUseCase"
+      const createHandoverReceiptUseCase = new CreateHandoverReceiptUseCase(
+        sl.get("ReceiptRepository")
       );
 
-      const response = await createHandoverReceiptUseCase.execute({
-        notes: notes,
-        startOdometerKm: parseInt(startOdometerKm),
-        startBatteryPercentage: parseInt(startBatteryPercentage),
-        bookingId: bookingId,
-        vehicleFiles: [
-          photos.front,
-          photos.back,
-          photos.left,
-          photos.right,
-        ].filter(Boolean) as string[],
-        checkListFile: checklistUri,
-      });
+      const assignVehicleToBookingUseCase = new AssignVehicleToBookingUseCase(
+        sl.get("BookingRepository")
+      );
 
-      const receiptData: HandoverReceiptResponse = unwrapResponse(response);
+      const [handoverResponse, assignResponse] = await Promise.all([
+        createHandoverReceiptUseCase.execute({
+          notes,
+          startOdometerKm: parseInt(startOdometerKm),
+          startBatteryPercentage: parseInt(startBatteryPercentage),
+          bookingId,
+          vehicleFiles: [photos.front, photos.back, photos.left, photos.right].filter(Boolean) as string[],
+          checkListFile: checklistUri,
+        }),
+        assignVehicleToBookingUseCase.execute(vehicleId, bookingId),
+      ]);
 
-      console.log("receiptData", receiptData);
-      Alert.alert("Thành công", "Kiểm tra đã được hoàn thành");
-      
+      const receiptData: HandoverReceiptResponse = unwrapResponse(handoverResponse);
+
+      Alert.alert("Thành công", "Kiểm tra đã được hoàn thành và xe đã được gán cho booking");
+
       navigation.navigate("HandoverReport", {
         receiptId: receiptData.id,
         notes: receiptData.notes,
@@ -572,25 +591,40 @@ export const VehicleInspectionScreen: React.FC = () => {
               <Text style={styles.statusCaption}>kiểm tra hoàn thành</Text>
             </View>
             <View style={styles.statusItem}>
-              <Text style={[styles.statusNumber, { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" }]}>
+              <Text
+                style={[
+                  styles.statusNumber,
+                  { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" },
+                ]}
+              >
                 {getIssuesCount()}
               </Text>
               <Text style={styles.statusCaption}>vấn đề</Text>
             </View>
             <View style={styles.statusItem}>
-              <Text style={[styles.statusNumber, { color: getPhotosCount() === 4 ? "#67D16C" : "#FFD700" }]}>
+              <Text
+                style={[
+                  styles.statusNumber,
+                  { color: getPhotosCount() === 4 ? "#67D16C" : "#FFD700" },
+                ]}
+              >
                 {getPhotosCount()}/4
               </Text>
               <Text style={styles.statusCaption}>ảnh</Text>
             </View>
           </View>
-          
+
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
               <Text style={styles.readyLabel}>
                 {isReadyForHandover() ? "Sẵn sàng bàn giao" : "Chưa sẵn sàng"}
               </Text>
-              <Text style={[styles.progressPercentage, { color: isReadyForHandover() ? "#67D16C" : "#FFD700" }]}>
+              <Text
+                style={[
+                  styles.progressPercentage,
+                  { color: isReadyForHandover() ? "#67D16C" : "#FFD700" },
+                ]}
+              >
                 {getCompletionPercentage()}%
               </Text>
             </View>
@@ -598,9 +632,11 @@ export const VehicleInspectionScreen: React.FC = () => {
               <View
                 style={[
                   styles.readyFill,
-                  { 
+                  {
                     width: `${getCompletionPercentage()}%`,
-                    backgroundColor: isReadyForHandover() ? "#67D16C" : "#FFD700"
+                    backgroundColor: isReadyForHandover()
+                      ? "#67D16C"
+                      : "#FFD700",
                   },
                 ]}
               />
@@ -611,38 +647,57 @@ export const VehicleInspectionScreen: React.FC = () => {
             <View style={styles.tag}>
               <Text style={styles.tagText}>Thời gian kiểm tra</Text>
             </View>
-            <Text style={styles.timeText}>~{Math.max(5, Math.round(getTotalCount() * 0.5))} phút</Text>
+            <Text style={styles.timeText}>
+              ~{Math.max(5, Math.round(getTotalCount() * 0.5))} phút
+            </Text>
           </View>
         </View>
 
         {/* Inspection Summary */}
         <View style={styles.summaryCard}>
           <Text style={styles.cardHeader}>Tóm tắt kiểm tra</Text>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tình trạng tổng thể</Text>
-            <Text style={[styles.summaryValue, { color: getOverallCondition().color }]}>
+            <Text
+              style={[
+                styles.summaryValue,
+                { color: getOverallCondition().color },
+              ]}
+            >
               {getOverallCondition().text}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tình trạng pin</Text>
-            <Text style={[styles.summaryValue, { color: getBatteryCondition().color }]}>
+            <Text
+              style={[
+                styles.summaryValue,
+                { color: getBatteryCondition().color },
+              ]}
+            >
               {getBatteryCondition().text}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Ảnh xe</Text>
-            <Text style={[styles.summaryValue, { color: getPhotosStatus().color }]}>
+            <Text
+              style={[styles.summaryValue, { color: getPhotosStatus().color }]}
+            >
               {getPhotosStatus().text}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Vấn đề phát hiện</Text>
-            <Text style={[styles.summaryValue, { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" }]}>
+            <Text
+              style={[
+                styles.summaryValue,
+                { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" },
+              ]}
+            >
               {getIssuesCount()} vấn đề cần xử lý
             </Text>
           </View>
@@ -650,7 +705,12 @@ export const VehicleInspectionScreen: React.FC = () => {
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Trạng thái bàn giao</Text>
             <View style={styles.statusBadge}>
-              <Text style={[styles.statusBadgeText, { color: isReadyForHandover() ? "#67D16C" : "#FFD700" }]}>
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  { color: isReadyForHandover() ? "#67D16C" : "#FFD700" },
+                ]}
+              >
                 {isReadyForHandover() ? "✓ Sẵn sàng" : "⚠ Chưa sẵn sàng"}
               </Text>
             </View>
@@ -661,25 +721,44 @@ export const VehicleInspectionScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.primaryCta,
-            (!isReadyForHandover() || isSubmitting) && styles.primaryCtaDisabled
+            (!isReadyForHandover() || isSubmitting) &&
+              styles.primaryCtaDisabled,
           ]}
           onPress={handleCompleteInspection}
           disabled={!isReadyForHandover() || isSubmitting}
         >
-          <Text style={[
-            styles.primaryCtaText,
-            (!isReadyForHandover() || isSubmitting) && styles.primaryCtaTextDisabled
-          ]}>
-            {isSubmitting 
-              ? "Đang gửi..." 
-              : isReadyForHandover() 
-                ? "Hoàn thành kiểm tra" 
-                : "Chưa sẵn sàng"
-            }
+          <Text
+            style={[
+              styles.primaryCtaText,
+              (!isReadyForHandover() || isSubmitting) &&
+                styles.primaryCtaTextDisabled,
+            ]}
+          >
+            {isSubmitting
+              ? "Đang gửi..."
+              : isReadyForHandover()
+              ? "Hoàn thành kiểm tra"
+              : "Chưa sẵn sàng"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tertiaryCta}>
           <Text style={styles.tertiaryCtaText}>Lưu & Tiếp tục sau</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tertiaryCta}
+          onPress={() =>
+            navigation.navigate("HandoverReport", {
+              receiptId: "",
+              notes: "",
+              startOdometerKm: 0,
+              startBatteryPercentage: 0,
+              bookingId: bookingId,
+              vehicleFiles: [],
+              checkListFile: "",
+            })
+          }
+        >
+          <Text style={styles.tertiaryCtaText}>Next Step</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -866,23 +945,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  readyLabel: { 
-    color: colors.text.primary, 
-    fontSize: 14, 
-    fontWeight: "600" 
+  readyLabel: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "600",
   },
   progressPercentage: {
     fontSize: 16,
     fontWeight: "700",
   },
-  readyProgress: { 
-    height: 10, 
-    backgroundColor: "#3A3A3A", 
+  readyProgress: {
+    height: 10,
+    backgroundColor: "#3A3A3A",
     borderRadius: 5,
     overflow: "hidden",
   },
-  readyFill: { 
-    height: 10, 
+  readyFill: {
+    height: 10,
     borderRadius: 5,
     // transition: "all 0.3s ease",
   },
@@ -926,13 +1005,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#2A2A2A",
   },
-  summaryLabel: { 
-    color: colors.text.secondary, 
+  summaryLabel: {
+    color: colors.text.secondary,
     fontSize: 13,
     fontWeight: "500",
     flex: 1,
   },
-  summaryValue: { 
+  summaryValue: {
     color: colors.text.primary,
     fontSize: 13,
     fontWeight: "600",
@@ -969,8 +1048,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
   },
-  primaryCtaText: { 
-    color: "#000", 
+  primaryCtaText: {
+    color: "#000",
     fontWeight: "700",
     fontSize: 16,
   },
@@ -1055,4 +1134,3 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
-

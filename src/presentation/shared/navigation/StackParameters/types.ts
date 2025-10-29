@@ -99,7 +99,7 @@ export type StaffStackParamList = {
   ScanResult: undefined;
   CustomerRentals: undefined;
   SelectVehicle: { bookingId: string };
-  VehicleInspection: { bookingId: string, currentOdometerKm: number, batteryHealthPercentage: number };
+  VehicleInspection: { vehicleId: string, bookingId: string, currentOdometerKm: number, batteryHealthPercentage: number };
   HandoverReport: { 
     receiptId: string;
     notes: string;
@@ -112,7 +112,7 @@ export type StaffStackParamList = {
   AwaitingApproval: { status?: 'pending' | 'approved' | 'denied' } | undefined;
   HandoverDocument: undefined;
   HandoverComplete: undefined;
-  BookingDetails: { bookingId: string };
+  BookingDetails: { bookingId?: string; booking?: any };
   Charging: undefined;
   Profile: undefined;
   VehicleConfirmation: undefined;

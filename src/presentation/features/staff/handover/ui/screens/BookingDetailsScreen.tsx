@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,9 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import { Booking } from "../../../../../../domain/entities/booking/Booking";
 
 type BookingDetailsScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -32,7 +35,29 @@ type BookingDetailsScreenRouteProp = RouteProp<
 export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<BookingDetailsScreenRouteProp>();
   const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(false);
   const { bookingId } = route.params;
+
+  useEffect(() => {
+    fetchBooking();
+  }, [bookingId]);
+
+  const fetchBooking = async () => {
+    try {
+      setLoading(true);
+      const getBookingByIdUseCase = new GetBookingByIdUseCase(
+        sl.get("BookingRepository")
+      );
+      const booking = await getBookingByIdUseCase.execute(bookingId);
+      setBooking(booking);
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleProceedToCheck = () => {
     console.log("Proceed to check car");
   };
@@ -42,8 +67,7 @@ export const BookingDetailsScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
           title="Booking Details"
-          subtitle="John Nguyen"
-          submeta="ID: #EMR240915001"
+          subtitle={booking?.renter?.fullName()}
           onBack={() => navigation.goBack()}
         />
 
@@ -51,11 +75,11 @@ export const BookingDetailsScreen: React.FC = () => {
         <View style={styles.section}>
           <SectionHeader title="Thông tin Khách hàng" icon="user" />
           <InfoCard>
-            <Text style={styles.customerName}>NGUYEN VAN A</Text>
+            <Text style={styles.customerName}>{booking?.renter?.fullName()}</Text>
             <View style={styles.infoRow}>
-              <Text style={styles.infoText}>CCCD: 049897456123</Text>
+              <Text style={styles.infoText}>Account: {booking?.renter?.account?.username}</Text>
               <Text style={styles.bullet}>•</Text>
-              <Text style={styles.infoText}>SDT: 0987654123</Text>
+              <Text style={styles.infoText}>Phone: {booking?.renter?.phone}</Text>
             </View>
           </InfoCard>
         </View>
@@ -64,13 +88,13 @@ export const BookingDetailsScreen: React.FC = () => {
         <View style={styles.section}>
           <SectionHeader title="Thông tin Booking" icon="calendar" />
           <InfoCard>
-            <InfoItem label="Mã Booking:" value="BK001-345-987" />
+            <InfoItem label="Mã Booking:" value={booking?.id} />
             <InfoItem
               label="Địa điểm:"
               value="Xx Street, Ward 2, Tan Binh District"
             />
-            <InfoItem label="Thời gian thuê:" value="06/09/2025 - 09:00" />
-            <InfoItem label="Thời gian trả:" value="07/09/2025 - 09:00" />
+            <InfoItem label="Thời gian thuê:" value={booking?.startDatetime?.toLocaleString("en-GB")} />
+            <InfoItem label="Thời gian trả:" value={booking?.endDatetime?.toLocaleString("en-GB")} />
             <InfoItem label="Gói thuê:" value="24 giờ" />
           </InfoCard>
         </View>
@@ -188,6 +212,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 20,
     marginBottom: 20,
+    marginHorizontal: 16,
   },
   proceedButtonContent: {
     flexDirection: "row",

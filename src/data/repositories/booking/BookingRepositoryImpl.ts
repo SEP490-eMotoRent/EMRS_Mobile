@@ -4,6 +4,7 @@ import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/boo
 import { CreateBookingRequest } from "../../models/booking/CreateBookingRequest";
 import { PaginatedBooking } from "../../models/booking/PaginatedBooking";
 import {
+  AccountBookingResponse,
   BookingForStaffResponse,
   RenterBookingResponse,
   VehicleBookingResponse,
@@ -16,6 +17,7 @@ import { RentalPricing } from "../../../domain/entities/financial/RentalPricing"
 import { Branch } from "../../../domain/entities/operations/Branch";
 import { BookingResponse } from "../../models/booking/BookingResponse";
 import { PaginatedBookingResponse } from "../../models/booking/PaginatedBookingResponse";
+import { Account } from "../../../domain/entities/account/Account";
 
 export class BookingRepositoryImpl implements BookingRepository {
   constructor(private remote: BookingRemoteDataSource) {}
@@ -47,6 +49,11 @@ export class BookingRepositoryImpl implements BookingRepository {
   async getById(id: string): Promise<Booking | null> {
     const response = await this.remote.getById(id);
     return response ? this.mapToEntity(response) : null;
+  }
+
+  async getByIdForStaff(id: string): Promise<Booking | null> {
+    const response = await this.remote.getById(id);
+    return response ? this.mapStaffResponseToEntity(response) : null;
   }
 
   async getByRenter(renterId: string): Promise<Booking[]> {
@@ -89,6 +96,10 @@ export class BookingRepositoryImpl implements BookingRepository {
       totalPages: paginatedResponse.totalPages,
       items,
     };
+  }
+
+  async assignVehicle(vehicleId: string, bookingId: string): Promise<void> {
+    await this.remote.assignVehicle(vehicleId, bookingId);
   }
 
   // =========================================================================
@@ -178,7 +189,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       0, // refundAmount
       dto.bookingStatus,
       vehicleModel?.id ?? "unknown-model",
-      dto.renter.id, // renterId
+      dto?.renter?.id ?? "unknown-renter", // renterId
       renter, // REQUIRED
       vehicleModel, // REQUIRED
       vehicle?.id, // vehicleId
@@ -199,6 +210,17 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
+
+  private mapAccountFromStaffResponse(dto: AccountBookingResponse): Account {
+    return new Account(
+      dto?.id || "unknown-account",
+      dto?.username || "unknown-username",
+      "",
+      dto?.role || "unknown-role",
+      dto?.fullname || "unknown-fullname",
+    );
+  }
+
   // =========================================================================
   // MAPPERS: Renter (aligned with C# backend)
   // =========================================================================
@@ -208,13 +230,15 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.email || "",
       dto.phone || "",
       dto.address || "",
-      dto.account.id, // accountId
+      dto.account?.id || "unknown-account", // accountId
       "unknown", // membershipId (not in DTO)
       false,
       "",
+      dto.dateOfBirth,
       undefined,
+      "",
       undefined,
-      ""
+      this.mapAccountFromStaffResponse(dto.account)
     );
   }
 

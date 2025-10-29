@@ -15,30 +15,42 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppSelector } from "../../../../authentication/store/hooks";
+import { GenerateContractUseCase } from "../../../../../../domain/usecases/receipt/GenerateContractUseCase";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import sl from "../../../../../../core/di/InjectionContainer";
 
 type HandoverReportNav = StackNavigationProp<
   StaffStackParamList,
   "HandoverReport"
 >;
 
-type HandoverReportRouteProp = RouteProp<
-  StaffStackParamList,
-  "HandoverReport"
->;
+type HandoverReportRouteProp = RouteProp<StaffStackParamList, "HandoverReport">;
 
 export const HandoverReportScreen: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const navigation = useNavigation<HandoverReportNav>();
   const route = useRoute<HandoverReportRouteProp>();
-  const { 
+  const {
     receiptId,
     notes,
     startOdometerKm,
     startBatteryPercentage,
     bookingId,
     vehicleFiles,
-    checkListFile
+    checkListFile,
   } = route.params || {};
+
+  const generateConstract = async () => {
+    try {
+      const generateContractUseCase = new GenerateContractUseCase(
+        sl.get("ReceiptRepository")
+      );
+      const response = await generateContractUseCase.execute("6efd06f2-540d-4a68-9b77-c6903de14a17");
+      const contractData: string = unwrapResponse(response);
+      console.log("contractData", contractData);
+    } catch (error) {}
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -136,8 +148,8 @@ export const HandoverReportScreen: React.FC = () => {
                 const labels = ["Front", "Back"];
                 return (
                   <View key={index} style={styles.galleryItem}>
-                    <Image 
-                      source={{ uri: imageUrl }} 
+                    <Image
+                      source={{ uri: imageUrl }}
                       style={styles.galleryImage}
                       resizeMode="cover"
                     />
@@ -152,8 +164,8 @@ export const HandoverReportScreen: React.FC = () => {
                   const labels = ["Left", "Right"];
                   return (
                     <View key={index + 2} style={styles.galleryItem}>
-                      <Image 
-                        source={{ uri: imageUrl }} 
+                      <Image
+                        source={{ uri: imageUrl }}
                         style={styles.galleryImage}
                         resizeMode="cover"
                       />
@@ -163,13 +175,13 @@ export const HandoverReportScreen: React.FC = () => {
                 })}
               </View>
             )}
-            
+
             {/* Checklist File */}
             {checkListFile && (
               <View style={styles.galleryRow}>
                 <View style={[styles.galleryItem, { width: "100%" }]}>
-                  <Image 
-                    source={{ uri: checkListFile }} 
+                  <Image
+                    source={{ uri: checkListFile }}
                     style={styles.checklistImage}
                     resizeMode="cover"
                   />
@@ -208,8 +220,9 @@ export const HandoverReportScreen: React.FC = () => {
         {/* Bottom CTA */}
         <TouchableOpacity
           style={styles.sendCta}
-          onPress={() =>
-            navigation.navigate("AwaitingApproval", { status: "approved" })
+          onPress={
+            generateConstract
+            // navigation.navigate("AwaitingApproval", { status: "approved" })
           }
         >
           <AntDesign name="send" size={16} color="#000" />

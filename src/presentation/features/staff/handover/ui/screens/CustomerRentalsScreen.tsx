@@ -233,6 +233,7 @@ export const CustomerRentalsScreen: React.FC = () => {
       </View>
     );
   };
+  console.log("bookings", bookings[0]?.renter.account?.fullname);
 
   return (
     <SafeAreaView style={styles.container}>
