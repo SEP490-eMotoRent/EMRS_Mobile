@@ -34,7 +34,7 @@ type SelectVehicleScreenRouteProp = RouteProp<
 
 export const SelectVehicleScreen: React.FC = () => {
   const route = useRoute<SelectVehicleScreenRouteProp>();
-  const { bookingId } = route.params;
+  const { bookingId, renterName, vehicleModel } = route.params;
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -99,8 +99,8 @@ export const SelectVehicleScreen: React.FC = () => {
       <View style={styles.scrollContent}>
         <ScreenHeader
           title="Select Vehicle"
-          subtitle="John Nguyen"
-          submeta="Booked type: VinFast Evo200"
+          subtitle={renterName}
+          submeta={`Booked type: ${vehicleModel?.modelName}`}
           showSearch={true}
           onSearchPress={() => {}}
           onBack={() => navigation.goBack()}
@@ -157,7 +157,7 @@ export const SelectVehicleScreen: React.FC = () => {
 
                   {/* Plate + right link */}
                   <View style={styles.rowBetween}>
-                    <Text style={styles.plate}>{vehicleCard.plate}</Text>
+                    <Text style={styles.plate}>{vehicleCard.plate}  •  #{vehicleCard.id.slice(-10)}</Text>
                     <TouchableOpacity disabled={vehicleCard.disabled}>
                       <Text style={styles.link}>View details</Text>
                     </TouchableOpacity>

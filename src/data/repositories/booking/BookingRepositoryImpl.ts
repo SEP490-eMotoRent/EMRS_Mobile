@@ -168,7 +168,9 @@ export class BookingRepositoryImpl implements BookingRepository {
       ? this.mapVehicleFromStaffResponse(dto.vehicle)
       : undefined;
 
-    const vehicleModel = vehicle?.vehicleModel ?? undefined;
+    const vehicleModel = dto.vehicleModel
+      ? this.mapVehicleModelFromStaffResponse(dto.vehicleModel)
+      : undefined;
 
     return new Booking(
       dto.id,
@@ -210,14 +212,31 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-
   private mapAccountFromStaffResponse(dto: AccountBookingResponse): Account {
     return new Account(
       dto?.id || "unknown-account",
       dto?.username || "unknown-username",
       "",
       dto?.role || "unknown-role",
-      dto?.fullname || "unknown-fullname",
+      dto?.fullname || "unknown-fullname"
+    );
+  }
+
+  private mapVehicleModelFromStaffResponse(dto: VehicleModelBookingResponse): VehicleModel {
+    return new VehicleModel(
+      dto.id,
+      dto.modelName,
+      dto.category,
+      dto.batteryCapacityKwh,
+      dto.maxRangeKm,
+      dto.maxSpeedKmh,
+      "",
+      "",
+      undefined,
+      new Date(),
+      undefined,
+      undefined,
+      undefined
     );
   }
 

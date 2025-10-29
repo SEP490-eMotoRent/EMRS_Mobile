@@ -23,9 +23,8 @@ export const ApiEndpoints = {
         byRenter: (renterId: string) => `/Booking/renter/${renterId}`,
         byCurrentRenter: "/Booking/renter/get",
         list: "/Booking",
-        assignVehicle: (vehicleId: string, bookingId: string) => `/Booking/${bookingId}/${vehicleId}`,
+        assignVehicle: (vehicleId: string, bookingId: string) => `/Booking/vehicle/assign/${bookingId}/${vehicleId}`,
     },
-    
     // Auth endpoints
     auth: {
         register: "/auth/register",
