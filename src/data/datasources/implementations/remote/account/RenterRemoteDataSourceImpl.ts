@@ -1,6 +1,94 @@
+import { ServerException } from "../../../../../core/errors/ServerException";
+import { AxiosClient } from "../../../../../core/network/AxiosClient";
+import { AppLogger } from "../../../../../core/utils/Logger";
+import { UpdateRenterRequest } from "../../../../models/account/renter/UpdateRenterRequest";
 import { RegisterRenterResponse } from "../../../../models/account/renter/RegisterRenterResponse";
+import { RenterRemoteDataSource } from "../../../interfaces/remote/account/RenterRemoteDataSource";
+import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 
-export interface RenterRemoteDataSource {
-    create(): Promise<RegisterRenterResponse>;
-    getAll(): Promise<RegisterRenterResponse[]>;
+export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
+    private readonly apiClient: AxiosClient;
+    private readonly logger = AppLogger.getInstance();
+
+    constructor(apiClient: AxiosClient) {
+        this.apiClient = apiClient;
+    }
+
+    async create(): Promise<RegisterRenterResponse> {
+        try {
+        this.logger.info('Creating renter via API...');
+        const response = await this.apiClient.post<RegisterRenterResponse>('/renters', {});
+        this.logger.info('Renter created successfully');
+        return response.data;
+        } catch (error: any) {
+        this.logger.error(`Failed to create renter: ${error.message}`);
+        throw new ServerException(error.response?.data?.message || 'Failed to create renter', error.response?.status || 500);
+        }
+    }
+
+    async getAll(): Promise<RegisterRenterResponse[]> {
+        try {
+        this.logger.info('Fetching all renters...');
+        const response = await this.apiClient.get<RegisterRenterResponse[]>('/renters');
+        return response.data;
+        } catch (error: any) {
+        this.logger.error(`Failed to get renters: ${error.message}`);
+        throw new ServerException(error.response?.data?.message || 'Failed to fetch renters', error.response?.status || 500);
+        }
+    }
+
+    async getById(id: string): Promise<RegisterRenterResponse | null> {
+        try {
+        this.logger.info(`Fetching renter by ID: ${id}`);
+        const response = await this.apiClient.get<RegisterRenterResponse>(`/renters/${id}`);
+        return response.data;
+        } catch (error: any) {
+        if (error.response?.status === 404) return null;
+        this.logger.error(`Failed to get renter ${id}: ${error.message}`);
+        throw new ServerException(error.response?.data?.message || 'Failed to fetch renter', error.response?.status || 500);
+        }
+    }
+
+    async update(request: UpdateRenterRequest): Promise<RegisterRenterResponse> {
+        try {
+        this.logger.info('Updating renter profile...');
+
+        if (request.profilePicture) {
+            const formData = new FormData();
+            formData.append('email', request.email);
+            formData.append('phone', request.phone);
+            formData.append('address', request.address);
+            formData.append('dateOfBirth', request.dateOfBirth);
+            formData.append('mediaId', request.mediaId);
+            formData.append('fullname', request.fullname);
+            formData.append('profilePicture', request.profilePicture);
+
+            const response = await this.apiClient.put<RegisterRenterResponse>(
+            ApiEndpoints.renter.update,
+            formData
+            );
+
+            this.logger.info('Renter profile updated with image');
+            return response.data;
+        } else {
+            const response = await this.apiClient.put<RegisterRenterResponse>(
+            ApiEndpoints.renter.update,
+            {
+                email: request.email,
+                phone: request.phone,
+                address: request.address,
+                dateOfBirth: request.dateOfBirth,
+                mediaId: request.mediaId,
+                fullname: request.fullname,
+            }
+            );
+
+            this.logger.info('Renter profile updated');
+            return response.data;
+        }
+        } catch (error: any) {
+        this.logger.error(`Failed to update renter: ${error.message}`);
+        throw new ServerException(error.response?.data?.message || 'Failed to update profile', error.response?.status || 500);
+        }
+    }
 }

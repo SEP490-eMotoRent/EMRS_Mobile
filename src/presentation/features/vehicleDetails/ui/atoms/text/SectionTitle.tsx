@@ -12,7 +12,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({ title }) => {
 const styles = StyleSheet.create({
     title: {
         color: "#fff",
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: "700",
         marginBottom: 16,
     },

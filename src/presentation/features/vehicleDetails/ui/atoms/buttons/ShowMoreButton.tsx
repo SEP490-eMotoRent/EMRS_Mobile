@@ -7,7 +7,7 @@ interface ShowMoreButtonProps {
 
 export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({ onPress }) => {
     return (
-        <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.7}>
             <Text style={styles.text}>Show more</Text>
         </TouchableOpacity>
     );
@@ -15,15 +15,14 @@ export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({ onPress }) => {
 
 const styles = StyleSheet.create({
     button: {
-        backgroundColor: "#d4c5f9",
+        backgroundColor: "#a78bfa",
         paddingVertical: 12,
         paddingHorizontal: 32,
         borderRadius: 12,
-        alignSelf: "center",
     },
     text: {
         color: "#000",
-        fontSize: 15,
-        fontWeight: "600",
+        fontSize: 14,
+        fontWeight: "700",
     },
 });

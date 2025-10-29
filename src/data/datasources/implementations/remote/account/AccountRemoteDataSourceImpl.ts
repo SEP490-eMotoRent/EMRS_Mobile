@@ -41,7 +41,7 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
             
             const response = await this.apiClient.get<RegisterUserRequest>(
                 `/auth/user`,
-                { email }
+                { params: { email } }
             );
 
             return response.data;
