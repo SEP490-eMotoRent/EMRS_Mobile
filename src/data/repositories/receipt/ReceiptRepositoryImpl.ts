@@ -28,5 +28,9 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
 
         return await this.remote.createHandoverReceipt(request);
     }
+
+    async generateContract(bookingId: string): Promise<ApiResponse<string>> {
+        return await this.remote.generateContract(bookingId);
+    }
 }
 

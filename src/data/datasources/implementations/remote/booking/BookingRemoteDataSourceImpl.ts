@@ -101,4 +101,15 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       };
     }
   }
+
+  async assignVehicle(vehicleId: string, bookingId: string): Promise<void> {
+    try {
+      const endpoint = ApiEndpoints.booking.assignVehicle(vehicleId, bookingId);
+      const response = await this.axiosClient.put<ApiResponse<void>>(endpoint);
+      return unwrapResponse(response.data);
+    } catch (error: any) {
+      console.error("Failed to assign vehicle to booking:", error);
+      throw error;
+    }
+  }
 }

@@ -41,4 +41,10 @@ export interface BookingRemoteDataSource {
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBookingResponse>;
+
+  /**
+   * Assign a vehicle to a booking
+   * @returns void
+   */
+  assignVehicle(vehicleId: string, bookingId: string): Promise<void>;
 }
