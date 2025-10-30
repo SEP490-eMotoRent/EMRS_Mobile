@@ -16,6 +16,7 @@ export interface BookingForStaffResponse {
     renter: RenterBookingResponse; // ✅ Nested
     vehicle: VehicleBookingResponse; // ✅ Nested
     vehicleModel: VehicleModelBookingResponse; // ✅ Nested
+    rentalContract: RentalContractBookingResponse; // ✅ Nested
 }
 
 export interface RenterBookingResponse {
@@ -43,8 +44,14 @@ export interface VehicleBookingResponse {
     licensePlate: string;
     nextMaintenanceDue?: Date;
     fileUrl?: string[];
-    rentalPricing?: number; // ✅ This is the rental price, not ID
+    rentalPricing?: RentalPricingBookingResponse; // ✅ This is the rental price, not ID
     vehicleModel?: VehicleModelBookingResponse; // ✅ Nested
+}
+
+export interface RentalPricingBookingResponse {
+    id: string;
+    rentalPrice: number;
+    excessKmPrice: number;
 }
 
 export interface VehicleModelBookingResponse {
@@ -54,4 +61,13 @@ export interface VehicleModelBookingResponse {
     batteryCapacityKwh?: number;
     maxRangeKm?: number;
     maxSpeedKmh?: number;
+}
+
+export interface RentalContractBookingResponse {
+    id: string;
+    contractNumber: string;
+    contractTerms: string;
+    otpCode: string;
+    contractStatus: string;
+    file: string;
 }

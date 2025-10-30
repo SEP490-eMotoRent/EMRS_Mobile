@@ -11,31 +11,27 @@ import {
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { SectionHeader } from "../molecules/SectionHeader";
 import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
 import { InfoItem } from "../../../../../common/components/molecules/InfoItem";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
-import { GetContractUseCase } from "../../../../../../domain/usecases/receipt/GetContractUseCase";
 import { RentalContract } from "../../../../../../domain/entities/booking/RentalContract";
 import { Linking } from "react-native";
 // import Pdf from "react-native-pdf";
 import { WebView } from "react-native-webview";
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../../authentication/store";
 
-type BookingDetailsScreenNavigationProp = StackNavigationProp<
-  StaffStackParamList,
-  "BookingDetails"
->;
+type BookingDetailsScreenNavigationProp = any;
 
 type BookingDetailsScreenRouteProp = RouteProp<
   StaffStackParamList,
@@ -45,6 +41,7 @@ type BookingDetailsScreenRouteProp = RouteProp<
 export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<BookingDetailsScreenRouteProp>();
   const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
+  const user = useSelector((state: RootState) => state.auth.user);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [contract, setContract] = useState<RentalContract | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,24 +57,8 @@ export const BookingDetailsScreen: React.FC = () => {
 
   useEffect(() => {
     fetchBooking();
-    fetchContract();
     fetchVehicleModels();
   }, [bookingId]);
-
-  const fetchContract = async () => {
-    try {
-      setLoading(true);
-      const getContractUseCase = new GetContractUseCase(
-        sl.get("ReceiptRepository")
-      );
-      const contract = await getContractUseCase.execute(bookingId);
-      setContract(contract);
-    } catch (error) {
-      console.error("Error fetching contract:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchBooking = async () => {
     try {
@@ -87,6 +68,7 @@ export const BookingDetailsScreen: React.FC = () => {
       );
       const booking = await getBookingByIdUseCase.execute(bookingId);
       setBooking(booking);
+      setContract(booking?.rentalContract);
     } catch (error) {
       console.error("Error fetching booking:", error);
     } finally {
@@ -120,8 +102,6 @@ export const BookingDetailsScreen: React.FC = () => {
   const saveEdit = async () => {
     try {
       setSaving(true);
-      // Here you would call update booking API to persist vehicle model change
-      // For now, update local state to reflect choice
       const chosen = vehicleModels.find((m) => m.id === selectedModelId);
       if (chosen && booking) {
         setBooking({ ...booking, vehicleModel: chosen } as Booking);
@@ -141,6 +121,9 @@ export const BookingDetailsScreen: React.FC = () => {
     }),
     [contract]
   );
+
+  const canSignContract =
+    user?.id && booking?.renter?.account?.id === user.id && contract?.contractStatus === "Unsigned";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -245,7 +228,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 <Text style={styles.iconLabel}>Thời gian thuê</Text>
               </View>
               <Text style={styles.iconValue}>
-                {booking?.startDatetime?.toLocaleString("en-GB") || "-"}
+                {booking?.startDatetime?.toLocaleDateString("en-GB") || "-"}
               </Text>
             </View>
             <View style={styles.divider} />
@@ -256,7 +239,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 <Text style={styles.iconLabel}>Thời gian trả</Text>
               </View>
               <Text style={styles.iconValue}>
-                {booking?.endDatetime?.toLocaleString("en-GB") || "-"}
+                {booking?.endDatetime?.toLocaleDateString("en-GB") || "-"}
               </Text>
             </View>
             <View style={styles.divider} />
@@ -287,7 +270,24 @@ export const BookingDetailsScreen: React.FC = () => {
             <InfoCard style={styles.contractCard}>
               <InfoItem label="Số hợp đồng:" value={contractInfo.number} />
               <InfoItem label="Trạng thái:" value={contractInfo.status} />
-
+              {/* Sign contract CTA if eligible */}
+              {canSignContract && (
+                <TouchableOpacity
+                  style={styles.signContractBtn}
+                  onPress={() =>
+                    navigation.navigate("SignContract", {
+                      contract: contract,
+                      booking: booking,
+                      userPhone: booking?.renter?.phone,
+                    })
+                  }
+                >
+                  <AntDesign name="edit" size={16} color="#fff" />
+                  <Text style={styles.signContractBtnText}>
+                    Ký hợp đồng kỹ thuật số
+                  </Text>
+                </TouchableOpacity>
+              )}
               <View style={styles.contractActionsRow}>
                 <TouchableOpacity
                   style={[styles.contractBtn, styles.contractBtnPrimary]}
@@ -390,7 +390,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 <Text>PDF</Text>
               ) : (
                 <WebView
-                  source={{ uri: contractInfo.url }}
+                  source={{ uri: contract?.contractPdfUrl }}
                   onLoadStart={() => setWebviewLoading(true)}
                   onLoadEnd={() => setWebviewLoading(false)}
                   style={styles.webview}
@@ -694,7 +694,6 @@ const styles = StyleSheet.create({
   contractActionsRow: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 10,
   },
   contractBtn: {
     marginTop: 10,
@@ -723,7 +722,7 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: 12,
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 8,
   },
   modalContainer: {
     flex: 1,
@@ -737,6 +736,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    marginTop: 20,
   },
   modalBack: {
     padding: 6,
@@ -866,4 +866,16 @@ const styles = StyleSheet.create({
   resetBtnDark: { backgroundColor: "#2A2A2A" },
   applyBtnDark: { backgroundColor: "#C9B6FF", borderColor: "#C9B6FF" },
   modalBtnTextDark: { color: colors.text.primary, fontWeight: "700" },
+  signContractBtn: {
+    backgroundColor: "#6B3EF5",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    marginBottom: 4,
+    marginTop: 10,
+  },
+  signContractBtnText: { color: "#fff", fontWeight: "700" },
 });

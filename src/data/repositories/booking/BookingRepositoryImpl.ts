@@ -6,6 +6,8 @@ import { PaginatedBooking } from "../../models/booking/PaginatedBooking";
 import {
   AccountBookingResponse,
   BookingForStaffResponse,
+  RentalContractBookingResponse,
+  RentalPricingBookingResponse,
   RenterBookingResponse,
   VehicleBookingResponse,
   VehicleModelBookingResponse,
@@ -18,6 +20,7 @@ import { Branch } from "../../../domain/entities/operations/Branch";
 import { BookingResponse } from "../../models/booking/BookingResponse";
 import { PaginatedBookingResponse } from "../../models/booking/PaginatedBookingResponse";
 import { Account } from "../../../domain/entities/account/Account";
+import { RentalContract } from "../../../domain/entities/booking/RentalContract";
 
 export class BookingRepositoryImpl implements BookingRepository {
   constructor(private remote: BookingRemoteDataSource) {}
@@ -148,6 +151,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
       undefined, // insurancePackageId
       undefined, // insurancePackage
+      undefined, // rentalContract
       undefined, // handoverBranchId
       undefined, // handoverBranch
       undefined, // returnBranchId
@@ -172,8 +176,12 @@ export class BookingRepositoryImpl implements BookingRepository {
       ? this.mapVehicleModelFromStaffResponse(dto.vehicleModel)
       : undefined;
 
+    const rentalContract = dto.rentalContract
+      ? this.mapRentalContractFromStaffResponse(dto.rentalContract)
+      : undefined;
+
     return new Booking(
-      dto.id,
+      dto?.id,
       dto.baseRentalFee,
       dto.depositAmount,
       dto.rentalDays,
@@ -191,7 +199,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       0, // refundAmount
       dto.bookingStatus,
       vehicleModel?.id ?? "unknown-model",
-      dto?.renter?.id ?? "unknown-renter", // renterId
+      renter?.id ?? "unknown-renter", // renterId
       renter, // REQUIRED
       vehicleModel, // REQUIRED
       vehicle?.id, // vehicleId
@@ -201,6 +209,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
       undefined, // insurancePackageId
       undefined, // insurancePackage
+      rentalContract, // rentalContract
       undefined, // handoverBranchId
       undefined, // handoverBranch
       undefined, // returnBranchId
@@ -222,7 +231,9 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapVehicleModelFromStaffResponse(dto: VehicleModelBookingResponse): VehicleModel {
+  private mapVehicleModelFromStaffResponse(
+    dto: VehicleModelBookingResponse
+  ): VehicleModel {
     return new VehicleModel(
       dto.id,
       dto.modelName,
@@ -235,6 +246,21 @@ export class BookingRepositoryImpl implements BookingRepository {
       undefined,
       new Date(),
       undefined,
+      undefined,
+      undefined
+    );
+  }
+
+  private mapRentalContractFromStaffResponse(
+    dto: RentalContractBookingResponse
+  ): RentalContract {
+    return new RentalContract(
+      dto.id,
+      dto.contractNumber,
+      dto.contractTerms,
+      dto.otpCode,
+      dto.contractStatus,
+      dto.file,
       undefined,
       undefined
     );
@@ -266,15 +292,15 @@ export class BookingRepositoryImpl implements BookingRepository {
   // =========================================================================
   private mapVehicleFromStaffResponse(dto: VehicleBookingResponse): Vehicle {
     const vehicleModel = new VehicleModel(
-      dto.vehicleModel.id,
-      dto.vehicleModel.modelName,
-      dto.vehicleModel.category,
-      dto.vehicleModel.batteryCapacityKwh,
-      dto.vehicleModel.maxRangeKm,
-      dto.vehicleModel.maxSpeedKmh,
+      dto.vehicleModel?.id,
+      dto.vehicleModel?.modelName,
+      dto.vehicleModel?.category,
+      dto.vehicleModel?.batteryCapacityKwh,
+      dto.vehicleModel?.maxRangeKm,
+      dto.vehicleModel?.maxSpeedKmh,
       "",
       "unknown",
-      this.createMockRentalPricing(dto.rentalPricing),
+      this.mapRentalPricingFromStaffResponse(dto.rentalPricing),
       new Date()
     );
 
@@ -289,7 +315,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.status,
       "",
       "unknown",
-      dto.vehicleModel.id,
+      dto.vehicleModel?.id,
       mockBranch,
       vehicleModel,
       [],
@@ -330,7 +356,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       0,
       "",
       "",
-      this.createMockRentalPricing(0),
+      undefined,
       new Date()
     );
   }
@@ -366,12 +392,19 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private createMockRentalPricing(price: number): RentalPricing {
-    return {
-      id: "mock",
-      rentalPrice: price,
-      createdAt: new Date(),
-    } as RentalPricing;
+  private mapRentalPricingFromStaffResponse(
+    dto: RentalPricingBookingResponse
+  ): RentalPricing {
+    return new RentalPricing(
+      dto.id,
+      dto.rentalPrice,
+      dto.excessKmPrice,
+      [],
+      new Date(),
+      null,
+      null,
+      false
+    );
   }
 
   private createMockBranch(): Branch {
