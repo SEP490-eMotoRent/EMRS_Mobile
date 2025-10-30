@@ -127,10 +127,9 @@ export const TripsScreen: React.FC = () => {
         console.log("Open sort options");
     };
 
-    const handleViewDetails = (tripId: string, bookingReference: string) => {
+    const handleViewDetails = (bookingId: string) => {
         navigation.navigate('BookingDetails', {
-            tripId,
-            bookingReference,
+            bookingId,
         });
     };
 
@@ -207,7 +206,7 @@ export const TripsScreen: React.FC = () => {
                 renderItem={({ item }) => (
                     <CurrentTripCard
                         trip={item}
-                        onViewDetails={() => handleViewDetails(item.id, item.reference)}
+                        onViewDetails={() => handleViewDetails(item.id)}
                         onExtendRental={item.status === "renting" ? () => handleExtendRental(item.id) : undefined}
                         onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id) : undefined}
                         onCancel={item.status === "confirmed" ? () => handleCancelBooking(item.id) : undefined}

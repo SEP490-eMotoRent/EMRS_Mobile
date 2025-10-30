@@ -3,6 +3,7 @@ import React from 'react';
 import { BookingDetailsScreen } from '../../../../features/staff/handover/ui/screens';
 import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
 import { TripStackParamList } from '../../StackParameters/types';
+import { SignContractScreen } from '../../../../features/contract/ui/screens/SignContractScreen';
 
 
 const Stack = createStackNavigator<TripStackParamList>();
@@ -47,6 +48,13 @@ export const TripNavigator: React.FC = () => {
                 ],
                 },
             }),
+            }}
+        />
+        <Stack.Screen 
+            name="SignContract" 
+            component={SignContractScreen}
+            options={{
+            headerShown: false,
             }}
         />
         </Stack.Navigator>
