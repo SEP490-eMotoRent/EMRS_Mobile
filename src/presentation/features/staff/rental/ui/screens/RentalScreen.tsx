@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -19,29 +19,28 @@ import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { GetBookingListUseCase } from "../../../../../../domain/usecases/booking/GetBookingListUseCase";
+import sl from "../../../../../../core/di/InjectionContainer";
 
 type RentalScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
   "Rental"
 >;
 
-interface RentedVehicle {
-  id: string;
-  customerName: string;
-  customerAvatar: any;
-  branch: string;
-  vehicleName: string;
-  licensePlate: string;
-  startTime: string;
-  expectedReturn: string;
-  status: "upcoming" | "normal" | "overdue";
-  vehicleImage: any;
-}
-
 export const RentalScreen: React.FC = () => {
   const navigation = useNavigation<RentalScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<"handover" | "rented">("handover");
   const [searchPlate, setSearchPlate] = useState("");
+  const [pageNum, setPageNum] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [bookings, setBookings] = useState<Booking[] | null>(null);
+  const [rentedBookings, setRentedBookings] = useState<Booking[] | null>(null);
+
+  useEffect(() => {
+    fetchBookings(1);
+  }, []);
 
   // Mock data for handover schedule
   const handoverSchedule = [
@@ -69,45 +68,28 @@ export const RentalScreen: React.FC = () => {
     },
   ];
 
-  // Mock data for rented vehicles
-  const rentedVehicles: RentedVehicle[] = [
-    {
-      id: "1",
-      customerName: "John Nguyen",
-      customerAvatar: require("../../../../../../../assets/images/avatar.png"),
-      branch: "District 2 Branch",
-      vehicleName: "VinFast Evo200",
-      licensePlate: "59X1-12345",
-      startTime: "Sep 18, 9:00 AM",
-      expectedReturn: "11:00 AM (1h 30m)",
-      status: "upcoming",
-      vehicleImage: require("../../../../../../../assets/images/motor-big.png"),
-    },
-    {
-      id: "2",
-      customerName: "Sarah Chen",
-      customerAvatar: require("../../../../../../../assets/images/avatar.png"),
-      branch: "District 1 Branch",
-      vehicleName: "VinFast Evo200",
-      licensePlate: "59X1-67890",
-      startTime: "Sep 18, 8:00 AM",
-      expectedReturn: "2:00 PM",
-      status: "normal",
-      vehicleImage: require("../../../../../../../assets/images/motor-big.png"),
-    },
-    {
-      id: "3",
-      customerName: "Michael Tran",
-      customerAvatar: require("../../../../../../../assets/images/avatar.png"),
-      branch: "District 3 Branch",
-      vehicleName: "VinFast Evo200",
-      licensePlate: "59X1-11111",
-      startTime: "Sep 18, 7:00 AM",
-      expectedReturn: "10:30 AM (Overdue 30m)",
-      status: "overdue",
-      vehicleImage: require("../../../../../../../assets/images/motor-big.png"),
-    },
-  ];
+  const fetchBookings = async (page: number = pageNum) => {
+    setLoading(true);
+    try {
+      const getBookingListUseCase = new GetBookingListUseCase(
+        sl.get("BookingRepository")
+      );
+      const response = await getBookingListUseCase.execute(
+        "",
+        "",
+        "Booked",
+        page,
+        pageSize
+      );
+
+      // const bookingsData = unwrapResponse(response);
+      setRentedBookings(response.items);
+      setPageNum(page);
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -239,7 +221,7 @@ export const RentalScreen: React.FC = () => {
             </View>
 
             <PrimaryButton
-              title="View Details Booking"
+              title="Xem chi tiết Booking"
               onPress={() => navigation.navigate("BookingDetails")}
               style={styles.viewDetailsButton}
             />
@@ -273,26 +255,32 @@ export const RentalScreen: React.FC = () => {
         <View style={styles.rentedHeader}>
           <Text style={styles.rentedTitle}>Danh sách Xe đang cho thuê</Text>
           <View style={styles.rentedBadge}>
-            <Text style={styles.rentedBadgeText}>{rentedVehicles.length}</Text>
+            <Text style={styles.rentedBadgeText}>{rentedBookings?.length}</Text>
           </View>
         </View>
 
-        {rentedVehicles.map((vehicle) => (
-          <View key={vehicle.id} style={styles.rentedCard}>
+        {rentedBookings.map((booking) => (
+          <View key={booking.id} style={styles.rentedCard}>
             <View style={styles.rentedCardHeader}>
               <View style={styles.customerInfo}>
                 <Image
-                  source={vehicle.customerAvatar}
+                  source={
+                    booking.renter?.avatarUrl ||
+                    require("../../../../../../../assets/images/avatar.png")
+                  }
                   style={styles.customerAvatar}
                 />
                 <View style={styles.customerDetails}>
                   <Text style={styles.customerName}>
-                    {vehicle.customerName}
+                    {booking.renter?.account?.fullname}
                   </Text>
-                  <Text style={styles.customerBranch}>{vehicle.branch}</Text>
+                  <Text style={styles.customerBranch}>
+                    {/* {booking.handoverBranch?.branchName} */}
+                    District 2 Branch
+                  </Text>
                 </View>
                 <Image
-                  source={vehicle.vehicleImage}
+                  source={{ uri: booking.vehicle?.fileUrl[0] }}
                   style={styles.vehicleThumbnail}
                 />
               </View>
@@ -300,33 +288,58 @@ export const RentalScreen: React.FC = () => {
 
             <View style={styles.vehicleDetails}>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Vehicle</Text>
-                <Text style={styles.detailValue}>{vehicle.vehicleName}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>License Plate</Text>
-                <Text style={styles.detailValue}>{vehicle.licensePlate}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Start Time</Text>
-                <Text style={styles.detailValue}>{vehicle.startTime}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Expected Return</Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    { color: getStatusColor(vehicle.status) },
-                  ]}
-                >
-                  {vehicle.expectedReturn}
+                <View style={styles.detailLeft}>
+                  <AntDesign name="car" size={14} color={colors.text.primary} />
+                  <Text style={styles.detailLabel}>Xe</Text>
+                </View>
+                <Text style={styles.detailValue}>
+                  {booking.vehicle?.vehicleModel?.modelName}
                 </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <View style={styles.detailLeft}>
+                  <AntDesign name="idcard" size={14} color={colors.text.primary} />
+                  <Text style={styles.detailLabel}>Biển số xe</Text>
+                </View>
+                <View style={styles.platePill}>
+                  <Text style={styles.platePillText}>{booking.vehicle?.licensePlate}</Text>
+                </View>
+              </View>
+              <View style={styles.detailRow}>
+                <View style={styles.detailLeft}>
+                  <AntDesign name="calendar" size={14} color={colors.text.primary} />
+                  <Text style={styles.detailLabel}>Thời gian nhận xe</Text>
+                </View>
+                <Text style={styles.detailValue}>
+                  {booking.startDatetime?.toLocaleString("en-GB")}
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <View style={styles.detailLeft}>
+                  <AntDesign name="clock-circle" size={14} color={colors.text.primary} />
+                  <Text style={styles.detailLabel}>Thời gian trả xe</Text>
+                </View>
+                <View style={[styles.statusPill, { backgroundColor: getStatusColor(booking.bookingStatus) + '33' }]}>
+                  <Text style={[styles.statusPillText, { color: getStatusColor(booking.bookingStatus) }]}>
+                    {booking.endDatetime?.toLocaleString("en-GB")}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.startReturnButton}>
-              <Text style={styles.startReturnText}>Start Return</Text>
-            </TouchableOpacity>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => navigation.navigate("BookingDetails", { bookingId: booking.id })}
+              >
+                <AntDesign name="file-text" size={16} color="#C9B6FF" />
+                <Text style={styles.secondaryButtonText}>Xem chi tiết</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.startReturnButton}>
+                <AntDesign name="login" size={16} color="#000" />
+                <Text style={styles.startReturnText}>Bắt đầu trả xe</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ))}
       </View>
@@ -335,7 +348,11 @@ export const RentalScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader title="Rental" subtitle="District 2 Branch" showBackButton={false} />
+      <ScreenHeader
+        title="Rental"
+        subtitle="District 2 Branch"
+        showBackButton={false}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* App Header */}
 
@@ -709,6 +726,7 @@ const styles = StyleSheet.create({
   vehicleDetails: {
     marginBottom: 16,
   },
+  detailLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -725,15 +743,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  platePill: {
+    backgroundColor: "#2F2A3A",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#3A3450",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  platePillText: { color: "#C9B6FF", fontWeight: "700", fontSize: 12 },
+  statusPill: {
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  statusPillText: { fontWeight: "700", fontSize: 12 },
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  secondaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#26212E",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#3A3450",
+    flex: 1,
+  },
+  secondaryButtonText: {
+    color: "#C9B6FF",
+    fontWeight: "700",
+  },
   startReturnButton: {
     backgroundColor: "#C9B6FF",
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 12,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    flex: 1,
   },
   startReturnText: {
     color: "#000",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
   },
 });

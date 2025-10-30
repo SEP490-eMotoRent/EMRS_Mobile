@@ -36,8 +36,8 @@ import { ReceiptRepository } from '../../domain/repositories/receipt/ReceiptRepo
 import { UpdateRenterProfileUseCase } from "../../domain/usecases/account/Profile/UpdateRenterProfileUseCase";
 import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/CreateHandoverReceiptUseCase';
 
-import { GenerateContractUseCase } from "../../domain/usecases/receipt/GenerateContractUseCase";
-import { GetContractUseCase } from "../../domain/usecases/receipt/GetContractUseCase";
+import { GenerateContractUseCase } from "../../domain/usecases/contract/GenerateContractUseCase";
+import { GetContractUseCase } from "../../domain/usecases/contract/GetContractUseCase";
 
 // Branch imports
 import { BranchRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/branch/BranchRemoteDataSourceImpl';

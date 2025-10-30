@@ -20,7 +20,6 @@ import { ScreenHeader } from "../../../../../common/components/organisms/ScreenH
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Vehicle } from "../../../../../../domain/entities/vehicle/Vehicle";
 import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
-import { VehicleBookingResponse } from "../../../../../../data/models/booking/staffResponse/BookingResponseForStaff";
 import { RootState } from "../../../../authentication/store";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
@@ -51,7 +50,7 @@ export const SelectVehicleScreen: React.FC = () => {
   const [filterColor, setFilterColor] = useState<string>("");
   const [filterOdometerMin, setFilterOdometerMin] = useState<string>("");
   const [filterBatteryMin, setFilterBatteryMin] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("Available");
   const [filterVehicleModelId, setFilterVehicleModelId] = useState<string>("");
   const [showModelList, setShowModelList] = useState<boolean>(false);
   const [shouldRefetch, setShouldRefetch] = useState<boolean>(false);
@@ -146,13 +145,22 @@ export const SelectVehicleScreen: React.FC = () => {
     return {
       id: vehicle.id,
       plate: vehicle.licensePlate || "Unknown",
-      badge: vehicle.status === "Available" ? "Available" : "Unavailable",
+      badge:
+        vehicle.status === "Available"
+          ? "Available"
+          : vehicle.status === "Booked"
+          ? "Booked"
+          : vehicle.status === "Unavailable"
+          ? "Unavailable"
+          : vehicle.status === "Rented"
+          ? "Rented"
+          : "Unknown",
       batteryPct: vehicle.batteryHealthPercentage || 0,
       currentOdometerKm: vehicle?.currentOdometerKm || 0,
       color: vehicle.color || "Unknown",
       status: vehicle.status || "Unknown",
       fileUrl: vehicle.fileUrl || [],
-      disabled: vehicle.status === "Unavailable",
+      disabled: vehicle.status === "Unavailable" || vehicle.status === "Rented",
       nextMaintenanceDue: vehicle.nextMaintenanceDue,
       rentalPricing: vehicle.vehicleModel.rentalPricing.rentalPrice,
     };
@@ -162,6 +170,14 @@ export const SelectVehicleScreen: React.FC = () => {
     if (status === "Available")
       return (
         <Text style={[styles.badge, styles.badgeAvailable]}>Available</Text>
+      );
+    if (status === "Booked")
+      return (
+        <Text style={[styles.badge, styles.badgeBooked]}>Booked</Text>
+      );
+    if (status === "Rented")
+      return (
+        <Text style={[styles.badge, styles.badgeRented]}>Rented</Text>
       );
     return (
       <Text style={[styles.badge, styles.badgeUnavailable]}>Unavailable</Text>
@@ -203,8 +219,9 @@ export const SelectVehicleScreen: React.FC = () => {
           </View>
 
           {/* Active filters */}
-          {(!showFilter) && (filterColor ||
-          filterOdometerMin ||
+          {!showFilter &&
+          (filterColor ||
+            filterOdometerMin ||
             filterBatteryMin ||
             filterStatus ||
             filterVehicleModelId) ? (
@@ -286,15 +303,17 @@ export const SelectVehicleScreen: React.FC = () => {
                   key={vehicleCard.id}
                   style={[
                     styles.card,
-                    !vehicleCard.disabled && styles.cardDisabled,
+                    vehicleCard.disabled && styles.cardDisabled,
                   ]}
                 >
                   {/* Badges row */}
                   <View style={styles.badgesRow}>
-                    {renderBadge(vehicleCard.badge)}
-                    <Text style={[styles.badge, styles.badgeMuted]}>
-                      Ready for inspection
-                    </Text>
+                    {vehicleCard.badge === "Available" &&
+                      renderBadge(vehicleCard.badge)}
+                    {vehicleCard.badge === "Booked" &&
+                      renderBadge(vehicleCard.badge)}
+                    {vehicleCard.badge === "Unavailable" &&
+                      renderBadge(vehicleCard.badge)}
                   </View>
 
                   {/* Vehicle image */}
@@ -435,7 +454,7 @@ export const SelectVehicleScreen: React.FC = () => {
                   {/* Footer actions */}
                   <View style={styles.footerRow}>
                     <TouchableOpacity disabled={vehicleCard.disabled}>
-                      <Text style={styles.link}>
+                      <Text style={[styles.link, vehicleCard.disabled && styles.linkDisabled]}>
                         View Details{" "}
                         <AntDesign
                           name="arrow-right"
@@ -445,7 +464,7 @@ export const SelectVehicleScreen: React.FC = () => {
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.inspectionBtn}
+                      style={[styles.inspectionBtn, vehicleCard.disabled && styles.inspectionBtnDisabled]}
                       onPress={() =>
                         navigation.navigate("VehicleInspection", {
                           vehicleId: vehicle.id,
@@ -455,9 +474,10 @@ export const SelectVehicleScreen: React.FC = () => {
                             vehicle.batteryHealthPercentage,
                         })
                       }
+                      disabled={vehicleCard.disabled}
                     >
-                      <AntDesign name="camera" size={16} color="#000" />
-                      <Text style={styles.inspectionBtnText}>Inspection</Text>
+                      <AntDesign name="camera" size={16} color={vehicleCard.disabled ? "#999" : "#000"} />
+                      <Text style={[styles.inspectionBtnText, vehicleCard.disabled && styles.inspectionBtnTextDisabled]}>Inspection</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -830,6 +850,8 @@ const styles = StyleSheet.create({
   },
   badgeAvailable: { backgroundColor: "#4CAF50", color: "#fff" },
   badgeUnavailable: { backgroundColor: "#FF8A80", color: "#000" },
+  badgeBooked: { backgroundColor: "#FFC107", color: "#000" },
+  badgeRented: { backgroundColor: "#67D16C", color: "#000" },
   badgeMuted: { backgroundColor: "#2A2A2A", color: colors.text.secondary },
   banner: {
     width: "100%",
@@ -926,6 +948,7 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     fontSize: 12,
   },
+  linkDisabled: { color: colors.text.secondary },
   inspectionBtn: {
     backgroundColor: "#C9B6FF",
     paddingVertical: 10,
@@ -943,12 +966,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  inspectionBtnDisabled: {
+    backgroundColor: "#3A3A3A",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   inspectionBtnText: {
     color: "#000000",
     fontWeight: "700",
     fontSize: 14,
     marginLeft: 6,
   },
+  inspectionBtnTextDisabled: { color: "#999" },
 
   disabledNote: {
     backgroundColor: "#1A1A1A",

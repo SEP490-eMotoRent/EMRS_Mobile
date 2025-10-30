@@ -8,6 +8,7 @@ import {
   Modal,
   ActivityIndicator,
   Modal as RNModal,
+  RefreshControl,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -123,7 +124,9 @@ export const BookingDetailsScreen: React.FC = () => {
   );
 
   const canSignContract =
-    user?.id && booking?.renter?.account?.id === user.id && contract?.contractStatus === "Unsigned";
+    user?.id &&
+    booking?.renter?.account?.id === user.id &&
+    contract?.contractStatus === "Unsigned";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -134,12 +137,17 @@ export const BookingDetailsScreen: React.FC = () => {
           <Text style={styles.loadingOverlayText}>Loading booking...</Text>
         </View>
       )}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ScreenHeader
-          title="Booking Details"
-          subtitle={booking?.renter?.fullName()}
-          onBack={() => navigation.goBack()}
-        />
+      <ScreenHeader
+        title="Booking Details"
+        subtitle={booking?.renter?.fullName()}
+        onBack={() => navigation.goBack()}
+      />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={fetchBooking} />
+        }
+      >
         {/* Customer Information */}
         <View style={styles.section}>
           <SectionHeader title="Thông tin Khách hàng" icon="user" />
@@ -276,9 +284,9 @@ export const BookingDetailsScreen: React.FC = () => {
                   style={styles.signContractBtn}
                   onPress={() =>
                     navigation.navigate("SignContract", {
-                      contract: contract,
-                      booking: booking,
-                      userPhone: booking?.renter?.phone,
+                      bookingId,
+                      email: booking?.renter?.email,
+                      fullName: booking?.renter?.account?.fullname,
                     })
                   }
                 >
@@ -327,30 +335,46 @@ export const BookingDetailsScreen: React.FC = () => {
           </InfoCard>
         </View>
 
-        {/* Proceed Button */}
-
-        <View style={styles.editRow}>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.updateBtn]}
-            onPress={openEdit}
-          >
-            <AntDesign name="edit" size={16} color="#000" />
-            <Text style={styles.actionBtnText}>Update Booking</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.changeBtn]}
-            onPress={() => {
-              navigation.navigate("SelectVehicle", {
-                bookingId: bookingId,
-                renterName: booking?.renter?.fullName?.() ?? "",
-                vehicleModel: booking?.vehicleModel,
-              });
-            }}
-          >
-            <AntDesign name="swap" size={16} color="#000" />
-            <Text style={styles.actionBtnText}>Change Vehicle</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Actions */}
+        {booking?.bookingStatus !== "Booked" ? (
+          <View style={styles.editRow}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.updateBtn]}
+              onPress={openEdit}
+            >
+              <AntDesign name="edit" size={16} color="#000" />
+              <Text style={styles.actionBtnText}>Update Booking</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.changeBtn]}
+              onPress={() => {
+                navigation.navigate("SelectVehicle", {
+                  bookingId: bookingId,
+                  renterName: booking?.renter?.fullName?.() ?? "",
+                  vehicleModel: booking?.vehicleModel,
+                });
+              }}
+            >
+              <AntDesign name="swap" size={16} color="#000" />
+              <Text style={styles.actionBtnText}>Change Vehicle</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.editRow}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.gpsBtn]}
+              onPress={() =>
+                navigation.navigate("TrackingGPS", {
+                  vehicleId: booking?.vehicle?.id,
+                  licensePlate: booking?.vehicle?.licensePlate,
+                })
+              }
+            >
+              <AntDesign name="environment" size={16} color="#000" />
+              <Text style={styles.actionBtnText}>Theo dõi GPS</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
 
       {/* Contract WebView Modal */}
@@ -682,7 +706,7 @@ const styles = StyleSheet.create({
   actionBtn: {
     flex: 1,
     borderRadius: 10,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -690,6 +714,7 @@ const styles = StyleSheet.create({
   },
   updateBtn: { backgroundColor: "#C9B6FF" },
   changeBtn: { backgroundColor: "#FFD666" },
+  gpsBtn: { backgroundColor: "#7DB3FF" },
   actionBtnText: { color: "#000", fontWeight: "700" },
   contractActionsRow: {
     flexDirection: "row",

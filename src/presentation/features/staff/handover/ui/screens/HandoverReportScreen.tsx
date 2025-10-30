@@ -15,7 +15,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppSelector } from "../../../../authentication/store/hooks";
-import { GenerateContractUseCase } from "../../../../../../domain/usecases/receipt/GenerateContractUseCase";
+import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import sl from "../../../../../../core/di/InjectionContainer";
 

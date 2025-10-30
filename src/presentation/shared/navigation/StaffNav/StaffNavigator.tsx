@@ -4,7 +4,6 @@ import {
   StaffBottomNavigationBar,
   StaffNavRoute,
 } from "../../../common/components/organisms/StaffBottomNavigationBar";
-import { ProfileNavigator } from "../HomeNav/ProfileNavigator";
 import { createStackNavigator } from "@react-navigation/stack";
 import { StaffStackParamList } from "../StackParameters/types";
 import {
@@ -29,6 +28,7 @@ import {
   ScanFaceScreen,
   ScanResultScreen,
 } from "../../../features/staff/scan/ui/screens";
+import TrackingGPSScreen from "../../../features/staff/tracking/ui/screens/TrackingGPSScreen";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -104,6 +104,7 @@ export const StaffNavigator: React.FC = () => {
         />
         <Stack.Screen name="ReturnInspection" component={ReturnInspectionScreen} />
         <Stack.Screen name="AIAnalysis" component={AIAnalysisScreen} />
+        <Stack.Screen name="TrackingGPS" component={TrackingGPSScreen} />
       </Stack.Navigator>
     </View>
   );
