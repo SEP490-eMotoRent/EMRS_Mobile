@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from '../atoms/Button';
 import { Icon } from '../atoms/Icons/Icons';
 import { Text } from '../atoms/Text';
@@ -42,6 +42,7 @@ interface EditProfileTemplateProps {
     onLicenseUpload: (method: 'camera' | 'gallery') => void;
     onLicenseUpdate: () => void;
     onChangePassword: () => void;
+    saving?: boolean;
 }
 
 export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) => {
@@ -54,8 +55,16 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                 <Icon name="back" size={24} />
             </Button>
             <Text variant="header">Edit Profile</Text>
-            <Button onPress={props.onSave} style={styles.saveButton} variant="ghost">
-                <Text style={styles.saveText}>Save</Text>
+            <Button
+                onPress={props.saving ? undefined : props.onSave}
+                style={styles.saveButton}
+                variant="ghost"
+                >
+                {props.saving ? (
+                    <ActivityIndicator size="small" color="#7C3AED" />
+                ) : (
+                    <Text style={styles.saveText}>Save</Text>
+                )}
             </Button>
             </View>
 
@@ -135,8 +144,16 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
             </Button>
 
             {/* Action Buttons */}
-            <Button onPress={props.onSave} style={styles.saveChangesButton}>
-                <Text style={styles.saveChangesText}>Save Changes</Text>
+            <Button
+                onPress={props.saving ? undefined : props.onSave}
+                style={[styles.saveChangesButton, props.saving && { opacity: 0.6 }]}
+                disabled={props.saving}
+                >
+                {props.saving ? (
+                    <ActivityIndicator color="#000" />
+                ) : (
+                    <Text style={styles.saveChangesText}>Save Changes</Text>
+                )}
             </Button>
 
             <Button onPress={props.onCancel} style={styles.cancelButton} variant="ghost">

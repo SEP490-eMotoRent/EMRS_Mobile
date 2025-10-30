@@ -2,10 +2,9 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
-type VehicleCardNavigationProp = StackNavigationProp<HomeStackParamList>;
-
+// This is a UI-only interface for displaying vehicle models in the map
 export interface ElectricVehicle {
     id: number;
     name: string;
@@ -20,6 +19,9 @@ export interface ElectricVehicle {
     features: string[];
 }
 
+// Change to BrowseStackParamList since VehicleDetails is there
+type VehicleCardNavigationProp = StackNavigationProp<BrowseStackParamList>;
+
 interface VehicleCardProps {
     vehicle: ElectricVehicle;
     onBookPress: (vehicleId: number) => void;
@@ -29,7 +31,8 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
     const navigation = useNavigation<VehicleCardNavigationProp>();
 
     const handleCardPress = () => {
-        navigation.navigate('VehicleDetails', { vehicleId: vehicle.id });
+        // Convert number to string for navigation
+        navigation.navigate('VehicleDetails', { vehicleId: vehicle.id.toString() });
     };
 
     return (
