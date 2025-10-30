@@ -38,6 +38,25 @@ import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/Crea
 
 import { GenerateContractUseCase } from "../../domain/usecases/receipt/GenerateContractUseCase";
 import { GetContractUseCase } from "../../domain/usecases/receipt/GetContractUseCase";
+
+// Branch imports
+import { BranchRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/branch/BranchRemoteDataSourceImpl';
+import { BranchRepositoryImpl } from '../../data/repositories/operations/BranchRepositoryImpl';
+import { BranchRepository } from '../../domain/repositories/operations/BranchRepository';
+import { GetAllBranchesUseCase } from '../../domain/usecases/branch/GetAllBranchesUseCase';
+import { GetBranchByIdUseCase } from '../../domain/usecases/branch/GetBranchByIdUseCase';
+
+// Google Maps Imports
+import { GoogleGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/GoogleGeocodingDataSourceImpl';
+import { GeocodingRepositoryImpl } from '../../data/repositories/maps/GeocodingRepositoryImpl';
+import { GeocodingRepository } from '../../domain/repositories/map/GeocodingRepository';
+import { SearchPlacesUseCase } from '../../domain/usecases/maps/SearchPlacesUseCase';
+import { GetPlaceDetailsUseCase } from '../../domain/usecases/maps/GetPlaceDetailsUseCase';
+
+// Mapbox Maps Imports
+import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
+import { GeocodeAddressUseCase } from '../../domain/usecases/maps/GeocodeAddressUseCase';
+
 import { AxiosClient } from "../network/AxiosClient";
 
 /**
@@ -106,6 +125,36 @@ class ServiceLocator {
     this.services.set("GenerateContractUseCase", generateContractUseCase);
     const getContractUseCase = new GetContractUseCase(receiptRepository);
     this.services.set("GetContractUseCase", getContractUseCase);
+
+    // Branch services
+    const branchRemoteDataSource = new BranchRemoteDataSourceImpl(axiosClient);
+    this.services.set("BranchRemoteDataSource", branchRemoteDataSource);
+    const branchRepository = new BranchRepositoryImpl(branchRemoteDataSource);
+    this.services.set("BranchRepository", branchRepository);
+    const getAllBranchesUseCase = new GetAllBranchesUseCase(branchRepository);
+    this.services.set("GetAllBranchesUseCase", getAllBranchesUseCase);
+    const getBranchByIdUseCase = new GetBranchByIdUseCase(branchRepository);
+    this.services.set("GetBranchByIdUseCase", getBranchByIdUseCase);
+
+    // Geocoding services
+    // const geocodingDataSource = new GoogleGeocodingDataSourceImpl();
+    // this.services.set("GeocodingDataSource", geocodingDataSource);
+    // const geocodingRepository = new GeocodingRepositoryImpl(geocodingDataSource);
+    // this.services.set("GeocodingRepository", geocodingRepository);
+    // const searchPlacesUseCase = new SearchPlacesUseCase(geocodingRepository);
+    // this.services.set("SearchPlacesUseCase", searchPlacesUseCase);
+    // const getPlaceDetailsUseCase = new GetPlaceDetailsUseCase(geocodingRepository);
+    // this.services.set("GetPlaceDetailsUseCase", getPlaceDetailsUseCase);
+
+    // MapBoxes
+    const geocodingDataSource = new MapboxGeocodingDataSourceImpl();
+    this.services.set("GeocodingDataSource", geocodingDataSource);
+    const geocodingRepository = new GeocodingRepositoryImpl(geocodingDataSource);
+    this.services.set("GeocodingRepository", geocodingRepository);
+    const searchPlacesUseCase = new SearchPlacesUseCase(geocodingRepository);
+    this.services.set("SearchPlacesUseCase", searchPlacesUseCase);
+    const getPlaceDetailsUseCase = new GetPlaceDetailsUseCase(geocodingRepository);
+    this.services.set("GetPlaceDetailsUseCase", getPlaceDetailsUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -166,11 +215,34 @@ class ServiceLocator {
 
   getGenerateContractUseCase(): GenerateContractUseCase {
     return this.get<GenerateContractUseCase>('GenerateContractUseCase');
-    
   }
 
   getGetContractUseCase(): GetContractUseCase {
     return this.get<GetContractUseCase>('GetContractUseCase');
+  }
+
+  getBranchRepository(): BranchRepository {
+    return this.get<BranchRepository>('BranchRepository');
+  }
+
+  GetAllBranchesUseCase(): GetAllBranchesUseCase {
+    return this.get<GetAllBranchesUseCase>('GetAllBranchesUseCase');
+  }
+
+  getBranchByIdUseCase(): GetBranchByIdUseCase {
+    return this.get<GetBranchByIdUseCase>('GetBranchByIdUseCase');
+  }
+
+  getGeocodingRepository(): GeocodingRepository {
+    return this.get<GeocodingRepository>('GeocodingRepository');
+  }
+
+  getSearchPlacesUseCase(): SearchPlacesUseCase {
+      return this.get<SearchPlacesUseCase>('SearchPlacesUseCase');
+  }
+
+  getGetPlaceDetailsUseCase(): GetPlaceDetailsUseCase {
+      return this.get<GetPlaceDetailsUseCase>('GetPlaceDetailsUseCase');
   }
 
   getAxiosClient(): AxiosClient {
