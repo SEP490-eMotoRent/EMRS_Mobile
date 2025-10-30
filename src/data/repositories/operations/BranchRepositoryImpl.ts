@@ -1,62 +1,84 @@
 import { Branch } from "../../../domain/entities/operations/Branch";
 import { BranchRepository } from "../../../domain/repositories/operations/BranchRepository";
-import { BranchLocalDataSource } from "../../datasources/interfaces/local/branch/BranchLocalDataSource";
+import { BranchRemoteDataSource } from "../../datasources/interfaces/remote/branch/BranchRemoteDataSource";
 import { BranchResponse } from "../../models/branch/BranchResponse";
 import { CreateBranchRequest } from "../../models/branch/CreateBranchRequest";
+import { UpdateBranchRequest } from "../../models/branch/UpdateBranchRequest";
 
 export class BranchRepositoryImpl implements BranchRepository {
-    constructor(private local: BranchLocalDataSource) {}
+    constructor(private remoteDataSource: BranchRemoteDataSource) {}
 
     async create(branch: Branch): Promise<void> {
         const request: CreateBranchRequest = {
-        branchName: branch.branchName,
-        address: branch.address,
-        city: branch.city,
-        phone: branch.phone,
-        email: branch.email,
-        latitude: branch.latitude,
-        longitude: branch.longitude,
-        openingTime: branch.openingTime,
-        closingTime: branch.closingTime
+            branchName: branch.branchName,
+            address: branch.address,
+            city: branch.city,
+            phone: branch.phone,
+            email: branch.email,
+            latitude: branch.latitude,
+            longitude: branch.longitude,
+            openingTime: branch.openingTime,
+            closingTime: branch.closingTime
         };
-        await this.local.create(request);
+        await this.remoteDataSource.create(request);
     }
 
     async delete(branch: Branch): Promise<void> {
-        await this.local.delete(branch.id);
+        await this.remoteDataSource.delete(branch.id);
     }
 
     async getAll(): Promise<Branch[]> {
-        const models = await this.local.getAll();
-        return models.map(model => this.mapToEntity(model));
+        const responses = await this.remoteDataSource.getAll();
+        return responses.map(response => this.mapToEntity(response));
     }
 
     async getById(id: string): Promise<Branch | null> {
-        const model = await this.local.getById(id);
-        return model ? this.mapToEntity(model) : null;
+        try {
+            const response = await this.remoteDataSource.getById(id);
+            return this.mapToEntity(response);
+        } catch (error) {
+            return null;
+        }
     }
 
     async update(branch: Branch): Promise<void> {
-        const model: BranchResponse = {
-        id: branch.id,
-        branchName: branch.branchName,
-        address: branch.address,
-        city: branch.city,
-        phone: branch.phone,
-        email: branch.email,
-        latitude: branch.latitude,
-        longitude: branch.longitude,
-        openingTime: branch.openingTime,
-        closingTime: branch.closingTime
+        const request: UpdateBranchRequest = {
+            branchName: branch.branchName,
+            address: branch.address,
+            city: branch.city,
+            phone: branch.phone,
+            email: branch.email,
+            latitude: branch.latitude,
+            longitude: branch.longitude,
+            openingTime: branch.openingTime,
+            closingTime: branch.closingTime
         };
-        await this.local.update(branch.id, model);
+        await this.remoteDataSource.update(branch.id, request);
     }
 
-    private mapToEntity(model: BranchResponse): Branch {
+    private mapToEntity(response: BranchResponse): Branch {
         return new Branch(
-        model.id, model.branchName, model.address, model.city, model.phone,
-        model.email, model.latitude, model.longitude, model.openingTime, model.closingTime,
-        [], [], [], [], [], [], [], new Date(), null, null, false
+            response.id,
+            response.branchName,
+            response.address,
+            response.city,
+            response.phone,
+            response.email,
+            response.latitude,
+            response.longitude,
+            response.openingTime,
+            response.closingTime,
+            [], // staffs - empty for now
+            [], // vehicles - empty for now
+            [], // chargingRecords
+            [], // sentTransferOrders
+            [], // receivedTransferOrders
+            [], // handoverBookings
+            [], // returnBookings
+            new Date(), // createdAt
+            null, // updatedAt
+            null, // deletedAt
+            false // isDeleted
         );
     }
 }

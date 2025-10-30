@@ -43,4 +43,13 @@ export const ApiEndpoints = {
         generateContract: (bookingId: string) => `/rental/contract/${bookingId}`,
         getContract: (bookingId: string) => `/rental/contract/${bookingId}`,
     },
+
+    // Branch endpoints ✅ NEW
+    branch: {
+        list: "/Branch",
+        detail: (id: string) => `/Branch/${id}`,
+        create: "/Branch/create",
+        update: (id: string) => `/Branch/${id}`,
+        delete: (id: string) => `/Branch/${id}`,
+    },
 };

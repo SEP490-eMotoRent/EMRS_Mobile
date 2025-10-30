@@ -8,9 +8,8 @@ import { MapSearchBar } from "../molecules/MapSearchBar";
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ListViewButton } from "../atoms/buttons/ListViewButton";
-import { ClusterMarker } from "../atoms/markers/ClusterMarkers";
+import { BranchMarker } from "../atoms/markers/BranchMarker";
 import { LocationPinMarker } from "../atoms/markers/LocationPinMarker";
-import { PriceMarker } from "../atoms/markers/PriceMarkers";
 import { ElectricVehicle } from "../molecules/VehicleCard";
 import { MapFilters } from "../orgamisms/MapFilters";
 import { VehicleBottomSheet } from "../orgamisms/VehicleBottomSheet";
@@ -217,7 +216,6 @@ export const MapScreen: React.FC = () => {
         navigation.navigate('ListView', { location, dateRange, address });
     };
 
-
     const handleSearchBarPress = () => {
         setBookingModalVisible(true);
     };
@@ -242,12 +240,11 @@ export const MapScreen: React.FC = () => {
                 {searchedLocation && (
                     <Marker
                         coordinate={searchedLocation}
-                        anchor={{ x: 0.5, y: 1 }}
+                        anchor={{ x: 0.5, y: 0.92 }}
                     >
                         <LocationPinMarker />
                     </Marker>
                 )}
-
                 {/* Individual branch markers */}
                 {branches.map((branch) => (
                     <Marker
@@ -257,11 +254,9 @@ export const MapScreen: React.FC = () => {
                             longitude: branch.longitude,
                         }}
                         onPress={() => handleBranchMarkerPress(branch)}
-                        anchor={{ x: 0.5, y: 1 }}
-                        centerOffset={{ x: 0, y: 0 }}
+                        anchor={{ x: 0.5, y: 0.75 }}
                     >
-                        <PriceMarker
-                            price={branch.price}
+                        <BranchMarker
                             isSelected={selectedMarkerId === branch.id && selectedMarkerType === "branch"}
                         />
                     </Marker>
@@ -276,10 +271,11 @@ export const MapScreen: React.FC = () => {
                             longitude: cluster.longitude,
                         }}
                         onPress={() => handleClusterMarkerPress(cluster)}
-                        anchor={{ x: 0.5, y: 1 }}
-                        centerOffset={{ x: 0, y: 0 }}
+                        anchor={{ x: 0.5, y: 0.75 }}
                     >
-                        <ClusterMarker count={cluster.count} minPrice={cluster.minPrice} />
+                        <BranchMarker
+                            isSelected={selectedMarkerId === cluster.id && selectedMarkerType === "cluster"}
+                        />
                     </Marker>
                 ))}
             </MapView>

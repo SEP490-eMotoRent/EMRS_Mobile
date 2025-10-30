@@ -1,52 +1,44 @@
-// core/di/InjectionContainer.ts - UPDATED VERSION
-
-import { AxiosClient } from "../network/AxiosClient";
-import { AppLogger } from "../utils/Logger";
 import { AccountLocalDataSourceImpl } from "../../data/datasources/implementations/local/account/AccountLocalDataSourceImpl";
 import { RenterLocalDataSourceImpl } from "../../data/datasources/implementations/local/account/RenterLocalDataSourceImpl";
+import { AppLogger } from "../utils/Logger";
 
 // Account imports
-import { AccountRepository } from '../../domain/repositories/account/AccountRepository';
-import { AccountRepositoryImpl } from '../../data/repositories/account/AccountRepositoryImpl';
-import { AccountRemoteDataSource } from '../../data/datasources/interfaces/remote/account/AccountRemoteDataSource';
 import { AccountRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/account/AccountRemoteDataSourceImpl';
+import { AccountRepositoryImpl } from '../../data/repositories/account/AccountRepositoryImpl';
+import { AccountRepository } from '../../domain/repositories/account/AccountRepository';
 
 // Renter imports
-import { RenterRepository } from '../../domain/repositories/account/RenterRepository';
-import { RenterRepositoryImpl } from '../../data/repositories/account/RenterRepositoryImpl';
-import { RenterRemoteDataSource } from '../../data/datasources/interfaces/remote/account/RenterRemoteDataSource';
 import { RenterRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/account/RenterRemoteDataSourceImpl';
+import { RenterRepositoryImpl } from '../../data/repositories/account/RenterRepositoryImpl';
+import { RenterRepository } from '../../domain/repositories/account/RenterRepository';
 
 // Vehicle imports
-import { VehicleRepository } from '../../domain/repositories/vehicle/VehicleRepository';
-import { VehicleRepositoryImpl } from '../../data/repositories/vehicle/VehicleRepositoryImpl';
-import { VehicleRemoteDataSource } from '../../data/datasources/interfaces/remote/vehicle/VehicleRemoteDataSource';
 import { VehicleRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl';
+import { VehicleRepositoryImpl } from '../../data/repositories/vehicle/VehicleRepositoryImpl';
+import { VehicleRepository } from '../../domain/repositories/vehicle/VehicleRepository';
 
 // Vehicle Model imports
-import { VehicleModelRepository } from "../../domain/repositories/vehicle/VehicleModelRepository";
-import { VehicleModelRepositoryImpl } from "../../data/repositories/vehicle/VehicleModelRepositoryImpl";
-import { VehicleModelRemoteDataSource } from "../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { VehicleModelRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/vehicle/VehicleModelRemoteDataSourceImpl";
+import { VehicleModelRepositoryImpl } from "../../data/repositories/vehicle/VehicleModelRepositoryImpl";
+import { VehicleModelRepository } from "../../domain/repositories/vehicle/VehicleModelRepository";
 
 // Booking imports
-import { BookingRepository } from '../../domain/repositories/booking/BookingRepository';
-import { BookingRepositoryImpl } from '../../data/repositories/booking/BookingRepositoryImpl';
-import { BookingRemoteDataSource } from '../../data/datasources/interfaces/remote/booking/BookingRemoteDataSource';
 import { BookingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/booking/BookingRemoteDataSourceImpl';
+import { BookingRepositoryImpl } from '../../data/repositories/booking/BookingRepositoryImpl';
+import { BookingRepository } from '../../domain/repositories/booking/BookingRepository';
 import { CreateBookingUseCase } from '../../domain/usecases/booking/CreateBookingUseCase';
 import { GetCurrentRenterBookingsUseCase } from '../../domain/usecases/booking/GetCurrentRenterBookingsUseCase';
 
 // Receipt imports
-import { ReceiptRepository } from '../../domain/repositories/receipt/ReceiptRepository';
-import { ReceiptRepositoryImpl } from '../../data/repositories/receipt/ReceiptRepositoryImpl';
-import { ReceiptRemoteDataSource } from '../../data/datasources/interfaces/remote/receipt/ReceiptRemoteDataSource';
 import { ReceiptRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/receipt/ReceiptRemoteDataSourceImpl';
-import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/CreateHandoverReceiptUseCase';
+import { ReceiptRepositoryImpl } from '../../data/repositories/receipt/ReceiptRepositoryImpl';
+import { ReceiptRepository } from '../../domain/repositories/receipt/ReceiptRepository';
 import { UpdateRenterProfileUseCase } from "../../domain/usecases/account/Profile/UpdateRenterProfileUseCase";
+import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/CreateHandoverReceiptUseCase';
 
 import { GenerateContractUseCase } from "../../domain/usecases/receipt/GenerateContractUseCase";
 import { GetContractUseCase } from "../../domain/usecases/receipt/GetContractUseCase";
+import { AxiosClient } from "../network/AxiosClient";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -112,7 +104,6 @@ class ServiceLocator {
 
     const generateContractUseCase = new GenerateContractUseCase(receiptRepository);
     this.services.set("GenerateContractUseCase", generateContractUseCase);
-
     const getContractUseCase = new GetContractUseCase(receiptRepository);
     this.services.set("GetContractUseCase", getContractUseCase);
   }
@@ -175,6 +166,7 @@ class ServiceLocator {
 
   getGenerateContractUseCase(): GenerateContractUseCase {
     return this.get<GenerateContractUseCase>('GenerateContractUseCase');
+    
   }
 
   getGetContractUseCase(): GetContractUseCase {
