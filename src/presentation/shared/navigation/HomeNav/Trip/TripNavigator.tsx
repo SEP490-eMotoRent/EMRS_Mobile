@@ -4,6 +4,8 @@ import { BookingDetailsScreen } from '../../../../features/staff/handover/ui/scr
 import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
 import { TripStackParamList } from '../../StackParameters/types';
 import { SignContractScreen } from '../../../../features/contract/ui/screens/SignContractScreen';
+import { EmergencyContactScreen } from '../../../../features/insuranceClaim/ui/screens/EmergencyContactScreen';
+import { IncidentReportScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentReportScreen';
 
 
 const Stack = createStackNavigator<TripStackParamList>();
@@ -55,6 +57,22 @@ export const TripNavigator: React.FC = () => {
             component={SignContractScreen}
             options={{
             headerShown: false,
+            }}
+        />
+        <Stack.Screen
+            name="EmergencyContact"
+            component={EmergencyContactScreen}
+            options={{
+            presentation: 'card',
+            gestureEnabled: true,
+            }}
+        />
+        <Stack.Screen
+            name="IncidentReport"
+            component={IncidentReportScreen}
+            options={{
+            presentation: 'card',
+            gestureEnabled: true,
             }}
         />
         </Stack.Navigator>

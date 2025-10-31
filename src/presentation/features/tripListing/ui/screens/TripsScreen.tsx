@@ -202,8 +202,15 @@ export const TripsScreen: React.FC = () => {
         console.log("Extend rental", tripId);
     };
 
-    const handleReportIssue = (tripId: string) => {
-        console.log("Report issue", tripId);
+    const handleReportIssue = (bookingId: string, trip: CurrentTrip) => {
+        navigation.navigate('EmergencyContact', {
+            bookingId,
+            rentalDetails: {
+            bikeModel: trip.vehicleName,
+            licensePlate: 'ABC-123', // TODO: get from API later
+            branch: trip.location || 'Main Branch',
+            },
+        });
     };
 
     const handleCancelBooking = (tripId: string) => {
@@ -272,7 +279,7 @@ export const TripsScreen: React.FC = () => {
                         trip={item}
                         onViewDetails={() => handleViewDetails(item.id)}
                         onExtendRental={item.status === "renting" ? () => handleExtendRental(item.id) : undefined}
-                        onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id) : undefined}
+                        onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id, item) : undefined}
                         onCancel={item.status === "confirmed" ? () => handleCancelBooking(item.id) : undefined}
                     />
                 )}

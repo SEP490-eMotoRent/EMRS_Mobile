@@ -89,6 +89,22 @@ export type TripStackParamList = {
     email: string;
     fullName: string;
   }
+  EmergencyContact: {
+    bookingId: string;
+    rentalDetails: {
+      bikeModel: string;
+      licensePlate: string;
+      branch: string;
+    };
+  };
+  IncidentReport: {
+    bookingId: string;
+    initialData?: {
+      dateTime: string;
+      location: string;
+      address: string;
+    };
+  };
 };
 
 export type ProfileStackParamList = {
