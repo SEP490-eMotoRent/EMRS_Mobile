@@ -30,11 +30,11 @@ export const ScanResultScreen: React.FC = () => {
   const route = useRoute<ScanResultScreenRouteProp>();
   const { renter } = route.params || {};
   const [loaded, setLoaded] = useState(false);
-  
+
   const handleContinueToReturn = () => {
     navigation.navigate("VehicleConfirmation");
   };
-  
+
   const handleContinueToHandover = () => {
     navigation.navigate("CustomerRentals", { renterId: renter.id });
   };
@@ -64,8 +64,12 @@ export const ScanResultScreen: React.FC = () => {
               <Text style={styles.customerNameLarge}>
                 {renter.account?.fullname}
               </Text>
-              <Text style={styles.customerAddress}>Địa chỉ: {renter.address}</Text>
-              <Text style={styles.customerPhone}>Số điện thoại: {renter.phone}</Text>
+              <Text style={styles.customerAddress}>
+                Địa chỉ: {renter.address}
+              </Text>
+              <Text style={styles.customerPhone}>
+                Số điện thoại: {renter.phone}
+              </Text>
               <Text style={styles.customerPhone}>Email: {renter.email}</Text>
             </View>
           </View>
@@ -84,24 +88,30 @@ export const ScanResultScreen: React.FC = () => {
                 />
                 {!loaded && (
                   <ActivityIndicator
-                    style={styles.faceImage}
+                    style={styles.faceImageLoading}
                     size="small"
                     color="#999"
                   />
                 )}
               </View>
-              <View style={styles.verificationBadge}>
-                <AntDesign name="check" size={20} color="#FFFFFF" />
-              </View>
+              {loaded && (
+                <View style={styles.verificationBadge}>
+                  <AntDesign name="check" size={20} color="#FFFFFF" />
+                </View>
+              )}
             </View>
 
             {/* Verification Status */}
-            <Text style={styles.verificationStatus}>
-              Danh tính đã được xác minh - 98% khớp
-            </Text>
-            <Text style={styles.verificationDescription}>
-              Customer identity confirmed
-            </Text>
+            {loaded && (
+              <>
+                <Text style={styles.verificationStatus}>
+                  Danh tính đã được xác minh - 98% khớp
+                </Text>
+                <Text style={styles.verificationDescription}>
+                  Customer identity confirmed
+                </Text>
+              </>
+            )}
           </View>
         </View>
 
@@ -291,6 +301,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+  },
+  faceImageLoading: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   faceImage: {
     width: 350,

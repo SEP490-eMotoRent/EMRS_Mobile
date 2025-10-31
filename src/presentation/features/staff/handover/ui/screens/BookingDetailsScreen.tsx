@@ -33,6 +33,7 @@ import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/ve
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../authentication/store";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
+import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -61,7 +62,8 @@ export const BookingDetailsScreen: React.FC = () => {
   const [selectedModelId, setSelectedModelId] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
+  
   useEffect(() => {
     fetchBooking();
     fetchVehicleModels();
@@ -81,6 +83,24 @@ export const BookingDetailsScreen: React.FC = () => {
       console.error("Error fetching booking:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateConstract = async () => {
+    try {
+      setIsLoading(true);
+      const generateContractUseCase = new GenerateContractUseCase(
+        sl.get("ReceiptRepository")
+      );
+      const response = await generateContractUseCase.execute(bookingId);
+      console.log("response", response);
+      // if (response.success) {
+        navigation.navigate("AwaitingApproval");
+      // }
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -381,6 +401,29 @@ export const BookingDetailsScreen: React.FC = () => {
               >
                 <AntDesign name="swap" size={16} color="#000" />
                 <Text style={styles.actionBtnText}>Change Vehicle</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        {booking?.bookingStatus === "Booked" &&
+          hasRentalReceipt &&
+          !hasContract && (
+            <View style={styles.contractCreateRow}>
+              <TouchableOpacity
+                style={[
+                  styles.contractCreateBtn,
+                  isLoading && styles.contractCreateBtnDisabled,
+                ]}
+                onPress={generateConstract}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <AntDesign name="file-text" size={20} color="#000" />
+                )}
+                <Text style={styles.contractCreateBtnText}>
+                  {isLoading ? "Đang tạo hợp đồng..." : "Tạo hợp đồng thuê"}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -819,6 +862,37 @@ const styles = StyleSheet.create({
   gpsBtn: { backgroundColor: "#7DB3FF" },
   receiptBtn: { backgroundColor: "#C9B6FF", marginHorizontal: 16 },
   actionBtnText: { color: "#000", fontWeight: "700" },
+  contractCreateRow: {
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  contractCreateBtn: {
+    backgroundColor: "#C9B6FF",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 10,
+    shadowColor: "#C9B6FF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  contractCreateBtnText: {
+    color: "#000",
+    fontWeight: "700",
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  contractCreateBtnDisabled: {
+    opacity: 0.6,
+  },
   contractActionsRow: {
     flexDirection: "row",
     gap: 10,
