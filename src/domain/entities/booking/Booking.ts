@@ -90,6 +90,7 @@ export class Booking implements BaseEntity {
         insurancePackageId?: string,
         insurancePackage?: InsurancePackage,
         rentalContract?: RentalContract,
+        rentalReceipt?: RentalReceipt,
         handoverBranchId?: string,
         handoverBranch?: Branch,
         returnBranchId?: string,
@@ -140,6 +141,7 @@ export class Booking implements BaseEntity {
         this.vehicle = vehicle; // ✅ Now optional
         this.insurancePackage = insurancePackage;
         this.rentalContract = rentalContract;
+        this.rentalReceipt = rentalReceipt;
         this.handoverBranch = handoverBranch;
         this.returnBranch = returnBranch;
     }
