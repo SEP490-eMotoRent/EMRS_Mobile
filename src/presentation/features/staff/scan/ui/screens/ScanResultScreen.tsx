@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,15 +7,15 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
-import { BackButton } from '../../../../../common/components/atoms/buttons/BackButton';
-import { useNavigation } from "@react-navigation/native";
+import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
-const customerAvatar = require("../../../../../../../assets/images/avatar.png");
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ScanResultScreenNavigationProp = StackNavigationProp<
@@ -23,26 +23,30 @@ type ScanResultScreenNavigationProp = StackNavigationProp<
   "ScanResult"
 >;
 
+type ScanResultScreenRouteProp = RouteProp<StaffStackParamList, "ScanResult">;
+
 export const ScanResultScreen: React.FC = () => {
   const navigation = useNavigation<ScanResultScreenNavigationProp>();
-
-  const handleContinueToHandover = () => {
-    console.log("Continue to handover");
-    navigation.navigate("CustomerRentals");
-  };
-
+  const route = useRoute<ScanResultScreenRouteProp>();
+  const { renter } = route.params || {};
+  const [loaded, setLoaded] = useState(false);
+  
   const handleContinueToReturn = () => {
-    console.log("Continue to return");
     navigation.navigate("VehicleConfirmation");
   };
+  
+  const handleContinueToHandover = () => {
+    navigation.navigate("CustomerRentals", { renterId: renter.id });
+  };
+
+  console.log(renter);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Verify Customer Identity"
-          subtitle="#EMR240915001"
-          submeta="John Nguyen"
+          title="Xác minh danh tính khách hàng"
+          submeta={renter.account?.fullname}
           onBack={() => navigation.goBack()}
         />
 
@@ -51,16 +55,18 @@ export const ScanResultScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Customer Information</Text>
           <View style={styles.customerCard}>
             <View style={styles.customerAvatar}>
-              <Image source={customerAvatar} style={styles.avatarImage} />
+              <Image
+                source={{ uri: renter.avatarUrl }}
+                style={styles.avatarImage}
+              />
             </View>
             <View style={styles.customerDetails}>
-              <Text style={styles.customerNameLarge}>John Nguyen</Text>
-              <Text style={styles.customerStatus}>Expected customer</Text>
-              <Text style={styles.customerPhone}>Phone: ***8901</Text>
-              <Text style={styles.customerVehicle}>
-                Vehicle: VinFast Evo200
+              <Text style={styles.customerNameLarge}>
+                {renter.account?.fullname}
               </Text>
-              <Text style={styles.pickupTime}>Pickup time: 10:30 AM</Text>
+              <Text style={styles.customerAddress}>Địa chỉ: {renter.address}</Text>
+              <Text style={styles.customerPhone}>Số điện thoại: {renter.phone}</Text>
+              <Text style={styles.customerPhone}>Email: {renter.email}</Text>
             </View>
           </View>
         </View>
@@ -71,7 +77,18 @@ export const ScanResultScreen: React.FC = () => {
             {/* Face Image with Verification Overlay */}
             <View style={styles.faceImageContainer}>
               <View style={styles.faceImage}>
-                <Image source={customerAvatar} style={styles.faceImage} />
+                <Image
+                  source={{ uri: renter.faceScanUrl }}
+                  style={styles.faceImage}
+                  onLoad={() => setLoaded(true)}
+                />
+                {!loaded && (
+                  <ActivityIndicator
+                    style={styles.faceImage}
+                    size="small"
+                    color="#999"
+                  />
+                )}
               </View>
               <View style={styles.verificationBadge}>
                 <AntDesign name="check" size={20} color="#FFFFFF" />
@@ -80,7 +97,7 @@ export const ScanResultScreen: React.FC = () => {
 
             {/* Verification Status */}
             <Text style={styles.verificationStatus}>
-              Identity Verified - 98% match
+              Danh tính đã được xác minh - 98% khớp
             </Text>
             <Text style={styles.verificationDescription}>
               Customer identity confirmed
@@ -89,14 +106,14 @@ export const ScanResultScreen: React.FC = () => {
         </View>
 
         {/* Match Confidence */}
-        <View style={styles.confidenceCard}>
+        {/* <View style={styles.confidenceCard}>
           <View style={styles.confidenceSection}>
             <View style={styles.confidenceImages}>
               <View style={styles.confidenceImage}>
-                <Image source={customerAvatar} style={styles.confidenceImage} />
+                <Image source={{ uri: renter.faceScanUrl }} style={styles.confidenceImage} />
               </View>
               <View style={styles.confidenceImage}>
-                <Image source={customerAvatar} style={styles.confidenceImage} />
+                <Image source={{ uri: renter.faceScanUrl }} style={styles.confidenceImage} />
               </View>
             </View>
             <View>
@@ -104,7 +121,7 @@ export const ScanResultScreen: React.FC = () => {
               <Text style={styles.confidenceValue}>98%</Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
@@ -118,12 +135,14 @@ export const ScanResultScreen: React.FC = () => {
               </View>
               <View style={styles.buttonTextContainer}>
                 <Text style={styles.returnButtonText}>Continue to Return</Text>
-                <Text style={styles.returnButtonSubtext}>Vehicle return process</Text>
+                <Text style={styles.returnButtonSubtext}>
+                  Vehicle return process
+                </Text>
               </View>
               <AntDesign name="right" size={16} color="#FFFFFF" />
             </View>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.handoverButton}
             onPress={handleContinueToHandover}
@@ -133,8 +152,12 @@ export const ScanResultScreen: React.FC = () => {
                 <AntDesign name="car" size={24} color="#000000" />
               </View>
               <View style={styles.buttonTextContainer}>
-                <Text style={styles.handoverButtonText}>Continue to Handover</Text>
-                <Text style={styles.handoverButtonSubtext}>Vehicle pickup process</Text>
+                <Text style={styles.handoverButtonText}>
+                  Continue to Handover
+                </Text>
+                <Text style={styles.handoverButtonSubtext}>
+                  Vehicle pickup process
+                </Text>
               </View>
               <AntDesign name="right" size={16} color="#000000" />
             </View>
@@ -221,7 +244,12 @@ const styles = StyleSheet.create({
   customerStatus: {
     fontSize: 14,
     color: colors.text.secondary,
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  customerAddress: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    marginBottom: 4,
   },
   customerPhone: {
     fontSize: 14,
@@ -237,9 +265,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
   },
-  scanResultSection: {
-    marginBottom: 32,
-  },
+  scanResultSection: {},
   scanResultCard: {
     backgroundColor: "#2A2A2A",
     borderRadius: 16,
@@ -297,7 +323,7 @@ const styles = StyleSheet.create({
   verificationDescription: {
     fontSize: 14,
     color: colors.text.secondary,
-    marginBottom: 24,
+    marginBottom: 4,
     textAlign: "center",
   },
   confidenceSection: {

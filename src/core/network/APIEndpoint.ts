@@ -37,6 +37,8 @@ export const ApiEndpoints = {
   renter: {
     list: "/renters",
     update: "/account/renter",
+    detail: (renterId: string) => `/account/renter/${renterId}`,
+    scanFace: "/account/renter/scan",
   },
 
   // Receipt endpoints

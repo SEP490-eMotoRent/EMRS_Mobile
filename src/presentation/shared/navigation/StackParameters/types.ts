@@ -2,6 +2,7 @@ import { NavigatorScreenParams } from "@react-navigation/native";
 import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
 import { Booking } from "../../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../../domain/entities/booking/RentalContract";
+import { ScanFaceResponse } from "../../../../data/models/account/renter/ScanFaceResponse";
 
 export type AuthStackParamList = {
   Hello: undefined;
@@ -103,8 +104,8 @@ export type StaffStackParamList = {
   Rental: undefined;
   Return: undefined;
   ScanFace: undefined;
-  ScanResult: undefined;
-  CustomerRentals: undefined;
+  ScanResult: { renter: ScanFaceResponse };
+  CustomerRentals: { renterId: string };
   SelectVehicle: {
     bookingId: string;
     renterName: string;

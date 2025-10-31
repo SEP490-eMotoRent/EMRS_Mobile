@@ -7,6 +7,9 @@ import { RenterRemoteDataSource } from "../../datasources/interfaces/remote/acco
 import { RegisterRenterResponse } from "../../models/account/renter/RegisterRenterResponse";
 import { UpdateRenterRequest } from "../../models/account/renter/UpdateRenterRequest";
 import { RenterRepository } from "../../../domain/repositories/account/RenterRepository";
+import { ScanFaceRequest } from "../../models/account/renter/ScanFaceRequest";
+import { ScanFaceResponse } from "../../models/account/renter/ScanFaceResponse";
+import { ApiResponse } from "../../../core/network/APIResponse";
 
 export class RenterRepositoryImpl implements RenterRepository {
     constructor(
@@ -61,6 +64,14 @@ export class RenterRepositoryImpl implements RenterRepository {
         }
     }
 
+    async scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>> {
+        try {
+          return await this.remote.scanFace(request);
+        } catch (error) {
+          throw error;
+        }
+    }
+
     private mapToEntity(model: RegisterRenterResponse): Renter {
         const accountId = model.accountId;
         const minimalAccount = new Account(
@@ -96,6 +107,7 @@ export class RenterRepositoryImpl implements RenterRepository {
             model.dateOfBirth,
             model.verificationCodeExpiry ? new Date(model.verificationCodeExpiry) : undefined,
             model.avatarUrl,
+            undefined,
             undefined,
             new Date(),
             null,
