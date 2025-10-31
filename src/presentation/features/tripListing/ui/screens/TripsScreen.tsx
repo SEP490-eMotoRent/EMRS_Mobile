@@ -26,7 +26,6 @@ export const TripsScreen: React.FC = () => {
     const [sortBy, setSortBy] = useState("Recent first");
     const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
 
-    // ✅ Get bookings from API
     const getCurrentRenterBookingsUseCase = useMemo(
         () => sl.get<GetCurrentRenterBookingsUseCase>("GetCurrentRenterBookingsUseCase"),
         []
@@ -34,11 +33,10 @@ export const TripsScreen: React.FC = () => {
     
     const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(getCurrentRenterBookingsUseCase);
 
-    // ✅ Map Booking entities to UI models
+    // ✅ Enhanced mapping with more details from API
     const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
         console.log("🔍 Mapping booking:", booking.id, "Status:", booking.bookingStatus);
         
-        // ✅ FIXED: Handle actual status values from API
         let status: "renting" | "confirmed" | "returned";
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         
@@ -49,9 +47,8 @@ export const TripsScreen: React.FC = () => {
         } else if (bookingStatus === "COMPLETED" || bookingStatus === "RETURNED") {
             status = "returned";
         } else if (bookingStatus === "CANCELLED") {
-            return null; // Don't show cancelled in current trips
+            return null;
         } else {
-            // ✅ For any unknown status, show as confirmed
             status = "confirmed";
         }
 
@@ -63,15 +60,63 @@ export const TripsScreen: React.FC = () => {
         const startDate = booking.startDatetime ? formatDate(booking.startDatetime) : "";
         const endDate = booking.endDatetime ? formatDate(booking.endDatetime) : "";
 
+        // ✅ Get vehicle details from nested vehicleModel
+        const vehicleName = booking.vehicleModel?.modelName || "Unknown Vehicle";
+        const vehicleCategory = booking.vehicleModel?.category || "";
+        
+        // ✅ Calculate rental duration
+        const calculateDuration = () => {
+            if (booking.rentalDays && booking.rentalDays > 0) {
+                return `${booking.rentalDays} day${booking.rentalDays > 1 ? 's' : ''}`;
+            }
+            if (booking.rentalHours && booking.rentalHours > 0) {
+                return `${booking.rentalHours} hour${booking.rentalHours > 1 ? 's' : ''}`;
+            }
+            return "";
+        };
+
+        // ✅ Calculate time remaining or time until start
+        const calculateTimeInfo = () => {
+            if (!booking.startDatetime) return undefined;
+            
+            const now = new Date();
+            const start = new Date(booking.startDatetime);
+            const end = booking.endDatetime ? new Date(booking.endDatetime) : null;
+            
+            if (status === "renting" && end) {
+                const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                if (daysLeft > 0) {
+                    return `${daysLeft} day${daysLeft > 1 ? 's' : ''} left`;
+                }
+                return "Ending soon";
+            }
+            
+            if (status === "confirmed") {
+                const daysUntil = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                if (daysUntil > 0) {
+                    return `Starts in ${daysUntil} day${daysUntil > 1 ? 's' : ''}`;
+                }
+                return `Starts ${startDate}`;
+            }
+            
+            return undefined;
+        };
+
         return {
             id: booking.id,
-            vehicleName: "Vehicle", // TODO: Get from vehicle model when available
+            vehicleName,
+            vehicleCategory,
             dates: `${startDate} - ${endDate}, ${booking.startDatetime?.getFullYear() || ""}`,
+            duration: calculateDuration(),
             status,
-            timeInfo: status === "renting" ? "Active rental" : `Starts ${startDate}`,
-            reference: `#${booking.id.substring(0, 12)}`,
-            location: "Branch", // TODO: Get from branch when available
+            timeInfo: calculateTimeInfo(),
+            reference: `#${booking.id.substring(0, 8)}`,
+            location: "Branch",
             totalAmount: booking.totalAmount ? `${booking.totalAmount.toLocaleString()}đ` : undefined,
+            depositAmount: booking.depositAmount ? `${booking.depositAmount.toLocaleString()}đ` : undefined,
+            baseRentalFee: booking.baseRentalFee ? `${booking.baseRentalFee.toLocaleString()}đ` : undefined,
+            hasInsurance: !!booking.insurancePackage,
+            vehicleAssigned: !!booking.vehicleId,
         };
     };
 
@@ -79,7 +124,7 @@ export const TripsScreen: React.FC = () => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         
         if (bookingStatus !== "COMPLETED" && bookingStatus !== "CANCELLED") {
-            return null; // Only show completed or cancelled in past trips
+            return null;
         }
 
         const formatDate = (date: Date) => {
@@ -90,15 +135,35 @@ export const TripsScreen: React.FC = () => {
         const startDate = booking.startDatetime ? formatDate(booking.startDatetime) : "";
         const endDate = booking.endDatetime ? formatDate(booking.endDatetime) : "";
 
+        const vehicleName = booking.vehicleModel?.modelName || "Unknown Vehicle";
+        const vehicleCategory = booking.vehicleModel?.category || "";
+
+        // ✅ Calculate rental duration for past trips
+        const calculateDuration = () => {
+            if (booking.rentalDays && booking.rentalDays > 0) {
+                return `${booking.rentalDays} day${booking.rentalDays > 1 ? 's' : ''}`;
+            }
+            if (booking.rentalHours && booking.rentalHours > 0) {
+                return `${booking.rentalHours} hour${booking.rentalHours > 1 ? 's' : ''}`;
+            }
+            return "";
+        };
+
         return {
             id: booking.id,
-            vehicleName: "Vehicle",
+            vehicleName,
+            vehicleCategory,
             dates: `${startDate} - ${endDate}, ${booking.startDatetime?.getFullYear() || ""}`,
+            duration: calculateDuration(),
             status: bookingStatus === "COMPLETED" ? "completed" : "cancelled",
             rating: bookingStatus === "COMPLETED" ? 5 : undefined,
             totalAmount: booking.totalAmount ? `${booking.totalAmount.toLocaleString()}đ` : undefined,
             refundedAmount: bookingStatus === "CANCELLED" && booking.depositAmount 
                 ? `${booking.depositAmount.toLocaleString()}đ` 
+                : undefined,
+            hadInsurance: !!booking.insurancePackage,
+            lateReturnFee: booking.lateReturnFee && booking.lateReturnFee > 0 
+                ? `${booking.lateReturnFee.toLocaleString()}đ` 
                 : undefined,
         };
     };
@@ -157,25 +222,24 @@ export const TripsScreen: React.FC = () => {
         console.log("Book similar", tripId);
     };
 
-    // Filter current trips
     const filteredCurrentTrips = currentTrips.filter(trip => {
         if (searchQuery) {
             return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    trip.reference.toLowerCase().includes(searchQuery.toLowerCase());
+                    trip.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
         }
         return true;
     });
 
-    // Filter past trips
     const filteredPastTrips = pastTrips.filter(trip => {
         if (pastFilter && trip.status !== pastFilter) return false;
         if (searchQuery) {
-            return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase());
+            return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
         }
         return true;
     });
 
-    // Past trips filter tags
     const pastFilterTags = [
         { id: "completed", label: "Completed", count: pastTrips.filter(t => t.status === "completed").length },
         { id: "cancelled", label: "Cancelled", count: pastTrips.filter(t => t.status === "cancelled").length },
@@ -247,6 +311,7 @@ export const TripsScreen: React.FC = () => {
                     <View style={{ marginTop: index === 0 ? 0 : 4 }}>
                         <PastTripCard
                             trip={item}
+                            onViewDetails={() => handleViewDetails(item.id)}
                             onRentAgain={() => handleRentAgain(item.id)}
                             onViewReceipt={() => handleViewReceipt(item.id)}
                             onBookSimilar={

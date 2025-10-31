@@ -1,4 +1,3 @@
-
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StatusBadge } from "../atoms/badges/StatusBadge";
@@ -10,12 +9,18 @@ import { MapPreview } from "../molecules/MapPreview";
 export interface CurrentTrip {
     id: string;
     vehicleName: string;
+    vehicleCategory?: string; // ✅ NEW
     dates: string;
+    duration?: string; // ✅ NEW: "5 days" or "8 hours"
     status: "confirmed" | "returned" | "renting";
-    timeInfo?: string; // "5 days left" for renting, "Starts in 3 days" for confirmed
+    timeInfo?: string;
     reference: string;
-    location?: string; // Only for renting status
-    totalAmount?: string; // For confirmed status
+    location?: string;
+    totalAmount?: string;
+    depositAmount?: string; // ✅ NEW
+    baseRentalFee?: string; // ✅ NEW
+    hasInsurance?: boolean; // ✅ NEW
+    vehicleAssigned?: boolean; // ✅ NEW
 }
 
 interface CurrentTripCardProps {
@@ -39,10 +44,31 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
             onPress={onViewDetails}
             activeOpacity={0.7}
         >
-            <StatusBadge status={trip.status} />
+            <View style={styles.header}>
+                <StatusBadge status={trip.status} />
+                {/* ✅ NEW: Show indicators */}
+                <View style={styles.indicators}>
+                    {trip.hasInsurance && (
+                        <View style={styles.indicator}>
+                            <Text style={styles.indicatorIcon}>🛡️</Text>
+                        </View>
+                    )}
+                    {trip.vehicleAssigned && (
+                        <View style={styles.indicator}>
+                            <Text style={styles.indicatorIcon}>✓</Text>
+                            <Text style={styles.indicatorText}>Vehicle Ready</Text>
+                        </View>
+                    )}
+                </View>
+            </View>
             
             <View style={styles.content}>
-                <VehicleInfo name={trip.vehicleName} dates={trip.dates} />
+                <VehicleInfo 
+                    name={trip.vehicleName} 
+                    dates={trip.dates}
+                    category={trip.vehicleCategory} // ✅ Pass category
+                    duration={trip.duration} // ✅ Pass duration
+                />
                 
                 {trip.timeInfo && trip.status === "renting" && (
                     <TimeRemaining time={trip.timeInfo} />
@@ -61,10 +87,27 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                     <MapPreview location={trip.location} />
                 )}
                 
-                {trip.status === "confirmed" && trip.totalAmount && (
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Total amount</Text>
-                        <Text style={styles.amount}>{trip.totalAmount}</Text>
+                {/* ✅ NEW: Enhanced amount display for confirmed bookings */}
+                {trip.status === "confirmed" && (
+                    <View style={styles.amountSection}>
+                        {trip.baseRentalFee && (
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Rental fee</Text>
+                                <Text style={styles.value}>{trip.baseRentalFee}</Text>
+                            </View>
+                        )}
+                        {trip.depositAmount && (
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Deposit</Text>
+                                <Text style={styles.value}>{trip.depositAmount}</Text>
+                            </View>
+                        )}
+                        {trip.totalAmount && (
+                            <View style={[styles.row, styles.totalRow]}>
+                                <Text style={styles.totalLabel}>Total amount</Text>
+                                <Text style={styles.totalAmount}>{trip.totalAmount}</Text>
+                            </View>
+                        )}
                     </View>
                 )}
                 
@@ -75,7 +118,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                             <TouchableOpacity 
                                 style={styles.primaryButton} 
                                 onPress={(e) => {
-                                    e.stopPropagation(); // ✅ ADDED
+                                    e.stopPropagation();
                                     onViewDetails();
                                 }}
                             >
@@ -85,7 +128,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                                 <TouchableOpacity 
                                     style={styles.primaryButton} 
                                     onPress={(e) => {
-                                        e.stopPropagation(); // ✅ ADDED
+                                        e.stopPropagation();
                                         onExtendRental();
                                     }}
                                 >
@@ -97,7 +140,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                             <TouchableOpacity 
                                 style={styles.reportButton} 
                                 onPress={(e) => {
-                                    e.stopPropagation(); // ✅ ADDED
+                                    e.stopPropagation();
                                     onReportIssue();
                                 }}
                             >
@@ -112,7 +155,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                         <TouchableOpacity 
                             style={styles.primaryButton} 
                             onPress={(e) => {
-                                e.stopPropagation(); // ✅ ADDED
+                                e.stopPropagation();
                                 onViewDetails();
                             }}
                         >
@@ -122,7 +165,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                             <TouchableOpacity 
                                 style={styles.cancelButton} 
                                 onPress={(e) => {
-                                    e.stopPropagation(); // ✅ ADDED
+                                    e.stopPropagation();
                                     onCancel();
                                 }}
                             >
@@ -136,7 +179,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                     <TouchableOpacity 
                         style={styles.primaryButton} 
                         onPress={(e) => {
-                            e.stopPropagation(); // ✅ ADDED
+                            e.stopPropagation();
                             onViewDetails();
                         }}
                     >
@@ -156,6 +199,32 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         marginTop: 4,
     },
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    indicators: {
+        flexDirection: "row",
+        gap: 8,
+    },
+    indicator: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#2a2a2a",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        gap: 4,
+    },
+    indicatorIcon: {
+        fontSize: 12,
+    },
+    indicatorText: {
+        color: "#22c55e",
+        fontSize: 10,
+        fontWeight: "600",
+    },
     content: {
         marginTop: 12,
     },
@@ -172,20 +241,40 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 12,
     },
-    row: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
+    amountSection: {
         marginTop: 12,
         paddingTop: 12,
         borderTopWidth: 1,
         borderTopColor: "#333",
     },
+    row: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 8,
+    },
     label: {
         color: "#999",
-        fontSize: 14,
+        fontSize: 13,
     },
-    amount: {
+    value: {
+        color: "#fff",
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    totalRow: {
+        marginTop: 4,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: "#333",
+        marginBottom: 0,
+    },
+    totalLabel: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    totalAmount: {
         color: "#fff",
         fontSize: 16,
         fontWeight: "700",

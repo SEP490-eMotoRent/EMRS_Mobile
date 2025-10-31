@@ -7,7 +7,6 @@ export class InsurancePackage implements BaseEntity {
     public deletedAt: Date | null;
     public isDeleted: boolean;
 
-    // C# FIELDS - EXACT MATCH
     public packageName: string;
     public packageFee: number;
     public coveragePersonLimit: number;
