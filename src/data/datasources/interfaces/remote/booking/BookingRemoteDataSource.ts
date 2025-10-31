@@ -1,38 +1,37 @@
+import { BookingResponse } from "../../../../models/booking/BookingResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
-import { 
-  BookingResponse, 
-} from "../../../../models/booking/BookingResponse";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
 
+/**
+ * Remote data source interface for booking operations
+ * Defines the contract for API calls
+ */
 export interface BookingRemoteDataSource {
   /**
    * Create a new booking
-   * @returns BookingResponse (simple response with IDs only)
    */
   create(request: CreateBookingRequest): Promise<BookingResponse>;
 
   /**
-   * Get booking by ID
-   * @returns BookingForStaffResponse (detailed response with nested objects)
+   * Get booking by ID (returns staff response with full details)
    */
   getById(id: string): Promise<BookingForStaffResponse | null>;
 
   /**
    * Get bookings by renter ID
-   * @returns BookingForStaffResponse[] (detailed responses)
+   * ✅ UPDATED: Returns BookingResponse[] (BookingListForRenterResponse[])
    */
-  getByRenter(renterId: string): Promise<BookingForStaffResponse[]>;
+  getByRenter(renterId: string): Promise<BookingResponse[]>;
 
   /**
-   * Get current renter's bookings
-   * @returns BookingForStaffResponse[] (detailed responses)
+   * Get current authenticated renter's bookings
+   * ✅ UPDATED: Returns BookingResponse[] (BookingListForRenterResponse[])
    */
-  getCurrentRenterBookings(): Promise<BookingForStaffResponse[]>;
+  getCurrentRenterBookings(): Promise<BookingResponse[]>;
 
   /**
-   * Get paginated bookings with filters
-   * @returns PaginatedBookingResponse (can contain simple or detailed responses)
+   * Get paginated list of bookings with filters
    */
   getBookings(
     vehicleModelId: string,
@@ -44,7 +43,6 @@ export interface BookingRemoteDataSource {
 
   /**
    * Assign a vehicle to a booking
-   * @returns void
    */
   assignVehicle(vehicleId: string, bookingId: string): Promise<void>;
 }

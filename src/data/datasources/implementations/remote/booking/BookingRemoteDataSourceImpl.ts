@@ -45,11 +45,12 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async getByRenter(renterId: string): Promise<BookingForStaffResponse[]> {
+  async getByRenter(renterId: string): Promise<BookingResponse[]> {
     try {
       const endpoint = ApiEndpoints.booking.byRenter(renterId);
+      // ✅ UPDATED: Returns BookingResponse (renter response) not staff response
       const response = await this.axiosClient.get<
-        ApiResponse<BookingForStaffResponse[]>
+        ApiResponse<BookingResponse[]>
       >(endpoint);
       return unwrapResponse(response.data);
     } catch (error: any) {
@@ -58,14 +59,18 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async getCurrentRenterBookings(): Promise<BookingForStaffResponse[]> {
+  async getCurrentRenterBookings(): Promise<BookingResponse[]> {
     try {
+      console.log("🌐 Calling API:", ApiEndpoints.booking.byCurrentRenter);
+      // ✅ UPDATED: Returns BookingResponse[] (BookingListForRenterResponse[])
       const response = await this.axiosClient.get<
-        ApiResponse<BookingForStaffResponse[]>
+        ApiResponse<BookingResponse[]>
       >(ApiEndpoints.booking.byCurrentRenter);
-      return unwrapResponse(response.data);
+      const result = unwrapResponse(response.data);
+      console.log("✅ API returned bookings:", result.length);
+      return result;
     } catch (error: any) {
-      console.error("Failed to fetch current renter bookings:", error);
+      console.error("❌ Failed to fetch current renter bookings:", error);
       return [];
     }
   }
