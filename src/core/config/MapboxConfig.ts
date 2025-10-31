@@ -1,7 +1,7 @@
 export const MapboxConfig = {
     // Get your free token from: https://account.mapbox.com/access-tokens/
     // NO CREDIT CARD REQUIRED for basic tier
-    accessToken: 'Input', // Starts with 'pk.'
+    accessToken: 'MapBox_Key', // Starts with 'pk.'
     
     // Vietnam-specific settings
     region: 'vn',
