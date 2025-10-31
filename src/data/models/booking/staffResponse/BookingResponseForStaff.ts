@@ -17,6 +17,7 @@ export interface BookingForStaffResponse {
     vehicle: VehicleBookingResponse; // ✅ Nested
     vehicleModel: VehicleModelBookingResponse; // ✅ Nested
     rentalContract: RentalContractBookingResponse; // ✅ Nested
+    rentalReceipt: RentalReceiptBookingResponse; // ✅ Nested
 }
 
 export interface RenterBookingResponse {
@@ -70,4 +71,18 @@ export interface RentalContractBookingResponse {
     otpCode: string;
     contractStatus: string;
     file: string;
+}
+
+export interface RentalReceiptBookingResponse {
+    id: string;
+    notes: string;
+    renterConfirmedAt: string | null;
+    startOdometerKm: number;
+    endOdometerKm: number;
+    startBatteryPercentage: number;
+    endBatteryPercentage: number;
+    bookingId: string;
+    staffId: string;
+    vehicleFiles: string[];
+    checkListFile: string;
 }
