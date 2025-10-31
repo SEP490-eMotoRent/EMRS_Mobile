@@ -90,6 +90,10 @@ export type TripStackParamList = {
     email: string;
     fullName: string;
   }
+  TrackingGPS: {
+    vehicleId?: string;
+    licensePlate?: string;
+  };
 };
 
 export type ProfileStackParamList = {

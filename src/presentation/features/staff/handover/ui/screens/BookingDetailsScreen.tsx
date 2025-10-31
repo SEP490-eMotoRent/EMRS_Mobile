@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal as RNModal,
   RefreshControl,
+  Image,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -31,6 +32,7 @@ import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleM
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../authentication/store";
+import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -45,6 +47,9 @@ export const BookingDetailsScreen: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [contract, setContract] = useState<RentalContract | null>(null);
+  const [rentalReceipt, setRentalReceipt] = useState<RentalReceipt | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const { bookingId } = route.params;
   const [showContract, setShowContract] = useState(false);
@@ -55,6 +60,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const [showModelList, setShowModelList] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     fetchBooking();
@@ -70,6 +76,7 @@ export const BookingDetailsScreen: React.FC = () => {
       const booking = await getBookingByIdUseCase.execute(bookingId);
       setBooking(booking);
       setContract(booking?.rentalContract);
+      setRentalReceipt(booking?.rentalReceipt);
     } catch (error) {
       console.error("Error fetching booking:", error);
     } finally {
@@ -114,6 +121,7 @@ export const BookingDetailsScreen: React.FC = () => {
   };
 
   const hasContract = !!contract?.contractPdfUrl;
+  const hasRentalReceipt = !!rentalReceipt;
   const contractInfo = useMemo(
     () => ({
       number: contract?.contractNumber || "(chưa cấp)",
@@ -271,6 +279,21 @@ export const BookingDetailsScreen: React.FC = () => {
           </InfoCard>
         </View>
 
+        {hasRentalReceipt && (
+          <View style={styles.section}>
+            <SectionHeader title="Biên bản bàn giao" icon="file-text" />
+            <InfoCard>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.receiptBtn]}
+                onPress={() => setShowReceipt(true)}
+              >
+                <AntDesign name="file" size={16} color="#000" />
+                <Text style={styles.actionBtnText}>Xem biên bản bàn giao</Text>
+              </TouchableOpacity>
+            </InfoCard>
+          </View>
+        )}
+
         {/* Contract Section (only when available) */}
         {hasContract && (
           <View style={styles.section}>
@@ -335,31 +358,33 @@ export const BookingDetailsScreen: React.FC = () => {
           </InfoCard>
         </View>
 
-        {/* Actions */}
-        {booking?.bookingStatus !== "Booked" ? (
-          <View style={styles.editRow}>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.updateBtn]}
-              onPress={openEdit}
-            >
-              <AntDesign name="edit" size={16} color="#000" />
-              <Text style={styles.actionBtnText}>Update Booking</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.changeBtn]}
-              onPress={() => {
-                navigation.navigate("SelectVehicle", {
-                  bookingId: bookingId,
-                  renterName: booking?.renter?.fullName?.() ?? "",
-                  vehicleModel: booking?.vehicleModel,
-                });
-              }}
-            >
-              <AntDesign name="swap" size={16} color="#000" />
-              <Text style={styles.actionBtnText}>Change Vehicle</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
+        {booking?.bookingStatus === "Booked" &&
+          !hasRentalReceipt &&
+          !hasContract && (
+            <View style={styles.editRow}>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.updateBtn]}
+                onPress={openEdit}
+              >
+                <AntDesign name="edit" size={16} color="#000" />
+                <Text style={styles.actionBtnText}>Update Booking</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.changeBtn]}
+                onPress={() => {
+                  navigation.navigate("SelectVehicle", {
+                    bookingId: bookingId,
+                    renterName: booking?.renter?.fullName?.() ?? "",
+                    vehicleModel: booking?.vehicleModel,
+                  });
+                }}
+              >
+                <AntDesign name="swap" size={16} color="#000" />
+                <Text style={styles.actionBtnText}>Change Vehicle</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        {booking?.bookingStatus === "Renting" && (
           <View style={styles.editRow}>
             <TouchableOpacity
               style={[styles.actionBtn, styles.gpsBtn]}
@@ -376,6 +401,83 @@ export const BookingDetailsScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Rental Receipt Modal */}
+      <RNModal
+        visible={showReceipt}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReceipt(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeaderDark}>
+              <Text style={styles.modalTitleDark}>Biên bản bàn giao</Text>
+              <TouchableOpacity onPress={() => setShowReceipt(false)}>
+                <AntDesign name="close" size={18} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView>
+              <InfoCard>
+                <View style={[styles.infoItem]}>
+                  <Text style={styles.infoLabel}>Ghi chú:</Text>
+                  <Text style={styles.infoValue}>
+                    {booking?.rentalReceipt?.notes || "-"}
+                  </Text>
+                </View>
+                <View style={[styles.infoItem]}>
+                  <Text style={styles.infoLabel}>Số km bắt đầu:</Text>
+                  <Text style={styles.infoValue}>
+                    {booking?.rentalReceipt?.startOdometerKm} km
+                  </Text>
+                </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Pin bắt đầu:</Text>
+                  <Text style={styles.infoValue}>
+                    {booking?.rentalReceipt?.startBatteryPercentage}%
+                  </Text>
+                </View>
+              </InfoCard>
+
+              {/* Vehicle photos grid */}
+              {!!booking?.rentalReceipt?.vehicleFiles?.length && (
+                <View style={styles.section}>
+                  <SectionHeader title="Ảnh xe bàn giao" icon="picture" />
+                  <View style={styles.photoGrid}>
+                    {booking?.rentalReceipt?.vehicleFiles.map(
+                      (uri: string, idx: number) => (
+                        <View key={idx} style={styles.photoItem}>
+                          <Image
+                            source={{ uri }}
+                            style={styles.photoImage}
+                            resizeMode="cover"
+                          />
+                        </View>
+                      )
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {!!booking?.rentalReceipt?.checkListFile && (
+                <View style={styles.section}>
+                  <SectionHeader title="Checklist" icon="profile" />
+                  <View style={styles.checklistWrapImg}>
+                    <Image
+                      source={{
+                        uri: booking?.rentalReceipt?.checkListFile as string,
+                      }}
+                      style={styles.checklistImg}
+                      resizeMode="cover"
+                    />
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </RNModal>
 
       {/* Contract WebView Modal */}
       <Modal
@@ -715,6 +817,7 @@ const styles = StyleSheet.create({
   updateBtn: { backgroundColor: "#C9B6FF" },
   changeBtn: { backgroundColor: "#FFD666" },
   gpsBtn: { backgroundColor: "#7DB3FF" },
+  receiptBtn: { backgroundColor: "#C9B6FF", marginHorizontal: 16 },
   actionBtnText: { color: "#000", fontWeight: "700" },
   contractActionsRow: {
     flexDirection: "row",
@@ -820,6 +923,42 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     padding: 16,
     overflow: "visible",
+    maxHeight: "90%",
+  },
+  photoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingHorizontal: 0,
+  },
+  photoItem: {
+    width: "48%",
+    aspectRatio: 1,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#0F0A18",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  photoImage: { width: "100%", height: "100%" },
+  checklistWrapImg: {
+    width: "100%",
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#0F0A18",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+  },
+  checklistContent: { alignItems: "center", justifyContent: "center" },
+  checklistImg: {
+    width: "100%",
+    height: 1300,
+    resizeMode: "cover",
+    borderRadius: 8,
   },
   modalHeaderDark: {
     flexDirection: "row",
