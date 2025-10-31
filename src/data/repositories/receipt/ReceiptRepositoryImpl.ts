@@ -40,6 +40,14 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
         return this.mapToEntity(response.data);
     }
 
+    async generateOtp(contractId: string): Promise<ApiResponse<string>> {
+        return await this.remote.generateOtp(contractId);
+    }
+
+    async signContract(contractId: string, otpCode: string): Promise<ApiResponse<string>> {
+        return await this.remote.signContract(contractId, otpCode);
+    }
+
     private mapToEntity(dto: GetContractResponse): RentalContract {
         return new RentalContract(
             dto.id,

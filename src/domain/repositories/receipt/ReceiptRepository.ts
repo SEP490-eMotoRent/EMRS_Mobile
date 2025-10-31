@@ -10,4 +10,6 @@ export interface ReceiptRepository {
   ): Promise<ApiResponse<HandoverReceiptResponse>>;
   generateContract(bookingId: string): Promise<ApiResponse<string>>;
   getContract(bookingId: string): Promise<RentalContract | null>;
+  generateOtp(contractId: string): Promise<ApiResponse<string>>;
+  signContract(contractId: string, otpCode: string): Promise<ApiResponse<string>>;
 }

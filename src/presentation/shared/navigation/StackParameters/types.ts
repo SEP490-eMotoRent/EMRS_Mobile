@@ -85,9 +85,9 @@ export type TripStackParamList = {
     bookingId: string;
   };
   SignContract: {
-    contract?: RentalContract;
-    booking?: Booking;
-    userPhone?: string;
+    bookingId: string;
+    email: string;
+    fullName: string;
   }
 };
 
@@ -135,10 +135,14 @@ export type StaffStackParamList = {
   ReturnInspection: undefined;
   AIAnalysis: undefined;
   SignContract: {
-    contract?: RentalContract;
-    booking?: Booking;
-    userPhone?: string;
+    bookingId: string;
+    email: string;
+    fullName: string;
   }
+  TrackingGPS: {
+    vehicleId?: string;
+    licensePlate?: string;
+  };
 };
 
 export type RootStackParamList = {

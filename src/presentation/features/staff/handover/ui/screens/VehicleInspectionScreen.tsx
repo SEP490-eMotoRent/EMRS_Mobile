@@ -100,9 +100,7 @@ export const VehicleInspectionScreen: React.FC = () => {
     left: null,
     right: null,
   });
-  const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState("");
   const [startOdometerKm, setStartOdometerKm] = useState(
     currentOdometerKm?.toString() || ""
@@ -411,7 +409,6 @@ export const VehicleInspectionScreen: React.FC = () => {
         checkListFile: receiptData.checkListFile,
       });
     } catch (error) {
-      console.error("Error submitting inspection:", error);
       Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
     } finally {
       setIsSubmitting(false);

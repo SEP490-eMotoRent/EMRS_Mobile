@@ -8,5 +8,7 @@ export interface ReceiptRemoteDataSource {
     createHandoverReceipt(request: CreateHandoverReceiptRequest): Promise<ApiResponse<HandoverReceiptResponse>>;
     generateContract(bookingId: string): Promise<ApiResponse<string>>;
     getContract(bookingId: string): Promise<ApiResponse<GetContractResponse>>;
+    generateOtp(contractId: string): Promise<ApiResponse<string>>;
+    signContract(contractId: string, otpCode: string): Promise<ApiResponse<string>>;
 }
 

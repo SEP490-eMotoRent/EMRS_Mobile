@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   Alert,
   Image,
   Modal,
+  ActivityIndicator,
 } from "react-native";
+import sl from "../../../../../core/di/InjectionContainer";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { WebView } from "react-native-webview";
 import { AntDesign } from "@expo/vector-icons";
@@ -17,6 +19,10 @@ import { TripStackParamList } from "../../../../shared/navigation/StackParameter
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 import { colors } from "../../../../common/theme/colors";
+import { GetContractUseCase } from "../../../../../domain/usecases/contract/GetContractUseCase";
+import { RentalContract } from "../../../../../domain/entities/booking/RentalContract";
+import { GenerateOtpContractUseCase } from "../../../../../domain/usecases/contract/GenerateOtpContractUseCase";
+import { SignContractUseCase } from "../../../../../domain/usecases/contract/SignContractUseCase";
 
 type SignContractScreenRouteProp = RouteProp<
   TripStackParamList,
@@ -28,41 +34,113 @@ type SignContractScreenNavigationProp = any;
 export const SignContractScreen: React.FC = () => {
   const route = useRoute<SignContractScreenRouteProp>();
   const navigation = useNavigation<SignContractScreenNavigationProp>();
-  const { contract, booking, userPhone } = route.params || {};
-
+  const { bookingId, email, fullName } = route.params || {};
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [submitting, setSubmitting] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
-  const maskedPhone = userPhone ? `***${userPhone.slice(-4)}` : "***xxxx";
+  const [contract, setContract] = useState<RentalContract | null>(null);
+  const [hasRequestedOtp, setHasRequestedOtp] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
+  const maskedEmail = email
+    ? `***${email.split("@")[0].slice(-4)}@${email.split("@")[1]}`
+    : "***xxxx";
+  const otpRefs = useRef<Array<TextInput | null>>([]);
+
+  useEffect(() => {
+    fetchContract();
+  }, [bookingId]);
+
+  const fetchContract = async () => {
+    try {
+      setLoading(true);
+      const getContractUseCase = new GetContractUseCase(
+        sl.get("ReceiptRepository")
+      );
+      const contract = await getContractUseCase.execute(bookingId);
+      setContract(contract);
+    } catch (error) {
+      console.error("Error fetching contract:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // OTP input logic
   const handleChange = (index: number, value: string) => {
-    if (value.length > 1) value = value.slice(-1);
+    let newVal = value.replace(/[^0-9]/g, "");
+    // auto-next on entry
     const next = [...otp];
-    next[index] = value.replace(/[^0-9]/g, "");
+    next[index] = newVal;
     setOtp(next);
+    if (newVal.length === 1 && index < otpRefs.current.length - 1) {
+      otpRefs.current[index + 1]?.focus();
+    }
+    // handle backspace: if input is empty and user presses backspace, go to previous
+    if (newVal.length === 0 && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
   };
 
   const handleSendOtp = async () => {
     try {
-      // TODO: Wire to send-OTP API
-      await new Promise((r) => setTimeout(r, 800));
-      Alert.alert(
-        "OTP Sent",
-        "A verification code has been sent to your phone."
+      setLoading(true);
+      const generateOtpUseCase = new GenerateOtpContractUseCase(
+        sl.get("ReceiptRepository")
       );
+      const response = await generateOtpUseCase.execute(contract?.id || "");
+      if (response.success) {
+        Alert.alert(
+          "Thành công",
+          "Mã OTP đã được gửi đến email đã đăng ký của bạn"
+        );
+        setHasRequestedOtp(true);
+        setResendSeconds(60);
+      } else {
+        Alert.alert("Lỗi", response.message || "Failed to send OTP");
+      }
     } catch (e: any) {
-      Alert.alert("Error", e?.message || "Failed to send OTP");
+      Alert.alert("Lỗi", e?.message || "Failed to send OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSign = () => {
-    setSubmitting(true);
-    setTimeout(() => {
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setResendSeconds((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendSeconds]);
+
+  const handleSign = async () => {
+    // setSubmitting(true);
+    // setTimeout(() => {
+    //   setSubmitting(false);
+    //   navigation.goBack();
+    // }, 1200);
+    try {
+      setSubmitting(true);
+      const signContractUseCase = new SignContractUseCase(
+        sl.get("ReceiptRepository")
+      );
+      const response = await signContractUseCase.execute(
+        contract?.id || "",
+        otp.join("")
+      );
+      if (response.success) {
+        Alert.alert("Thành công", "Hợp đồng đã được ký thành công");
+        navigation.goBack();
+      } else {
+        Alert.alert("Lỗi", response.message || "Failed to sign contract");
+      }
+    } catch (error) {
+      console.error("Error signing contract:", error);
+    } finally {
       setSubmitting(false);
-      navigation.goBack();
-    }, 1200);
+    }
   };
 
   return (
@@ -70,8 +148,8 @@ export const SignContractScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <ScreenHeader
-          title="Sign Contract"
-          subtitle={contract?.contractNumber || "CONTRACT-EMR-240915001"}
+          title="Ký hợp đồng kỹ thuật số"
+          subtitle={`Người ký: ${fullName}`}
           onBack={() => navigation.goBack()}
         />
 
@@ -220,7 +298,7 @@ export const SignContractScreen: React.FC = () => {
                 Bạn sẽ nhận được mã OTP để hoàn thành việc ký
               </Text>
               <Text style={styles.stepSub}>
-                Mã OTP sẽ được gửi đến số điện thoại đã đăng ký của bạn
+                Mã OTP sẽ được gửi đến email đã đăng ký của bạn
               </Text>
             </View>
           </View>
@@ -230,13 +308,16 @@ export const SignContractScreen: React.FC = () => {
         <View style={styles.otpSection}>
           <Text style={styles.otpTitle}>Nhập mã OTP</Text>
           <Text style={styles.otpDesc}>
-            Chúng tôi đã gửi mã 6 chữ số đến số điện thoại đã đăng ký của bạn
-            kết thúc bằng {maskedPhone}
+            Chúng tôi đã gửi mã 6 chữ số đến email đã đăng ký của bạn kết thúc
+            bằng {maskedEmail}
           </Text>
           <View style={styles.otpRow}>
             {otp.map((digit, i) => (
               <TextInput
                 key={i}
+                ref={(ref) => {
+                  otpRefs.current[i] = ref;
+                }}
                 value={digit}
                 onChangeText={(val) => handleChange(i, val)}
                 keyboardType="numeric"
@@ -244,15 +325,43 @@ export const SignContractScreen: React.FC = () => {
                 style={styles.otpInput}
                 autoFocus={false}
                 returnKeyType="next"
+                onKeyPress={({ nativeEvent }) => {
+                  if (nativeEvent.key === "Backspace" && !otp[i] && i > 0) {
+                    otpRefs.current[i - 1]?.focus();
+                  }
+                }}
               />
             ))}
           </View>
-          <TouchableOpacity style={styles.sendOtpBtn} onPress={handleSendOtp}>
-            <Text style={styles.sendOtpBtnTxt}>Gửi OTP</Text>
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Text style={styles.resendOtp}>Gửi lại mã OTP</Text>
-          </TouchableOpacity>
+          {!hasRequestedOtp ? (
+            <TouchableOpacity
+              style={[styles.sendOtpBtn, loading && { opacity: 0.6 }]}
+              onPress={handleSendOtp}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#19141C" />
+              ) : (
+                <Text style={styles.sendOtpBtnTxt}>Gửi OTP</Text>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={handleSendOtp}
+              disabled={loading || resendSeconds > 0}
+            >
+              <Text
+                style={[
+                  styles.resendOtp,
+                  (loading || resendSeconds > 0) && { opacity: 0.6 },
+                ]}
+              >
+                {resendSeconds > 0
+                  ? `Gửi lại mã OTP (${resendSeconds}s)`
+                  : "Gửi lại mã OTP"}
+              </Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.otpInfoRow}>
             <AntDesign name="lock" size={16} color="#C9B6FF" />
             <Text style={styles.otpInfo}>
@@ -425,7 +534,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  sendOtpBtnTxt: { fontSize: 16, lineHeight: 20, color: "#19141C", fontWeight: "700" },
+  sendOtpBtnTxt: {
+    fontSize: 16,
+    lineHeight: 20,
+    color: "#19141C",
+    fontWeight: "700",
+  },
   otpRow: {
     flexDirection: "row",
     justifyContent: "space-evenly",

@@ -71,4 +71,28 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
       throw error;
     }
   }
+
+  async generateOtp(contractId: string): Promise<ApiResponse<string>> {
+    try {
+      const response = await this.axiosClient.post<ApiResponse<string>>(
+        ApiEndpoints.receipt.generateOtp(contractId)
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error generating OTP:", error);
+      throw error;
+    }
+  }
+
+  async signContract(contractId: string, otpCode: string): Promise<ApiResponse<string>> {
+    try {
+      const response = await this.axiosClient.post<ApiResponse<string>>(
+        ApiEndpoints.receipt.signContract(contractId, otpCode)
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error signing contract:", error);
+      throw error;
+    }
+  }
 }
