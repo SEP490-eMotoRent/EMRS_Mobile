@@ -16,6 +16,8 @@ interface JWTPayload {
     role: string;
     exp: number;
 }
+import { ScanFaceResponse } from "../../../../models/account/renter/ScanFaceResponse";
+import { ScanFaceRequest } from "../../../../models/account/renter/ScanFaceRequest";
 
 export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
     private readonly apiClient: AxiosClient;
@@ -151,6 +153,28 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         } catch (error: any) {
             this.logger.error(`Failed to update renter: ${error.message}`);
             throw new ServerException(error.response?.data?.message || 'Failed to update profile', error.response?.status || 500);
+        }
+    }
+
+    async scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>> {
+        try {
+        this.logger.info('Scanning face...');
+        const formData = new FormData();
+        formData.append('image', {
+            uri: request.image,
+            name: `face_${Date.now()}.jpg`,
+            type: "image/jpeg",
+        } as any);
+        const response = await this.apiClient.post<ApiResponse<ScanFaceResponse>>(ApiEndpoints.renter.scanFace, formData);
+        return {
+            success: response.data.success,
+            message: response.data.message,
+            data: response.data.data,
+            code: response.data.code,
+        };
+        } catch (error: any) {
+        this.logger.error(`Failed to scan face: ${error.message}`);
+        throw new ServerException(error.response?.data?.message || 'Failed to scan face', error.response?.status || 500);
         }
     }
 }

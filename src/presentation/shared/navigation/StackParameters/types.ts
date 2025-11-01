@@ -2,6 +2,7 @@ import { NavigatorScreenParams } from "@react-navigation/native";
 import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
 import { Booking } from "../../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../../domain/entities/booking/RentalContract";
+import { ScanFaceResponse } from "../../../../data/models/account/renter/ScanFaceResponse";
 
 export type AuthStackParamList = {
   Hello: undefined;
@@ -20,8 +21,8 @@ export type AuthStackParamList = {
 
 export type HomeStackParamList = {
   Home: undefined;
-  Browse: NavigatorScreenParams<BrowseStackParamList>; // NOT undefined
-  Booking: NavigatorScreenParams<BookingStackParamList>; // NOT undefined
+  Browse: NavigatorScreenParams<BrowseStackParamList>;
+  Booking: NavigatorScreenParams<BookingStackParamList>;
 };
 
 export type BrowseStackParamList = {
@@ -88,7 +89,7 @@ export type TripStackParamList = {
     bookingId: string;
     email: string;
     fullName: string;
-  }
+  };
   EmergencyContact: {
     bookingId: string;
     rentalDetails: {
@@ -105,6 +106,10 @@ export type TripStackParamList = {
       address: string;
     };
   };
+  TrackingGPS: {
+    vehicleId?: string;
+    licensePlate?: string;
+  };
 };
 
 export type ProfileStackParamList = {
@@ -119,8 +124,8 @@ export type StaffStackParamList = {
   Rental: undefined;
   Return: undefined;
   ScanFace: undefined;
-  ScanResult: undefined;
-  CustomerRentals: undefined;
+  ScanResult: { renter: ScanFaceResponse };
+  CustomerRentals: { renterId: string };
   SelectVehicle: {
     bookingId: string;
     renterName: string;
@@ -154,7 +159,7 @@ export type StaffStackParamList = {
     bookingId: string;
     email: string;
     fullName: string;
-  }
+  };
   TrackingGPS: {
     vehicleId?: string;
     licensePlate?: string;
@@ -163,6 +168,6 @@ export type StaffStackParamList = {
 
 export type RootStackParamList = {
   Auth: undefined;
-  Home: undefined; // This is NavigationBarNavigator with all tabs
+  Home: undefined;
   Staff: undefined;
 };

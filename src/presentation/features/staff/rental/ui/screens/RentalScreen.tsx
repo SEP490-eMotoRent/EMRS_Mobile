@@ -14,7 +14,6 @@ import { AntDesign, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { AppHeader } from "../../../../../common/components/organisms/AppHeader";
 import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -77,7 +76,7 @@ export const RentalScreen: React.FC = () => {
       const response = await getBookingListUseCase.execute(
         "",
         "",
-        "Booked",
+        "Renting",
         page,
         pageSize
       );
@@ -298,16 +297,26 @@ export const RentalScreen: React.FC = () => {
               </View>
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <AntDesign name="idcard" size={14} color={colors.text.primary} />
+                  <AntDesign
+                    name="idcard"
+                    size={14}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.detailLabel}>Biển số xe</Text>
                 </View>
                 <View style={styles.platePill}>
-                  <Text style={styles.platePillText}>{booking.vehicle?.licensePlate}</Text>
+                  <Text style={styles.platePillText}>
+                    {booking.vehicle?.licensePlate}
+                  </Text>
                 </View>
               </View>
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <AntDesign name="calendar" size={14} color={colors.text.primary} />
+                  <AntDesign
+                    name="calendar"
+                    size={14}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.detailLabel}>Thời gian nhận xe</Text>
                 </View>
                 <Text style={styles.detailValue}>
@@ -316,11 +325,28 @@ export const RentalScreen: React.FC = () => {
               </View>
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <AntDesign name="clock-circle" size={14} color={colors.text.primary} />
+                  <AntDesign
+                    name="clock-circle"
+                    size={14}
+                    color={colors.text.primary}
+                  />
                   <Text style={styles.detailLabel}>Thời gian trả xe</Text>
                 </View>
-                <View style={[styles.statusPill, { backgroundColor: getStatusColor(booking.bookingStatus) + '33' }]}>
-                  <Text style={[styles.statusPillText, { color: getStatusColor(booking.bookingStatus) }]}>
+                <View
+                  style={[
+                    styles.statusPill,
+                    {
+                      backgroundColor:
+                        getStatusColor(booking.bookingStatus) + "33",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusPillText,
+                      { color: getStatusColor(booking.bookingStatus) },
+                    ]}
+                  >
                     {booking.endDatetime?.toLocaleString("en-GB")}
                   </Text>
                 </View>
@@ -330,12 +356,21 @@ export const RentalScreen: React.FC = () => {
             <View style={styles.actionsRow}>
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={() => navigation.navigate("BookingDetails", { bookingId: booking.id })}
+                onPress={() =>
+                  navigation.navigate("BookingDetails", {
+                    bookingId: booking.id,
+                  })
+                }
               >
                 <AntDesign name="file-text" size={16} color="#C9B6FF" />
                 <Text style={styles.secondaryButtonText}>Xem chi tiết</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.startReturnButton}>
+              <TouchableOpacity
+                style={styles.startReturnButton}
+                onPress={() =>
+                  navigation.navigate("ScanFace")
+                }
+              >
                 <AntDesign name="login" size={16} color="#000" />
                 <Text style={styles.startReturnText}>Bắt đầu trả xe</Text>
               </TouchableOpacity>
@@ -349,7 +384,7 @@ export const RentalScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader
-        title="Rental"
+        title="Cho thuê xe"
         subtitle="District 2 Branch"
         showBackButton={false}
       />
@@ -400,7 +435,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 50,
   },
   tabContainer: {
     flexDirection: "row",

@@ -13,7 +13,7 @@ import {
 import { colors } from "../../../../../common/theme/colors";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
@@ -28,8 +28,15 @@ type CustomerRentalsScreenNavigationProp = StackNavigationProp<
   "CustomerRentals"
 >;
 
+type CustomerRentalsScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "CustomerRentals"
+>;
+
 export const CustomerRentalsScreen: React.FC = () => {
   const navigation = useNavigation<CustomerRentalsScreenNavigationProp>();
+  const route = useRoute<CustomerRentalsScreenRouteProp>();
+  const { renterId } = route.params;
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -73,7 +80,7 @@ export const CustomerRentalsScreen: React.FC = () => {
       );
       const response = await getBookingListUseCase.execute(
         filterVehicleModelId || (undefined as any),
-        "019a15be-38b0-7746-b665-f07bca082855",
+        renterId,
         filterStatus || (undefined as any),
         page,
         pageSize

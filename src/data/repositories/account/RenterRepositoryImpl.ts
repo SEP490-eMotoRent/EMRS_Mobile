@@ -8,6 +8,9 @@ import { RegisterRenterResponse } from "../../models/account/renter/RegisterRent
 import { RenterResponse } from "../../models/account/renter/RenterResponse";
 import { UpdateRenterRequest } from "../../models/account/renter/UpdateRenterRequest";
 import { RenterRepository } from "../../../domain/repositories/account/RenterRepository";
+import { ScanFaceRequest } from "../../models/account/renter/ScanFaceRequest";
+import { ScanFaceResponse } from "../../models/account/renter/ScanFaceResponse";
+import { ApiResponse } from "../../../core/network/APIResponse";
 
 export class RenterRepositoryImpl implements RenterRepository {
     constructor(
@@ -138,6 +141,14 @@ export class RenterRepositoryImpl implements RenterRepository {
         renter.attachMembership(minimalMembership);
 
         return renter;
+    }
+
+    async scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>> {
+        try {
+          return await this.remote.scanFace(request);
+        } catch (error) {
+          throw error;
+        }
     }
 
     private mapToEntity(model: RegisterRenterResponse): Renter {

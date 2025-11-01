@@ -105,6 +105,7 @@ export const StaffNavigator: React.FC = () => {
         <Stack.Screen name="ReturnInspection" component={ReturnInspectionScreen} />
         <Stack.Screen name="AIAnalysis" component={AIAnalysisScreen} />
         <Stack.Screen name="TrackingGPS" component={TrackingGPSScreen} />
+        <Stack.Screen name="ScanFace" component={ScanFaceScreen} />
       </Stack.Navigator>
     </View>
   );

@@ -40,6 +40,12 @@ export const ApiEndpoints = {
     update: "/account/renter",
     current: "/account/renter", // FIXED: NO ID for current (JWT-based)
     detail: (renterId: string) => `/account/renter/${renterId}`, // FIXED: WITH ID
+    scanFace: "/account/renter/scan",
+    document: {
+      upload: "/api/Document", // POST
+      update: (documentId: string) => `/api/Document/${documentId}`, // PUT
+      delete: (documentId: string) => `/api/Document/${documentId}`, // DELETE
+    }
   },
   
   // Receipt endpoints

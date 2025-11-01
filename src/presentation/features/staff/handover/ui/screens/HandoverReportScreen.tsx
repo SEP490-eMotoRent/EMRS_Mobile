@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -227,14 +228,18 @@ export const HandoverReportScreen: React.FC = () => {
 
         {/* Bottom CTA */}
         <TouchableOpacity
-          style={styles.sendCta}
-          onPress={
-            generateConstract
-            // navigation.navigate("AwaitingApproval", { status: "approved" })
-          }
+          style={[styles.sendCta, isLoading && styles.sendCtaDisabled]}
+          onPress={generateConstract}
+          disabled={isLoading}
         >
-          <AntDesign name="send" size={16} color="#000" />
-          <Text style={styles.sendCtaText}>Send to Customer</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <AntDesign name="send" size={16} color="#000" />
+          )}
+          <Text style={styles.sendCtaText}>
+            {isLoading ? "Sending..." : "Send to Customer"}
+          </Text>
         </TouchableOpacity>
         <Text style={styles.noteText}>
           Customer will receive notification to approve. Report expires in 30
@@ -389,6 +394,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   sendCtaText: { color: "#000", fontWeight: "800", fontSize: 16 },
+  sendCtaDisabled: {
+    opacity: 0.6,
+  },
   noteText: {
     color: colors.text.secondary,
     fontSize: 12,
