@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { ProgressBar } from '../atoms';
 import { SubmitButton } from '../molecules';
 import { IncidentInfoSection, PhotosDocumentationSection, LocationInputSection, DescriptionSection, DateTimeSection } from '../organisms';
 
+type NavigationProp = StackNavigationProp<TripStackParamList, 'IncidentReport'>;
+type RouteProp = any;
 
 export interface IncidentReportScreenProps {
     initialData?: {
@@ -22,6 +27,10 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = ({
     },
     onSubmit,
     }) => {
+    const navigation = useNavigation<NavigationProp>();
+    const route = useRoute<RouteProp>();
+    const { bookingId } = route.params;
+
     const [photos, setPhotos] = useState<(string | null)[]>([null, null, null, null]);
     const [description, setDescription] = useState('');
     const [date, setDate] = useState('2025-09-19');
@@ -29,7 +38,6 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = ({
 
     const handleAddPhoto = (index: number) => {
         console.log('Add photo at index:', index);
-        // Implement photo picker logic
     };
 
     const handleLocationPress = () => {
@@ -49,12 +57,20 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = ({
     };
 
     const handleSubmit = () => {
-        onSubmit({
+        const data = {
+        bookingId,
         photos,
         description,
         date,
         time,
-        });
+        location: initialData.location,
+        address: initialData.address,
+        };
+
+        onSubmit(data);
+
+        // Return to TripsScreen
+        navigation.navigate('Trip');
     };
 
     return (

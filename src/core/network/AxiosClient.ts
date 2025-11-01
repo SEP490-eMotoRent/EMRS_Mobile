@@ -93,6 +93,13 @@ export class AxiosClient {
 
   /* ------------------- PUBLIC METHODS ------------------- */
 
+  /**
+   * Get the current authentication token from Redux store
+   */
+  public getAuthToken(): string | null {
+    return store.getState().auth.token;
+  }
+
   async get<T>(
     path: string,
     config?: AxiosRequestConfig

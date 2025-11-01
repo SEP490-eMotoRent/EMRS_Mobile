@@ -21,8 +21,8 @@ export type AuthStackParamList = {
 
 export type HomeStackParamList = {
   Home: undefined;
-  Browse: NavigatorScreenParams<BrowseStackParamList>; // NOT undefined
-  Booking: NavigatorScreenParams<BookingStackParamList>; // NOT undefined
+  Browse: NavigatorScreenParams<BrowseStackParamList>;
+  Booking: NavigatorScreenParams<BookingStackParamList>;
 };
 
 export type BrowseStackParamList = {
@@ -89,7 +89,23 @@ export type TripStackParamList = {
     bookingId: string;
     email: string;
     fullName: string;
-  }
+  };
+  EmergencyContact: {
+    bookingId: string;
+    rentalDetails: {
+      bikeModel: string;
+      licensePlate: string;
+      branch: string;
+    };
+  };
+  IncidentReport: {
+    bookingId: string;
+    initialData?: {
+      dateTime: string;
+      location: string;
+      address: string;
+    };
+  };
   TrackingGPS: {
     vehicleId?: string;
     licensePlate?: string;
@@ -143,7 +159,7 @@ export type StaffStackParamList = {
     bookingId: string;
     email: string;
     fullName: string;
-  }
+  };
   TrackingGPS: {
     vehicleId?: string;
     licensePlate?: string;
@@ -152,6 +168,6 @@ export type StaffStackParamList = {
 
 export type RootStackParamList = {
   Auth: undefined;
-  Home: undefined; // This is NavigationBarNavigator with all tabs
+  Home: undefined;
   Staff: undefined;
 };

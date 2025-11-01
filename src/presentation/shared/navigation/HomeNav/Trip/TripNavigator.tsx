@@ -1,10 +1,12 @@
-import { createStackNavigator } from "@react-navigation/stack";
-import React from "react";
-import { BookingDetailsScreen } from "../../../../features/staff/handover/ui/screens";
-import { TripsScreen } from "../../../../features/tripListing/ui/screens/TripsScreen";
-import { TripStackParamList } from "../../StackParameters/types";
-import { SignContractScreen } from "../../../../features/contract/ui/screens/SignContractScreen";
-import { TrackingGPSScreen } from "../../../../features/staff/tracking/ui/screens/TrackingGPSScreen";
+import { createStackNavigator } from '@react-navigation/stack';
+import React from 'react';
+import { BookingDetailsScreen } from '../../../../features/staff/handover/ui/screens';
+import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
+import { TripStackParamList } from '../../StackParameters/types';
+import { SignContractScreen } from '../../../../features/contract/ui/screens/SignContractScreen';
+import { EmergencyContactScreen } from '../../../../features/insuranceClaim/ui/screens/EmergencyContactScreen';
+import { IncidentReportScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentReportScreen';
+import TrackingGPSScreen from '../../../../features/staff/tracking/ui/screens/TrackingGPSScreen';
 
 const Stack = createStackNavigator<TripStackParamList>();
 

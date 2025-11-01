@@ -27,20 +27,27 @@ export const ApiEndpoints = {
     assignVehicle: (vehicleId: string, bookingId: string) =>
       `/Booking/vehicle/assign/${bookingId}/${vehicleId}`,
   },
+  
   // Auth endpoints
   auth: {
     register: "/auth/register",
     login: "/auth/login",
   },
 
-  // Renter endpoints
+
   renter: {
     list: "/renters",
     update: "/account/renter",
-    detail: (renterId: string) => `/account/renter/${renterId}`,
+    current: "/account/renter", // FIXED: NO ID for current (JWT-based)
+    detail: (renterId: string) => `/account/renter/${renterId}`, // FIXED: WITH ID
     scanFace: "/account/renter/scan",
+    document: {
+      upload: "/api/Document", // POST
+      update: (documentId: string) => `/api/Document/${documentId}`, // PUT
+      delete: (documentId: string) => `/api/Document/${documentId}`, // DELETE
+    }
   },
-
+  
   // Receipt endpoints
   receipt: {
     create: "/rental/receipt",
@@ -52,7 +59,7 @@ export const ApiEndpoints = {
       `/rental/contract/${contractId}/${otpCode}/confirm`,
   },
 
-  // Branch endpoints ✅ NEW
+  // Branch endpoints
   branch: {
     list: "/Branch",
     detail: (id: string) => `/Branch/${id}`,

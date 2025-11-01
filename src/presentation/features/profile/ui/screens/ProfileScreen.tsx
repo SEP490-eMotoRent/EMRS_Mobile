@@ -1,21 +1,27 @@
+// src/features/profile/screens/ProfileScreen.tsx
 import { StackNavigationProp } from "@react-navigation/stack";
 import React from "react";
-import { Alert, Platform, ScrollView, StyleSheet, View } from "react-native";
 import {
-  ProfileStackParamList,
-  RootStackParamList,
-} from "../../../../shared/navigation/StackParameters/types";
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  RefreshControl,
+  Text,
+} from "react-native";
+import { ProfileStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ProfileHeader } from "../molecules/ProfileHeader";
 import { QuickSettings } from "../organisms/QuickSettings";
 import { TransactionList } from "../organisms/TransactionList";
 import { VerificationCard } from "../organisms/VerificationCard";
 import { WalletCard } from "../organisms/WalletCard";
-import { Transaction, Verification } from "../temp";
+import { Transaction } from "../temp";
 import { removeAuth } from "../../../authentication/store/slices/authSlice";
-import {
-  useAppDispatch,
-  useAppSelector,
-} from "../../../authentication/store/hooks";
+import { useAppDispatch } from "../../../authentication/store/hooks";
+import { DocumentVerificationHelper } from "../../../../../domain/helpers/DocumentVerificationHelper";
+import { useRenterProfile } from "../../hooks/useRenterProfile";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -28,7 +34,9 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const token = useAppSelector((state) => state.auth.token);
+  const { renter, renterResponse, loading, error, refresh } = useRenterProfile();
+
+  // Mock transactions
   const transactions: Transaction[] = [
     { title: "VinFast Evo200 Rental", date: "Sep 01, 2025", amount: -2670000 },
     { title: "Security Deposit Refund", date: "Aug 27, 2025", amount: 1500000 },
@@ -36,65 +44,93 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     { title: "Klara S Rental", date: "Aug 05, 2025", amount: -950000 },
   ];
 
-  const verifications: Verification[] = [
-    { label: "ID verification", status: "verified" },
-    { label: "Driver's license", status: "valid", validUntil: "2027" },
-    { label: "Phone Number", status: "needed" },
-  ];
+  const handleEdit = () => navigation.navigate("EditProfile");
+  const handleAddFunds = () => console.log("Add funds");
+  const handleWithdraw = () => console.log("Withdraw money");
+  const handleManage = () => console.log("Manage wallet");
+  const handleViewAllTransactions = () => console.log("View all transactions");
+  const handleVerify = () => console.log("Start verification");
+  const handleViewDetails = () => console.log("View verification details");
 
-  const handleEdit = (): void => {
-    navigation.navigate("EditProfile");
-  };
-
-  const handleAddFunds = (): void => {
-    console.log("Add funds");
-  };
-
-  const handleWithdraw = (): void => {
-    console.log("Withdraw money");
-  };
-
-  const handleManage = (): void => {
-    console.log("Manage wallet");
-  };
-
-  const handleViewAllTransactions = (): void => {
-    console.log("View all transactions");
-  };
-
-  const handleVerify = (): void => {
-    console.log("Start verification");
-  };
-
-  const handleViewDetails = (): void => {
-    console.log("View verification details");
-  };
-
-  const handleSignOut = (): void => {
+  const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Sign Out",
         style: "destructive",
-        onPress: () => {
-          dispatch(removeAuth());
-        },
+        onPress: () => dispatch(removeAuth()),
       },
     ]);
   };
 
+  // === LOADING & ERROR STATES ===
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#00ff00" />
+      </View>
+    );
+  }
+
+  if (error || !renter || !renterResponse) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>Error: {error || "Profile not found"}</Text>
+        <ActivityIndicator size="large" color="#ff0000" />
+      </View>
+    );
+  }
+
+  // === MEMBER SINCE ===
+  const memberSince = new Date(renter.createdAt || Date.now()).toLocaleDateString(
+    "en-US",
+    { year: "numeric", month: "long" }
+  );
+
+  // === VERIFICATIONS ===
+  const rawVerifications = DocumentVerificationHelper.getAllVerifications(
+    renterResponse.documents,
+    renterResponse.phone
+  );
+
+  const verifications = rawVerifications.map((info) => {
+    let icon = "document";
+    if (info.label.includes("Citizen") || info.label.includes("ID")) {
+      icon = "id-card";
+    } else if (info.label.includes("License") || info.label.includes("Driver")) {
+      icon = "car";
+    } else if (info.label.includes("Phone")) {
+      icon = "phone";
+    }
+
+    return {
+      title: info.label,
+      status: info.status as "verified" | "valid" | "needed" | "expired",
+      icon,
+    };
+  });
+
+  // === RENDER ===
   return (
     <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={refresh}
+            tintColor="#00ff00"
+            colors={["#00ff00"]}
+          />
+        }
       >
         <ProfileHeader
-          name="John Nguyen"
-          memberSince="March 2024"
-          trips="12"
-          distance="850km"
+          name={renter.account?.fullname || renter.email}
+          memberSince={memberSince}
+          trips="0"
+          distance="0km"
           onEdit={handleEdit}
         />
         <WalletCard
@@ -129,5 +165,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 16,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#ff0000",
+    fontSize: 16,
+    marginBottom: 16,
   },
 });

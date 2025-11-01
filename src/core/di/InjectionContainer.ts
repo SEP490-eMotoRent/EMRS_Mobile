@@ -11,6 +11,7 @@ import { AccountRepository } from '../../domain/repositories/account/AccountRepo
 import { RenterRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/account/RenterRemoteDataSourceImpl';
 import { RenterRepositoryImpl } from '../../data/repositories/account/RenterRepositoryImpl';
 import { RenterRepository } from '../../domain/repositories/account/RenterRepository';
+import { GetCurrentRenterUseCase } from '../../domain/usecases/account/Profile/GetCurrentRenterUseCase';
 
 // Vehicle imports
 import { VehicleRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl';
@@ -47,15 +48,13 @@ import { GetAllBranchesUseCase } from '../../domain/usecases/branch/GetAllBranch
 import { GetBranchByIdUseCase } from '../../domain/usecases/branch/GetBranchByIdUseCase';
 
 // Google Maps Imports
-import { GoogleGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/GoogleGeocodingDataSourceImpl';
 import { GeocodingRepositoryImpl } from '../../data/repositories/maps/GeocodingRepositoryImpl';
 import { GeocodingRepository } from '../../domain/repositories/map/GeocodingRepository';
-import { SearchPlacesUseCase } from '../../domain/usecases/maps/SearchPlacesUseCase';
 import { GetPlaceDetailsUseCase } from '../../domain/usecases/maps/GetPlaceDetailsUseCase';
+import { SearchPlacesUseCase } from '../../domain/usecases/maps/SearchPlacesUseCase';
 
 // Mapbox Maps Imports
 import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
-import { GeocodeAddressUseCase } from '../../domain/usecases/maps/GeocodeAddressUseCase';
 
 import { AxiosClient } from "../network/AxiosClient";
 
@@ -90,6 +89,8 @@ class ServiceLocator {
     this.services.set("RenterRepository", renterRepository);
     const updateRenterProfileUseCase = new UpdateRenterProfileUseCase(renterRepository);
     this.services.set("UpdateRenterProfileUseCase", updateRenterProfileUseCase);
+    const getCurrentRenterUseCase = new GetCurrentRenterUseCase(renterRepository);
+    this.services.set("GetCurrentRenterUseCase", getCurrentRenterUseCase);
 
     // Vehicle services
     const vehicleRemoteDataSource = new VehicleRemoteDataSourceImpl(axiosClient);
@@ -247,6 +248,10 @@ class ServiceLocator {
 
   getAxiosClient(): AxiosClient {
     return this.get<AxiosClient>('AxiosClient');
+  }
+
+  getGetCurrentRenterUseCase(): GetCurrentRenterUseCase {
+    return this.get<GetCurrentRenterUseCase>('GetCurrentRenterUseCase');
   }
 }
 
