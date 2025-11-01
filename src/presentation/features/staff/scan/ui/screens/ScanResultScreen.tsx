@@ -32,7 +32,7 @@ export const ScanResultScreen: React.FC = () => {
   const [loaded, setLoaded] = useState(false);
 
   const handleContinueToReturn = () => {
-    navigation.navigate("VehicleConfirmation");
+    navigation.navigate("BookingReturnList", { renterId: renter.id });
   };
 
   const handleContinueToHandover = () => {

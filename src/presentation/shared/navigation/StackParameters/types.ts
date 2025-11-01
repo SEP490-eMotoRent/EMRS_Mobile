@@ -152,7 +152,10 @@ export type StaffStackParamList = {
   BookingDetails: { bookingId?: string; booking?: any };
   Charging: undefined;
   Profile: undefined;
-  VehicleConfirmation: undefined;
+  VehicleConfirmation: {
+    bookingId: string;
+    vehicleId: string;
+  };
   ReturnInspection: undefined;
   AIAnalysis: undefined;
   SignContract: {
@@ -164,6 +167,7 @@ export type StaffStackParamList = {
     vehicleId?: string;
     licensePlate?: string;
   };
+  BookingReturnList: { renterId: string };
 };
 
 export type RootStackParamList = {
