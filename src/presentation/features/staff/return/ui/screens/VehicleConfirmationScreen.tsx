@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,16 +7,19 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import { Booking } from "../../../../../../domain/entities/booking/Booking";
 
-const customerAvatar = require("../../../../../../../assets/images/avatar.png");
 const vehicleImage = require("../../../../../../../assets/images/technician.png");
 
 type VehicleConfirmationScreenNavigationProp = StackNavigationProp<
@@ -24,8 +27,44 @@ type VehicleConfirmationScreenNavigationProp = StackNavigationProp<
   "VehicleConfirmation"
 >;
 
+type VehicleConfirmationScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "VehicleConfirmation"
+>;
+
 export const VehicleConfirmationScreen: React.FC = () => {
   const navigation = useNavigation<VehicleConfirmationScreenNavigationProp>();
+  const route = useRoute<VehicleConfirmationScreenRouteProp>();
+  const { bookingId, vehicleId } = route.params;
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchBooking();
+  }, [bookingId]);
+
+  const fetchBooking = async () => {
+    try {
+      setLoading(true);
+      const getBookingByIdUseCase = new GetBookingByIdUseCase(
+        sl.get("BookingRepository")
+      );
+      const booking = await getBookingByIdUseCase.execute(bookingId);
+      setBooking(booking);
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#a78bfa" />
+      </View>
+    );
+  }
 
   const handleStartReturnInspection = () => {
     console.log("Start return inspection");
@@ -51,11 +90,17 @@ export const VehicleConfirmationScreen: React.FC = () => {
             </View>
             <View style={styles.verificationContent}>
               <Text style={styles.verificationText}>Customer Verified</Text>
-              <Text style={styles.verificationName}>John Nguyen</Text>
+              <Text style={styles.verificationName}>
+                {booking?.renter.account?.fullname}
+              </Text>
             </View>
           </View>
           <View style={styles.verificationFooter}>
-            <AntDesign name="clock-circle" size={14} color={colors.text.secondary} />
+            <AntDesign
+              name="clock-circle"
+              size={14}
+              color={colors.text.secondary}
+            />
             <Text style={styles.verificationTime}>Verified at 11:00 AM</Text>
           </View>
         </View>
@@ -65,8 +110,12 @@ export const VehicleConfirmationScreen: React.FC = () => {
           <Image source={vehicleImage} style={styles.vehicleImage} />
           <View style={styles.imageOverlay}>
             <View style={styles.vehicleInfoOverlay}>
-              <Text style={styles.vehicleModel}>VinFast Evo200</Text>
-              <Text style={styles.vehiclePlate}>59X1-12345</Text>
+              <Text style={styles.vehicleModel}>
+                {booking?.vehicleModel.modelName}
+              </Text>
+              <Text style={styles.vehiclePlate}>
+                {booking?.vehicle.licensePlate}
+              </Text>
             </View>
           </View>
           <View style={styles.activeRentalTag}>
@@ -81,35 +130,47 @@ export const VehicleConfirmationScreen: React.FC = () => {
         <View style={styles.detailsContainer}>
           <View style={styles.detailsColumn}>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Model</Text>
-              <Text style={styles.detailValue}>VinFast Evo200</Text>
+              <Text style={styles.detailLabel}>Mẫu xe</Text>
+              <Text style={styles.detailValue}>
+                {booking?.vehicleModel.modelName}
+              </Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>License Plate</Text>
-              <Text style={styles.detailValueLarge}>59X1-12345</Text>
+              <Text style={styles.detailLabel}>Biển số xe</Text>
+              <Text style={styles.detailValueLarge}>
+                {booking?.vehicle.licensePlate}
+              </Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Color</Text>
-              <Text style={styles.detailValue}>White Pearl</Text>
+              <Text style={styles.detailLabel}>Màu sắc</Text>
+              <Text style={styles.detailValue}>{booking?.vehicle.color}</Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Year</Text>
-              <Text style={styles.detailValue}>2024</Text>
+              <Text style={styles.detailLabel}>Năm sản xuất</Text>
+              <Text style={styles.detailValue}>
+                {booking?.vehicle.yearOfManufacture?.getFullYear()}
+              </Text>
             </View>
           </View>
 
           <View style={styles.detailsColumn}>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Branch</Text>
+              <Text style={styles.detailLabel}>Chi nhánh nhận xe</Text>
               <Text style={styles.detailValue}>District 2 Branch</Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Rental Start</Text>
-              <Text style={styles.detailValue}>Sep 15, 9:00 AM</Text>
+              <Text style={styles.detailLabel}>Thời gian nhận xe</Text>
+              <Text style={styles.detailValue}>
+                {booking?.startDatetime?.toLocaleDateString()}{" "}
+                {booking?.startDatetime?.toLocaleTimeString()}
+              </Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Expected Return</Text>
-              <Text style={styles.detailValue}>Sep 18, 11:00 AM</Text>
+              <Text style={styles.detailLabel}>Thời gian trả xe</Text>
+              <Text style={styles.detailValue}>
+                {booking?.endDatetime?.toLocaleDateString()}{" "}
+                {booking?.endDatetime?.toLocaleTimeString()}
+              </Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Status</Text>
@@ -122,37 +183,43 @@ export const VehicleConfirmationScreen: React.FC = () => {
 
         {/* Rental Summary */}
         <View style={styles.summarySection}>
-          <Text style={styles.summaryTitle}>Rental Summary</Text>
+          <Text style={styles.summaryTitle}>Tổng quan thuê xe</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Rental Duration</Text>
-            <Text style={styles.summaryValue}>3 days 2 hours</Text>
+            <Text style={styles.summaryLabel}>Thời gian thuê xe</Text>
+            <Text style={styles.summaryValue}>
+              {booking?.rentalDays} ngày {booking?.rentalHours} giờ
+            </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Handover Odometer</Text>
-            <Text style={styles.summaryValue}>1,234 km</Text>
+            <Text style={styles.summaryLabel}>Số km khi nhận xe</Text>
+            <Text style={styles.summaryValue}>
+              {booking?.rentalReceipt?.startOdometerKm} km
+            </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Handover Battery</Text>
-            <Text style={styles.summaryValue}>85%</Text>
+            <Text style={styles.summaryLabel}>Phần trăm pin khi nhận xe</Text>
+            <Text style={styles.summaryValue}>
+              {booking?.rentalReceipt?.startBatteryPercentage}%
+            </Text>
           </View>
         </View>
 
         {/* Booking Information */}
         <View style={styles.bookingCard}>
           <View style={styles.bookingHeader}>
-            <Text style={styles.bookingTitle}>Booking Information</Text>
+            <Text style={styles.bookingTitle}>Thông tin đặt xe</Text>
             <AntDesign name="up" size={16} color={colors.text.secondary} />
           </View>
           <View style={styles.bookingRow}>
-            <Text style={styles.bookingLabel}>Booking ID</Text>
-            <Text style={styles.bookingValue}>#BK-2025-09-1234</Text>
+            <Text style={styles.bookingLabel}>Mã đặt xe</Text>
+            <Text style={styles.bookingValue}>#{booking?.id.slice(-10)}</Text>
           </View>
           <View style={styles.bookingRow}>
-            <Text style={styles.bookingLabel}>Insurance</Text>
+            <Text style={styles.bookingLabel}>Bảo hiểm</Text>
             <Text style={styles.bookingValue}>Premium Package</Text>
           </View>
           <View style={styles.bookingRow}>
-            <Text style={styles.bookingLabel}>Deposit Held</Text>
+            <Text style={styles.bookingLabel}>Tiền cọc</Text>
             <Text style={styles.bookingValue}>5,000,000 VND</Text>
           </View>
         </View>
@@ -168,8 +235,12 @@ export const VehicleConfirmationScreen: React.FC = () => {
                 <AntDesign name="camera" size={20} color="#000000" />
               </View>
               <View style={styles.buttonTextContainer}>
-                <Text style={styles.startReturnText}>Start Return Inspection</Text>
-                <Text style={styles.buttonSubtext}>Begin 4-angle photo capture</Text>
+                <Text style={styles.startReturnText}>
+                  Start Return Inspection
+                </Text>
+                <Text style={styles.buttonSubtext}>
+                  Begin 4-angle photo capture
+                </Text>
               </View>
               <AntDesign name="right" size={16} color="#000000" />
             </View>

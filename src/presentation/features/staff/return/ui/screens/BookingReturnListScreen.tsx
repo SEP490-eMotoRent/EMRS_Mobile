@@ -23,26 +23,26 @@ import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/ve
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 
-type CustomerRentalsScreenNavigationProp = StackNavigationProp<
+type BookingReturnListScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
-  "CustomerRentals"
+  "BookingReturnList"
 >;
 
-type CustomerRentalsScreenRouteProp = RouteProp<
+type BookingReturnListScreenRouteProp = RouteProp<
   StaffStackParamList,
-  "CustomerRentals"
+  "BookingReturnList"
 >;
 
-export const CustomerRentalsScreen: React.FC = () => {
-  const navigation = useNavigation<CustomerRentalsScreenNavigationProp>();
-  const route = useRoute<CustomerRentalsScreenRouteProp>();
+export const BookingReturnListScreen: React.FC = () => {
+  const navigation = useNavigation<BookingReturnListScreenNavigationProp>();
+  const route = useRoute<BookingReturnListScreenRouteProp>();
   const { renterId } = route.params;
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("Renting");
   const [filterVehicleModelId, setFilterVehicleModelId] = useState<string>("");
   const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
   const [showModelList, setShowModelList] = useState<boolean>(false);
@@ -126,17 +126,14 @@ export const CustomerRentalsScreen: React.FC = () => {
     return `${diffDays} days rental`;
   };
 
-  const handleSelectVehicle = (booking: Booking) => {
-    console.log("booking vehicle model", booking.vehicleModel);
-    navigation.navigate("SelectVehicle", {
+  const handleReturnVehicle = (booking: Booking) => {
+    navigation.navigate("VehicleConfirmation", {
       bookingId: booking.id,
-      renterName: booking.renter.account.fullname,
-      vehicleModel: booking.vehicleModel,
+      vehicleId: booking.vehicle?.id,
     });
   };
 
   const handleViewDetails = (booking: Booking) => {
-    console.log("View details:", booking.id);
     navigation.navigate("BookingDetails", { bookingId: booking.id });
   };
 
@@ -263,11 +260,17 @@ export const CustomerRentalsScreen: React.FC = () => {
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => handleViewDetails(booking)}
+          >
+            <Text style={styles.buttonText}>View Details</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
               styles.selectButton,
               !hasVehicle && styles.selectButtonPending,
             ]}
-            onPress={() => handleSelectVehicle(booking)}
+            onPress={() => handleReturnVehicle(booking)}
           >
             <Text
               style={[
@@ -275,14 +278,9 @@ export const CustomerRentalsScreen: React.FC = () => {
                 !hasVehicle && styles.buttonTextPending,
               ]}
             >
-              {hasVehicle ? "Change Vehicle" : "Select Vehicle"}
+              {hasVehicle ? "Return Vehicle" : "Return Vehicle"}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.viewButton}
-            onPress={() => handleViewDetails(booking)}
-          >
-            <Text style={styles.buttonText}>View Details</Text>
+            <AntDesign name="arrow-right" size={16} color="#000" />
           </TouchableOpacity>
         </View>
       </View>
@@ -293,11 +291,11 @@ export const CustomerRentalsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.scrollContent}>
         <ScreenHeader
-          title="Customer Rentals"
+          title="Customer Return"
           subtitle={
             bookings?.[0]?.renter?.account?.fullname
-              ? `${bookings?.[0]?.renter?.account?.fullname} Bookings`
-              : "Customer Bookings"
+              ? `${bookings?.[0]?.renter?.account?.fullname} Bookings Return`
+              : "Customer Bookings Return"
           }
           submeta={
             bookings?.[0]
@@ -337,7 +335,7 @@ export const CustomerRentalsScreen: React.FC = () => {
           <View style={styles.rentalSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                List Rental of{" "}
+                List Return of{" "}
                 {bookings?.[0]?.renter?.account?.fullname ?? "Customer"}
               </Text>
               <View style={styles.countBadge}>
@@ -774,6 +772,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
   },
   viewButton: {
     flex: 1,
@@ -785,6 +785,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: "600",
+    marginRight: 4,
   },
   loadingContainer: {
     padding: 40,
