@@ -6,11 +6,13 @@ import { RenterLocalDataSource } from "../../datasources/interfaces/local/accoun
 import { RenterRemoteDataSource } from "../../datasources/interfaces/remote/account/RenterRemoteDataSource";
 import { RegisterRenterResponse } from "../../models/account/renter/RegisterRenterResponse";
 import { RenterResponse } from "../../models/account/renter/RenterResponse";
-import { UpdateRenterRequest } from "../../models/account/renter/UpdateRenterRequest";
+
 import { RenterRepository } from "../../../domain/repositories/account/RenterRepository";
 import { ScanFaceRequest } from "../../models/account/renter/ScanFaceRequest";
 import { ScanFaceResponse } from "../../models/account/renter/ScanFaceResponse";
 import { ApiResponse } from "../../../core/network/APIResponse";
+import { UpdateRenterRequest } from "../../models/account/renter/update/UpdateRenterRequest";
+import { UpdateRenterResponse } from "../../models/account/renter/update/RenterAccountUpdateResponse";
 
 export class RenterRepositoryImpl implements RenterRepository {
     constructor(
@@ -49,7 +51,6 @@ export class RenterRepositoryImpl implements RenterRepository {
         }
     }
 
-    // NEW METHOD: Return raw response
     async getCurrentRenterRaw(): Promise<RenterResponse> {
         try {
             return await this.remote.getCurrent();
@@ -58,45 +59,50 @@ export class RenterRepositoryImpl implements RenterRepository {
         }
     }
 
-    async update(renter: Renter): Promise<void> {
+    /**
+     * Update renter profile
+     * @param request - Update request with profile data
+     * @returns UpdateRenterResponse with updated profile including new avatar URL
+     */
+    async update(request: UpdateRenterRequest): Promise<UpdateRenterResponse> {
         try {
-            const request: UpdateRenterRequest = {
-                email: renter.email,
-                phone: renter.phone,
-                address: renter.address,
-                dateOfBirth: renter.dateOfBirth || '',
-                mediaId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                fullname: renter.account?.fullname || '',
-            };
-
+            // Call remote data source with the request
             const response = await this.remote.update(request);
             
-            const renters = await this.local.getAll();
-            const index = renters.findIndex(r => r.id === renter.id);
-            if (index !== -1) {
-                renters[index] = response;
-                await AsyncStorage.setItem('@renters', JSON.stringify(renters));
-            }
+            // Optionally update local cache if needed
+            // (You might want to fetch fresh data after update)
+            
+            return response;
         } catch (error) {
             throw error;
         }
     }
 
+    async scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>> {
+        try {
+            return await this.remote.scanFace(request);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Maps backend RenterResponse (from GET) to domain Renter entity
+     * Uses lowercase fields because C# JSON serializer converts to camelCase
+     */
     private mapRenterResponseToEntity(response: RenterResponse): Renter {
-        // Create Account from response
         const account = new Account(
-            response.account.id,
-            response.account.username,
+            response.account.id,           // lowercase (JSON serialized from C#)
+            response.account.username,     // lowercase
             '',
-            response.account.role,
-            response.account.fullname,
+            response.account.role,         // lowercase
+            response.account.fullname,     // lowercase
             undefined, undefined, false, undefined, undefined,
             null,
             undefined,
             new Date(), null, null, false
         );
 
-        // Create minimal Membership
         const minimalMembership = new Membership(
             '',
             'Basic',
@@ -112,43 +118,33 @@ export class RenterRepositoryImpl implements RenterRepository {
             dateOfBirth = `${year}-${month}-${day}`;
         }
 
-        // Check verification status from documents
         const hasCitizenDoc = response.documents.some(
             doc => doc.documentType === 'Citizen' && doc.verificationStatus
         );
 
-        // Create Renter - CORRECT ARGUMENT ORDER
         const renter = new Renter(
-            response.id,
-            response.email,
-            response.phone,
-            response.address,
-            response.account.id,
-            '', // membershipId
+            response.id,              // lowercase
+            response.email,           // lowercase
+            response.phone,           // lowercase
+            response.address,         // lowercase
+            response.account.id,      // lowercase
+            '',
             hasCitizenDoc,
             '',
             dateOfBirth,
             undefined,
-            response.avatarUrl || '',
-            undefined, // wallet
-            account,   // account: Account
-            new Date(), // createdAt
-            null,      // updatedAt
-            null,      // deletedAt
-            false      // isDeleted
+            response.avatarUrl || '', // lowercase (camelCase)
+            undefined,
+            account,
+            new Date(),
+            null,
+            null,
+            false
         );
 
         renter.attachMembership(minimalMembership);
 
         return renter;
-    }
-
-    async scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>> {
-        try {
-          return await this.remote.scanFace(request);
-        } catch (error) {
-          throw error;
-        }
     }
 
     private mapToEntity(model: RegisterRenterResponse): Renter {
@@ -186,9 +182,9 @@ export class RenterRepositoryImpl implements RenterRepository {
             model.dateOfBirth,
             model.verificationCodeExpiry ? new Date(model.verificationCodeExpiry) : undefined,
             model.avatarUrl,
-            undefined, // wallet
-            minimalAccount, // account
-            new Date(),     // createdAt
+            undefined,
+            minimalAccount,
+            new Date(),
             null,
             null,
             false

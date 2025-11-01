@@ -11,11 +11,13 @@ interface PersonalInfoSectionProps {
     countryCode: string;
     phoneNumber: string;
     dateOfBirth: string;
+    address: string; // ✅ ADD THIS
     onFullNameChange: (text: string) => void;
     onEmailChange: (text: string) => void;
     onCountryCodePress: () => void;
     onPhoneNumberChange: (text: string) => void;
     onDatePress: () => void;
+    onAddressChange: (text: string) => void; // ✅ ADD THIS
 }
 
 export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
@@ -24,44 +26,57 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
     countryCode,
     phoneNumber,
     dateOfBirth,
+    address, // ✅ RECEIVE THIS
     onFullNameChange,
     onEmailChange,
     onCountryCodePress,
     onPhoneNumberChange,
     onDatePress,
+    onAddressChange, // ✅ RECEIVE THIS
 }) => {
     return (
         <View style={styles.container}>
-        <Text variant="title" style={styles.title}>Personal Information</Text>
-        
-        <TextInput
-            label="Full Name*"
-            value={fullName}
-            onChangeText={onFullNameChange}
-            placeholder="Enter your full name"
-        />
+            <Text variant="title" style={styles.title}>Personal Information</Text>
+            
+            <TextInput
+                label="Full Name*"
+                value={fullName}
+                onChangeText={onFullNameChange}
+                placeholder="Enter your full name"
+            />
 
-        <TextInput
-            label="Email Address*"
-            value={email}
-            onChangeText={onEmailChange}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-        />
+            <TextInput
+                label="Email Address*"
+                value={email}
+                onChangeText={onEmailChange}
+                placeholder="Enter your email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+            />
 
-        <PhoneInput
-            label="Phone Number*"
-            countryCode={countryCode}
-            phoneNumber={phoneNumber}
-            onCountryCodePress={onCountryCodePress}
-            onPhoneNumberChange={onPhoneNumberChange}
-        />
+            <PhoneInput
+                label="Phone Number*"
+                countryCode={countryCode}
+                phoneNumber={phoneNumber}
+                onCountryCodePress={onCountryCodePress}
+                onPhoneNumberChange={onPhoneNumberChange}
+            />
 
-        <DateInput
-            label="Date of Birth*"
-            value={dateOfBirth}
-            onPress={onDatePress}
-        />
+            <DateInput
+                label="Date of Birth*"
+                value={dateOfBirth}
+                onPress={onDatePress}
+            />
+
+            {/* ✅ ADD ADDRESS FIELD */}
+            <TextInput
+                label="Address*"
+                value={address}
+                onChangeText={onAddressChange}
+                placeholder="Enter your address"
+                multiline
+                numberOfLines={3}
+            />
         </View>
     );
 };

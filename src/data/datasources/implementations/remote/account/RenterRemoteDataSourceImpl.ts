@@ -1,23 +1,25 @@
 import { ServerException } from "../../../../../core/errors/ServerException";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { AppLogger } from "../../../../../core/utils/Logger";
-import { UpdateRenterRequest } from "../../../../models/account/renter/UpdateRenterRequest";
-import { RegisterRenterResponse } from "../../../../models/account/renter/RegisterRenterResponse";
-import { RenterResponse } from "../../../../models/account/renter/RenterResponse";
-import { RenterRemoteDataSource } from "../../../interfaces/remote/account/RenterRemoteDataSource";
+
+import { jwtDecode } from "jwt-decode";
 import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse, unwrapResponse } from "../../../../../core/network/APIResponse";
-import { jwtDecode } from "jwt-decode";
+import { RegisterRenterResponse } from "../../../../models/account/renter/RegisterRenterResponse";
+import { RenterResponse } from "../../../../models/account/renter/RenterResponse";
+import { ScanFaceRequest } from "../../../../models/account/renter/ScanFaceRequest";
+import { ScanFaceResponse } from "../../../../models/account/renter/ScanFaceResponse";
+import { UpdateRenterResponse } from "../../../../models/account/renter/update/RenterAccountUpdateResponse";
+import { UpdateRenterRequest } from "../../../../models/account/renter/update/UpdateRenterRequest";
+import { RenterRemoteDataSource } from "../../../interfaces/remote/account/RenterRemoteDataSource";
 
 interface JWTPayload {
-    Id: string;          // Account ID
-    UserId: string;      // Renter ID ✅
+    Id: string;
+    UserId: string;
     Username: string;
     role: string;
     exp: number;
 }
-import { ScanFaceResponse } from "../../../../models/account/renter/ScanFaceResponse";
-import { ScanFaceRequest } from "../../../../models/account/renter/ScanFaceRequest";
 
 export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
     private readonly apiClient: AxiosClient;
@@ -27,13 +29,9 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         this.apiClient = apiClient;
     }
 
-    /**
-     * Extract renter ID from JWT token
-     */
     private getRenterIdFromToken(): string {
         try {
-            // Get token from axios client headers or storage
-            const token = this.apiClient.getAuthToken(); // You'll need to implement this
+            const token = this.apiClient.getAuthToken();
             
             if (!token) {
                 throw new Error('No authentication token found');
@@ -94,10 +92,8 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         try {
             this.logger.info('Fetching current renter profile...');
             
-            // Extract renter ID from JWT token
             const renterId = this.getRenterIdFromToken();
             
-            // Use the detail endpoint with the extracted ID
             const response = await this.apiClient.get<ApiResponse<RenterResponse>>(
                 ApiEndpoints.renter.detail(renterId)
             );
@@ -113,68 +109,100 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         }
     }
 
-    async update(request: UpdateRenterRequest): Promise<RegisterRenterResponse> {
+    async update(request: UpdateRenterRequest): Promise<UpdateRenterResponse> {
         try {
             this.logger.info('Updating renter profile...');
 
-            if (request.profilePicture) {
-                const formData = new FormData();
-                formData.append('email', request.email);
-                formData.append('phone', request.phone);
-                formData.append('address', request.address);
-                formData.append('dateOfBirth', request.dateOfBirth);
-                formData.append('mediaId', request.mediaId);
-                formData.append('fullname', request.fullname);
-                formData.append('profilePicture', request.profilePicture);
+            console.log('=== DATASOURCE RECEIVED ===');
+            console.log('Email:', request.Email);
+            console.log('phone:', request.phone);
+            console.log('Address:', request.Address);
+            console.log('DateOfBirth:', request.DateOfBirth);
+            console.log('Fullname:', request.Fullname);
+            console.log('MediaId:', request.MediaId);
+            console.log('ProfilePicture:', !!request.ProfilePicture);
+            console.log('===========================');
 
-                const response = await this.apiClient.put<ApiResponse<RegisterRenterResponse>>(
-                    ApiEndpoints.renter.update,
-                    formData
-                );
+            const formData = new FormData();
 
-                this.logger.info('Renter profile updated with image');
-                return unwrapResponse(response.data);
-            } else {
-                const response = await this.apiClient.put<ApiResponse<RegisterRenterResponse>>(
-                    ApiEndpoints.renter.update,
-                    {
-                        email: request.email,
-                        phone: request.phone,
-                        address: request.address,
-                        dateOfBirth: request.dateOfBirth,
-                        mediaId: request.mediaId,
-                        fullname: request.fullname,
-                    }
-                );
+            // Required
+            formData.append('Email', request.Email);
+            formData.append('phone', request.phone);
+            formData.append('Address', request.Address);
 
-                this.logger.info('Renter profile updated');
-                return unwrapResponse(response.data);
+            // Optional
+            if (request.DateOfBirth) formData.append('DateOfBirth', request.DateOfBirth);
+            if (request.Fullname) formData.append('Fullname', request.Fullname);
+            if (request.MediaId) formData.append('MediaId', request.MediaId);
+
+            // File (only if new image)
+            if (request.ProfilePicture) {
+                formData.append('ProfilePicture', {
+                    uri: request.ProfilePicture.uri,
+                    name: request.ProfilePicture.name || 'profile.jpg',
+                    type: request.ProfilePicture.type || 'image/jpeg',
+                } as any);
             }
+
+            console.log('=== SENDING FORMDATA ===');
+
+            // CRITICAL: NO HEADERS! Let Axios set Content-Type + boundary
+            const response = await this.apiClient.put<ApiResponse<UpdateRenterResponse>>(
+                ApiEndpoints.renter.update,
+                formData
+                // NO { headers: ... }
+            );
+
+            this.logger.info('Renter profile updated successfully');
+            return unwrapResponse(response.data);
         } catch (error: any) {
             this.logger.error(`Failed to update renter: ${error.message}`);
-            throw new ServerException(error.response?.data?.message || 'Failed to update profile', error.response?.status || 500);
+
+            if (error.response) {
+                console.log('=== ERROR RESPONSE ===');
+                console.log('Status:', error.response.status);
+                console.log('Data:', JSON.stringify(error.response.data, null, 2));
+            } else if (error.request) {
+                console.log('=== NO RESPONSE (Network Error) ===');
+                console.log(error.request);
+            } else {
+                console.log('=== ERROR SETUP ===', error.message);
+            }
+
+            throw new ServerException(
+                error.response?.data?.message || error.message || 'Failed to update profile',
+                error.response?.status || 500
+            );
         }
     }
 
     async scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>> {
         try {
-        this.logger.info('Scanning face...');
-        const formData = new FormData();
-        formData.append('image', {
-            uri: request.image,
-            name: `face_${Date.now()}.jpg`,
-            type: "image/jpeg",
-        } as any);
-        const response = await this.apiClient.post<ApiResponse<ScanFaceResponse>>(ApiEndpoints.renter.scanFace, formData);
-        return {
-            success: response.data.success,
-            message: response.data.message,
-            data: response.data.data,
-            code: response.data.code,
-        };
+            this.logger.info('Scanning face...');
+            const formData = new FormData();
+            formData.append('image', {
+                uri: request.image,
+                name: `face_${Date.now()}.jpg`,
+                type: "image/jpeg",
+            } as any);
+            
+            const response = await this.apiClient.post<ApiResponse<ScanFaceResponse>>(
+                ApiEndpoints.renter.scanFace, 
+                formData
+            );
+            
+            return {
+                success: response.data.success,
+                message: response.data.message,
+                data: response.data.data,
+                code: response.data.code,
+            };
         } catch (error: any) {
-        this.logger.error(`Failed to scan face: ${error.message}`);
-        throw new ServerException(error.response?.data?.message || 'Failed to scan face', error.response?.status || 500);
+            this.logger.error(`Failed to scan face: ${error.message}`);
+            throw new ServerException(
+                error.response?.data?.message || 'Failed to scan face', 
+                error.response?.status || 500
+            );
         }
     }
 }

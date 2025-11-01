@@ -17,6 +17,7 @@ interface EditProfileTemplateProps {
     countryCode: string;
     phoneNumber: string;
     dateOfBirth: string;
+    address: string; // ✅ ADD THIS
     citizenId: string;
     citizenIdAutoFill: boolean;
     existingCitizenDoc?: DocumentResponse;
@@ -34,6 +35,7 @@ interface EditProfileTemplateProps {
     onCountryCodePress: () => void;
     onPhoneNumberChange: (text: string) => void;
     onDatePress: () => void;
+    onAddressChange: (text: string) => void; // ✅ ADD THIS
     onCitizenIdChange: (text: string) => void;
     onCitizenIdAutoFillChange: (value: boolean) => void;
     onCitizenIdUpload: (method: 'camera' | 'gallery') => void;
@@ -87,11 +89,13 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         countryCode={props.countryCode}
                         phoneNumber={props.phoneNumber}
                         dateOfBirth={props.dateOfBirth}
+                        address={props.address} // ✅ PASS THIS
                         onFullNameChange={props.onFullNameChange}
                         onEmailChange={props.onEmailChange}
                         onCountryCodePress={props.onCountryCodePress}
                         onPhoneNumberChange={props.onPhoneNumberChange}
                         onDatePress={props.onDatePress}
+                        onAddressChange={props.onAddressChange} // ✅ PASS THIS
                     />
 
                     {/* Identity Documents Section */}
