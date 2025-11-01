@@ -1,5 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import {
+    ActivityIndicator,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    View,
+} from 'react-native';
 import { Button } from '../atoms/Button';
 import { Icon } from '../atoms/Icons/Icons';
 import { Text } from '../atoms/Text';
@@ -10,14 +16,23 @@ import { DocumentSection } from '../organisms/ProfileOrganism/DocumentSection';
 import { PersonalInfoSection } from '../organisms/ProfileOrganism/PersonalInfoSection';
 import { DocumentResponse } from '../../../../../data/models/account/renter/RenterResponse';
 
+// Helper: Normalize URI (handles string | string[] | undefined)
+const normalizeImageUri = (uri: string | string[] | undefined): string | undefined => {
+    if (!uri) return undefined;
+    if (Array.isArray(uri)) {
+        return uri[0] || undefined;
+    }
+    return uri;
+};
+
 interface EditProfileTemplateProps {
-    profileImageUri?: string;
+    profileImageUri?: string | string[]; // ← Accept array
     fullName: string;
     email: string;
     countryCode: string;
     phoneNumber: string;
     dateOfBirth: string;
-    address: string; // ✅ ADD THIS
+    address: string;
     citizenId: string;
     citizenIdAutoFill: boolean;
     existingCitizenDoc?: DocumentResponse;
@@ -35,7 +50,7 @@ interface EditProfileTemplateProps {
     onCountryCodePress: () => void;
     onPhoneNumberChange: (text: string) => void;
     onDatePress: () => void;
-    onAddressChange: (text: string) => void; // ✅ ADD THIS
+    onAddressChange: (text: string) => void;
     onCitizenIdChange: (text: string) => void;
     onCitizenIdAutoFillChange: (value: boolean) => void;
     onCitizenIdUpload: (method: 'camera' | 'gallery') => void;
@@ -53,129 +68,140 @@ interface EditProfileTemplateProps {
 }
 
 export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) => {
+  // Normalize image URI safely for ProfilePhoto
+    const safeImageUri = normalizeImageUri(props.profileImageUri);
+
     return (
         <SafeAreaView style={styles.safeArea}>
-            <View style={styles.container}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <Button onPress={props.onBack} style={styles.backButton} variant="ghost">
-                        <Icon name="back" size={24} />
-                    </Button>
-                    <Text variant="header">Edit Profile</Text>
-                    <Button
-                        onPress={props.saving ? undefined : props.onSave}
-                        style={styles.saveButton}
-                        variant="ghost"
-                    >
-                        {props.saving ? (
-                            <ActivityIndicator size="small" color="#7C3AED" />
-                        ) : (
-                            <Text style={styles.saveText}>Save</Text>
-                        )}
-                    </Button>
-                </View>
-
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                    {/* Profile Photo */}
-                    <ProfilePhoto 
-                        imageUri={props.profileImageUri} 
-                        onPress={props.onChangePhoto} 
-                    />
-
-                    {/* Personal Information */}
-                    <PersonalInfoSection
-                        fullName={props.fullName}
-                        email={props.email}
-                        countryCode={props.countryCode}
-                        phoneNumber={props.phoneNumber}
-                        dateOfBirth={props.dateOfBirth}
-                        address={props.address} // ✅ PASS THIS
-                        onFullNameChange={props.onFullNameChange}
-                        onEmailChange={props.onEmailChange}
-                        onCountryCodePress={props.onCountryCodePress}
-                        onPhoneNumberChange={props.onPhoneNumberChange}
-                        onDatePress={props.onDatePress}
-                        onAddressChange={props.onAddressChange} // ✅ PASS THIS
-                    />
-
-                    {/* Identity Documents Section */}
-                    <Text variant="title" style={styles.sectionTitle}>Identity Documents</Text>
-
-                    {/* Citizen ID */}
-                    <DocumentSection
-                        title="Citizen ID (CCCD)"
-                        iconName="id"
-                        documentNumber={props.citizenId}
-                        onDocumentNumberChange={props.onCitizenIdChange}
-                        autoFill={props.citizenIdAutoFill}
-                        onAutoFillChange={props.onCitizenIdAutoFillChange}
-                        onUpload={props.onCitizenIdUpload}
-                        onUpdate={props.onCitizenIdUpdate}
-                        existingDocument={props.existingCitizenDoc}
-                        onViewDocument={props.onViewCitizenDoc}
-                    />
-
-                    {/* Driver's License */}
-                    <DocumentSection
-                        title="Driver's License"
-                        iconName="license"
-                        documentNumber={props.licenseNumber}
-                        onDocumentNumberChange={props.onLicenseNumberChange}
-                        autoFill={props.licenseAutoFill}
-                        onAutoFillChange={props.onLicenseAutoFillChange}
-                        onUpload={props.onLicenseUpload}
-                        onUpdate={props.onLicenseUpdate}
-                        existingDocument={props.existingLicenseDoc}
-                        onViewDocument={props.onViewLicenseDoc}
-                        additionalFields={
-                            <>
-                                <TextInput
-                                    label="License Class*"
-                                    value={props.licenseClass}
-                                    onChangeText={props.onLicenseClassChange}
-                                    placeholder="Enter license class"
-                                />
-                                <DateInput
-                                    label="Expiry Date*"
-                                    value={props.licenseExpiry}
-                                    onPress={props.onLicenseExpiryPress}
-                                />
-                            </>
-                        }
-                    />
-
-                    {/* Security Section */}
-                    <Text variant="title" style={styles.sectionTitle}>Security</Text>
-                    <Button onPress={props.onChangePassword} style={styles.securityButton} variant="secondary">
-                        <View style={styles.securityButtonContent}>
-                            <View style={styles.securityButtonLeft}>
-                                <Icon name="lock" size={20} />
-                                <Text>Change Password</Text>
-                            </View>
-                            <Icon name="chevron" size={20} color="#666666" />
-                        </View>
-                    </Button>
-
-                    {/* Action Buttons */}
-                    <Button
-                        onPress={props.saving ? undefined : props.onSave}
-                        style={[styles.saveChangesButton, props.saving && { opacity: 0.6 }]}
-                        disabled={props.saving}
-                    >
-                        {props.saving ? (
-                            <ActivityIndicator color="#000" />
-                        ) : (
-                            <Text style={styles.saveChangesText}>Save Changes</Text>
-                        )}
-                    </Button>
-
-                    <Button onPress={props.onCancel} style={styles.cancelButton} variant="ghost">
-                        <Text style={styles.cancelText}>Cancel</Text>
-                    </Button>
-
-                    <View style={styles.bottomPadding} />
-                </ScrollView>
+        <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+            <Button onPress={props.onBack} style={styles.backButton} variant="ghost">
+                <Icon name="back" size={24} />
+            </Button>
+            <Text variant="header">Edit Profile</Text>
+            <Button
+                onPress={props.saving ? undefined : props.onSave}
+                style={styles.saveButton}
+                variant="ghost"
+            >
+                {props.saving ? (
+                <ActivityIndicator size="small" color="#7C3AED" />
+                ) : (
+                <Text style={styles.saveText}>Save</Text>
+                )}
+            </Button>
             </View>
+
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            {/* Profile Photo */}
+            <ProfilePhoto 
+                imageUri={safeImageUri} 
+                onPress={props.onChangePhoto} 
+            />
+
+            {/* Personal Information */}
+            <PersonalInfoSection
+                fullName={props.fullName}
+                email={props.email}
+                countryCode={props.countryCode}
+                phoneNumber={props.phoneNumber}
+                dateOfBirth={props.dateOfBirth}
+                address={props.address}
+                onFullNameChange={props.onFullNameChange}
+                onEmailChange={props.onEmailChange}
+                onCountryCodePress={props.onCountryCodePress}
+                onPhoneNumberChange={props.onPhoneNumberChange}
+                onDatePress={props.onDatePress}
+                onAddressChange={props.onAddressChange}
+            />
+
+            {/* Identity Documents Section */}
+            <Text variant="title" style={styles.sectionTitle}>
+                Identity Documents
+            </Text>
+
+            {/* Citizen ID */}
+            <DocumentSection
+                title="Citizen ID (CCCD)"
+                iconName="id"
+                documentNumber={props.citizenId}
+                onDocumentNumberChange={props.onCitizenIdChange}
+                autoFill={props.citizenIdAutoFill}
+                onAutoFillChange={props.onCitizenIdAutoFillChange}
+                onUpload={props.onCitizenIdUpload}
+                onUpdate={props.onCitizenIdUpdate}
+                existingDocument={props.existingCitizenDoc}
+                onViewDocument={props.onViewCitizenDoc}
+            />
+
+            {/* Driver's License */}
+            <DocumentSection
+                title="Driver's License"
+                iconName="license"
+                documentNumber={props.licenseNumber}
+                onDocumentNumberChange={props.onLicenseNumberChange}
+                autoFill={props.licenseAutoFill}
+                onAutoFillChange={props.onLicenseAutoFillChange}
+                onUpload={props.onLicenseUpload}
+                onUpdate={props.onLicenseUpdate}
+                existingDocument={props.existingLicenseDoc}
+                onViewDocument={props.onViewLicenseDoc}
+                additionalFields={
+                <>
+                    <TextInput
+                    label="License Class*"
+                    value={props.licenseClass}
+                    onChangeText={props.onLicenseClassChange}
+                    placeholder="Enter license class"
+                    />
+                    <DateInput
+                    label="Expiry Date*"
+                    value={props.licenseExpiry}
+                    onPress={props.onLicenseExpiryPress}
+                    />
+                </>
+                }
+            />
+
+            {/* Security Section */}
+            <Text variant="title" style={styles.sectionTitle}>
+                Security
+            </Text>
+            <Button
+                onPress={props.onChangePassword}
+                style={styles.securityButton}
+                variant="secondary"
+            >
+                <View style={styles.securityButtonContent}>
+                <View style={styles.securityButtonLeft}>
+                    <Icon name="lock" size={20} />
+                    <Text>Change Password</Text>
+                </View>
+                <Icon name="chevron" size={20} color="#666666" />
+                </View>
+            </Button>
+
+            {/* Action Buttons */}
+            <Button
+                onPress={props.saving ? undefined : props.onSave}
+                style={[styles.saveChangesButton, props.saving && { opacity: 0.6 }]}
+                disabled={props.saving}
+            >
+                {props.saving ? (
+                <ActivityIndicator color="#000" />
+                ) : (
+                <Text style={styles.saveChangesText}>Save Changes</Text>
+                )}
+            </Button>
+
+            <Button onPress={props.onCancel} style={styles.cancelButton} variant="ghost">
+                <Text style={styles.cancelText}>Cancel</Text>
+            </Button>
+
+            <View style={styles.bottomPadding} />
+            </ScrollView>
+        </View>
         </SafeAreaView>
     );
 };

@@ -1,3 +1,5 @@
+// TripNavigator.tsx
+
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 import { BookingDetailsScreen } from '../../../../features/staff/handover/ui/screens';
@@ -18,26 +20,25 @@ export const TripNavigator: React.FC = () => {
       screenOptions={{
         headerShown: false,
         cardStyle: { backgroundColor: "#000000" },
-        // ✅ CRITICAL: Enable gesture and back button
         gestureEnabled: true,
         gestureDirection: "horizontal",
       }}
     >
+      {/* ROOT: Trips List */}
       <Stack.Screen
         name="Trip"
         component={TripsScreen}
         options={{
-          // First screen in stack - can't go back
-          gestureEnabled: false,
+          gestureEnabled: false, // First screen — no back
         }}
       />
+
+      {/* Booking Details */}
       <Stack.Screen
         name="BookingDetails"
         component={BookingDetailsScreen}
         options={{
-          // ✅ This allows Android back button to work
           gestureEnabled: true,
-          // ✅ Add slide animation
           cardStyleInterpolator: ({ current, layouts }) => ({
             cardStyle: {
               transform: [
@@ -52,6 +53,8 @@ export const TripNavigator: React.FC = () => {
           }),
         }}
       />
+
+      {/* Sign Contract */}
       <Stack.Screen
         name="SignContract"
         component={SignContractScreen}
@@ -59,11 +62,58 @@ export const TripNavigator: React.FC = () => {
           headerShown: false,
         }}
       />
+
+      {/* Emergency Contact */}
+      <Stack.Screen
+        name="EmergencyContact"
+        component={EmergencyContactScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* Incident Report */}
+      <Stack.Screen
+        name="IncidentReport"
+        component={IncidentReportScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* GPS Tracking */}
       <Stack.Screen
         name="TrackingGPS"
         component={TrackingGPSScreen}
         options={{
           headerShown: false,
+          gestureEnabled: true,
         }}
       />
     </Stack.Navigator>
