@@ -5,6 +5,32 @@ import { RenterResponse } from '../../../../data/models/account/renter/RenterRes
 import sl from '../../../../core/di/InjectionContainer';
 import { useAppSelector } from '../../authentication/store/hooks';
 
+// NORMALIZE AVATAR URL - FIX THE ARRAY ISSUE HERE
+const normalizeAvatarUrl = (url: any): string | null => {
+    if (!url) return null;
+    if (typeof url === 'string') return url;
+    if (Array.isArray(url) && url.length > 0 && typeof url[0] === 'string') {
+        return url[0];
+    }
+    return null;
+};
+
+// NORMALIZE RENTER RESPONSE - FIX AVATAR BEFORE IT SPREADS
+const normalizeRenterResponse = (response: any): RenterResponse => {
+    return {
+        ...response,
+        avatarUrl: normalizeAvatarUrl(response.avatarUrl)
+    };
+};
+
+// NORMALIZE RENTER ENTITY - FIX AVATAR IN THE ENTITY TOO
+const normalizeRenter = (renter: any): Renter => {
+    return {
+        ...renter,
+        avatarUrl: normalizeAvatarUrl(renter.avatarUrl)
+    };
+};
+
 export const useRenterProfile = () => {
     const token = useAppSelector((state) => state.auth.token);
     const [renter, setRenter] = useState<Renter | null>(null);
@@ -27,8 +53,26 @@ export const useRenterProfile = () => {
             const getCurrentRenterUseCase = sl.getGetCurrentRenterUseCase();
             const result = await getCurrentRenterUseCase.execute();
 
-            setRenter(result.renter);
-            setRenterResponse(result.rawResponse);
+            console.log('🔥 RAW API RESPONSE:', {
+                avatarUrl: result.renter.avatarUrl,
+                isArray: Array.isArray(result.renter.avatarUrl),
+                rawResponseAvatar: result.rawResponse.avatarUrl,
+                isRawArray: Array.isArray(result.rawResponse.avatarUrl)
+            });
+
+            // NORMALIZE THE DATA BEFORE SETTING STATE
+            const normalizedRenter = normalizeRenter(result.renter);
+            const normalizedResponse = normalizeRenterResponse(result.rawResponse);
+
+            console.log('✅ NORMALIZED:', {
+                avatarUrl: normalizedRenter.avatarUrl,
+                isArray: Array.isArray(normalizedRenter.avatarUrl),
+                responseAvatar: normalizedResponse.avatarUrl,
+                isResponseArray: Array.isArray(normalizedResponse.avatarUrl)
+            });
+
+            setRenter(normalizedRenter);
+            setRenterResponse(normalizedResponse);
         } catch (err: any) {
             console.error('Failed to fetch renter profile:', err);
             setError(err.message || 'Failed to load profile');
