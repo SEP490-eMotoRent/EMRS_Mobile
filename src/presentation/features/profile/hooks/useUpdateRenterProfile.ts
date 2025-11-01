@@ -1,45 +1,33 @@
 import { useState } from 'react';
 import sl from '../../../../core/di/InjectionContainer';
-import { UpdateRenterProfileUseCase } from '../../../../domain/usecases/account/Profile/UpdateRenterProfileUseCase';
+import { UpdateRenterResponse } from '../../../../data/models/account/renter/update/RenterAccountUpdateResponse';
+import { UpdateRenterRequest } from '../../../../data/models/account/renter/update/UpdateRenterRequest';
 
+
+/**
+ * Hook for updating renter profile
+ * Simplified - no more FormData handling at this level
+ */
 export const useUpdateRenterProfile = () => {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const updateUseCase = sl.getUpdateRenterProfileUseCase();
 
-    const update = async (data: {
-        email: string;
-        phone: string;
-        address: string;
-        dateOfBirth: string;
-        mediaId: string;
-        fullname: string;
-        profilePicture?: any;
-    }) => {
+    const update = async (data: UpdateRenterRequest): Promise<UpdateRenterResponse> => {
         setLoading(true);
+        setError(null);
+        
         try {
-        const request: any = {
-            email: data.email,
-            phone: data.phone,
-            address: data.address,
-            dateOfBirth: data.dateOfBirth,
-            mediaId: data.mediaId,
-            fullname: data.fullname,
-        };
-
-        if (data.profilePicture) {
-            const formData = new FormData();
-            Object.keys(request).forEach(key => {
-            formData.append(key, request[key]);
-            });
-            formData.append('profilePicture', data.profilePicture);
-            await updateUseCase.execute(formData);
-        } else {
-            await updateUseCase.execute(request);
-        }
+            const response = await updateUseCase.execute(data);
+            return response;
+        } catch (err: any) {
+            const errorMessage = err.message || 'Failed to update profile';
+            setError(errorMessage);
+            throw err;
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 
-    return { update, loading };
+    return { update, loading, error };
 };

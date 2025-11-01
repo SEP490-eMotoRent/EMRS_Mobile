@@ -8,7 +8,7 @@ import { EditProfileTemplate } from '../templates/EditProfileTemplate';
 
 export const EditProfileScreen = ({ navigation }: any) => {
     // Fetch current user profile
-    const { renter, renterResponse, loading: fetchLoading } = useRenterProfile();
+    const { renter, renterResponse, loading: fetchLoading, refresh } = useRenterProfile();
     const { update, loading: updateLoading } = useUpdateRenterProfile();
 
     // Form state
@@ -76,7 +76,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
     };
 
     const handleViewDocument = (documentUrl: string) => {
-        // Open document image in browser or image viewer
         Linking.openURL(documentUrl).catch(() => {
             Alert.alert('Error', 'Cannot open document image');
         });
@@ -84,33 +83,64 @@ export const EditProfileScreen = ({ navigation }: any) => {
 
     const handleSave = async () => {
         try {
-            // Only create file object if a NEW image was picked
-            const file = profileImageUri && !profileImageUri.startsWith('http')
-                ? {
-                    uri: profileImageUri,
-                    name: 'profile.jpg',
-                    type: 'image/jpeg',
-                }
-                : undefined;
+            // Validation
+            if (!email || !phoneNumber || !address) {
+                Alert.alert('Validation Error', 'Email, phone number, and address are required');
+                return;
+            }
 
-            // Convert date from DD/MM/YYYY to YYYY-MM-DD
+            // Convert date from DD/MM/YYYY to YYYY-MM-DD for backend
             let formattedDate = dateOfBirth;
             if (dateOfBirth.includes('/')) {
                 const [day, month, year] = dateOfBirth.split('/');
                 formattedDate = `${year}-${month}-${day}`;
             }
 
-            await update({
-                email,
-                phone: `${countryCode}${phoneNumber.replace(/\s/g, '')}`,
-                address: address,
-                dateOfBirth: formattedDate,
-                mediaId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                fullname: fullName,
-                profilePicture: file,
-            });
+            // 🔍 DEBUG: Check values before building request
+            console.log('=== BEFORE UPDATE ===');
+            console.log('Email:', email.trim());
+            console.log('Phone:', `${countryCode}${phoneNumber.replace(/\s/g, '')}`);
+            console.log('Address:', address.trim());
+            console.log('DateOfBirth:', formattedDate);
+            console.log('Fullname:', fullName.trim());
+            console.log('ProfilePicture URI:', profileImageUri);
+            console.log('Is HTTP?:', profileImageUri?.startsWith('http'));
+            console.log('===================');
 
-            Alert.alert('Success', 'Profile updated!');
+            // ✅ Build request with EXACT backend field names
+            const request: any = {
+                Email: email.trim(),              // ⚠️ Capital 'E'
+                phone: `${countryCode}${phoneNumber.replace(/\s/g, '')}`,  // ⚠️ Lowercase 'p'
+                Address: address.trim(),          // ⚠️ Capital 'A'
+                DateOfBirth: formattedDate,       // ⚠️ Capital 'D', 'B'
+                Fullname: fullName.trim(),        // ⚠️ Capital 'F'
+            };
+
+            // Only add ProfilePicture if user picked a new image (not an existing URL)
+            if (profileImageUri && !profileImageUri.startsWith('http')) {
+                request.ProfilePicture = {
+                    uri: profileImageUri,
+                    name: 'profile.jpg',
+                    type: 'image/jpeg',
+                };
+            }
+
+            console.log('=== SENDING REQUEST ===');
+            console.log(JSON.stringify(request, null, 2));
+            console.log('======================');
+
+            // Call the update hook
+            const response = await update(request);
+
+            // Update the profile image with the new URL from response
+            if (response.AvatarUrl) {
+                setProfileImageUri(response.AvatarUrl);
+            }
+
+            // Refresh the profile data
+            await refresh();
+
+            Alert.alert('Success', 'Profile updated successfully!');
             navigation.goBack();
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to update profile');
@@ -121,7 +151,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
     if (fetchLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#00ff00" />
+                <ActivityIndicator size="large" color="#7C3AED" />
             </View>
         );
     }
@@ -134,6 +164,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
             countryCode={countryCode}
             phoneNumber={phoneNumber}
             dateOfBirth={dateOfBirth}
+            address={address}
             // Citizen ID props
             citizenId={citizenDoc?.documentNumber || ''}
             citizenIdAutoFill={false}
@@ -146,7 +177,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
             existingLicenseDoc={licenseDoc}
             // Handlers
             onBack={() => navigation.goBack()}
-            onSave={updateLoading ? undefined : handleSave}
+            onSave={handleSave}
             onCancel={() => navigation.goBack()}
             onChangePhoto={pickImage}
             onFullNameChange={setFullName}
@@ -154,6 +185,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
             onCountryCodePress={() => {}}
             onPhoneNumberChange={setPhoneNumber}
             onDatePress={() => {}}
+            onAddressChange={setAddress}
             onCitizenIdChange={() => {}}
             onCitizenIdAutoFillChange={() => {}}
             onCitizenIdUpload={() => {}}

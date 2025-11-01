@@ -1,9 +1,15 @@
-import { Renter } from "../../../entities/account/Renter";
+import { UpdateRenterResponse } from "../../../../data/models/account/renter/update/RenterAccountUpdateResponse";
+import { UpdateRenterRequest } from "../../../../data/models/account/renter/update/UpdateRenterRequest";
 import { RenterRepository } from "../../../repositories/account/RenterRepository";
 export class UpdateRenterProfileUseCase {
     constructor(private renterRepository: RenterRepository) {}
 
-    async execute(request: any): Promise<void> {  // ← CHANGE FROM Renter TO any
-        await this.renterRepository.update(request);
+    /**
+     * Execute profile update
+     * @param request - Update request with profile data
+     * @returns UpdateRenterResponse with updated profile data
+     */
+    async execute(request: UpdateRenterRequest): Promise<UpdateRenterResponse> {
+        return await this.renterRepository.update(request);
     }
 }
