@@ -1,16 +1,17 @@
 import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
-import { CreateHandoverReceiptRequest } from "../../../../models/receipt/CreateHandoverReceiptRequest";
+import { CreateReceiptRequest } from "../../../../models/receipt/CreateReceiptRequest";
 import { GetContractResponse } from "../../../../models/receipt/GetContractResponse";
 import { HandoverReceiptResponse } from "../../../../models/receipt/HandoverReceiptResponse";
+import { UpdateReceiptRequest } from "../../../../models/receipt/UpdateReceiptRequest";
 import { ReceiptRemoteDataSource } from "../../../interfaces/remote/receipt/ReceiptRemoteDataSource";
 
 export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
 
   async createHandoverReceipt(
-    request: CreateHandoverReceiptRequest
+    request: CreateReceiptRequest
   ): Promise<ApiResponse<HandoverReceiptResponse>> {
     try {
       const formData = new FormData();
@@ -44,6 +45,37 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
       };
     } catch (error: any) {
       console.error("Error creating handover receipt:", error);
+      throw error;
+    }
+  }
+
+  async updateRentalReceipt(request: UpdateReceiptRequest): Promise<void> {
+    try {
+      const formData = new FormData();
+
+      // Add text fields
+      formData.append("RentalReceiptId", request.rentalReceiptId);
+      formData.append("EndOdometerKm", request.endOdometerKm.toString());
+      formData.append(
+        "EndBatteryPercentage",
+        request.endBatteryPercentage.toString()
+      );
+
+      // Add return vehicle images files
+      request.returnVehicleImagesFiles.forEach((file, index) => {
+        formData.append("ReturnVehicleImagesFiles", file);
+      });
+
+      // Add return checklist file
+      formData.append("ReturnCheckListFile", request.returnCheckListFile);
+      const response = await this.axiosClient.put<void>(
+        ApiEndpoints.receipt.updateRentalReceipt,
+        formData
+      );
+      return response.data;
+    }
+    catch (error: any) {
+      console.error("Error updating rental receipt:", error);
       throw error;
     }
   }

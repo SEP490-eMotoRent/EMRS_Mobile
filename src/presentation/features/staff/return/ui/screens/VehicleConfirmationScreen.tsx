@@ -68,7 +68,9 @@ export const VehicleConfirmationScreen: React.FC = () => {
 
   const handleStartReturnInspection = () => {
     console.log("Start return inspection");
-    navigation.navigate("ReturnInspection");
+    navigation.navigate("ReturnInspection", {
+      rentalReceiptId: booking?.rentalReceipt?.id,
+    });
   };
 
   return (

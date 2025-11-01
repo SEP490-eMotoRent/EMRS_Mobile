@@ -2,7 +2,7 @@ import { ApiResponse } from "../../../core/network/APIResponse";
 import { HandoverReceiptResponse } from "../../../data/models/receipt/HandoverReceiptResponse";
 import { ReceiptRepository } from "../../repositories/receipt/ReceiptRepository";
 
-export interface CreateHandoverReceiptUseCaseInput {
+export interface CreateReceiptUseCaseInput {
     notes: string;
     startOdometerKm: number;
     startBatteryPercentage: number;
@@ -11,10 +11,10 @@ export interface CreateHandoverReceiptUseCaseInput {
     checkListFile: string;
 }
 
-export class CreateHandoverReceiptUseCase {
+export class CreateReceiptUseCase {
     constructor(private receiptRepo: ReceiptRepository) {}
     
-    async execute(input: CreateHandoverReceiptUseCaseInput): Promise<ApiResponse<HandoverReceiptResponse>> {
+    async execute(input: CreateReceiptUseCaseInput): Promise<ApiResponse<HandoverReceiptResponse>> {
         return await this.receiptRepo.createHandoverReceipt(input);
     }
 }

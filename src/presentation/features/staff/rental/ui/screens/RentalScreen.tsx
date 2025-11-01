@@ -258,7 +258,7 @@ export const RentalScreen: React.FC = () => {
           </View>
         </View>
 
-        {rentedBookings.map((booking) => (
+        {rentedBookings && rentedBookings.map((booking) => (
           <View key={booking.id} style={styles.rentedCard}>
             <View style={styles.rentedCardHeader}>
               <View style={styles.customerInfo}>

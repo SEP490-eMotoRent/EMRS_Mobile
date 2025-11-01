@@ -19,11 +19,11 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../../core/di/InjectionContainer";
-import { CreateHandoverReceiptUseCase } from "../../../../../../domain/usecases/receipt/CreateHandoverReceiptUseCase";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { HandoverReceiptResponse } from "../../../../../../data/models/receipt/HandoverReceiptResponse";
 import { AssignVehicleToBookingUseCase } from "../../../../../../domain/usecases/booking/AssignVehicleToBookingUseCase";
+import { CreateReceiptUseCase } from "../../../../../../domain/usecases/receipt/CreateReceiptUseCase";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -375,7 +375,7 @@ export const VehicleInspectionScreen: React.FC = () => {
         } as any);
       }
 
-      const createHandoverReceiptUseCase = new CreateHandoverReceiptUseCase(
+      const createReceiptUseCase = new CreateReceiptUseCase(
         sl.get("ReceiptRepository")
       );
 
@@ -384,7 +384,7 @@ export const VehicleInspectionScreen: React.FC = () => {
       );
 
       const [handoverResponse, assignResponse] = await Promise.all([
-        createHandoverReceiptUseCase.execute({
+        createReceiptUseCase.execute({
           notes,
           startOdometerKm: parseInt(startOdometerKm),
           startBatteryPercentage: parseInt(startBatteryPercentage),

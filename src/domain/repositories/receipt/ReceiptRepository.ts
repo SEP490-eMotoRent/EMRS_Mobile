@@ -1,13 +1,14 @@
 import { ApiResponse } from "../../../core/network/APIResponse";
-import { GetContractResponse } from "../../../data/models/receipt/GetContractResponse";
 import { HandoverReceiptResponse } from "../../../data/models/receipt/HandoverReceiptResponse";
 import { RentalContract } from "../../entities/booking/RentalContract";
-import { CreateHandoverReceiptUseCaseInput } from "../../usecases/receipt/CreateHandoverReceiptUseCase";
+import { CreateReceiptUseCaseInput } from "../../usecases/receipt/CreateReceiptUseCase";
+import { UpdateReceiptUseCaseInput } from "../../usecases/receipt/UpdateReceiptUseCase";
 
 export interface ReceiptRepository {
   createHandoverReceipt(
-    input: CreateHandoverReceiptUseCaseInput
+    input: CreateReceiptUseCaseInput
   ): Promise<ApiResponse<HandoverReceiptResponse>>;
+  updateRentalReceipt(input: UpdateReceiptUseCaseInput): Promise<void>;
   generateContract(bookingId: string): Promise<ApiResponse<string>>;
   getContract(bookingId: string): Promise<RentalContract | null>;
   generateOtp(contractId: string): Promise<ApiResponse<string>>;

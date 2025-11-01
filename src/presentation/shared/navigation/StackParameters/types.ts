@@ -156,7 +156,7 @@ export type StaffStackParamList = {
     bookingId: string;
     vehicleId: string;
   };
-  ReturnInspection: undefined;
+  ReturnInspection: { rentalReceiptId: string };
   AIAnalysis: undefined;
   SignContract: {
     bookingId: string;

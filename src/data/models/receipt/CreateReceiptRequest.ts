@@ -1,4 +1,4 @@
-export interface CreateHandoverReceiptRequest {
+export interface CreateReceiptRequest {
     notes: string;
     startOdometerKm: number;
     startBatteryPercentage: number;

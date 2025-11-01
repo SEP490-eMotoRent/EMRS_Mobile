@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,15 +7,19 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  Alert,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
+import * as ImagePicker from "expo-image-picker";
 import { AntDesign, Entypo } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StepProgressBar } from "../atoms";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { UpdateReceiptUseCase } from "../../../../../../domain/usecases/receipt/UpdateReceiptUseCase";
 
 const customerAvatar = require("../../../../../../../assets/images/avatar2.png");
 
@@ -24,18 +28,127 @@ type ReturnInspectionScreenNavigationProp = StackNavigationProp<
   "ReturnInspection"
 >;
 
-export const ReturnInspectionScreen: React.FC = () => {
-  const navigation = useNavigation<ReturnInspectionScreenNavigationProp>();
-  const [batteryPercentage, setBatteryPercentage] = useState("57");
+type ReturnInspectionScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "ReturnInspection"
+>;
 
-  const handleContinue = () => {
-    console.log("Continue to AI Analysis");
-    navigation.navigate("AIAnalysis");
+export const ReturnInspectionScreen: React.FC = () => {
+  const route = useRoute<ReturnInspectionScreenRouteProp>();
+  const { rentalReceiptId } = route.params;
+  const navigation = useNavigation<ReturnInspectionScreenNavigationProp>();
+  const [endOdometerKm, setEndOdometerKm] = useState("0");
+  const [endBatteryPercentage, setEndBatteryPercentage] = useState("57");
+  const [photos, setPhotos] = useState<Record<string, string | null>>({
+    front: null,
+    back: null,
+    left: null,
+    right: null,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const ensurePermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    return cam.status === "granted" && lib.status === "granted";
   };
 
-  const handleCapturePhoto = (angle: string) => {
-    console.log(`Capture photo for ${angle}`);
-    // Open camera for photo capture
+  const getPhotosCount = () => {
+    return Object.values(photos).filter(Boolean).length;
+  };
+
+  const handleContinue = async () => {
+    if (isSubmitting) return;
+    try {
+      setIsSubmitting(true);
+
+      // Validate required fields
+      if (!endOdometerKm || !endBatteryPercentage) {
+        Alert.alert("Lỗi", "Vui lòng nhập số km và % pin bắt đầu");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (getPhotosCount() < 4) {
+        Alert.alert(
+          "Lỗi",
+          "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)"
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      const updateReceiptUseCase = new UpdateReceiptUseCase(
+        sl.get("ReceiptRepository")
+      );
+
+      const handoverResponse = await updateReceiptUseCase.execute({
+        rentalReceiptId: rentalReceiptId,
+        endOdometerKm: parseInt(endOdometerKm),
+        endBatteryPercentage: parseInt(endBatteryPercentage),
+        vehicleFiles: [
+          photos.front,
+          photos.back,
+          photos.left,
+          photos.right,
+        ].filter(Boolean) as string[],
+        checkListFile: "",
+      });
+
+      // const receiptData: HandoverReceiptResponse =
+      //   unwrapResponse(handoverResponse);
+
+      Alert.alert(
+        "Thành công",
+        "Kiểm tra đã được hoàn thành"
+      );
+
+      navigation.navigate("AIAnalysis");
+    } catch (error) {
+      Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openPicker = async (key: keyof typeof photos) => {
+    const ok = await ensurePermissions();
+    if (!ok) {
+      Alert.alert(
+        "Permission required",
+        "Please grant camera and media permissions."
+      );
+      return;
+    }
+
+    Alert.alert("Add photo", "Choose source", [
+      {
+        text: "Camera",
+        onPress: async () => {
+          const res = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 0.7,
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
+        },
+      },
+      {
+        text: "Library",
+        onPress: async () => {
+          const res = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            quality: 0.7,
+            mediaTypes: ["images"],
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   return (
@@ -80,38 +193,38 @@ export const ReturnInspectionScreen: React.FC = () => {
           <View style={styles.photoGrid}>
             <TouchableOpacity
               style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Front")}
+              onPress={() => openPicker("front")}
             >
               <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Front</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
+              <Text style={styles.photoLabel}>Mặt trước</Text>
+              <Text style={styles.photoSubtext}>Chạm để chụp</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Rear")}
+              onPress={() => openPicker("back")}
             >
               <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Rear</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
+              <Text style={styles.photoLabel}>Mặt sau</Text>
+              <Text style={styles.photoSubtext}>Chạm để chụp</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Left Side")}
+              onPress={() => openPicker("left")}
             >
               <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Left Side</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
+              <Text style={styles.photoLabel}>Bên trái</Text>
+              <Text style={styles.photoSubtext}>Chạm để chụp</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Right Side")}
+              onPress={() => openPicker("right")}
             >
               <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Right Side</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
+              <Text style={styles.photoLabel}>Bên phải</Text>
+              <Text style={styles.photoSubtext}>Chạm để chụp</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -137,8 +250,8 @@ export const ReturnInspectionScreen: React.FC = () => {
               <AntDesign name="edit" size={16} color={colors.text.secondary} />
               <TextInput
                 style={styles.batteryInput}
-                value={batteryPercentage}
-                onChangeText={setBatteryPercentage}
+                value={endBatteryPercentage}
+                onChangeText={setEndBatteryPercentage}
                 keyboardType="numeric"
                 placeholder="Enter battery %"
                 placeholderTextColor={colors.text.secondary}
