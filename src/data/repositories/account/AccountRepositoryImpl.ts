@@ -36,14 +36,14 @@ export class AccountRepositoryImpl implements AccountRepository {
     }
 
     private mapToEntity(model: RegisterUserRequest): Account {
-        // STEP 1: Create MINIMAL Renter
+        // STEP 1: Create MINIMAL Renter (no account yet)
         const renterId = `renter_${model.username}`;
         const minimalRenter = new Renter(
             renterId,
             model.email,
             model.phone,
             model.address,
-            model.username,
+            model.username,           // accountId
             'default_membership',
             false,
             '',
@@ -51,45 +51,34 @@ export class AccountRepositoryImpl implements AccountRepository {
             undefined,
             model.avatarUrl,
             undefined,
-            new Date(),
-            null,
-            null,
-            false
+            undefined,                // ← account: Account | undefined
+            new Date(),               // ← createdAt
+            null,                     // updatedAt
+            null,                     // deletedAt
+            false                     // isDeleted
         );
 
         // STEP 2: Create MINIMAL Membership
         const minimalMembership = new Membership(
             'default_membership',
             'Basic',
-            0,
-            0,
-            0,
-            'Basic membership',
+            0, 0, 0, 'Basic membership',
             [],
-            new Date(),
-            null,
-            null,
-            false
+            new Date(), null, null, false
         );
 
-        // STEP 3: Create Account (EXACT 16 PARAMS)
+        // STEP 3: Create Account
         const account = new Account(
             model.username,           // id
             model.username,           // username
             model.password,           // password
             'Renter',                 // role
             model.fullname,           // fullname
-            undefined,                // refreshToken
-            undefined,                // refreshTokenExpiry
-            false,                    // isRefreshTokenRevoked
-            undefined,                // resetPasswordToken
-            undefined,                // resetPasswordTokenExpiry
+            undefined, undefined, false, undefined, undefined,
             minimalRenter,            // renter
             undefined,                // staff
             new Date(),               // createdAt
-            null,                     // updatedAt
-            null,                     // deletedAt
-            false                     // isDeleted
+            null, null, false
         );
 
         // STEP 4: LINK CIRCULAR REFERENCES
