@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import sl from '../../../../core/di/InjectionContainer';
-import { UpdateRenterResponse } from '../../../../data/models/account/renter/update/RenterAccountUpdateResponse';
-import { UpdateRenterRequest } from '../../../../data/models/account/renter/update/UpdateRenterRequest';
-
+import { UpdateRenterResponse } from '../../../../../data/models/account/renter/update/RenterAccountUpdateResponse';
+import { UpdateRenterRequest } from '../../../../../data/models/account/renter/update/UpdateRenterRequest';
+import sl from '../../../../../core/di/InjectionContainer';
 
 /**
  * Hook for updating renter profile

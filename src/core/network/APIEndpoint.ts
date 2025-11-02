@@ -46,6 +46,15 @@ export const ApiEndpoints = {
       delete: (documentId: string) => `/api/Document/${documentId}`, // DELETE
     }
   },
+
+  //Document Endpoints
+  document: {
+    createCitizen: "/Document/citizen",
+    createDriving: "/Document/driving",
+    updateCitizen: "/Document/citizen",
+    updateDriving: "/Document/driving",
+    delete: (documentId: string) => `/Document/${documentId}`,
+  },
   
   // Receipt endpoints
   receipt: {

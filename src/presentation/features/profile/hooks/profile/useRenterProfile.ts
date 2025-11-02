@@ -1,9 +1,10 @@
 // src/features/profile/hooks/useRenterProfile.ts
 import { useEffect, useState } from 'react';
-import { Renter } from '../../../../domain/entities/account/Renter';
-import { RenterResponse } from '../../../../data/models/account/renter/RenterResponse';
-import sl from '../../../../core/di/InjectionContainer';
-import { useAppSelector } from '../../authentication/store/hooks';
+import { RenterResponse } from '../../../../../data/models/account/renter/RenterResponse';
+import { Renter } from '../../../../../domain/entities/account/Renter';
+import { useAppSelector } from '../../../authentication/store/hooks';
+import sl from '../../../../../core/di/InjectionContainer';
+
 
 // NORMALIZE AVATAR URL - FIX THE ARRAY ISSUE HERE
 const normalizeAvatarUrl = (url: any): string | null => {

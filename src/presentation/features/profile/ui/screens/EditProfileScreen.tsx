@@ -2,9 +2,10 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, StyleSheet, View } from 'react-native';
 import { DocumentResponse } from '../../../../../data/models/account/renter/RenterResponse';
-import { useRenterProfile } from '../../hooks/useRenterProfile';
-import { useUpdateRenterProfile } from '../../hooks/useUpdateRenterProfile';
+
 import { EditProfileTemplate } from '../templates/EditProfileTemplate';
+import { useRenterProfile } from '../../hooks/profile/useRenterProfile';
+import { useUpdateRenterProfile } from '../../hooks/profile/useUpdateRenterProfile';
 
 // Helper: Normalize URI to string (handles string | string[] | undefined)
 const normalizeUri = (uri: string | string[] | undefined): string | undefined => {
