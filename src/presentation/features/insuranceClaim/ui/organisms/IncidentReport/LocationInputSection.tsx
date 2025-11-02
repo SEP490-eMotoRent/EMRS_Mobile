@@ -1,17 +1,36 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
 export interface LocationInputSectionProps {
-    onPress: () => void;
+    value: string;
+    onChangeText: (text: string) => void;
+    onGpsPress?: () => void;
+    error?: string;
 }
 
-export const LocationInputSection: React.FC<LocationInputSectionProps> = ({ onPress }) => (
+export const LocationInputSection: React.FC<LocationInputSectionProps> = ({ 
+    value,
+    onChangeText,
+    onGpsPress,
+    error,
+}) => (
     <View style={styles.section}>
-        <Text style={styles.title}>Location</Text>
-        <TouchableOpacity style={styles.input} onPress={onPress}>
-        <Text style={styles.icon}>📍</Text>
-        <Text style={styles.placeholder}>Enter location or use GPS</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Incident Location *</Text>
+        <View style={styles.inputContainer}>
+            <TextInput
+                style={styles.input}
+                placeholder="Enter location (e.g., District 7, Ho Chi Minh City)"
+                placeholderTextColor="#666"
+                value={value}
+                onChangeText={onChangeText}
+            />
+            {onGpsPress && (
+                <TouchableOpacity style={styles.gpsButton} onPress={onGpsPress}>
+                    <Text style={styles.gpsIcon}>📍</Text>
+                </TouchableOpacity>
+            )}
+        </View>
+        {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
 );
 
@@ -28,19 +47,31 @@ const styles = StyleSheet.create({
         color: '#fff',
         marginBottom: 12,
     },
-    input: {
+    inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#0A0A0A',
         borderRadius: 8,
-        padding: 12,
-        gap: 8,
+        overflow: 'hidden',
     },
-    icon: {
+    input: {
+        flex: 1,
+        padding: 12,
+        fontSize: 14,
+        color: '#fff',
+    },
+    gpsButton: {
+        padding: 12,
+        backgroundColor: '#2A2A2A',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    gpsIcon: {
         fontSize: 18,
     },
-    placeholder: {
-        fontSize: 14,
-        color: '#666',
+    errorText: {
+        fontSize: 12,
+        color: '#FF4444',
+        marginTop: 8,
     },
 });

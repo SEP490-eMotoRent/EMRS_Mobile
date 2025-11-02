@@ -3,20 +3,28 @@ import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '../atoms/Text';
 import { Icon } from '../atoms/Icons/Icons';
 
+// Normalize URI: string | string[] | undefined → string | undefined
+const normalizeUri = (uri: string | string[] | undefined): string | undefined => {
+    if (!uri) return undefined;
+    return Array.isArray(uri) ? uri[0] : uri;
+};
+
 interface ProfilePhotoProps {
-    imageUri?: string;
+    imageUri?: string | string[]; // ← NOW ACCEPTS ARRAY
     onPress: () => void;
 }
 
 export const ProfilePhoto: React.FC<ProfilePhotoProps> = ({ imageUri, onPress }) => {
+    const safeUri = normalizeUri(imageUri);
+
     return (
         <View style={styles.container}>
         <TouchableOpacity style={styles.photoContainer} onPress={onPress}>
-            {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.photo} />
+            {safeUri ? (
+            <Image source={{ uri: safeUri }} style={styles.photo} />
             ) : (
             <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>👤</Text>
+                <Text style={styles.placeholderText}>User</Text>
             </View>
             )}
             <View style={styles.cameraIcon}>

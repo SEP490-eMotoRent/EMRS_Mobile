@@ -1,7 +1,7 @@
 // src/features/auth/components/organism/login/LoginForm.tsx
 import React, { useState } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { Button } from '../../../../../common/components/atoms/Button';
+import { Button } from '../../../../../common/components/atoms/buttons/Button';
 import { Input } from '../../../../../common/components/atoms/Input';
 import { LoginMethodSelector } from '../../molecules/login/LoginMethodSelector';
 

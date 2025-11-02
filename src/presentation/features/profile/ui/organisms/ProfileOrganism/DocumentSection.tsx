@@ -7,6 +7,16 @@ import { Switch } from 'react-native';
 import { DocumentUploadPlaceholder } from '../../molecules/DocumentUploadPlaceholder';
 import { TextInput } from '../../molecules/TextInput';
 
+// 🔥 ADD THIS HELPER AT THE TOP
+const normalizeFileUrl = (url: string | string[] | undefined): string | undefined => {
+    if (!url) return undefined;
+    if (typeof url === 'string') return url;
+    if (Array.isArray(url) && url.length > 0 && typeof url[0] === 'string') {
+        return url[0];
+    }
+    return undefined;
+};
+
 interface DocumentData {
     id: string;
     documentNumber: string;
@@ -14,7 +24,7 @@ interface DocumentData {
     expiryDate: string;
     issuingAuthority: string;
     verificationStatus: string;
-    fileUrl: string;
+    fileUrl: string | string[]; // 🔥 UPDATE THIS TO ACCEPT ARRAY
 }
 
 interface DocumentSectionProps {
@@ -27,7 +37,6 @@ interface DocumentSectionProps {
     onUpload: (method: 'camera' | 'gallery') => void;
     onUpdate: () => void;
     additionalFields?: React.ReactNode;
-    // NEW: Existing document data
     existingDocument?: DocumentData;
     onViewDocument?: () => void;
 }
@@ -46,6 +55,9 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     onViewDocument,
 }) => {
     const hasDocument = !!existingDocument;
+    
+    // 🔥 NORMALIZE THE FILE URL HERE
+    const safeFileUrl = existingDocument ? normalizeFileUrl(existingDocument.fileUrl) : undefined;
 
     return (
         <View style={styles.container}>
@@ -74,7 +86,6 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 />
             </View>
 
-            {/* Show additional info if document exists */}
             {hasDocument && (
                 <View style={styles.documentInfo}>
                     <View style={styles.infoRow}>
@@ -104,15 +115,15 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 {hasDocument ? 'Document Image' : `Upload ${title === "Citizen ID (CCCD)" ? "CCCD" : "License"} Images`}
             </Text>
 
-            {/* Show existing document image or upload placeholder */}
-            {hasDocument && existingDocument.fileUrl ? (
+            {/* 🔥 USE NORMALIZED URL HERE */}
+            {hasDocument && safeFileUrl ? (
                 <TouchableOpacity 
                     style={styles.documentImageContainer}
                     onPress={onViewDocument}
                     activeOpacity={0.7}
                 >
                     <Image
-                        source={{ uri: existingDocument.fileUrl }}
+                        source={{ uri: safeFileUrl }}
                         style={styles.documentImage}
                         resizeMode="cover"
                     />

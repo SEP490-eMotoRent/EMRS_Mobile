@@ -1,7 +1,7 @@
 // src/features/auth/components/organism/RegisterForm.tsx
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button } from '../../../../../common/components/atoms/Button';
+import { Button } from '../../../../../common/components/atoms/buttons/Button';
 import { Input } from '../../../../../common/components/atoms/Input';
 
 interface RegisterFormProps {

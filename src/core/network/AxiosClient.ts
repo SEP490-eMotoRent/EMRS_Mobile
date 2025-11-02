@@ -1,13 +1,13 @@
 import axios, {
   AxiosInstance,
+  AxiosRequestConfig,
   AxiosResponse,
   InternalAxiosRequestConfig,
-  AxiosRequestConfig,
 } from "axios";
-import { ApiEndpoints } from "../network/APIEndpoint";
-import { ServerException } from "../errors/ServerException";
-import { AppLogger } from "../utils/Logger";
 import { store } from "../../presentation/features/authentication/store";
+import { ServerException } from "../errors/ServerException";
+import { ApiEndpoints } from "../network/APIEndpoint";
+import { AppLogger } from "../utils/Logger";
 
 export class AxiosClient {
   private readonly axiosInstance: AxiosInstance;
@@ -42,9 +42,11 @@ export class AxiosClient {
 
         // Let Axios set the multipart boundary automatically
         if (config.data instanceof FormData) {
-          delete (config.headers as any)["Content-Type"];
+          // DO NOT delete Content-Type
+          // Axios will set: multipart/form-data; boundary=...
+          config.headers["Content-Type"] = "multipart/form-data";
           console.log(
-            "Request contains FormData - Content-Type will be set automatically"
+            "Request contains FormData - Content-Type set to multipart/form-data"
           );
         }
 

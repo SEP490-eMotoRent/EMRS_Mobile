@@ -13,6 +13,16 @@ import { RenterRepositoryImpl } from '../../data/repositories/account/RenterRepo
 import { RenterRepository } from '../../domain/repositories/account/RenterRepository';
 import { GetCurrentRenterUseCase } from '../../domain/usecases/account/Profile/GetCurrentRenterUseCase';
 
+//Documents Import
+import { DocumentRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/account/DocumentRemoteDataSourceImpl";
+import { DocumentRepositoryImpl } from "../../data/repositories/account/DocumentRepositoryImpl";
+import { DeleteDocumentUseCase } from "../../domain/usecases/account/Documents/DeleteDocumentUseCase";
+import { CreateDrivingDocumentUseCase } from "../../domain/usecases/account/Documents/DriverLicense/CreateDrivingDocumentUseCase";
+import { UpdateDrivingDocumentUseCase } from "../../domain/usecases/account/Documents/DriverLicense/UpdateDrivingDocumentUseCase";
+import { CreateCitizenDocumentUseCase } from "../../domain/usecases/account/Documents/IdentificationCard/CreateCitizenDocumentUseCase";
+import { UpdateCitizenDocumentUseCase } from "../../domain/usecases/account/Documents/IdentificationCard/UpdateCitizenDocumentUseCase";
+import { DocumentRepository } from "../../domain/repositories/account/DocumentRepository";
+
 // Vehicle imports
 import { VehicleRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl';
 import { VehicleRepositoryImpl } from '../../data/repositories/vehicle/VehicleRepositoryImpl';
@@ -46,6 +56,14 @@ import { BranchRepositoryImpl } from '../../data/repositories/operations/BranchR
 import { BranchRepository } from '../../domain/repositories/operations/BranchRepository';
 import { GetAllBranchesUseCase } from '../../domain/usecases/branch/GetAllBranchesUseCase';
 import { GetBranchByIdUseCase } from '../../domain/usecases/branch/GetBranchByIdUseCase';
+
+// Insurance Claim imports
+import { InsuranceClaimRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/insurance/InsuranceClaimRemoteDataSourceImpl";
+import { InsuranceClaimRepositoryImpl } from "../../data/repositories/insurance/InsuranceClaimRepositoryImpl";
+import { InsuranceClaimRepository } from "../../domain/repositories/insurance/InsuranceClaimRepository";
+import { CreateInsuranceClaimUseCase } from "../../domain/usecases/insurance/CreateInsuranceClaimUseCase";
+import { GetInsuranceClaimDetailUseCase } from "../../domain/usecases/insurance/GetInsuranceClaimDetailUseCase";
+import { GetMyInsuranceClaimsUseCase } from "../../domain/usecases/insurance/GetMyInsuranceClaimsUseCase";
 
 // Google Maps Imports
 import { GeocodingRepositoryImpl } from '../../data/repositories/maps/GeocodingRepositoryImpl';
@@ -92,6 +110,22 @@ class ServiceLocator {
     const getCurrentRenterUseCase = new GetCurrentRenterUseCase(renterRepository);
     this.services.set("GetCurrentRenterUseCase", getCurrentRenterUseCase);
 
+    // Document services
+    const documentRemoteDataSource = new DocumentRemoteDataSourceImpl(axiosClient);
+    this.services.set("DocumentRemoteDataSource", documentRemoteDataSource);
+    const documentRepository = new DocumentRepositoryImpl(documentRemoteDataSource);
+    this.services.set("DocumentRepository", documentRepository);
+    const createCitizenDocumentUseCase = new CreateCitizenDocumentUseCase(documentRepository);
+    this.services.set("CreateCitizenDocumentUseCase", createCitizenDocumentUseCase);
+    const createDrivingDocumentUseCase = new CreateDrivingDocumentUseCase(documentRepository);
+    this.services.set("CreateDrivingDocumentUseCase", createDrivingDocumentUseCase);
+    const updateCitizenDocumentUseCase = new UpdateCitizenDocumentUseCase(documentRepository);
+    this.services.set("UpdateCitizenDocumentUseCase", updateCitizenDocumentUseCase);
+    const updateDrivingDocumentUseCase = new UpdateDrivingDocumentUseCase(documentRepository);
+    this.services.set("UpdateDrivingDocumentUseCase", updateDrivingDocumentUseCase);
+    const deleteDocumentUseCase = new DeleteDocumentUseCase(documentRepository);
+    this.services.set("DeleteDocumentUseCase", deleteDocumentUseCase);
+
     // Vehicle services
     const vehicleRemoteDataSource = new VehicleRemoteDataSourceImpl(axiosClient);
     this.services.set("VehicleRemoteDataSource", vehicleRemoteDataSource);
@@ -137,17 +171,19 @@ class ServiceLocator {
     const getBranchByIdUseCase = new GetBranchByIdUseCase(branchRepository);
     this.services.set("GetBranchByIdUseCase", getBranchByIdUseCase);
 
-    // Geocoding services
-    // const geocodingDataSource = new GoogleGeocodingDataSourceImpl();
-    // this.services.set("GeocodingDataSource", geocodingDataSource);
-    // const geocodingRepository = new GeocodingRepositoryImpl(geocodingDataSource);
-    // this.services.set("GeocodingRepository", geocodingRepository);
-    // const searchPlacesUseCase = new SearchPlacesUseCase(geocodingRepository);
-    // this.services.set("SearchPlacesUseCase", searchPlacesUseCase);
-    // const getPlaceDetailsUseCase = new GetPlaceDetailsUseCase(geocodingRepository);
-    // this.services.set("GetPlaceDetailsUseCase", getPlaceDetailsUseCase);
+    // Insurance Claim services
+    const insuranceClaimRemoteDataSource = new InsuranceClaimRemoteDataSourceImpl(axiosClient);
+    this.services.set("InsuranceClaimRemoteDataSource", insuranceClaimRemoteDataSource);
+    const insuranceClaimRepository = new InsuranceClaimRepositoryImpl(insuranceClaimRemoteDataSource);
+    this.services.set("InsuranceClaimRepository", insuranceClaimRepository);
+    const createInsuranceClaimUseCase = new CreateInsuranceClaimUseCase(insuranceClaimRepository);
+    this.services.set("CreateInsuranceClaimUseCase", createInsuranceClaimUseCase);
+    const getMyInsuranceClaimsUseCase = new GetMyInsuranceClaimsUseCase(insuranceClaimRepository);
+    this.services.set("GetMyInsuranceClaimsUseCase", getMyInsuranceClaimsUseCase);
+    const getInsuranceClaimDetailUseCase = new GetInsuranceClaimDetailUseCase(insuranceClaimRepository);
+    this.services.set("GetInsuranceClaimDetailUseCase", getInsuranceClaimDetailUseCase);
 
-    // MapBoxes
+    // Geocoding services
     const geocodingDataSource = new MapboxGeocodingDataSourceImpl();
     this.services.set("GeocodingDataSource", geocodingDataSource);
     const geocodingRepository = new GeocodingRepositoryImpl(geocodingDataSource);
@@ -234,6 +270,22 @@ class ServiceLocator {
     return this.get<GetBranchByIdUseCase>('GetBranchByIdUseCase');
   }
 
+  getInsuranceClaimRepository(): InsuranceClaimRepository {
+    return this.get<InsuranceClaimRepository>('InsuranceClaimRepository');
+  }
+
+  getCreateInsuranceClaimUseCase(): CreateInsuranceClaimUseCase {
+    return this.get<CreateInsuranceClaimUseCase>('CreateInsuranceClaimUseCase');
+  }
+
+  getGetMyInsuranceClaimsUseCase(): GetMyInsuranceClaimsUseCase {
+    return this.get<GetMyInsuranceClaimsUseCase>('GetMyInsuranceClaimsUseCase');
+  }
+
+  getGetInsuranceClaimDetailUseCase(): GetInsuranceClaimDetailUseCase {
+    return this.get<GetInsuranceClaimDetailUseCase>('GetInsuranceClaimDetailUseCase');
+  }
+
   getGeocodingRepository(): GeocodingRepository {
     return this.get<GeocodingRepository>('GeocodingRepository');
   }
@@ -252,6 +304,30 @@ class ServiceLocator {
 
   getGetCurrentRenterUseCase(): GetCurrentRenterUseCase {
     return this.get<GetCurrentRenterUseCase>('GetCurrentRenterUseCase');
+  }
+
+  getDocumentRepository(): DocumentRepository {
+    return this.get<DocumentRepository>('DocumentRepository');
+  }
+
+  getCreateCitizenDocumentUseCase(): CreateCitizenDocumentUseCase {
+    return this.get<CreateCitizenDocumentUseCase>('CreateCitizenDocumentUseCase');
+  }
+
+  getCreateDrivingDocumentUseCase(): CreateDrivingDocumentUseCase {
+    return this.get<CreateDrivingDocumentUseCase>('CreateDrivingDocumentUseCase');
+  }
+
+  getUpdateCitizenDocumentUseCase(): UpdateCitizenDocumentUseCase {
+    return this.get<UpdateCitizenDocumentUseCase>('UpdateCitizenDocumentUseCase');
+  }
+
+  getUpdateDrivingDocumentUseCase(): UpdateDrivingDocumentUseCase {
+    return this.get<UpdateDrivingDocumentUseCase>('UpdateDrivingDocumentUseCase');
+  }
+
+  getDeleteDocumentUseCase(): DeleteDocumentUseCase {
+    return this.get<DeleteDocumentUseCase>('DeleteDocumentUseCase');
   }
 }
 

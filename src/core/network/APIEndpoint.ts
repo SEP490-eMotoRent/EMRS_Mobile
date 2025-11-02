@@ -34,7 +34,6 @@ export const ApiEndpoints = {
     login: "/auth/login",
   },
 
-
   renter: {
     list: "/renters",
     update: "/account/renter",
@@ -46,6 +45,15 @@ export const ApiEndpoints = {
       update: (documentId: string) => `/api/Document/${documentId}`, // PUT
       delete: (documentId: string) => `/api/Document/${documentId}`, // DELETE
     }
+  },
+
+  //Document Endpoints
+  document: {
+    createCitizen: "/Document/citizen",
+    createDriving: "/Document/driving",
+    updateCitizen: "/Document/citizen",
+    updateDriving: "/Document/driving",
+    delete: (documentId: string) => `/Document/${documentId}`,
   },
   
   // Receipt endpoints
@@ -67,5 +75,12 @@ export const ApiEndpoints = {
     create: "/Branch/create",
     update: (id: string) => `/Branch/${id}`,
     delete: (id: string) => `/Branch/${id}`,
+  },
+
+  // Insurance Claim endpoints
+  insuranceClaim: {
+    create: "/InsuranceClaim/create",
+    myClaims: "/InsuranceClaim/my-claims",
+    detail: (id: string) => `/InsuranceClaim/${id}`,
   },
 };

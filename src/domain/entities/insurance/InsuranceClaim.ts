@@ -7,8 +7,7 @@ export class InsuranceClaim implements BaseEntity {
     public deletedAt: Date | null;
     public isDeleted: boolean;
 
-    // C# FIELDS - EXACT MATCH
-    public incidentDate?: Date;
+    public incidentDate: Date | null;
     public incidentLocation: string;
     public description: string;
     public severity: string;
@@ -19,10 +18,10 @@ export class InsuranceClaim implements BaseEntity {
     public totalCost: number;
     public insuranceCoverageAmount: number;
     public renterLiabilityAmount: number;
-    public reviewedDate?: Date;
-    public completedAt?: Date;
+    public reviewedDate: Date | null;
+    public completedAt: Date | null;
     public rejectionReason: string;
-    public insuranceClaimPdfUrl?: string;
+    public insuranceClaimPdfUrl: string | null;
     public notes: string;
     public renterId: string;
     public bookingId: string;
@@ -43,10 +42,10 @@ export class InsuranceClaim implements BaseEntity {
         notes: string,
         renterId: string,
         bookingId: string,
-        incidentDate?: Date,
-        reviewedDate?: Date,
-        completedAt?: Date,
-        insuranceClaimPdfUrl?: string,
+        incidentDate: Date | null = null,
+        reviewedDate: Date | null = null,
+        completedAt: Date | null = null,
+        insuranceClaimPdfUrl: string | null = null,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
@@ -74,7 +73,6 @@ export class InsuranceClaim implements BaseEntity {
         this.renterId = renterId;
         this.bookingId = bookingId;
 
-        // Optional fields
         this.incidentDate = incidentDate;
         this.reviewedDate = reviewedDate;
         this.completedAt = completedAt;
