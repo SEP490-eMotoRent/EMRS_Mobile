@@ -7,6 +7,8 @@ export interface DateTimeSectionProps {
   time: string;
   onDatePress: () => void;
   onTimePress: () => void;
+  dateError?: string;
+  timeError?: string;
 }
 
 export const DateTimeSection: React.FC<DateTimeSectionProps> = ({
@@ -14,12 +16,20 @@ export const DateTimeSection: React.FC<DateTimeSectionProps> = ({
   time,
   onDatePress,
   onTimePress,
+  dateError,
+  timeError,
 }) => (
   <View style={styles.section}>
-    <Text style={styles.title}>Date & Time</Text>
+    <Text style={styles.title}>Date & Time *</Text>
     <View style={styles.inputs}>
-      <DateTimeInput value={date} onPress={onDatePress} icon="📅" type="date" />
-      <DateTimeInput value={time} onPress={onTimePress} icon="🕐" type="time" />
+      <View style={styles.inputWrapper}>
+        <DateTimeInput value={date} onPress={onDatePress} icon="📅" type="date" />
+        {dateError && <Text style={styles.errorText}>{dateError}</Text>}
+      </View>
+      <View style={styles.inputWrapper}>
+        <DateTimeInput value={time} onPress={onTimePress} icon="🕐" type="time" />
+        {timeError && <Text style={styles.errorText}>{timeError}</Text>}
+      </View>
     </View>
   </View>
 );
@@ -39,5 +49,13 @@ const styles = StyleSheet.create({
     },
     inputs: {
         gap: 12,
+    },
+    inputWrapper: {
+        gap: 4,
+    },
+    errorText: {
+        fontSize: 12,
+        color: '#FF4444',
+        marginTop: 4,
     },
 });
