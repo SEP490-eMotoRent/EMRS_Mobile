@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button } from '../../molecules';
+import { ActionButton } from '../../atoms/buttons/ActionButton';
 
 export interface ReportSectionProps {
     onReportPress: () => void;
@@ -8,11 +8,11 @@ export interface ReportSectionProps {
 
 export const ReportSection: React.FC<ReportSectionProps> = ({ onReportPress }) => (
     <View style={styles.section}>
-        <Button
-        icon="document"
-        label="Report Insurance Claim"
-        onPress={onReportPress}
-        variant="secondary"
+        <ActionButton
+            icon="file-text"
+            label="Report Insurance Claim"
+            onPress={onReportPress}
+            variant="danger"
         />
     </View>
 );

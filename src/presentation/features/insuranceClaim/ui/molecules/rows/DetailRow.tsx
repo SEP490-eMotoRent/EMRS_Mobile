@@ -5,6 +5,8 @@ import { LabelText, ValueText } from '../../atoms';
 export interface DetailRowProps {
     label: string;
     value: string;
+    valueColor?: string;
+    variant?: 'default' | 'horizontal';  // NEW!
 }
 
 export const DetailRow: React.FC<DetailRowProps> = ({ label, value }) => (

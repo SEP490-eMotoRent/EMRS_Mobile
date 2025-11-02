@@ -20,5 +20,5 @@ export type { LabelProps } from './Label';
 export { Value } from './Value';
 export type { ValueProps } from './Value';
 
-export { Button } from './Button';
-export type { ButtonProps } from './Button';
+export { Button } from './buttons/Button';
+export type { ButtonProps } from './buttons/Button';
