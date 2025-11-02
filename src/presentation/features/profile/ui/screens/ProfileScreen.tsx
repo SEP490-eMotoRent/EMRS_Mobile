@@ -21,7 +21,7 @@ import { Transaction } from "../temp";
 import { removeAuth } from "../../../authentication/store/slices/authSlice";
 import { useAppDispatch } from "../../../authentication/store/hooks";
 import { DocumentVerificationHelper } from "../../../../../domain/helpers/DocumentVerificationHelper";
-import { useRenterProfile } from "../../hooks/useRenterProfile";
+import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
