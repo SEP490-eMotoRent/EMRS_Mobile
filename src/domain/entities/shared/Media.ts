@@ -8,19 +8,17 @@ export class Media implements BaseEntity {
     public isDeleted: boolean;
 
     // C# FIELDS - EXACT MATCH
-    public mediaName: string;
     public mediaType: string;
     public fileUrl: string;
-    public description: string;
     public docNo: string;
+    public entityType: string;
 
     constructor(
         id: string,
-        mediaName: string,
         mediaType: string,
         fileUrl: string,
-        description: string,
         docNo: string,
+        entityType: string,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
@@ -32,11 +30,10 @@ export class Media implements BaseEntity {
         this.deletedAt = deletedAt;
         this.isDeleted = isDeleted;
 
-        this.mediaName = mediaName;
         this.mediaType = mediaType;
         this.fileUrl = fileUrl;
-        this.description = description;
         this.docNo = docNo;
+        this.entityType = entityType;
     }
 
     delete(): void {

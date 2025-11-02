@@ -8,6 +8,7 @@ export class Document implements BaseEntity {
     public deletedAt: Date | null;
     public isDeleted: boolean;
 
+    // C# FIELDS - EXACT MATCH
     public documentType: string;
     public documentNumber: string;
     public issueDate?: Date;
@@ -17,7 +18,7 @@ export class Document implements BaseEntity {
     public verifiedAt?: Date;
     public renterId: string;
 
-    // ✅ RELATION ADDED HERE (LINE 18)
+    // Relation (only what C# has)
     public renter: Renter;
 
     constructor(
@@ -26,7 +27,7 @@ export class Document implements BaseEntity {
         documentNumber: string,
         verificationStatus: string,
         renterId: string,
-        renter: Renter,        // ✅ ADDED
+        renter: Renter,
         issueDate?: Date,
         expiryDate?: Date,
         issuingAuthority?: string,
@@ -47,15 +48,13 @@ export class Document implements BaseEntity {
         this.documentNumber = documentNumber;
         this.verificationStatus = verificationStatus;
         this.renterId = renterId;
+        this.renter = renter;
 
         // Optional fields
         this.issueDate = issueDate;
         this.expiryDate = expiryDate;
         this.issuingAuthority = issuingAuthority;
         this.verifiedAt = verifiedAt;
-
-        // ✅ RELATION ASSIGNED (LINE 47)
-        this.renter = renter;
     }
 
     isExpired(): boolean {
