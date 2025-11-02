@@ -1,9 +1,9 @@
 // src/features/auth/components/organism/otp/OTPForm.tsx
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View, ViewStyle, TextInput } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native';
+import { Button } from '../../../../../common/components/atoms/buttons/Button';
 import { OTPInput } from '../../atoms/OTPVerify/OTPInput';
 import { ResendCodeButton } from '../../atoms/OTPVerify/ResendCodeButton';
-import { Button } from '../../../../../common/components/atoms/Button';
 
 interface OTPFormProps {
     onVerify: (code: string) => void;

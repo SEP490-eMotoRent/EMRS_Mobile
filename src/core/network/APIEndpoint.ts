@@ -34,7 +34,6 @@ export const ApiEndpoints = {
     login: "/auth/login",
   },
 
-
   renter: {
     list: "/renters",
     update: "/account/renter",
@@ -66,5 +65,12 @@ export const ApiEndpoints = {
     create: "/Branch/create",
     update: (id: string) => `/Branch/${id}`,
     delete: (id: string) => `/Branch/${id}`,
+  },
+
+  // Insurance Claim endpoints
+  insuranceClaim: {
+    create: "/InsuranceClaim/create",
+    myClaims: "/InsuranceClaim/my-claims",
+    detail: (id: string) => `/InsuranceClaim/${id}`,
   },
 };

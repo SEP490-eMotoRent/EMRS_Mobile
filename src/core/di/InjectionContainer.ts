@@ -47,6 +47,9 @@ import { BranchRepository } from '../../domain/repositories/operations/BranchRep
 import { GetAllBranchesUseCase } from '../../domain/usecases/branch/GetAllBranchesUseCase';
 import { GetBranchByIdUseCase } from '../../domain/usecases/branch/GetBranchByIdUseCase';
 
+// Insurance Claim imports
+
+
 // Google Maps Imports
 import { GeocodingRepositoryImpl } from '../../data/repositories/maps/GeocodingRepositoryImpl';
 import { GeocodingRepository } from '../../domain/repositories/map/GeocodingRepository';
@@ -57,6 +60,12 @@ import { SearchPlacesUseCase } from '../../domain/usecases/maps/SearchPlacesUseC
 import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
 
 import { AxiosClient } from "../network/AxiosClient";
+import { InsuranceClaimRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/insurance/InsuranceClaimRemoteDataSourceImpl";
+import { InsuranceClaimRepositoryImpl } from "../../data/repositories/insurance/InsuranceClaimRepositoryImpl";
+import { InsuranceClaimRepository } from "../../domain/repositories/insurance/InsuranceClaimRepository";
+import { CreateInsuranceClaimUseCase } from "../../domain/usecases/insurance/CreateInsuranceClaimUseCase";
+import { GetInsuranceClaimDetailUseCase } from "../../domain/usecases/insurance/GetInsuranceClaimDetailUseCase";
+import { GetMyInsuranceClaimsUseCase } from "../../domain/usecases/insurance/GetMyInsuranceClaimsUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -137,17 +146,19 @@ class ServiceLocator {
     const getBranchByIdUseCase = new GetBranchByIdUseCase(branchRepository);
     this.services.set("GetBranchByIdUseCase", getBranchByIdUseCase);
 
-    // Geocoding services
-    // const geocodingDataSource = new GoogleGeocodingDataSourceImpl();
-    // this.services.set("GeocodingDataSource", geocodingDataSource);
-    // const geocodingRepository = new GeocodingRepositoryImpl(geocodingDataSource);
-    // this.services.set("GeocodingRepository", geocodingRepository);
-    // const searchPlacesUseCase = new SearchPlacesUseCase(geocodingRepository);
-    // this.services.set("SearchPlacesUseCase", searchPlacesUseCase);
-    // const getPlaceDetailsUseCase = new GetPlaceDetailsUseCase(geocodingRepository);
-    // this.services.set("GetPlaceDetailsUseCase", getPlaceDetailsUseCase);
+    // Insurance Claim services
+    const insuranceClaimRemoteDataSource = new InsuranceClaimRemoteDataSourceImpl(axiosClient);
+    this.services.set("InsuranceClaimRemoteDataSource", insuranceClaimRemoteDataSource);
+    const insuranceClaimRepository = new InsuranceClaimRepositoryImpl(insuranceClaimRemoteDataSource);
+    this.services.set("InsuranceClaimRepository", insuranceClaimRepository);
+    const createInsuranceClaimUseCase = new CreateInsuranceClaimUseCase(insuranceClaimRepository);
+    this.services.set("CreateInsuranceClaimUseCase", createInsuranceClaimUseCase);
+    const getMyInsuranceClaimsUseCase = new GetMyInsuranceClaimsUseCase(insuranceClaimRepository);
+    this.services.set("GetMyInsuranceClaimsUseCase", getMyInsuranceClaimsUseCase);
+    const getInsuranceClaimDetailUseCase = new GetInsuranceClaimDetailUseCase(insuranceClaimRepository);
+    this.services.set("GetInsuranceClaimDetailUseCase", getInsuranceClaimDetailUseCase);
 
-    // MapBoxes
+    // Geocoding services
     const geocodingDataSource = new MapboxGeocodingDataSourceImpl();
     this.services.set("GeocodingDataSource", geocodingDataSource);
     const geocodingRepository = new GeocodingRepositoryImpl(geocodingDataSource);
@@ -232,6 +243,22 @@ class ServiceLocator {
 
   getBranchByIdUseCase(): GetBranchByIdUseCase {
     return this.get<GetBranchByIdUseCase>('GetBranchByIdUseCase');
+  }
+
+  getInsuranceClaimRepository(): InsuranceClaimRepository {
+    return this.get<InsuranceClaimRepository>('InsuranceClaimRepository');
+  }
+
+  getCreateInsuranceClaimUseCase(): CreateInsuranceClaimUseCase {
+    return this.get<CreateInsuranceClaimUseCase>('CreateInsuranceClaimUseCase');
+  }
+
+  getGetMyInsuranceClaimsUseCase(): GetMyInsuranceClaimsUseCase {
+    return this.get<GetMyInsuranceClaimsUseCase>('GetMyInsuranceClaimsUseCase');
+  }
+
+  getGetInsuranceClaimDetailUseCase(): GetInsuranceClaimDetailUseCase {
+    return this.get<GetInsuranceClaimDetailUseCase>('GetInsuranceClaimDetailUseCase');
   }
 
   getGeocodingRepository(): GeocodingRepository {

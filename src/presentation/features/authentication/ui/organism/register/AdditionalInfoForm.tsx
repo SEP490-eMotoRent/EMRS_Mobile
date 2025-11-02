@@ -1,7 +1,7 @@
 // src/features/auth/components/organism/AdditionalInfoForm.tsx
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Button } from '../../../../../common/components/atoms/Button';
+import { Button } from '../../../../../common/components/atoms/buttons/Button';
 import { CalendarIcon } from '../../../../../common/components/atoms/icons/searchBarIcons/CalendarIcon';
 import { Input } from '../../../../../common/components/atoms/Input';
 import { DateOfBirthPicker } from '../../molecules/DateOfBirthPicker';
