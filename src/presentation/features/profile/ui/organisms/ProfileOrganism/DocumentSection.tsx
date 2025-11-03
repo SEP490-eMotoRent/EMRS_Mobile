@@ -6,8 +6,9 @@ import { Button } from '../../atoms/Button';
 import { Switch } from 'react-native';
 import { DocumentUploadPlaceholder } from '../../molecules/DocumentUploadPlaceholder';
 import { TextInput } from '../../molecules/TextInput';
+import { DateInput } from '../../molecules/DateInput';
 
-// 🔥 ADD THIS HELPER AT THE TOP
+// Helper to normalize file URLs
 const normalizeFileUrl = (url: string | string[] | undefined): string | undefined => {
     if (!url) return undefined;
     if (typeof url === 'string') return url;
@@ -24,7 +25,7 @@ interface DocumentData {
     expiryDate: string;
     issuingAuthority: string;
     verificationStatus: string;
-    fileUrl: string | string[]; // 🔥 UPDATE THIS TO ACCEPT ARRAY
+    fileUrl: string | string[];
 }
 
 interface DocumentSectionProps {
@@ -39,6 +40,15 @@ interface DocumentSectionProps {
     additionalFields?: React.ReactNode;
     existingDocument?: DocumentData;
     onViewDocument?: () => void;
+    frontImage?: string;
+    backImage?: string;
+    // 🔥 NEW: Document metadata fields
+    issueDate?: string;
+    expiryDate?: string;
+    issuingAuthority?: string;
+    onIssueDatePress?: () => void;
+    onExpiryDatePress?: () => void;
+    onIssuingAuthorityChange?: (text: string) => void;
 }
 
 export const DocumentSection: React.FC<DocumentSectionProps> = ({
@@ -53,11 +63,27 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     additionalFields,
     existingDocument,
     onViewDocument,
+    frontImage,
+    backImage,
+    issueDate,
+    expiryDate,
+    issuingAuthority,
+    onIssueDatePress,
+    onExpiryDatePress,
+    onIssuingAuthorityChange,
 }) => {
     const hasDocument = !!existingDocument;
+    const hasNewImages = !!(frontImage || backImage);
     
-    // 🔥 NORMALIZE THE FILE URL HERE
-    const safeFileUrl = existingDocument ? normalizeFileUrl(existingDocument.fileUrl) : undefined;
+    // Get URLs from existing document
+    const existingUrls = existingDocument?.fileUrl 
+        ? (Array.isArray(existingDocument.fileUrl) 
+            ? existingDocument.fileUrl 
+            : [existingDocument.fileUrl])
+        : [];
+    
+    const frontUrl = existingUrls[0];
+    const backUrl = existingUrls[1];
 
     return (
         <View style={styles.container}>
@@ -79,14 +105,16 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
 
             <View style={hasDocument ? styles.disabledInput : undefined}>
                 <TextInput
-                    label={`${title === "Citizen ID (CCCD)" ? "Citizen ID" : "License"} Number*`}
+                    label={`${title === "Citizen ID (ID)" ? "Citizen ID" : "License"} Number*`}
                     value={documentNumber}
                     onChangeText={onDocumentNumberChange}
                     placeholder="Enter number"
+                    editable={!hasDocument}
                 />
             </View>
 
-            {hasDocument && (
+            {/* Show editable fields for NEW documents, read-only for existing */}
+            {hasDocument ? (
                 <View style={styles.documentInfo}>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Issue Date:</Text>
@@ -107,33 +135,113 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                         </Text>
                     </View>
                 </View>
+            ) : (
+                // 🔥 NEW: Editable fields for new documents
+                <View style={styles.editableFields}>
+                    {onIssueDatePress && (
+                        <DateInput
+                            label="Issue Date"
+                            value={issueDate || ''}
+                            onPress={onIssueDatePress}
+                        />
+                    )}
+                    {onExpiryDatePress && (
+                        <DateInput
+                            label="Expiry Date"
+                            value={expiryDate || ''}
+                            onPress={onExpiryDatePress}
+                        />
+                    )}
+                    {onIssuingAuthorityChange && (
+                        <TextInput
+                            label="Issuing Authority"
+                            value={issuingAuthority || ''}
+                            onChangeText={onIssuingAuthorityChange}
+                            placeholder="Enter issuing authority"
+                        />
+                    )}
+                </View>
             )}
 
             {additionalFields}
 
             <Text variant="label" style={styles.uploadLabel}>
-                {hasDocument ? 'Document Image' : `Upload ${title === "Citizen ID (CCCD)" ? "CCCD" : "License"} Images`}
+                {hasDocument || hasNewImages 
+                    ? 'Document Images' 
+                    : `Upload ${title === "Citizen ID (ID)" ? "ID" : "License"} Images`}
             </Text>
 
-            {/* 🔥 USE NORMALIZED URL HERE */}
-            {hasDocument && safeFileUrl ? (
-                <TouchableOpacity 
-                    style={styles.documentImageContainer}
-                    onPress={onViewDocument}
-                    activeOpacity={0.7}
-                >
-                    <Image
-                        source={{ uri: safeFileUrl }}
-                        style={styles.documentImage}
-                        resizeMode="cover"
-                    />
-                    <View style={styles.imageOverlay}>
-                        <Icon name="document" size={24} color="#FFF" />
-                        <Text style={styles.overlayText}>Tap to view full image</Text>
+            {/* Show images: either new uploaded ones or existing ones */}
+            {(hasDocument || hasNewImages) ? (
+                <View style={styles.imagesContainer}>
+                    {/* Front Image */}
+                    <View style={styles.imageWrapper}>
+                        <Text style={styles.imageLabel}>Front Side</Text>
+                        {(frontImage || frontUrl) ? (
+                            <TouchableOpacity 
+                                style={styles.documentImageContainer}
+                                onPress={onViewDocument}
+                                activeOpacity={0.7}
+                            >
+                                <Image
+                                    source={{ uri: frontImage || frontUrl }}
+                                    style={styles.documentImage}
+                                    resizeMode="cover"
+                                />
+                                <View style={styles.imageOverlay}>
+                                    <Icon name="document" size={20} color="#FFF" />
+                                    <Text style={styles.overlayText}>Front</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ) : (
+                            <View style={styles.placeholderBox}>
+                                <Icon name="image" size={32} color="#666" />
+                                <Text style={styles.placeholderText}>No front image</Text>
+                            </View>
+                        )}
                     </View>
-                </TouchableOpacity>
+
+                    {/* Back Image */}
+                    <View style={styles.imageWrapper}>
+                        <Text style={styles.imageLabel}>Back Side</Text>
+                        {(backImage || backUrl) ? (
+                            <TouchableOpacity 
+                                style={styles.documentImageContainer}
+                                onPress={onViewDocument}
+                                activeOpacity={0.7}
+                            >
+                                <Image
+                                    source={{ uri: backImage || backUrl }}
+                                    style={styles.documentImage}
+                                    resizeMode="cover"
+                                />
+                                <View style={styles.imageOverlay}>
+                                    <Icon name="document" size={20} color="#FFF" />
+                                    <Text style={styles.overlayText}>Back</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ) : (
+                            <View style={styles.placeholderBox}>
+                                <Icon name="image" size={32} color="#666" />
+                                <Text style={styles.placeholderText}>No back image</Text>
+                            </View>
+                        )}
+                    </View>
+                </View>
             ) : (
                 <DocumentUploadPlaceholder onUpload={onUpload} />
+            )}
+
+            {/* Show status message if new images are uploaded */}
+            {hasNewImages && (
+                <View style={styles.uploadedBadge}>
+                    <Icon name="check" size={16} color="#10B981" />
+                    <Text style={styles.uploadedText}>
+                        {frontImage && backImage 
+                            ? 'Both images ready. Click "Update" to save.'
+                            : 'Please capture both front and back images.'}
+                    </Text>
+                </View>
             )}
 
             <View style={styles.autoFillContainer}>
@@ -190,6 +298,10 @@ const styles = StyleSheet.create({
         marginTop: 8,
         gap: 6,
     },
+    editableFields: {
+        gap: 12,
+        marginTop: 8,
+    },
     infoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -205,15 +317,28 @@ const styles = StyleSheet.create({
     },
     uploadLabel: {
         marginTop: 8,
-        marginBottom: 4,
+        marginBottom: 8,
+    },
+    imagesContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+    },
+    imageWrapper: {
+        flex: 1,
+    },
+    imageLabel: {
+        fontSize: 12,
+        color: '#9CA3AF',
+        marginBottom: 6,
+        fontWeight: '500',
     },
     documentImageContainer: {
         position: 'relative',
         borderRadius: 12,
         overflow: 'hidden',
         backgroundColor: '#000',
-        height: 200,
-        marginTop: 8,
+        height: 140,
     },
     documentImage: {
         width: '100%',
@@ -221,14 +346,44 @@ const styles = StyleSheet.create({
     },
     imageOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 4,
+    },
+    overlayText: {
+        color: '#FFF',
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    placeholderBox: {
+        height: 140,
+        borderRadius: 12,
+        backgroundColor: '#1F2937',
+        borderWidth: 1,
+        borderColor: '#374151',
+        borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
         gap: 8,
     },
-    overlayText: {
-        color: '#FFF',
-        fontSize: 14,
+    placeholderText: {
+        color: '#9CA3AF',
+        fontSize: 12,
+    },
+    uploadedBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#10B98120',
+        padding: 12,
+        borderRadius: 8,
+        gap: 8,
+        marginTop: 12,
+    },
+    uploadedText: {
+        flex: 1,
+        color: '#10B981',
+        fontSize: 13,
         fontWeight: '500',
     },
     autoFillContainer: {

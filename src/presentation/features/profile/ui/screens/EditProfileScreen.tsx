@@ -27,7 +27,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const { createCitizen, createDriving, loading: createDocLoading } = useCreateDocument();
     const { updateCitizen, updateDriving, loading: updateDocLoading } = useUpdateDocument();
 
-    // Form state - ENFORCE STRING TYPE
+    // Form state
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [countryCode] = useState('+84');
@@ -40,13 +40,13 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const [citizenDoc, setCitizenDoc] = useState<DocumentResponse | undefined>();
     const [licenseDoc, setLicenseDoc] = useState<DocumentResponse | undefined>();
 
-    // NEW: Document upload state
+    // 🔥 NEW: Document images state (both front and back)
     const [citizenFrontImage, setCitizenFrontImage] = useState<string | undefined>();
     const [citizenBackImage, setCitizenBackImage] = useState<string | undefined>();
     const [licenseFrontImage, setLicenseFrontImage] = useState<string | undefined>();
     const [licenseBackImage, setLicenseBackImage] = useState<string | undefined>();
 
-    // NEW: Document form state
+    // Document form state
     const [citizenIdNumber, setCitizenIdNumber] = useState('');
     const [citizenIssueDate, setCitizenIssueDate] = useState('');
     const [citizenExpiryDate, setCitizenExpiryDate] = useState('');
@@ -64,7 +64,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
             setFullName(renter.account?.fullname || '');
             setEmail(renter.email || '');
 
-            // Extract phone number (remove country code if present)
             let phone = renter.phone || '';
             if (phone.startsWith('+84')) {
                 phone = phone.substring(3);
@@ -73,14 +72,12 @@ export const EditProfileScreen = ({ navigation }: any) => {
             }
             setPhoneNumber(phone);
 
-            // Format date to DD/MM/YYYY for display
             if (renterResponse.dateOfBirth) {
                 setDateOfBirth(renterResponse.dateOfBirth);
             }
 
             setAddress(renter.address || '');
 
-            // Set existing avatar if available
             if (renter.avatarUrl) {
                 const normalized = normalizeUri(renter.avatarUrl);
                 setProfileImageUri(normalized);
@@ -131,78 +128,145 @@ export const EditProfileScreen = ({ navigation }: any) => {
         }
     };
 
-    // NEW: Citizen document image picker
-    const pickCitizenImage = async (method: 'camera' | 'gallery', side: 'front' | 'back') => {
-        try {
-            let result;
-            
-            if (method === 'camera') {
-                const permission = await ImagePicker.requestCameraPermissionsAsync();
-                if (!permission.granted) {
-                    Alert.alert('Permission needed', 'Camera permission is required');
-                    return;
-                }
-                result = await ImagePicker.launchCameraAsync({
-                    allowsEditing: true,
-                    quality: 0.8,
-                });
-            } else {
-                result = await ImagePicker.launchImageLibraryAsync({
-                    allowsEditing: true,
-                    quality: 0.8,
-                });
-            }
-
-            if (!result.canceled && result.assets?.[0]) {
-                const uri = normalizeUri(result.assets[0].uri);
-                if (uri) {
-                    if (side === 'front') {
-                        setCitizenFrontImage(uri);
-                    } else {
-                        setCitizenBackImage(uri);
-                    }
-                }
-            }
-        } catch (error: any) {
-            Alert.alert('Error', 'Failed to pick image');
+    // 🔥 NEW: Handle citizen document upload with camera or gallery
+    const handleCitizenUpload = (method: 'camera' | 'gallery') => {
+        if (method === 'camera') {
+            // Navigate to camera for FRONT side first
+            navigation.navigate('DocumentCapture', {
+                documentType: 'citizen',
+                side: 'front',
+                onPhotoTaken: (uri: string, side: 'front' | 'back') => {
+                    console.log('📸 Citizen front captured:', uri);
+                    setCitizenFrontImage(uri);
+                    
+                    // Navigate to capture BACK side immediately after
+                    setTimeout(() => {
+                        navigation.navigate('DocumentCapture', {
+                            documentType: 'citizen',
+                            side: 'back',
+                            onPhotoTaken: (backUri: string, backSide: 'front' | 'back') => {
+                                console.log('📸 Citizen back captured:', backUri);
+                                setCitizenBackImage(backUri);
+                            },
+                        });
+                    }, 100);
+                },
+            });
+        } else {
+            // Gallery: pick both images sequentially
+            pickCitizenFromGallery();
         }
     };
 
-    // NEW: License document image picker
-    const pickLicenseImage = async (method: 'camera' | 'gallery', side: 'front' | 'back') => {
+    const pickCitizenFromGallery = async () => {
         try {
-            let result;
-            
-            if (method === 'camera') {
-                const permission = await ImagePicker.requestCameraPermissionsAsync();
-                if (!permission.granted) {
-                    Alert.alert('Permission needed', 'Camera permission is required');
-                    return;
-                }
-                result = await ImagePicker.launchCameraAsync({
-                    allowsEditing: true,
-                    quality: 0.8,
-                });
-            } else {
-                result = await ImagePicker.launchImageLibraryAsync({
-                    allowsEditing: true,
-                    quality: 0.8,
-                });
-            }
+            // Pick front image
+            const frontResult = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                quality: 0.8,
+            });
 
-            if (!result.canceled && result.assets?.[0]) {
-                const uri = normalizeUri(result.assets[0].uri);
-                if (uri) {
-                    if (side === 'front') {
-                        setLicenseFrontImage(uri);
-                    } else {
-                        setLicenseBackImage(uri);
-                    }
-                }
+            if (frontResult.canceled) return;
+
+            const frontUri = normalizeUri(frontResult.assets[0].uri);
+            if (!frontUri) return;
+
+            setCitizenFrontImage(frontUri);
+
+            // Pick back image
+            const backResult = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                quality: 0.8,
+            });
+
+            if (backResult.canceled) return;
+
+            const backUri = normalizeUri(backResult.assets[0].uri);
+            if (backUri) {
+                setCitizenBackImage(backUri);
             }
         } catch (error: any) {
-            Alert.alert('Error', 'Failed to pick image');
+            Alert.alert('Error', 'Failed to pick images');
         }
+    };
+
+    // 🔥 NEW: Handle license document upload with camera or gallery
+    const handleLicenseUpload = (method: 'camera' | 'gallery') => {
+        if (method === 'camera') {
+            navigation.navigate('DocumentCapture', {
+                documentType: 'license',
+                side: 'front',
+                onPhotoTaken: (uri: string, side: 'front' | 'back') => {
+                    console.log('📸 License front captured:', uri);
+                    setLicenseFrontImage(uri);
+                    
+                    // Navigate to capture BACK side immediately after
+                    setTimeout(() => {
+                        navigation.navigate('DocumentCapture', {
+                            documentType: 'license',
+                            side: 'back',
+                            onPhotoTaken: (backUri: string, backSide: 'front' | 'back') => {
+                                console.log('📸 License back captured:', backUri);
+                                setLicenseBackImage(backUri);
+                            },
+                        });
+                    }, 100);
+                },
+            });
+        } else {
+            pickLicenseFromGallery();
+        }
+    };
+
+    const pickLicenseFromGallery = async () => {
+        try {
+            const frontResult = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                quality: 0.8,
+            });
+
+            if (frontResult.canceled) return;
+
+            const frontUri = normalizeUri(frontResult.assets[0].uri);
+            if (!frontUri) return;
+
+            setLicenseFrontImage(frontUri);
+
+            const backResult = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                quality: 0.8,
+            });
+
+            if (backResult.canceled) return;
+
+            const backUri = normalizeUri(backResult.assets[0].uri);
+            if (backUri) {
+                setLicenseBackImage(backUri);
+            }
+        } catch (error: any) {
+            Alert.alert('Error', 'Failed to pick images');
+        }
+    };
+
+    // 🔥 NEW: Date picker handlers
+    const handleCitizenIssueDatePress = () => {
+        // TODO: Open date picker modal
+        Alert.alert('Date Picker', 'Implement date picker for citizen issue date');
+    };
+
+    const handleCitizenExpiryDatePress = () => {
+        // TODO: Open date picker modal
+        Alert.alert('Date Picker', 'Implement date picker for citizen expiry date');
+    };
+
+    const handleLicenseIssueDatePress = () => {
+        // TODO: Open date picker modal
+        Alert.alert('Date Picker', 'Implement date picker for license issue date');
+    };
+
+    const handleLicenseExpiryDatePress = () => {
+        // TODO: Open date picker modal
+        Alert.alert('Date Picker', 'Implement date picker for license expiry date');
     };
 
     const handleViewDocument = (documentUrl: string) => {
@@ -211,10 +275,9 @@ export const EditProfileScreen = ({ navigation }: any) => {
         });
     };
 
-    // NEW: Handle citizen document upload/update
+    // Handle citizen document submit
     const handleCitizenDocumentSubmit = async () => {
         try {
-            // Validation
             if (!citizenIdNumber) {
                 Alert.alert('Validation Error', 'Citizen ID number is required');
                 return;
@@ -227,7 +290,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     return;
                 }
 
-                // Convert dates to YYYY-MM-DD format if needed
                 const formatDate = (date: string) => {
                     if (!date) return undefined;
                     if (date.includes('/')) {
@@ -237,7 +299,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     return date;
                 };
 
-                const response = await createCitizen({
+                await createCitizen({
                     documentNumber: citizenIdNumber,
                     issueDate: formatDate(citizenIssueDate),
                     expiryDate: formatDate(citizenExpiryDate),
@@ -268,9 +330,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     return date;
                 };
 
-                // Get existing media IDs (you'll need to extract these from citizenDoc.fileUrl)
-                // For now, using placeholder - you may need to adjust based on your API response structure
-                const mediaIds = citizenDoc.fileUrl; // This should be an array of media IDs
+                const mediaIds = citizenDoc.fileUrl;
 
                 const updateRequest: any = {
                     id: citizenDoc.id,
@@ -283,7 +343,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     idFileBack: Array.isArray(mediaIds) ? mediaIds[1] : mediaIds,
                 };
 
-                // Only add files if user picked new images
                 if (citizenFrontImage && !citizenFrontImage.startsWith('http')) {
                     updateRequest.frontDocumentFile = {
                         uri: citizenFrontImage,
@@ -300,12 +359,11 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     };
                 }
 
-                const response = await updateCitizen(updateRequest);
+                await updateCitizen(updateRequest);
                 Alert.alert('Success', 'Citizen ID updated successfully!');
                 await refresh();
             }
 
-            // Clear image state
             setCitizenFrontImage(undefined);
             setCitizenBackImage(undefined);
         } catch (error: any) {
@@ -314,10 +372,9 @@ export const EditProfileScreen = ({ navigation }: any) => {
         }
     };
 
-    // NEW: Handle license document upload/update
+    // Handle license document submit
     const handleLicenseDocumentSubmit = async () => {
         try {
-            // Validation
             if (!licenseNumber) {
                 Alert.alert('Validation Error', 'License number is required');
                 return;
@@ -339,7 +396,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     return date;
                 };
 
-                const response = await createDriving({
+                await createDriving({
                     documentNumber: licenseNumber,
                     issueDate: formatDate(licenseIssueDate),
                     expiryDate: formatDate(licenseExpiryDate),
@@ -399,12 +456,11 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     };
                 }
 
-                const response = await updateDriving(updateRequest);
+                await updateDriving(updateRequest);
                 Alert.alert('Success', 'Driver\'s License updated successfully!');
                 await refresh();
             }
 
-            // Clear image state
             setLicenseFrontImage(undefined);
             setLicenseBackImage(undefined);
         } catch (error: any) {
@@ -415,20 +471,17 @@ export const EditProfileScreen = ({ navigation }: any) => {
 
     const handleSave = async () => {
         try {
-            // Validation
             if (!email || !phoneNumber || !address) {
                 Alert.alert('Validation Error', 'Email, phone number, and address are required');
                 return;
             }
 
-            // Convert date from DD/MM/YYYY to YYYY-MM-DD for backend
             let formattedDate = dateOfBirth;
             if (dateOfBirth.includes('/')) {
                 const [day, month, year] = dateOfBirth.split('/');
                 formattedDate = `${year}-${month}-${day}`;
             }
 
-            // Build request with EXACT backend field names
             const request: any = {
                 Email: email.trim(),
                 phone: `${countryCode}${phoneNumber.replace(/\s/g, '')}`,
@@ -437,7 +490,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 Fullname: fullName.trim(),
             };
 
-            // Only add ProfilePicture if user picked a new image (not an existing URL)
             if (profileImageUri && !profileImageUri.startsWith('http')) {
                 request.ProfilePicture = {
                     uri: profileImageUri,
@@ -446,16 +498,13 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 };
             }
 
-            // Call the update hook
             const response = await update(request);
 
-            // Update the profile image with the new URL from response
             if (response.AvatarUrl) {
                 const normalized = normalizeUri(response.AvatarUrl);
                 setProfileImageUri(normalized);
             }
 
-            // Refresh the profile data
             await refresh();
 
             Alert.alert('Success', 'Profile updated successfully!');
@@ -466,7 +515,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
         }
     };
 
-    // Show loading while fetching initial data
     if (fetchLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -490,12 +538,21 @@ export const EditProfileScreen = ({ navigation }: any) => {
             citizenId={citizenIdNumber}
             citizenIdAutoFill={false}
             existingCitizenDoc={citizenDoc}
+            citizenFrontImage={citizenFrontImage}
+            citizenBackImage={citizenBackImage}
+            citizenIssueDate={citizenIssueDate}
+            citizenExpiryDate={citizenExpiryDate}
+            citizenAuthority={citizenAuthority}
             // License props
             licenseNumber={licenseNumber}
             licenseClass={licenseClass}
             licenseExpiry={licenseExpiryDate}
             licenseAutoFill={false}
             existingLicenseDoc={licenseDoc}
+            licenseFrontImage={licenseFrontImage}
+            licenseBackImage={licenseBackImage}
+            licenseIssueDate={licenseIssueDate}
+            licenseAuthority={licenseAuthority}
             // Handlers
             onBack={() => navigation.goBack()}
             onSave={handleSave}
@@ -509,20 +566,25 @@ export const EditProfileScreen = ({ navigation }: any) => {
             onAddressChange={setAddress}
             onCitizenIdChange={setCitizenIdNumber}
             onCitizenIdAutoFillChange={() => {}}
-            onCitizenIdUpload={(method) => pickCitizenImage(method, 'front')} // For now, handle both images
+            onCitizenIdUpload={handleCitizenUpload}
             onCitizenIdUpdate={handleCitizenDocumentSubmit}
             onViewCitizenDoc={() => citizenDoc?.fileUrl && handleViewDocument(
                 Array.isArray(citizenDoc.fileUrl) ? citizenDoc.fileUrl[0] : citizenDoc.fileUrl
             )}
+            onCitizenIssueDatePress={handleCitizenIssueDatePress}
+            onCitizenExpiryDatePress={handleCitizenExpiryDatePress}
+            onCitizenAuthorityChange={setCitizenAuthority}
             onLicenseNumberChange={setLicenseNumber}
             onLicenseClassChange={setLicenseClass}
             onLicenseExpiryPress={() => {}}
             onLicenseAutoFillChange={() => {}}
-            onLicenseUpload={(method) => pickLicenseImage(method, 'front')} // For now, handle both images
+            onLicenseUpload={handleLicenseUpload}
             onLicenseUpdate={handleLicenseDocumentSubmit}
             onViewLicenseDoc={() => licenseDoc?.fileUrl && handleViewDocument(
                 Array.isArray(licenseDoc.fileUrl) ? licenseDoc.fileUrl[0] : licenseDoc.fileUrl
             )}
+            onLicenseIssueDatePress={handleLicenseIssueDatePress}
+            onLicenseAuthorityChange={setLicenseAuthority}
             onChangePassword={() => {}}
             saving={isSaving}
         />

@@ -29,13 +29,17 @@ export type IconName =
     | 'help'
     | 'terms'
     | 'shield'
-    | 'logout';
+    | 'logout'
+    | 'flash'
+    | 'flash-off'
+    | 'close'
+    | 'image';  // ✅ ADDED
 
 interface IconProps {
     name: IconName;
     size?: number;
     color?: string;
-    useVectorIcons?: boolean; // Toggle between emoji and vector icons
+    useVectorIcons?: boolean;
 }
 
 export const Icon: React.FC<IconProps> = ({ 
@@ -43,7 +47,7 @@ export const Icon: React.FC<IconProps> = ({
     size = 24, 
     color = '#FFFFFF',
     useVectorIcons = true 
-    }) => {
+}) => {
     // Vector icon mapping
     const vectorIcons: Record<IconName, { family: 'material' | 'community' | 'ionicons', name: string }> = {
         back: { family: 'ionicons', name: 'arrow-back' },
@@ -71,6 +75,10 @@ export const Icon: React.FC<IconProps> = ({
         help: { family: 'ionicons', name: 'help-circle-outline' },
         terms: { family: 'ionicons', name: 'document-outline' },
         logout: { family: 'ionicons', name: 'log-out-outline' },
+        flash: { family: 'ionicons', name: 'flash' },
+        'flash-off': { family: 'ionicons', name: 'flash-off' },
+        close: { family: 'ionicons', name: 'close' },
+        image: { family: 'ionicons', name: 'image-outline' },  // ✅ ADDED
     };
 
     // Emoji fallback mapping
@@ -100,19 +108,23 @@ export const Icon: React.FC<IconProps> = ({
         help: '❓',
         terms: '📋',
         logout: '⎋',
+        flash: '⚡',
+        'flash-off': '🔦',
+        close: '✕',
+        image: '🖼️',  // ✅ ADDED
     };
 
     if (useVectorIcons) {
         const iconConfig = vectorIcons[name];
         
         switch (iconConfig.family) {
-        case 'material':
-            return <MaterialIcons name={iconConfig.name} size={size} color={color} />;
-        case 'community':
-            return <MaterialCommunityIcons name={iconConfig.name} size={size} color={color} />;
-        case 'ionicons':
-        default:
-            return <Ionicons name={iconConfig.name} size={size} color={color} />;
+            case 'material':
+                return <MaterialIcons name={iconConfig.name} size={size} color={color} />;
+            case 'community':
+                return <MaterialCommunityIcons name={iconConfig.name} size={size} color={color} />;
+            case 'ionicons':
+            default:
+                return <Ionicons name={iconConfig.name} size={size} color={color} />;
         }
     }
 

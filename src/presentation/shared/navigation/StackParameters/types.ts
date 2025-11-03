@@ -115,6 +115,11 @@ export type TripStackParamList = {
 export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
+  DocumentCapture: {
+    documentType: 'citizen' | 'license';
+    side: 'front' | 'back';
+    onPhotoTaken: (uri: string, side: 'front' | 'back') => void;
+  };
   Auth: NavigatorScreenParams<AuthStackParamList>;
 };
 
