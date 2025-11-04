@@ -16,7 +16,10 @@ export interface DocumentResponse {
     verifiedAt: string;
     renterId: string;
     renter: null;
-    fileUrl: string;
+    images: Array<{           // ✅ CHANGED from fileUrl: string
+        id: string;           // ✅ Media ID (GUID)
+        fileUrl: string;      // ✅ Media URL
+    }>;
 }
 
 export interface RenterResponse {

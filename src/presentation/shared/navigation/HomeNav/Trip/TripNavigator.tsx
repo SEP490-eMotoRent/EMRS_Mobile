@@ -1,5 +1,3 @@
-// TripNavigator.tsx
-
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 import { BookingDetailsScreen } from '../../../../features/staff/handover/ui/screens';
@@ -8,6 +6,7 @@ import { TripStackParamList } from '../../StackParameters/types';
 import { SignContractScreen } from '../../../../features/contract/ui/screens/SignContractScreen';
 import { EmergencyContactScreen } from '../../../../features/insuranceClaim/ui/screens/EmergencyContactScreen';
 import { IncidentReportScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentReportScreen';
+import { IncidentPhotoCaptureScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentPhotoCaptureScreen';
 import TrackingGPSScreen from '../../../../features/staff/tracking/ui/screens/TrackingGPSScreen';
 
 const Stack = createStackNavigator<TripStackParamList>();
@@ -29,7 +28,7 @@ export const TripNavigator: React.FC = () => {
         name="Trip"
         component={TripsScreen}
         options={{
-          gestureEnabled: false, // First screen — no back
+          gestureEnabled: false,
         }}
       />
 
@@ -99,6 +98,30 @@ export const TripNavigator: React.FC = () => {
                   translateX: current.progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* NEW: Incident Photo Capture (Modal-style) */}
+      <Stack.Screen
+        name="IncidentPhotoCapture"
+        component={IncidentPhotoCaptureScreen}
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              transform: [
+                {
+                  translateY: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.height, 0],
                   }),
                 },
               ],

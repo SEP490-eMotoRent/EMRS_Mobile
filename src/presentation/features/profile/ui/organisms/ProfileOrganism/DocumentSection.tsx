@@ -8,16 +8,7 @@ import { DocumentUploadPlaceholder } from '../../molecules/DocumentUploadPlaceho
 import { TextInput } from '../../molecules/TextInput';
 import { DateInput } from '../../molecules/DateInput';
 
-// Helper to normalize file URLs
-const normalizeFileUrl = (url: string | string[] | undefined): string | undefined => {
-    if (!url) return undefined;
-    if (typeof url === 'string') return url;
-    if (Array.isArray(url) && url.length > 0 && typeof url[0] === 'string') {
-        return url[0];
-    }
-    return undefined;
-};
-
+// ✅ UPDATED: Changed fileUrl to images array
 interface DocumentData {
     id: string;
     documentNumber: string;
@@ -25,7 +16,10 @@ interface DocumentData {
     expiryDate: string;
     issuingAuthority: string;
     verificationStatus: string;
-    fileUrl: string | string[];
+    images: Array<{
+        id: string;
+        fileUrl: string;
+    }>;
 }
 
 interface DocumentSectionProps {
@@ -40,9 +34,10 @@ interface DocumentSectionProps {
     additionalFields?: React.ReactNode;
     existingDocument?: DocumentData;
     onViewDocument?: () => void;
+    onDeleteDocument?: () => void;
     frontImage?: string;
     backImage?: string;
-    // 🔥 NEW: Document metadata fields
+    // Document metadata fields
     issueDate?: string;
     expiryDate?: string;
     issuingAuthority?: string;
@@ -63,6 +58,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     additionalFields,
     existingDocument,
     onViewDocument,
+    onDeleteDocument,
     frontImage,
     backImage,
     issueDate,
@@ -75,15 +71,9 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     const hasDocument = !!existingDocument;
     const hasNewImages = !!(frontImage || backImage);
     
-    // Get URLs from existing document
-    const existingUrls = existingDocument?.fileUrl 
-        ? (Array.isArray(existingDocument.fileUrl) 
-            ? existingDocument.fileUrl 
-            : [existingDocument.fileUrl])
-        : [];
-    
-    const frontUrl = existingUrls[0];
-    const backUrl = existingUrls[1];
+    // ✅ UPDATED: Get URLs from images array instead of fileUrl
+    const frontUrl = existingDocument?.images?.[0]?.fileUrl;
+    const backUrl = existingDocument?.images?.[1]?.fileUrl;
 
     return (
         <View style={styles.container}>
@@ -98,9 +88,20 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                         </View>
                     )}
                 </View>
-                <Button onPress={onUpdate} style={styles.updateButton} variant="ghost">
-                    <Text style={styles.updateText}>Update</Text>
-                </Button>
+                <View style={styles.headerActions}>
+                    <Button onPress={onUpdate} style={styles.updateButton} variant="ghost">
+                        <Text style={styles.updateText}>Update</Text>
+                    </Button>
+                    {hasDocument && onDeleteDocument && (
+                        <Button 
+                            onPress={onDeleteDocument} 
+                            style={styles.deleteButton} 
+                            variant="ghost"
+                        >
+                            <Icon name="trash" size={16} color="#EF4444" />
+                        </Button>
+                    )}
+                </View>
             </View>
 
             <View style={hasDocument ? styles.disabledInput : undefined}>
@@ -136,7 +137,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                     </View>
                 </View>
             ) : (
-                // 🔥 NEW: Editable fields for new documents
+                // Editable fields for new documents
                 <View style={styles.editableFields}>
                     {onIssueDatePress && (
                         <DateInput
@@ -266,6 +267,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
+        flex: 1,
     },
     title: {
         fontWeight: '500',
@@ -284,12 +286,20 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
     },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
     updateButton: {
         padding: 0,
     },
     updateText: {
         color: '#7C3AED',
         fontSize: 14,
+    },
+    deleteButton: {
+        padding: 8,
     },
     documentInfo: {
         backgroundColor: '#F3F4F6',

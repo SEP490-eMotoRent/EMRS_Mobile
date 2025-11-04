@@ -106,6 +106,10 @@ export type TripStackParamList = {
       address: string;
     };
   };
+  IncidentPhotoCapture: {
+    bookingId: string;
+    onPhotoTaken: (uri: string) => void;
+  };
   TrackingGPS: {
     vehicleId?: string;
     licensePlate?: string;

@@ -70,6 +70,7 @@ interface EditProfileTemplateProps {
     onCitizenIdUpload: (method: 'camera' | 'gallery') => void;
     onCitizenIdUpdate: () => void;
     onViewCitizenDoc?: () => void;
+    onDeleteCitizenDoc?: () => void;
     onCitizenIssueDatePress?: () => void;
     onCitizenExpiryDatePress?: () => void;
     onCitizenAuthorityChange?: (text: string) => void;
@@ -80,6 +81,7 @@ interface EditProfileTemplateProps {
     onLicenseUpload: (method: 'camera' | 'gallery') => void;
     onLicenseUpdate: () => void;
     onViewLicenseDoc?: () => void;
+    onDeleteLicenseDoc?: () => void;
     onLicenseIssueDatePress?: () => void;
     onLicenseAuthorityChange?: (text: string) => void;
     onChangePassword: () => void;
@@ -152,6 +154,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onUpdate={props.onCitizenIdUpdate}
                         existingDocument={props.existingCitizenDoc}
                         onViewDocument={props.onViewCitizenDoc}
+                        onDeleteDocument={props.onDeleteCitizenDoc}
                         frontImage={props.citizenFrontImage}
                         backImage={props.citizenBackImage}
                         issueDate={props.citizenIssueDate}
@@ -174,6 +177,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onUpdate={props.onLicenseUpdate}
                         existingDocument={props.existingLicenseDoc}
                         onViewDocument={props.onViewLicenseDoc}
+                        onDeleteDocument={props.onDeleteLicenseDoc}
                         frontImage={props.licenseFrontImage}
                         backImage={props.licenseBackImage}
                         issueDate={props.licenseIssueDate}

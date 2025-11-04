@@ -33,7 +33,8 @@ export type IconName =
     | 'flash'
     | 'flash-off'
     | 'close'
-    | 'image';  // ✅ ADDED
+    | 'image'
+    | 'trash';  // ✅ NEW
 
 interface IconProps {
     name: IconName;
@@ -78,7 +79,8 @@ export const Icon: React.FC<IconProps> = ({
         flash: { family: 'ionicons', name: 'flash' },
         'flash-off': { family: 'ionicons', name: 'flash-off' },
         close: { family: 'ionicons', name: 'close' },
-        image: { family: 'ionicons', name: 'image-outline' },  // ✅ ADDED
+        image: { family: 'ionicons', name: 'image-outline' },
+        trash: { family: 'ionicons', name: 'trash-outline' },  // ✅ NEW
     };
 
     // Emoji fallback mapping
@@ -111,7 +113,8 @@ export const Icon: React.FC<IconProps> = ({
         flash: '⚡',
         'flash-off': '🔦',
         close: '✕',
-        image: '🖼️',  // ✅ ADDED
+        image: '🖼️',
+        trash: '🗑️',  // ✅ NEW
     };
 
     if (useVectorIcons) {
