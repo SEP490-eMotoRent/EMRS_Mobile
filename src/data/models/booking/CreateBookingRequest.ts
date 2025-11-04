@@ -1,6 +1,7 @@
 export interface CreateBookingRequest {
     startDatetime?: string;
     endDatetime?: string;
+    handoverBranchId: string;
     baseRentalFee: number;
     depositAmount: number;
     rentalDays: number;
@@ -8,5 +9,6 @@ export interface CreateBookingRequest {
     rentingRate: number;
     vehicleModelId: string;
     averageRentalPrice: number;
+    insurancePackageId?: string;
     totalRentalFee: number;
 }

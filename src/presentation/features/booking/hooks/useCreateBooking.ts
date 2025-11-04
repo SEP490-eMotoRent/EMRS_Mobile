@@ -11,12 +11,14 @@ export const useCreateBooking = (useCase: CreateBookingUseCase) => {
         vehicleModelId: string;
         startDatetime: Date;
         endDatetime: Date;
+        handoverBranchId: string;        // ✅ ADDED - Required
         rentalDays: number;
         rentalHours: number;
         baseRentalFee: number;
         depositAmount: number;
         rentingRate: number;
         averageRentalPrice: number;
+        insurancePackageId?: string;     // ✅ ADDED - Optional
         totalRentalFee: number;
         renterId: string;
     }) => {
@@ -24,10 +26,15 @@ export const useCreateBooking = (useCase: CreateBookingUseCase) => {
             setLoading(true);
             setError(null);
             
+            console.log("🚀 Creating booking with:", JSON.stringify(input, null, 2));
+            
             const result = await useCase.execute(input);
+            
+            console.log("✅ Booking created:", result.id);
             setBooking(result);
             return result;
         } catch (err: any) {
+            console.error("❌ Booking creation error:", err);
             setError(err.message || "Failed to create booking");
             throw err;
         } finally {

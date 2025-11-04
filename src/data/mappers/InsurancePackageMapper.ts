@@ -1,5 +1,5 @@
 import { InsurancePackage } from "../../domain/entities/insurance/InsurancePackage";
-import { InsurancePackageResponse } from "../models/booking/BookingResponse";
+import { InsurancePackageResponse } from "../models/booking/BookingResponseForRenter";
 
 export class InsurancePackageMapper {
     /**

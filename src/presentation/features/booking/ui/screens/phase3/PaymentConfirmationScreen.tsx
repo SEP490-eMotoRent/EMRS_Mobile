@@ -30,6 +30,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
         rentalDays,
         branchName,
         insurancePlan,
+        insurancePlanId,  // ✅ ADDED - This is the actual GUID
         rentalFee,
         insuranceFee,
         securityDeposit,
@@ -81,8 +82,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
     };
 
     const handlePayment = async () => {
-        console.log("Processing payment for vehicle:", vehicleId);
-        console.log("Total amount:", total);
+        console.log("💳 Processing payment for vehicle:", vehicleId);
+        console.log("💰 Total amount:", total);
 
         // ✅ Validate user is logged in
         if (!userId) {
@@ -98,18 +99,41 @@ export const PaymentConfirmationScreen: React.FC = () => {
             console.log("📅 Start:", startDate, "→", startDateTime.toISOString());
             console.log("📅 End:", endDate, "→", endDateTime.toISOString());
 
+            // ✅ TEMPORARY: Use hardcoded branch ID until we implement branch selection
+            // TODO: Replace with actual branch ID from route params or vehicle details
+            const TEMP_BRANCH_ID = "019a20b1-8d81-75e2-88bd-de6998d5c79c";
+            console.log("⚠️ Using temporary branch ID:", TEMP_BRANCH_ID);
+
+            // ✅ Parse insurance plan ID
+            // insurancePlan should already be a GUID from route params
+            // Only include if it's a valid GUID format (not "none" or plan names)
+            const isValidGuid = (str: string) => {
+                const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                return guidRegex.test(str);
+            };
+
+            const insurancePackageId = 
+                insurancePlan && isValidGuid(insurancePlan)
+                    ? insurancePlan 
+                    : undefined;
+
+            console.log("🛡️ Insurance Plan:", insurancePlan);
+            console.log("🛡️ Insurance Package ID:", insurancePackageId);
+
             const bookingData = {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
                 endDatetime: endDateTime,
+                handoverBranchId: TEMP_BRANCH_ID,        // ✅ Required
                 rentalDays: rentalDays,
                 rentalHours: 0,
                 baseRentalFee: parsePrice(rentalFee),
                 depositAmount: parsePrice(securityDeposit),
                 rentingRate: 1.0,
                 averageRentalPrice: parsePrice(rentalFee) / rentalDays,
+                insurancePackageId: insurancePackageId,  // ✅ Optional
                 totalRentalFee: parsePrice(total),
-                renterId: userId, // ✅ Use actual user ID
+                renterId: userId, // ✅ For local entity creation
             };
 
             // ✅ Log complete booking data
@@ -118,12 +142,15 @@ export const PaymentConfirmationScreen: React.FC = () => {
             // ✅ Create booking via API
             const booking = await createBooking(bookingData);
 
-            console.log("✅ Booking created:", booking.id);
+            console.log("✅ Booking created successfully!");
+            console.log("📋 Booking ID:", booking.id);
+            console.log("📋 Booking Code:", booking.bookingCode);
+            console.log("📋 Booking Status:", booking.bookingStatus);
 
             // ✅ Navigate to completion screen
             navigation.navigate('DigitalContract', {
                 vehicleId,
-                vehicleName: "VinFast Evo200",
+                vehicleName: "VinFast Evo200", // TODO: Get from vehicle data
                 startDate,
                 endDate,
                 duration,
@@ -132,14 +159,24 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 insurancePlan,
                 totalAmount: total,
                 securityDeposit,
-                contractNumber: booking.id,
+                contractNumber: booking.bookingCode || booking.id, // ✅ Use bookingCode if available
             });
         } catch (err: any) {
             console.error("❌ Booking creation failed:", err);
             console.error("❌ Error details:", err.response?.data || err.message);
+            
+            // ✅ Enhanced error handling
+            let errorMessage = "Unable to create booking. Please try again.";
+            
+            if (err.response?.data?.message) {
+                errorMessage = err.response.data.message;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
             Alert.alert(
                 "Booking Failed",
-                err.message || "Unable to create booking. Please try again.",
+                errorMessage,
                 [{ text: "OK" }]
             );
         }

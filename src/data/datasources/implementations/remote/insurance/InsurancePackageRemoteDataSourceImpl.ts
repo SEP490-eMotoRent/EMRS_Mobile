@@ -1,6 +1,6 @@
 import { ApiResponse } from '../../../../../core/network/APIResponse';
 import { AxiosClient } from '../../../../../core/network/AxiosClient';
-import { InsurancePackageResponse } from '../../../../models/booking/BookingResponse';
+import { InsurancePackageResponse } from '../../../../models/booking/BookingResponseForRenter';
 import { InsurancePackageRemoteDataSource } from '../../../interfaces/remote/insurance/InsurancePackageRemoteDataSource';
 
 export class InsurancePackageRemoteDataSourceImpl implements InsurancePackageRemoteDataSource {
