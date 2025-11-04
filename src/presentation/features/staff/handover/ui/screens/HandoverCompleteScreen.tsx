@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";

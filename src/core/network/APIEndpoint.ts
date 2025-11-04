@@ -83,4 +83,12 @@ export const ApiEndpoints = {
     myClaims: "/InsuranceClaim/my-claims",
     detail: (id: string) => `/InsuranceClaim/${id}`,
   },
+
+  // Rental return endpoints
+  rentalReturn: {
+    analyzeReturn: "/rental-return/return/upload-and-analyze",
+    createReceipt: "/rental-return/return/create-receipt",
+    summary: (bookingId: string) => `/rental-return/return/${bookingId}/summary`,
+    finalizeReturn: `/rental-return/return/finalize`,
+  },
 };

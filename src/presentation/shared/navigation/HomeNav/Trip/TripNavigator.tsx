@@ -9,6 +9,8 @@ import { SignContractScreen } from '../../../../features/contract/ui/screens/Sig
 import { EmergencyContactScreen } from '../../../../features/insuranceClaim/ui/screens/EmergencyContactScreen';
 import { IncidentReportScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentReportScreen';
 import TrackingGPSScreen from '../../../../features/staff/tracking/ui/screens/TrackingGPSScreen';
+import { ReturnReportScreen } from '../../../../features/tripDetails/ui/screens/ReturnReportScreen';
+import { ReturnCompleteScreen } from '../../../../features/tripDetails/ui/screens/ReturnCompleteScreen';
 
 const Stack = createStackNavigator<TripStackParamList>();
 
@@ -114,6 +116,22 @@ export const TripNavigator: React.FC = () => {
         options={{
           headerShown: false,
           gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="ReturnReport"
+        component={ReturnReportScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="ReturnComplete"
+        component={ReturnCompleteScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: false, // Prevent going back after completion
         }}
       />
     </Stack.Navigator>

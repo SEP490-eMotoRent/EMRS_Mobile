@@ -75,6 +75,9 @@ import { SearchPlacesUseCase } from '../../domain/usecases/maps/SearchPlacesUseC
 import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
 
 import { AxiosClient } from "../network/AxiosClient";
+import { RentalReturnRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl";
+import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
+import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -192,6 +195,14 @@ class ServiceLocator {
     this.services.set("SearchPlacesUseCase", searchPlacesUseCase);
     const getPlaceDetailsUseCase = new GetPlaceDetailsUseCase(geocodingRepository);
     this.services.set("GetPlaceDetailsUseCase", getPlaceDetailsUseCase);
+  
+    // Rental Return services
+    const rentalReturnRemoteDataSource = new RentalReturnRemoteDataSourceImpl(axiosClient);
+    this.services.set("RentalReturnRemoteDataSource", rentalReturnRemoteDataSource);
+    const rentalReturnRepository = new RentalReturnRepositoryImpl(rentalReturnRemoteDataSource);
+    this.services.set("RentalReturnRepository", rentalReturnRepository);
+    const analyzeReturnUseCase = new AiAnalyzeUseCase(rentalReturnRepository);
+    this.services.set("AiAnalyzeUseCase", analyzeReturnUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -328,6 +339,10 @@ class ServiceLocator {
 
   getDeleteDocumentUseCase(): DeleteDocumentUseCase {
     return this.get<DeleteDocumentUseCase>('DeleteDocumentUseCase');
+  }
+
+  getAiAnalyzeUseCase(): AiAnalyzeUseCase {
+    return this.get<AiAnalyzeUseCase>('AiAnalyzeUseCase');
   }
 }
 

@@ -3,6 +3,7 @@ import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
 import { Booking } from "../../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../../domain/entities/booking/RentalContract";
 import { ScanFaceResponse } from "../../../../data/models/account/renter/ScanFaceResponse";
+import { AnalyzeReturnResponse } from "../../../../data/models/rentalReturn/AnalyzeReturnResponse";
 
 export type AuthStackParamList = {
   Hello: undefined;
@@ -85,6 +86,25 @@ export type TripStackParamList = {
   BookingDetails: {
     bookingId: string;
   };
+  ReturnReport: {
+    bookingId: string;
+    rentalReceiptId: string;
+    settlement: {
+      baseRentalFee: number;
+      depositAmount: number;
+      totalAmount: number;
+      totalChargingFee: number;
+      totalAdditionalFees: number;
+      refundAmount: number;
+      feesBreakdown: {
+        cleaningFee: number;
+        crossBranchFee: number;
+        damageFee: number;
+        excessKmFee: number;
+        lateReturnFee: number;
+      };
+    };
+  };
   SignContract: {
     bookingId: string;
     email: string;
@@ -110,6 +130,7 @@ export type TripStackParamList = {
     vehicleId?: string;
     licensePlate?: string;
   };
+  ReturnComplete: undefined;
 };
 
 export type ProfileStackParamList = {
@@ -156,8 +177,35 @@ export type StaffStackParamList = {
     bookingId: string;
     vehicleId: string;
   };
-  ReturnInspection: { rentalReceiptId: string };
-  AIAnalysis: undefined;
+  ReturnInspection: { bookingId: string };
+  AIAnalysis: { bookingId: string; analyzeReturnData: AnalyzeReturnResponse };
+  ManualInspection: { bookingId: string; photos: string[] };
+  AdditionalFees: {
+    endOdometerKm: number;
+    endBatteryPercentage: number;
+    bookingId: string;
+    returnImageUrls: string[];
+    checkListImage: string;
+  };
+  ReturnReport: {
+    bookingId: string;
+    rentalReceiptId: string;
+    settlement: {
+      baseRentalFee: number;
+      depositAmount: number;
+      totalAmount: number;
+      totalChargingFee: number;
+      totalAdditionalFees: number;
+      refundAmount: number;
+      feesBreakdown: {
+        cleaningFee: number;
+        crossBranchFee: number;
+        damageFee: number;
+        excessKmFee: number;
+        lateReturnFee: number;
+      };
+    };
+  };
   SignContract: {
     bookingId: string;
     email: string;
