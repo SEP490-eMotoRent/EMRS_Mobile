@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/CreateInsuranceClaimRequest';
-import { InsuranceClaimResponse } from '../../../../../data/models/insurance/InsuranceClaimResponse';
 import sl from '../../../../../core/di/InjectionContainer';
+import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/insuranceClaim/CreateInsuranceClaimRequest';
+import { InsuranceClaimResponse } from '../../../../../data/models/insurance/insuranceClaim/InsuranceClaimResponse';
 
 interface UseCreateInsuranceClaimResult {
     isLoading: boolean;

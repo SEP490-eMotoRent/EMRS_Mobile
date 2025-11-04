@@ -1,5 +1,5 @@
-import { InsuranceClaimDetailResponse } from "../../../data/models/insurance/InsuranceClaimDetailResponse";
-import { InsuranceClaimRepository } from "../../repositories/insurance/InsuranceClaimRepository";
+import { InsuranceClaimDetailResponse } from "../../../../data/models/insurance/insuranceClaim/InsuranceClaimDetailResponse";
+import { InsuranceClaimRepository } from "../../../repositories/insurance/InsuranceClaimRepository";
 
 export class GetInsuranceClaimDetailUseCase {
     constructor(private repository: InsuranceClaimRepository) {}

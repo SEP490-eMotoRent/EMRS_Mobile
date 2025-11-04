@@ -1,6 +1,6 @@
-import { CreateInsuranceClaimRequest } from "../../../../models/insurance/CreateInsuranceClaimRequest";
-import { InsuranceClaimDetailResponse } from "../../../../models/insurance/InsuranceClaimDetailResponse";
-import { InsuranceClaimResponse } from "../../../../models/insurance/InsuranceClaimResponse";
+import { CreateInsuranceClaimRequest } from "../../../../models/insurance/insuranceClaim/CreateInsuranceClaimRequest";
+import { InsuranceClaimDetailResponse } from "../../../../models/insurance/insuranceClaim/InsuranceClaimDetailResponse";
+import { InsuranceClaimResponse } from "../../../../models/insurance/insuranceClaim/InsuranceClaimResponse";
 
 export interface InsuranceClaimRemoteDataSource {
     createInsuranceClaim(request: CreateInsuranceClaimRequest): Promise<InsuranceClaimResponse>;
