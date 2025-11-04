@@ -1,8 +1,8 @@
 import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
-import { CreateInsuranceClaimRequest } from "../../../../models/insurance/CreateInsuranceClaimRequest";
-import { InsuranceClaimDetailResponse } from "../../../../models/insurance/InsuranceClaimDetailResponse";
-import { InsuranceClaimResponse } from "../../../../models/insurance/InsuranceClaimResponse";
+import { CreateInsuranceClaimRequest } from "../../../../models/insurance/insuranceClaim/CreateInsuranceClaimRequest";
+import { InsuranceClaimDetailResponse } from "../../../../models/insurance/insuranceClaim/InsuranceClaimDetailResponse";
+import { InsuranceClaimResponse } from "../../../../models/insurance/insuranceClaim/InsuranceClaimResponse";
 import { InsuranceClaimRemoteDataSource } from "../../../interfaces/remote/insurance/InsuranceClaimRemoteDataSource";
 
 export class InsuranceClaimRemoteDataSourceImpl implements InsuranceClaimRemoteDataSource {

@@ -82,4 +82,9 @@ export const ApiEndpoints = {
     myClaims: "/InsuranceClaim/my-claims",
     detail: (id: string) => `/InsuranceClaim/${id}`,
   },
+
+  insurancePackage: {
+    getAll: "/InsurancePackage",
+    detail: (id: string) => `/InsurancePackage/${id}`,
+  },
 };

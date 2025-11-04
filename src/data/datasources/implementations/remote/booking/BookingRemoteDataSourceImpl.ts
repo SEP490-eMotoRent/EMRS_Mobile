@@ -4,7 +4,7 @@ import {
   unwrapResponse,
 } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
-import { BookingResponse } from "../../../../models/booking/BookingResponse";
+import { BookingResponseForRenter } from "../../../../models/booking/BookingResponseForRenter";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
@@ -13,22 +13,51 @@ import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/Book
 export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
 
-  async create(request: CreateBookingRequest): Promise<BookingResponse> {
+  async create(request: CreateBookingRequest): Promise<BookingResponseForRenter> {
     console.log(
-      "Sending booking request to API:",
+      "📤 Original booking request:",
       JSON.stringify(request, null, 2)
     );
 
-    const response = await this.axiosClient.post<ApiResponse<BookingResponse>>(
-      ApiEndpoints.booking.create,
-      request
-    );
+    // ✅ Build request object - CRITICAL: null for optional Guid, not undefined
+    const cleanedRequest: Record<string, any> = {
+      startDatetime: request.startDatetime,
+      endDatetime: request.endDatetime,
+      handoverBranchId: request.handoverBranchId,
+      baseRentalFee: request.baseRentalFee,
+      depositAmount: request.depositAmount,
+      rentalDays: request.rentalDays,
+      rentalHours: request.rentalHours,
+      rentingRate: request.rentingRate,
+      vehicleModelId: request.vehicleModelId,
+      averageRentalPrice: request.averageRentalPrice,
+      totalRentalFee: request.totalRentalFee,
+      // ✅ CRITICAL: C# expects null for Nullable<Guid>, not undefined or empty string
+      insurancePackageId: request.insurancePackageId || null,
+    };
 
     console.log(
-      "Booking API response:",
-      JSON.stringify(response.data, null, 2)
+      "📤 Cleaned booking request (null for optional Guid):",
+      JSON.stringify(cleanedRequest, null, 2)
     );
-    return unwrapResponse(response.data);
+
+    try {
+      const response = await this.axiosClient.post<ApiResponse<BookingResponseForRenter>>(
+        ApiEndpoints.booking.create,
+        cleanedRequest
+      );
+
+      console.log(
+        "📥 Booking API response:",
+        JSON.stringify(response.data, null, 2)
+      );
+      return unwrapResponse(response.data);
+    } catch (error: any) {
+      console.error("❌ [CREATE BOOKING] API Error:", error);
+      console.error("❌ Error Response:", JSON.stringify(error.response?.data, null, 2));
+      console.error("❌ Request that failed:", JSON.stringify(cleanedRequest, null, 2));
+      throw error;
+    }
   }
 
   async getById(id: string): Promise<BookingForStaffResponse | null> {
@@ -45,12 +74,11 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async getByRenter(renterId: string): Promise<BookingResponse[]> {
+  async getByRenter(renterId: string): Promise<BookingResponseForRenter[]> {
     try {
       const endpoint = ApiEndpoints.booking.byRenter(renterId);
-      // ✅ UPDATED: Returns BookingResponse (renter response) not staff response
       const response = await this.axiosClient.get<
-        ApiResponse<BookingResponse[]>
+        ApiResponse<BookingResponseForRenter[]>
       >(endpoint);
       return unwrapResponse(response.data);
     } catch (error: any) {
@@ -59,12 +87,11 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async getCurrentRenterBookings(): Promise<BookingResponse[]> {
+  async getCurrentRenterBookings(): Promise<BookingResponseForRenter[]> {
     try {
       console.log("🌐 Calling API:", ApiEndpoints.booking.byCurrentRenter);
-      // ✅ UPDATED: Returns BookingResponse[] (BookingListForRenterResponse[])
       const response = await this.axiosClient.get<
-        ApiResponse<BookingResponse[]>
+        ApiResponse<BookingResponseForRenter[]>
       >(ApiEndpoints.booking.byCurrentRenter);
       const result = unwrapResponse(response.data);
       console.log("✅ API returned bookings:", result.length);

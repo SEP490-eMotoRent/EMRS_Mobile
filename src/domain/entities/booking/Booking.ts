@@ -1,15 +1,15 @@
-import { BaseEntity, CreateEntityInput, UpdateEntityInput } from "../shared/BaseEntity";
 import { Renter } from "../account/Renter";
-import { Vehicle } from "../vehicle/Vehicle";
-import { VehicleModel } from "../vehicle/VehicleModel"; // ✅ NEW IMPORT
-import { InsurancePackage } from "../insurance/InsurancePackage";
-import { RentalContract } from "./RentalContract";
-import { RentalReceipt } from "./RentalReceipt";
-import { Feedback } from "./Feedback";
 import { InsuranceClaim } from "../insurance/InsuranceClaim";
-import { AdditionalFee } from "./AdditionalFee";
+import { InsurancePackage } from "../insurance/InsurancePackage";
 import { Branch } from "../operations/Branch";
 import { ChargingRecord } from "../operations/ChargingRecord";
+import { BaseEntity, CreateEntityInput, UpdateEntityInput } from "../shared/BaseEntity";
+import { Vehicle } from "../vehicle/Vehicle";
+import { VehicleModel } from "../vehicle/VehicleModel"; // ✅ NEW IMPORT
+import { AdditionalFee } from "./AdditionalFee";
+import { Feedback } from "./Feedback";
+import { RentalContract } from "./RentalContract";
+import { RentalReceipt } from "./RentalReceipt";
 
 export class Booking implements BaseEntity {
     public readonly id: string;
@@ -37,6 +37,7 @@ export class Booking implements BaseEntity {
     public totalAmount: number;
     public refundAmount: number;
     public bookingStatus: string;
+    public bookingCode: string;
     
     // ✅ UPDATED: VehicleModelId is now REQUIRED, VehicleId is OPTIONAL
     public vehicleModelId: string;
@@ -62,6 +63,7 @@ export class Booking implements BaseEntity {
 
     constructor(
         id: string,
+        bookingCode: string,
         baseRentalFee: number,
         depositAmount: number,
         rentalDays: number,
@@ -107,6 +109,7 @@ export class Booking implements BaseEntity {
         this.isDeleted = isDeleted;
 
         // Required fields
+        this.bookingCode = bookingCode;
         this.baseRentalFee = baseRentalFee;
         this.depositAmount = depositAmount;
         this.rentalDays = rentalDays;

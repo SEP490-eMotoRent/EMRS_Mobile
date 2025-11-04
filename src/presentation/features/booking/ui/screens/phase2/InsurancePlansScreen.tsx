@@ -1,7 +1,7 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState, useMemo } from "react";
+import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { PageHeader } from "../../molecules/PageHeader";
@@ -9,72 +9,26 @@ import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { VehicleInfoHeader } from "../../molecules/VehicleInfoHeader";
 import { InsuranceBookingSummary } from "../../organisms/InsuranceBookingSummary";
 import { InsurancePlan, InsurancePlanCard } from "../../organisms/InsurancePlanCard";
+import { useInsurancePackages } from "../../../hooks/useInsurancePackages";
+import { formatVND, transformToInsurancePlan } from "../../../../../common/utils/insurancePackageFormatter";
+
 
 type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsurancePlans'>;
 
-const insurancePlans: InsurancePlan[] = [
-    {
-        id: "none",
-        icon: "🚫",
-        iconColor: "#ef4444",
-        title: "No Protection",
-        price: "FREE",
-        priceColor: "#333",
-        description: "No Coverage For Vehicle Or Rider",
-        features: [
-            "You will be responsible for all damages and injuries that may occur during your rental period.",
-        ],
-    },
-    {
-        id: "basic",
-        icon: "🛡️",
-        iconColor: "#3b82f6",
-        title: "Basic Protection",
-        price: "50,000đ",
-        priceColor: "#3b82f6",
-        description: "",
-        features: [
-            "Personal injury: 150M VND/person",
-            "Property damage: 50M VND/incident",
-            "Vehicle damage: Not covered",
-            "Deductible: 2,000,000đ",
-        ],
-    },
-    {
-        id: "standard",
-        icon: "🟢",
-        iconColor: "#22c55e",
-        title: "Standard Protection",
-        price: "150,000đ",
-        priceColor: "#22c55e",
-        description: "",
-        features: [
-            "Personal injury: 150M VND/person",
-            "Property damage: 50M VND/incident",
-            "Vehicle damage: 50% coverage",
-            "Personal accident: 30M VND/person",
-            "Deductible: 1,000,000đ",
-        ],
-    },
-    {
-        id: "premium",
-        icon: "🟡",
-        iconColor: "#eab308",
-        title: "Premium Protection",
-        price: "150,000đ",
-        priceColor: "#d4c5f9",
-        description: "",
-        features: [
-            "Personal injury: 150M VND/person",
-            "Property damage: 50M VND/incident",
-            "Comprehensive vehicle coverage: 90%",
-            "Personal accident: 50M VND/person",
-            "Replacement vehicle included",
-            "Deductible: 500,000đ",
-        ],
-    },
-];
+// "No Protection" option (always available)
+const noProtectionPlan: InsurancePlan = {
+    id: "none",
+    icon: "🚫",
+    iconColor: "#ef4444",
+    title: "No Protection",
+    price: "FREE",
+    priceColor: "#333",
+    description: "No Coverage For Vehicle Or Rider",
+    features: [
+        "You will be responsible for all damages and injuries that may occur during your rental period.",
+    ],
+};
 
 export const InsurancePlansScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
@@ -83,16 +37,33 @@ export const InsurancePlansScreen: React.FC = () => {
     const { vehicleId, startDate, endDate, duration, rentalDays } = route.params;
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
 
+    // Fetch insurance packages from API
+    const { packages, loading, error, refetch } = useInsurancePackages();
+
     console.log("Insurance Plans - Vehicle ID:", vehicleId);
     console.log("Rental Duration:", duration);
+    console.log("Fetched Packages:", packages.length);
+
+    // Transform API packages to UI format and prepend "No Protection"
+    const insurancePlans: InsurancePlan[] = useMemo(() => {
+        const apiPlans = packages.map(pkg => transformToInsurancePlan(pkg));
+        return [noProtectionPlan, ...apiPlans];
+    }, [packages]);
 
     const handleBack = () => {
         navigation.goBack();
     };
 
     const selectedPlan = insurancePlans.find(p => p.id === selectedPlanId);
-    const insuranceFee = selectedPlanId === "none" ? "FREE" : selectedPlan?.price || "0đ";
-    const rentalFee = "3,130,000đ";
+    const selectedPackage = packages.find(p => p.id === selectedPlanId);
+    
+    const insuranceFee = selectedPlanId === "none" 
+        ? "FREE" 
+        : selectedPackage 
+            ? formatVND(selectedPackage.packageFee)
+            : "0đ";
+    
+    const rentalFee = "3,130,000đ"; // TODO: This should come from previous screen/API
     
     const parsePrice = (price: string) => {
         if (price === "FREE") return 0;
@@ -104,8 +75,7 @@ export const InsurancePlansScreen: React.FC = () => {
 
     const handleContinue = () => {
         console.log("Selected insurance plan:", selectedPlanId);
-        
-        const selectedPlan = insurancePlans.find(p => p.id === selectedPlanId);
+        console.log("Selected package details:", selectedPackage);
         
         navigation.navigate('PaymentConfirmation', {
             vehicleId,
@@ -124,6 +94,47 @@ export const InsurancePlansScreen: React.FC = () => {
         });
     };
 
+    // Loading state
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <PageHeader title="Insurance Plans" onBack={handleBack} />
+                <ProgressIndicator currentStep={2} totalSteps={4} />
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={styles.loadingText}>Loading insurance packages...</Text>
+                </View>
+            </View>
+        );
+    }
+
+    // Error state with retry
+    if (error) {
+        return (
+            <View style={styles.container}>
+                <PageHeader title="Insurance Plans" onBack={handleBack} />
+                <ProgressIndicator currentStep={2} totalSteps={4} />
+                <View style={styles.centerContainer}>
+                    <Text style={styles.errorText}>⚠️ {error}</Text>
+                    <PrimaryButton 
+                        title="Retry" 
+                        onPress={refetch}
+                        style={styles.retryButton}
+                    />
+                    <PrimaryButton 
+                        title="Continue Without Insurance" 
+                        onPress={() => {
+                            setSelectedPlanId("none");
+                            handleContinue();
+                        }}
+                        style={styles.skipButton}
+                    />
+                </View>
+            </View>
+        );
+    }
+
+    // Success state - display packages
     return (
         <View style={styles.container}>
             <PageHeader title="Insurance Plans" onBack={handleBack} />
@@ -140,6 +151,12 @@ export const InsurancePlansScreen: React.FC = () => {
                 />
 
                 <Text style={styles.sectionTitle}>Select Protection Plan</Text>
+
+                {insurancePlans.length === 1 && (
+                    <Text style={styles.warningText}>
+                        ⚠️ No insurance packages available at the moment. You can continue without protection.
+                    </Text>
+                )}
 
                 {insurancePlans.map((plan) => (
                     <InsurancePlanCard
@@ -158,16 +175,28 @@ export const InsurancePlansScreen: React.FC = () => {
             </ScrollView>
 
             <View style={styles.footer}>
-                <PrimaryButton title="Continue" onPress={handleContinue} />
+                <PrimaryButton 
+                    title="Continue" 
+                    onPress={handleContinue}
+                    disabled={!selectedPlanId}
+                />
             </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#000" },
-    scrollView: { flex: 1 },
-    content: { padding: 16, paddingBottom: 100 },
+    container: { 
+        flex: 1, 
+        backgroundColor: "#000" 
+    },
+    scrollView: { 
+        flex: 1 
+    },
+    content: { 
+        padding: 16, 
+        paddingBottom: 100 
+    },
     sectionTitle: {
         color: "#fff",
         fontSize: 16,
@@ -180,5 +209,41 @@ const styles = StyleSheet.create({
         backgroundColor: "#000",
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
+    },
+    centerContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 24,
+    },
+    loadingText: {
+        color: "#fff",
+        fontSize: 16,
+        marginTop: 16,
+    },
+    errorText: {
+        color: "#ef4444",
+        fontSize: 16,
+        textAlign: "center",
+        marginBottom: 24,
+        paddingHorizontal: 16,
+    },
+    warningText: {
+        color: "#fbbf24",
+        fontSize: 14,
+        textAlign: "center",
+        marginBottom: 16,
+        padding: 12,
+        backgroundColor: "#44403c",
+        borderRadius: 8,
+    },
+    retryButton: {
+        marginTop: 16,
+        minWidth: 200,
+    },
+    skipButton: {
+        marginTop: 12,
+        minWidth: 200,
+        backgroundColor: "#374151",
     },
 });

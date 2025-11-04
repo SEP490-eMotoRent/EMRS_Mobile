@@ -1,4 +1,4 @@
-import { BookingResponse } from "../../../../models/booking/BookingResponse";
+import { BookingResponse } from "../../../../models/booking/BookingResponseForRenter";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";

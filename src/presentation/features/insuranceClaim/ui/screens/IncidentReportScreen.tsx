@@ -2,7 +2,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/CreateInsuranceClaimRequest';
+import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/insuranceClaim/CreateInsuranceClaimRequest';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { useCreateInsuranceClaim } from '../../hooks/IncidentManagement/useCreateInsuranceClaim';
 import { useFormProgress } from '../../hooks/IncidentManagement/useFormProgress';

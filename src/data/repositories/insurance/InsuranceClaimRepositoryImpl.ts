@@ -1,8 +1,8 @@
 import { InsuranceClaimRepository } from "../../../domain/repositories/insurance/InsuranceClaimRepository";
 import { InsuranceClaimRemoteDataSource } from "../../datasources/interfaces/remote/insurance/InsuranceClaimRemoteDataSource";
-import { CreateInsuranceClaimRequest } from "../../models/insurance/CreateInsuranceClaimRequest";
-import { InsuranceClaimDetailResponse } from "../../models/insurance/InsuranceClaimDetailResponse";
-import { InsuranceClaimResponse } from "../../models/insurance/InsuranceClaimResponse";
+import { CreateInsuranceClaimRequest } from "../../models/insurance/insuranceClaim/CreateInsuranceClaimRequest";
+import { InsuranceClaimDetailResponse } from "../../models/insurance/insuranceClaim/InsuranceClaimDetailResponse";
+import { InsuranceClaimResponse } from "../../models/insurance/insuranceClaim/InsuranceClaimResponse";
 
 export class InsuranceClaimRepositoryImpl implements InsuranceClaimRepository {
     constructor(private remoteDataSource: InsuranceClaimRemoteDataSource) {}

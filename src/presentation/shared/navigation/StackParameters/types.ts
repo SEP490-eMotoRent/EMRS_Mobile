@@ -1,8 +1,6 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
-import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
-import { Booking } from "../../../../domain/entities/booking/Booking";
-import { RentalContract } from "../../../../domain/entities/booking/RentalContract";
 import { ScanFaceResponse } from "../../../../data/models/account/renter/ScanFaceResponse";
+import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
 
 export type AuthStackParamList = {
   Hello: undefined;
@@ -58,7 +56,7 @@ export type BookingStackParamList = {
     rentalDays: number;
     branchName: string;
     insurancePlan: string;
-    insurancePlanId: string;
+    insurancePlanId?: string;
     rentalFee: string;
     insuranceFee: string;
     securityDeposit: string;
