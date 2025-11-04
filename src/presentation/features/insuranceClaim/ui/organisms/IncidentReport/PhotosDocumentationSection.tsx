@@ -1,12 +1,17 @@
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { TripStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+
+type NavigationProp = StackNavigationProp<TripStackParamList>;
 
 export interface PhotosDocumentationSectionProps {
-    photos: File[];
-    onAddPhoto: (file: File) => void;
+    photos: string[]; // Changed from File[] to string[] (URIs)
+    onAddPhoto: (uri: string) => void;
     onRemovePhoto: (index: number) => void;
     maxPhotos?: number;
+    bookingId: string;
 }
 
 export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProps> = ({
@@ -14,52 +19,17 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
     onAddPhoto,
     onRemovePhoto,
     maxPhotos = 4,
+    bookingId,
 }) => {
-    const handleTakePhoto = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            alert('Sorry, we need camera permissions to take photos!');
-            return;
-        }
+    const navigation = useNavigation<NavigationProp>();
 
-        const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.8,
+    const handleTakePhoto = () => {
+        navigation.navigate('IncidentPhotoCapture', {
+            bookingId,
+            onPhotoTaken: (uri: string) => {
+                onAddPhoto(uri);
+            },
         });
-
-        if (!result.canceled && result.assets[0]) {
-            const uri = result.assets[0].uri;
-            // Convert to File object
-            const response = await fetch(uri);
-            const blob = await response.blob();
-            const file = new File([blob], `incident_${Date.now()}.jpg`, { type: 'image/jpeg' });
-            onAddPhoto(file);
-        }
-    };
-
-    const handlePickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            alert('Sorry, we need gallery permissions to pick photos!');
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            const uri = result.assets[0].uri;
-            const response = await fetch(uri);
-            const blob = await response.blob();
-            const file = new File([blob], `incident_${Date.now()}.jpg`, { type: 'image/jpeg' });
-            onAddPhoto(file);
-        }
     };
 
     return (
@@ -75,10 +45,10 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
                 Upload up to {maxPhotos} photos of the incident ({photos.length}/{maxPhotos})
             </Text>
             <View style={styles.photoGrid}>
-                {photos.map((photo, index) => (
+                {photos.map((photoUri, index) => (
                     <View key={index} style={styles.photoCard}>
                         <Image 
-                            source={{ uri: URL.createObjectURL(photo) }} 
+                            source={{ uri: photoUri }} 
                             style={styles.photoImage}
                         />
                         <TouchableOpacity 
@@ -92,7 +62,7 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
                 {photos.length < maxPhotos && (
                     <TouchableOpacity 
                         style={styles.addPhotoCard}
-                        onPress={handlePickImage}
+                        onPress={handleTakePhoto}
                     >
                         <Text style={styles.addIcon}>+</Text>
                         <Text style={styles.addText}>Add Photo</Text>
