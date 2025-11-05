@@ -19,23 +19,23 @@ export const ImportantNotesCard: React.FC<ImportantNotesCardProps> = ({
 }) => {
     return (
         <View style={styles.container}>
-        <SectionTitle title="Important Notes" />
+        <SectionTitle title="Ghi Chú Quan Trọng" />
         <View style={styles.card}>
             <WarningNote
             icon={<CancellationIcon />}
-            title="Cancellation policy"
+            title="Chính Sách Hủy Đặt Xe"
             description={cancellationPolicy}
             type="warning"
             />
             <WarningNote
             icon={<LateArrivalIcon />}
-            title="Late arrival"
+            title="Tới Trễ"
             description={lateArrivalPolicy}
             type="warning"
             />
             <ContactButton
             icon={<PhoneIcon />}
-            label="Emergency Hotline"
+            label="Đường Dây Nóng"
             value={emergencyHotline}
             onPress={onEmergencyCall}
             variant="primary"

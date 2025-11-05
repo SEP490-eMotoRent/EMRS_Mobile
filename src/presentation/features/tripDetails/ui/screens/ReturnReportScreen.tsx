@@ -40,22 +40,21 @@ export const ReturnReportScreen: React.FC = () => {
   const fetchSummaryReceipt = async () => {
     try {
       setLoading(true);
-
       const getBookingByIdUseCase = new RentalReturnSummaryUseCase(
         sl.get("RentalReturnRepository")
       );
       const summaryResponse = await getBookingByIdUseCase.execute(bookingId);
       const summaryData: SummaryResponse = unwrapResponse(summaryResponse);
       setSummary(summaryData);
-    } catch (error) {
-      Alert.alert("Error", `Không thể lấy tổng tiền: ${error.message}`);
+    } catch (error: any) {
+      Alert.alert("Lỗi", `Không thể tải báo cáo: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const formatVnd = (n: number) =>
-    new Intl.NumberFormat("vi-VN").format(n) + " VND";
+    new Intl.NumberFormat("vi-VN").format(n) + "đ";
 
   const handleFinalizeReturn = async () => {
     try {
@@ -71,17 +70,15 @@ export const ReturnReportScreen: React.FC = () => {
         finalizeReturnResponse
       );
 
-      // Navigate to Return Complete screen
       navigation.navigate("ReturnComplete");
     } catch (error: any) {
-      Alert.alert("Error", `Không thể kết thúc trả xe: ${error.message}`);
+      Alert.alert("Lỗi", `Không thể hoàn tất trả xe: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = () => {
-    console.log("handleApprove");
     handleFinalizeReturn();
   };
 
@@ -92,29 +89,28 @@ export const ReturnReportScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Header */}
         <ScreenHeader
-          title="Return Report"
+          title="Báo cáo trả xe"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
           showBackButton={true}
         />
 
-        {/* Orange actionable banner */}
+        {/* Banner cảnh báo */}
         <View style={styles.banner}>
           <AntDesign name="exclamation-circle" size={14} color="#FFEDD5" />
           <View style={{ flex: 1 }}>
             <Text style={styles.bannerTitle}>
-              Action Required: Review your return report
+              Vui lòng kiểm tra kỹ báo cáo
             </Text>
             <Text style={styles.bannerSub}>
-              Submitted on {new Date().toLocaleString()}
+              Đã báo cáo vào {new Date().toLocaleString("vi-VN")}
             </Text>
           </View>
         </View>
 
-        {/* Vehicle card */}
+        {/* Xe */}
         <View style={styles.card}>
           <View style={styles.rowBetween}>
             <View>
@@ -122,14 +118,14 @@ export const ReturnReportScreen: React.FC = () => {
               <Text style={styles.vehicleMeta}>59X1-12345</Text>
             </View>
             <View style={styles.statusPill}>
-              <Text style={styles.statusPillText}>Awaiting Approval</Text>
+              <Text style={styles.statusPillText}>Chờ duyệt</Text>
             </View>
           </View>
         </View>
 
-        {/* Photos */}
+        {/* Ảnh */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Vehicle Condition Photos</Text>
+          <Text style={styles.cardHeader}>Ảnh tình trạng xe</Text>
           <View style={styles.photoRow}>
             {[1, 2, 3].map((i) => (
               <View key={i} style={styles.photoItem}>
@@ -143,85 +139,84 @@ export const ReturnReportScreen: React.FC = () => {
           <TouchableOpacity style={styles.successBtn}>
             <AntDesign name="check-circle" size={14} color="#16A34A" />
             <Text style={styles.successBtnText}>
-              Identity & vehicle verified
+              Danh tính & xe đã được kiểm tra
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.linkRow}>
-            <Text style={styles.linkText}>View AI Report</Text>
+            <Text style={styles.linkText}>Xem báo cáo</Text>
             <AntDesign name="right" size={12} color={colors.text.secondary} />
           </TouchableOpacity>
         </View>
 
-        {/* Odometer & Usage */}
+        {/* Odometer */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Odometer & Usage</Text>
+          <Text style={styles.cardHeader}>Đồng hồ công tơ mét</Text>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Start Odometer</Text>
-            <Text style={styles.kvVal}>1,234 km</Text>
+            <Text style={styles.kvKey}>Bắt đầu</Text>
+            <Text style={styles.kvVal}>1.234 km</Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>End Odometer</Text>
-            <Text style={styles.kvVal}>1,390 km</Text>
+            <Text style={styles.kvKey}>Kết thúc</Text>
+            <Text style={styles.kvVal}>1.390 km</Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Distance Traveled</Text>
+            <Text style={styles.kvKey}>Quãng đường</Text>
             <Text style={styles.kvVal}>156 km</Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Excess KM</Text>
+            <Text style={styles.kvKey}>Vượt quá</Text>
             <Text style={[styles.kvVal, { color: "#F59E0B" }]}>56 km</Text>
           </View>
         </View>
 
-        {/* Charges Summary */}
+        {/* Phí */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Charges Summary</Text>
+          <Text style={styles.cardHeader}>Tổng hợp chi phí</Text>
 
           <View style={styles.kvRow}>
-            <Text style={styles.kvDim}>Total Additional Fees</Text>
+            <Text style={styles.kvDim}>Tổng phụ phí</Text>
             <Text style={styles.kvStrong}>
               {formatVnd(summary?.totalAmount || 0)}
             </Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Distance Fee</Text>
+            <Text style={styles.kvKey}>Phí quãng đường</Text>
             <Text style={styles.kvVal}>
               {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
             </Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Battery Fee</Text>
+            <Text style={styles.kvKey}>Phí sạc pin</Text>
             <Text style={styles.kvVal}>
               {formatVnd(summary?.totalChargingFee || 0)}
             </Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Damage Fee</Text>
+            <Text style={styles.kvKey}>Phí hư hỏng</Text>
             <Text style={styles.kvVal}>
               {formatVnd(summary?.feesBreakdown.damageFee || 0)}
             </Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Late Return</Text>
+            <Text style={styles.kvKey}>Trả muộn</Text>
             <Text style={styles.kvVal}>
               {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
             </Text>
           </View>
           <View style={styles.kvRow}>
-            <Text style={styles.kvKey}>Deposit</Text>
+            <Text style={styles.kvKey}>Tiền cọc</Text>
             <Text style={styles.kvVal}>
               {formatVnd(summary?.depositAmount || 0)}
             </Text>
           </View>
 
           <View style={[styles.kvRow, styles.topLine]}>
-            <Text style={styles.kvStrong}>Refund Amount</Text>
+            <Text style={styles.kvStrong}>Hoàn tiền</Text>
             <Text
               style={[
                 styles.kvStrong,
                 {
-                  color:
-                    (summary?.refundAmount || 0) >= 0 ? "#22C55E" : "#F97316",
+                  color: (summary?.refundAmount || 0) >= 0 ? "#22C55E" : "#F97316",
                 },
               ]}
             >
@@ -230,15 +225,12 @@ export const ReturnReportScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Action Buttons */}
+        {/* Nút hành động */}
         <TouchableOpacity style={styles.primaryCta} onPress={handleApprove}>
-          <Text style={styles.primaryCtaText}>Approve & Make Payment</Text>
+          <Text style={styles.primaryCtaText}>Phê duyệt & Thanh toán</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.secondaryCta}
-          onPress={handleRequestRecheck}
-        >
-          <Text style={styles.secondaryCtaText}>Request Recheck</Text>
+        <TouchableOpacity style={styles.secondaryCta} onPress={handleRequestRecheck}>
+          <Text style={styles.secondaryCtaText}>Yêu cầu kiểm tra lại</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
