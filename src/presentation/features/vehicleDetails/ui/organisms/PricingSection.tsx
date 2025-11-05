@@ -18,7 +18,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
 }) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Rental Pricing (VND)</Text>
+            <Text style={styles.title}>Giá Thuê Xe (VND)</Text>
             
             <ScrollView 
                 horizontal 
@@ -35,7 +35,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
             </ScrollView>
 
             <View style={styles.depositContainer}>
-                <Text style={styles.depositLabel}>Security Deposit</Text>
+                <Text style={styles.depositLabel}>Đặt Cọc</Text>
                 <Text style={styles.depositAmount}>{securityDeposit}</Text>
             </View>
         </View>
