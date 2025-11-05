@@ -58,13 +58,12 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
     const getCurrentDateTimeDisplay = (): string => {
         const now = new Date();
-        return now.toLocaleString('en-US', {
-            month: 'numeric',
+        return now.toLocaleString('vi-VN', {
             day: 'numeric',
+            month: 'numeric',
             year: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
-            hour12: true,
         });
     };
 
@@ -73,8 +72,8 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
             const audioUri = await stopRecording();
             if (audioUri) {
                 Alert.alert(
-                    'Voice Recording Saved',
-                    'Voice transcription feature coming soon. Please type your description manually.',
+                    'Ghi âm đã lưu',
+                    'Tính năng chuyển giọng nói thành văn bản sẽ sớm ra mắt. Vui lòng nhập mô tả bằng tay.',
                     [{ text: 'OK' }]
                 );
             }
@@ -85,25 +84,25 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
     const handleSubmit = async () => {
         if (!validate()) {
-            Alert.alert('Validation Error', 'Please fix the errors below');
+            Alert.alert('Lỗi xác thực', 'Vui lòng sửa các lỗi bên dưới');
             return;
         }
 
         const incidentDate = getIncidentDateTime();
         if (!incidentDate) {
-            Alert.alert('Error', 'Invalid date or time. Please check your input.');
+            Alert.alert('Lỗi', 'Ngày giờ không hợp lệ. Vui lòng kiểm tra lại.');
             return;
         }
 
         const imageFiles = formData.photos.map((uri, index) => ({
             uri,
             type: 'image/jpeg',
-            name: `incident_${Date.now()}_${index}.jpg`,
+            name: `su_co_${Date.now()}_${index}.jpg`,
         })) as any[];
 
         const request: CreateInsuranceClaimRequest = {
             bookingId,
-            incidentDate, // ← Date object, as required by model
+            incidentDate,
             incidentLocation: formData.incidentLocation,
             description: formData.description,
             incidentImageFiles: imageFiles.length > 0 ? imageFiles : undefined,
@@ -112,11 +111,11 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
         const result = await createClaim(request);
 
         if (result) {
-            Alert.alert('Success', 'Insurance claim submitted successfully', [
+            Alert.alert('Thành công', 'Yêu cầu bảo hiểm đã được gửi thành công', [
                 { text: 'OK', onPress: () => navigation.navigate('Trip') },
             ]);
         } else {
-            Alert.alert('Error', apiError || 'Failed to submit claim. Please try again.');
+            Alert.alert('Lỗi', apiError || 'Gửi yêu cầu thất bại. Vui lòng thử lại.');
         }
     };
 
@@ -130,11 +129,11 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
                 <IncidentInfoSection
                     dateTime={getCurrentDateTimeDisplay()}
-                    location={location?.address || 'Fetching location...'}
+                    location={location?.address || 'Đang lấy vị trí...'}
                     address={
                         location
                             ? `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`
-                            : 'GPS coordinates loading...'
+                            : 'Đang tải tọa độ GPS...'
                     }
                     isLoadingLocation={isLoadingLocation}
                     onRefreshLocation={refreshLocation}

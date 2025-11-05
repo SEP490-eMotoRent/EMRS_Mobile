@@ -25,11 +25,11 @@ export const DocumentUploadPlaceholder: React.FC<DocumentUploadPlaceholderProps>
         <View style={styles.container}>
         <TouchableOpacity style={styles.placeholder} onPress={showOptions}>
             <Text style={styles.icon}>📷</Text>
-            <Text style={styles.text}>Tap to upload</Text>
+            <Text style={styles.text}>Nhấn để tải lên</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.placeholder} onPress={showOptions}>
             <Text style={styles.icon}>📷</Text>
-            <Text style={styles.text}>Tap to upload</Text>
+            <Text style={styles.text}>Nhấn để tải lên</Text>
         </TouchableOpacity>
         </View>
     );

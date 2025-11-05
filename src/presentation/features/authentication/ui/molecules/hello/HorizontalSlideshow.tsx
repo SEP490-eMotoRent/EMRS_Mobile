@@ -71,7 +71,7 @@ export const HorizontalSlideshow: React.FC<HorizontalSlideshowProps> = ({
                         imageSource={img}
                         width={imageWidth}
                         height={height}
-                        accessibilityLabel={`Slideshow image ${(index % images.length) + 1}`}
+                        accessibilityLabel={`Hình ảnh slideshow ${(index % images.length) + 1}`}
                     />
                 ))}
             </Animated.View>

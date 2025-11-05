@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { StatusIcon } from "../atoms/icons/StatusIcon";
-import { InfoBullet } from "../atoms/text/InfoBullet";
+import { StatusIcon } from "../../atoms/icons/StatusIcon";
+import { InfoBullet } from "../../atoms/text/InfoBullet";
 
 export const PaymentNotices: React.FC = () => {
     return (

@@ -20,22 +20,22 @@ export const WalletCard: React.FC<WalletCardProps> = ({
       <View style={styles.walletHeader}>
         <View style={styles.walletTitle}>
           <Icon name="wallet" />
-          <Text style={styles.walletTitleText}>Wallet Balance</Text>
+          <Text style={styles.walletTitleText}>Tiền trong ví</Text>
         </View>
         <TouchableOpacity onPress={onManage}>
-          <Text style={styles.manageText}>Manage</Text>
+          <Text style={styles.manageText}>Quản Lý</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.availableText}>Available</Text>
+      <Text style={styles.availableText}>Số Dư</Text>
       <Text style={styles.balanceAmount}>{balance.toLocaleString()}đ</Text>
 
       <View style={styles.walletActions}>
         <TouchableOpacity style={styles.addFundsButton} onPress={onAddFunds}>
-          <Text style={styles.addFundsText}>+ Add Funds</Text>
+          <Text style={styles.addFundsText}>+ Nạp tiền</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onWithdraw}>
-          <Text style={styles.withdrawText}>Withdraw Money</Text>
+          <Text style={styles.withdrawText}>Rút Tiền</Text>
         </TouchableOpacity>
       </View>
     </View>

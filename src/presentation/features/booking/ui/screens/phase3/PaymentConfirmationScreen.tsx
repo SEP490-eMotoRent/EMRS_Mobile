@@ -10,10 +10,10 @@ import { useAppSelector } from "../../../../authentication/store/hooks";
 import { useCreateBooking } from "../../../hooks/useCreateBooking";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
-import { BookingSummaryCard } from "../../organisms/BookingSummaryCard";
+import { BookingSummaryCard } from "../../organisms/booking/BookingSummaryCard";
 import { CostBreakdown } from "../../organisms/CostBreakdown";
-import { PaymentMethodCard } from "../../organisms/PaymentMethodCard";
-import { PaymentNotices } from "../../organisms/PaymentNotices";
+import { PaymentMethodCard } from "../../organisms/payment/PaymentMethodCard";
+import { PaymentNotices } from "../../organisms/payment/PaymentNotices";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'PaymentConfirmation'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'PaymentConfirmation'>;
@@ -30,7 +30,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
         rentalDays,
         branchName,
         insurancePlan,
-        insurancePlanId,  // ✅ ADDED - This is the actual GUID
+        insurancePlanId,
         rentalFee,
         insuranceFee,
         securityDeposit,
@@ -40,11 +40,9 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("wallet");
 
-    // ✅ Get user from Redux
     const user = useAppSelector((state) => state.auth.user);
     const userId = user?.id;
 
-    // ✅ Get booking use case
     const createBookingUseCase = useMemo(() => 
         sl.get<CreateBookingUseCase>("CreateBookingUseCase"), 
         []
@@ -56,9 +54,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
         navigation.goBack();
     };
 
-    // ✅ Parse date strings to Date objects
     const parseDateString = (dateStr: string): Date => {
-        // "Nov 02 6:00 PM" format
         const months: { [key: string]: number } = {
             Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
             Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
@@ -82,12 +78,11 @@ export const PaymentConfirmationScreen: React.FC = () => {
     };
 
     const handlePayment = async () => {
-        console.log("💳 Processing payment for vehicle:", vehicleId);
-        console.log("💰 Total amount:", total);
+        console.log("Processing payment for vehicle:", vehicleId);
+        console.log("Total amount:", total);
 
-        // ✅ Validate user is logged in
         if (!userId) {
-            Alert.alert("Error", "Please log in to continue booking");
+            Alert.alert("Lỗi", "Vui lòng đăng nhập để tiếp tục đặt xe");
             return;
         }
 
@@ -95,62 +90,53 @@ export const PaymentConfirmationScreen: React.FC = () => {
             const startDateTime = parseDateString(startDate);
             const endDateTime = parseDateString(endDate);
             
-            // ✅ Log parsed dates
-            console.log("📅 Start:", startDate, "→", startDateTime.toISOString());
-            console.log("📅 End:", endDate, "→", endDateTime.toISOString());
+            console.log("Start:", startDate, "→", startDateTime.toISOString());
+            console.log("End:", endDate, "→", endDateTime.toISOString());
 
-            // ✅ TEMPORARY: Use hardcoded branch ID until we implement branch selection
-            // TODO: Replace with actual branch ID from route params or vehicle details
             const TEMP_BRANCH_ID = "019a20b1-8d81-75e2-88bd-de6998d5c79c";
-            console.log("⚠️ Using temporary branch ID:", TEMP_BRANCH_ID);
+            console.log("Using temporary branch ID:", TEMP_BRANCH_ID);
 
-            // ✅ Parse insurance plan ID
-            // insurancePlan should already be a GUID from route params
-            // Only include if it's a valid GUID format (not "none" or plan names)
             const isValidGuid = (str: string) => {
                 const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                 return guidRegex.test(str);
             };
 
-            const insurancePackageId = 
+            const insurancePackageId =
                 insurancePlan && isValidGuid(insurancePlan)
-                    ? insurancePlan 
+                    ? insurancePlan
                     : undefined;
 
-            console.log("🛡️ Insurance Plan:", insurancePlan);
-            console.log("🛡️ Insurance Package ID:", insurancePackageId);
+            console.log("Insurance Plan:", insurancePlan);
+            console.log("Insurance Package ID:", insurancePackageId);
 
             const bookingData = {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
                 endDatetime: endDateTime,
-                handoverBranchId: TEMP_BRANCH_ID,        // ✅ Required
+                handoverBranchId: TEMP_BRANCH_ID,
                 rentalDays: rentalDays,
                 rentalHours: 0,
                 baseRentalFee: parsePrice(rentalFee),
                 depositAmount: parsePrice(securityDeposit),
                 rentingRate: 1.0,
                 averageRentalPrice: parsePrice(rentalFee) / rentalDays,
-                insurancePackageId: insurancePackageId,  // ✅ Optional
+                insurancePackageId: insurancePackageId,
                 totalRentalFee: parsePrice(total),
-                renterId: userId, // ✅ For local entity creation
+                renterId: userId,
             };
 
-            // ✅ Log complete booking data
-            console.log("📦 Booking Data:", JSON.stringify(bookingData, null, 2));
+            console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
 
-            // ✅ Create booking via API
             const booking = await createBooking(bookingData);
 
-            console.log("✅ Booking created successfully!");
-            console.log("📋 Booking ID:", booking.id);
-            console.log("📋 Booking Code:", booking.bookingCode);
-            console.log("📋 Booking Status:", booking.bookingStatus);
+            console.log("Booking created successfully!");
+            console.log("Booking ID:", booking.id);
+            console.log("Booking Code:", booking.bookingCode);
+            console.log("Booking Status:", booking.bookingStatus);
 
-            // ✅ Navigate to completion screen
             navigation.navigate('DigitalContract', {
                 vehicleId,
-                vehicleName: "VinFast Evo200", // TODO: Get from vehicle data
+                vehicleName: "VinFast Evo200",
                 startDate,
                 endDate,
                 duration,
@@ -159,14 +145,13 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 insurancePlan,
                 totalAmount: total,
                 securityDeposit,
-                contractNumber: booking.bookingCode || booking.id, // ✅ Use bookingCode if available
+                contractNumber: booking.bookingCode || booking.id,
             });
         } catch (err: any) {
-            console.error("❌ Booking creation failed:", err);
-            console.error("❌ Error details:", err.response?.data || err.message);
+            console.error("Booking creation failed:", err);
+            console.error("Error details:", err.response?.data || err.message);
             
-            // ✅ Enhanced error handling
-            let errorMessage = "Unable to create booking. Please try again.";
+            let errorMessage = "Không thể tạo đặt xe. Vui lòng thử lại.";
             
             if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
@@ -175,7 +160,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
             }
             
             Alert.alert(
-                "Booking Failed",
+                "Đặt xe thất bại",
                 errorMessage,
                 [{ text: "OK" }]
             );
@@ -189,7 +174,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            <PageHeader title="Payment Confirmation" onBack={handleBack} />
+            <PageHeader title="Xác nhận thanh toán" onBack={handleBack} />
             <ProgressIndicator currentStep={3} totalSteps={4} />
 
             <ScrollView 
@@ -237,7 +222,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
             <View style={styles.footer}>
                 <PrimaryButton
-                    title={bookingLoading ? "Processing..." : `Pay ${total} with Wallet`}
+                    title={bookingLoading ? "Đang xử lý..." : `Thanh toán ${total} bằng Ví`}
                     onPress={handlePayment}
                     disabled={bookingLoading || !isSufficient}
                 />

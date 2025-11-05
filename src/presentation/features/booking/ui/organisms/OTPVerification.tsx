@@ -12,36 +12,36 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ phoneNumber, o
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Enter OTP Code</Text>
+            <Text style={styles.title}>Nhập mã OTP</Text>
             <Text style={styles.subtitle}>
-                We've sent a 6-digit code to your registered phone number ending in {phoneNumber}
+                Chúng tôi đã gửi mã 6 chữ số đến số điện thoại đăng ký của bạn kết thúc bằng {phoneNumber}
             </Text>
             
             <OTPInputGroup values={otpValues} />
             
             <TouchableOpacity style={styles.resendButton} onPress={onResend}>
-                <Text style={styles.resendText}>Resend OTP code</Text>
+                <Text style={styles.resendText}>Gửi lại mã OTP</Text>
             </TouchableOpacity>
             
             <Text style={styles.helpText}>
-                Didn't receive code? Check SMS or call support
+                Không nhận được mã? Kiểm tra tin nhắn hoặc liên hệ hỗ trợ
             </Text>
             
             <View style={styles.notices}>
                 <View style={styles.notice}>
                     <View style={styles.noticeIcon}>
-                        <Text style={styles.noticeIconText}>ⓘ</Text>
+                        <Text style={styles.noticeIconText}>i</Text>
                     </View>
                     <Text style={styles.noticeText}>
-                        This OTP is required to complete your digital signature
+                        Mã OTP này cần thiết để hoàn tất chữ ký số của bạn
                     </Text>
                 </View>
                 <View style={styles.notice}>
                     <View style={styles.noticeIcon}>
-                        <Text style={styles.noticeIconText}>ⓘ</Text>
+                        <Text style={styles.noticeIconText}>i</Text>
                     </View>
                     <Text style={styles.noticeText}>
-                        Do not share this code with anyone
+                        Không chia sẻ mã này với bất kỳ ai
                     </Text>
                 </View>
             </View>

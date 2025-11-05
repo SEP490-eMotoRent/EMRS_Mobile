@@ -10,7 +10,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({ onReportPress }) =
     <View style={styles.section}>
         <ActionButton
             icon="file-text"
-            label="Report Insurance Claim"
+            label="Báo cáo bảo hiểm"
             onPress={onReportPress}
             variant="danger"
         />

@@ -100,7 +100,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                     <Button onPress={props.onBack} style={styles.backButton} variant="ghost">
                         <Icon name="back" size={24} />
                     </Button>
-                    <Text variant="header">Edit Profile</Text>
+                    <Text variant="header">Chỉnh sửa hồ sơ</Text>
                     <Button
                         onPress={props.saving ? undefined : props.onSave}
                         style={styles.saveButton}
@@ -109,7 +109,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         {props.saving ? (
                             <ActivityIndicator size="small" color="#7C3AED" />
                         ) : (
-                            <Text style={styles.saveText}>Save</Text>
+                            <Text style={styles.saveText}>Lưu</Text>
                         )}
                     </Button>
                 </View>
@@ -139,12 +139,12 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
 
                     {/* Identity Documents Section */}
                     <Text variant="title" style={styles.sectionTitle}>
-                        Identity Documents
+                        Căn Cước Công Dân
                     </Text>
 
                     {/* Citizen ID */}
                     <DocumentSection
-                        title="Citizen ID (ID)"
+                        title="Căn Cước Công Dân (CCCD)"
                         iconName="id"
                         documentNumber={props.citizenId}
                         onDocumentNumberChange={props.onCitizenIdChange}
@@ -167,7 +167,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
 
                     {/* Driver's License */}
                     <DocumentSection
-                        title="Driver's License"
+                        title="Giấy Phép Lái Xe"
                         iconName="license"
                         documentNumber={props.licenseNumber}
                         onDocumentNumberChange={props.onLicenseNumberChange}
@@ -210,7 +210,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         <View style={styles.securityButtonContent}>
                             <View style={styles.securityButtonLeft}>
                                 <Icon name="lock" size={20} />
-                                <Text>Change Password</Text>
+                                <Text>Đổi Mật Khẩu</Text>
                             </View>
                             <Icon name="chevron" size={20} color="#666666" />
                         </View>
@@ -225,12 +225,12 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         {props.saving ? (
                             <ActivityIndicator color="#000" />
                         ) : (
-                            <Text style={styles.saveChangesText}>Save Changes</Text>
+                            <Text style={styles.saveChangesText}>Lưu Thay Đổi</Text>
                         )}
                     </Button>
 
                     <Button onPress={props.onCancel} style={styles.cancelButton} variant="ghost">
-                        <Text style={styles.cancelText}>Cancel</Text>
+                        <Text style={styles.cancelText}>Hủy</Text>
                     </Button>
 
                     <View style={styles.bottomPadding} />

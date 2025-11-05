@@ -16,11 +16,11 @@ export const LocationSharingSection: React.FC<LocationSharingSectionProps> = ({
 }) => (
     <View style={styles.section}>
         <TouchableOpacity style={styles.locationHeader} onPress={onSharePress}>
-        <View style={styles.locationHeaderLeft}>
-            <Icon name="location" size={20} />
-            <Text style={styles.locationHeaderText}>Share GPS Location</Text>
-        </View>
-        <ToggleSwitch value={isActive} onValueChange={onToggle} />
+            <View style={styles.locationHeaderLeft}>
+                <Icon name="location" size={20} />
+                <Text style={styles.locationHeaderText}>Chia sẻ vị trí</Text>
+            </View>
+            <ToggleSwitch value={isActive} onValueChange={onToggle} />
         </TouchableOpacity>
         <LocationStatus isActive={isActive} />
     </View>

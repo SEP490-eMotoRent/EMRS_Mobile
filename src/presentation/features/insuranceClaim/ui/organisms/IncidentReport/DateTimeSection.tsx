@@ -20,14 +20,14 @@ export const DateTimeSection: React.FC<DateTimeSectionProps> = ({
   timeError,
 }) => (
   <View style={styles.section}>
-    <Text style={styles.title}>Date & Time *</Text>
+    <Text style={styles.title}>Ngày & Giờ *</Text>
     <View style={styles.inputs}>
       <View style={styles.inputWrapper}>
-        <DateTimeInput value={date} onPress={onDatePress} icon="📅" type="date" />
+        <DateTimeInput value={date} onPress={onDatePress} icon="Calendar" type="date" />
         {dateError && <Text style={styles.errorText}>{dateError}</Text>}
       </View>
       <View style={styles.inputWrapper}>
-        <DateTimeInput value={time} onPress={onTimePress} icon="🕐" type="time" />
+        <DateTimeInput value={time} onPress={onTimePress} icon="Clock" type="time" />
         {timeError && <Text style={styles.errorText}>{timeError}</Text>}
       </View>
     </View>

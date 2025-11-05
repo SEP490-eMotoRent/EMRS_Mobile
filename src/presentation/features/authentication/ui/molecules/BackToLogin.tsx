@@ -9,7 +9,7 @@ interface BackToLoginProps {
 export const BackToLogin: React.FC<BackToLoginProps> = ({ onPress }) => {
     return (
         <View style={styles.container}>
-            <TextLink text="Back to Login" onPress={onPress} />
+            <TextLink text="Quay lại đăng nhập" onPress={onPress} />
         </View>
     );
 };

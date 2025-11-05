@@ -9,32 +9,29 @@ import { FeatureCard } from '../../molecules/features/FeatureCard';
 
 export const WhyChooseSection: React.FC = () => (
     <View style={styles.container}>
-        <Heading2 style={styles.heading}>Why Choose eMotoRent</Heading2>
+        <Heading2 style={styles.heading}>Tại sao chọn eMotoRent</Heading2>
         <BodyText style={styles.subText}>
-        Experience the future of transportation with our premium electric motorbike rental service.
+        Trải nghiệm tương lai giao thông với dịch vụ thuê xe máy điện cao cấp của chúng tôi.
         </BodyText>
 
         <FeatureCard
         icon={<BoltIcon />}
-        title="100% Electric Fleet"
-        description="Our entire fleet consists of premium electric motorbikes, offering zero emissions and a smooth, quiet riding experience."
+        title="Đội xe 100% điện"
+        description="Toàn bộ đội xe gồm xe máy điện cao cấp, không khí thải và trải nghiệm lái êm ái, yên tĩnh."
         />
 
         <FeatureCard
         icon={<BatteryIconFeature />}
-        title="Long Range Capability"
-        description="All our bikes come with extended range batteries, ensuring you can explore the city and beyond without range anxiety."
+        title="Phạm vi xa"
+        description="Tất cả xe đều có pin phạm vi mở rộng, đảm bảo bạn khám phá thành phố và xa hơn mà không lo hết pin."
         />
 
         <FeatureCard
         icon={<ShieldIcon />}
-        title="Comprehensive Insurance"
-        description="Ride with peace of mind knowing you're covered by our comprehensive insurance packages tailored for electric vehicles."
+        title="Bảo hiểm toàn diện"
+        description="Lái xe yên tâm với gói bảo hiểm toàn diện được thiết kế riêng cho xe điện."
         />
 
-        {/* <View style={styles.calloutBox}>
-        <Heading2 style={styles.calloutText}>Tap, Book, Go — It's That Easy</Heading2>
-        </View> */}
     </View>
 );
 
@@ -51,16 +48,5 @@ const styles = StyleSheet.create({
     subText: {
         textAlign: 'center',
         marginBottom: 32,
-    },
-    calloutBox: {
-        backgroundColor: '#1F1F1F',
-        padding: 24,
-        borderRadius: 16,
-        marginTop: 16,
-        marginBottom: 32,
-    },
-    calloutText: {
-        fontSize: 20,
-        textAlign: 'center',
     },
 });

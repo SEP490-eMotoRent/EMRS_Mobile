@@ -10,7 +10,7 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({ isActive }) => (
     <View style={styles.locationStatus}>
         <Checkmark checked={isActive} />
         <Text style={[styles.locationStatusText, isActive && styles.locationStatusTextActive]}>
-        Location sharing {isActive ? 'active' : 'inactive'}
+            Chia Sẻ Vị Trí {isActive ? 'active' : 'inactive'}
         </Text>
     </View>
 );

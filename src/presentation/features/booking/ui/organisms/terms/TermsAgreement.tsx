@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { TermsCheckbox } from "../atoms/checkboxes/TermsCheckbox";
+import { TermsCheckbox } from "../../atoms/checkboxes/TermsCheckbox";
 
 interface TermsAgreementProps {
     checked: boolean;

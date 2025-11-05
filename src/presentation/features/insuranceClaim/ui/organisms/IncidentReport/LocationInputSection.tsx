@@ -13,12 +13,12 @@ export const LocationInputSection: React.FC<LocationInputSectionProps> = ({
     error,
 }) => (
     <View style={styles.section}>
-        <Text style={styles.title}>Incident Location *</Text>
-        <Text style={styles.hint}>Auto-populated from GPS. Edit if needed.</Text>
+        <Text style={styles.title}>Địa điểm sự cố *</Text>
+        <Text style={styles.hint}>Tự động lấy từ GPS. Chỉnh sửa nếu cần.</Text>
         <View style={styles.inputContainer}>
             <TextInput
                 style={styles.input}
-                placeholder="Enter location (e.g., District 7, Ho Chi Minh City)"
+                placeholder="Nhập địa điểm (VD: Quận 7, TP.HCM)"
                 placeholderTextColor="#666"
                 value={value}
                 onChangeText={onChangeText}
@@ -47,16 +47,13 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: '#0A0A0A',
         borderRadius: 8,
-        overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#333',
+        overflow: 'hidden',
     },
     input: {
-        flex: 1,
         padding: 12,
         fontSize: 14,
         color: '#fff',

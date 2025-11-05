@@ -9,10 +9,10 @@ export interface StatusTimelineProps {
 export const StatusTimeline: React.FC<StatusTimelineProps> = ({ statuses }) => {
     return (
         <View style={styles.card}>
-        <Text style={styles.cardTitle}>Current Status</Text>
-        {statuses.map((status, index) => (
-            <StatusItem key={index} {...status} />
-        ))}
+            <Text style={styles.cardTitle}>Trạng thái hiện tại</Text>
+            {statuses.map((status, index) => (
+                <StatusItem key={index} {...status} />
+            ))}
         </View>
     );
 };

@@ -9,7 +9,6 @@ import { SimpleCameraOverlay } from '../atoms/cameras/SimpleCameraOverlay';
 import { Text } from '../atoms/texts/Text';
 import { Button } from '../atoms/buttons/Button';
 
-
 type NavigationProp = StackNavigationProp<TripStackParamList, 'IncidentPhotoCapture'>;
 type RouteProps = RouteProp<TripStackParamList, 'IncidentPhotoCapture'>;
 
@@ -49,8 +48,8 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
                 setCapturedPhoto(photo.uri);
             }
         } catch (error: any) {
-            console.error('Failed to capture photo:', error);
-            Alert.alert('Error', 'Failed to capture photo. Please try again.');
+            console.error('Chụp ảnh thất bại:', error);
+            Alert.alert('Lỗi', 'Không thể chụp ảnh. Vui lòng thử lại.');
         } finally {
             setIsCapturing(false);
         }
@@ -70,12 +69,12 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
     const handleClose = () => {
         if (capturedPhoto) {
             Alert.alert(
-                'Discard Photo?',
-                'Are you sure you want to discard this photo?',
+                'Hủy ảnh?',
+                'Bạn có chắc muốn bỏ ảnh này không?',
                 [
-                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Hủy', style: 'cancel' },
                     { 
-                        text: 'Discard', 
+                        text: 'Bỏ', 
                         style: 'destructive',
                         onPress: () => navigation.goBack()
                     },
@@ -86,7 +85,6 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
         }
     };
 
-    // Permission not determined yet
     if (!permission) {
         return (
             <View style={styles.permissionContainer}>
@@ -95,22 +93,20 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
         );
     }
 
-    // Permission denied
     if (!permission.granted) {
         return (
             <View style={styles.permissionContainer}>
                 <Text variant="title" style={styles.permissionTitle}>
-                    Camera Permission Required
+                    Cần quyền truy cập camera
                 </Text>
                 <Text style={styles.permissionText}>
-                    We need access to your camera to capture incident photos.
+                    Chúng tôi cần quyền truy cập camera để chụp ảnh sự cố.
                 </Text>
-                <Button onPress={requestPermission} label="Grant Permission" />
+                <Button onPress={requestPermission} label="Cấp quyền" />
             </View>
         );
     }
 
-    // Show preview screen if photo is captured
     if (capturedPhoto) {
         return (
             <SafeAreaView style={styles.container}>
@@ -118,10 +114,10 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
                 <View style={styles.previewContainer}>
                     <View style={styles.previewHeader}>
                         <Text variant="title" style={styles.previewTitle}>
-                            Review Photo
+                            Xem lại ảnh
                         </Text>
                         <Text style={styles.previewSubtitle}>
-                            Make sure the incident details are clear and visible
+                            Đảm bảo chi tiết sự cố rõ ràng và dễ thấy
                         </Text>
                     </View>
 
@@ -138,14 +134,14 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
                             onPress={handleRetake} 
                             style={styles.retakeButton}
                         >
-                            <Text style={styles.retakeButtonText}>Retake</Text>
+                            <Text style={styles.retakeButtonText}>Chụp lại</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
                             onPress={handleConfirm} 
                             style={styles.confirmButton}
                         >
-                            <Text style={styles.confirmButtonText}>Use Photo</Text>
+                            <Text style={styles.confirmButtonText}>Dùng ảnh này</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -153,7 +149,6 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
         );
     }
 
-    // Show camera capture screen
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000000" />
@@ -163,7 +158,7 @@ export const IncidentPhotoCaptureScreen: React.FC<IncidentPhotoCaptureScreenProp
                 facing="back"
                 flash={flashMode}
             >
-                <SimpleCameraOverlay instruction="Capture clear photos of the incident, vehicle damage, or scene" />
+                <SimpleCameraOverlay instruction="Chụp ảnh rõ ràng về sự cố, hư hỏng xe hoặc hiện trường" />
 
                 <View style={styles.controlsContainer}>
                     <CaptureControls

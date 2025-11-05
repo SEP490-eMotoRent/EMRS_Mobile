@@ -8,11 +8,11 @@ export interface SafetyChecklistSectionProps {
 
 export const SafetyChecklistSection: React.FC<SafetyChecklistSectionProps> = ({ items }) => (
     <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Safety Checklist</Text>
+        <Text style={styles.sectionTitle}>Kiểm tra an toàn</Text>
         <View style={styles.checklistContainer}>
-        {items.map((item, index) => (
-            <ChecklistItem key={index} text={item} />
-        ))}
+            {items.map((item, index) => (
+                <ChecklistItem key={index} text={item} />
+            ))}
         </View>
     </View>
 );

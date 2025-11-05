@@ -44,14 +44,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue, loading = fals
                 {loginMethod === 'credentials' ? (
                     <>
                         <Input
-                            placeholder="Username"
+                            placeholder="Tên đăng nhập"
                             value={username}
                             onChangeText={setUsername}
                             autoCapitalize="none"
                             editable={!loading}
                         />
                         <Input
-                            placeholder="Password"
+                            placeholder="Mật khẩu"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry={true}
@@ -60,7 +60,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue, loading = fals
                     </>
                 ) : (
                     <Input
-                        placeholder="Phone Number"
+                        placeholder="Số điện thoại"
                         value={phoneNumber}
                         onChangeText={setPhoneNumber}
                         keyboardType="phone-pad"
@@ -70,7 +70,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue, loading = fals
             </View>
 
             <Button
-                title={loading ? 'Signing In...' : 'Continue'}
+                title={loading ? 'Đang đăng nhập...' : 'Tiếp tục'}
                 onPress={handleContinue}
                 variant="primary"
                 style={buttonStyle}

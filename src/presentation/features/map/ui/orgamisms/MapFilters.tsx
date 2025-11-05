@@ -31,17 +31,17 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
             contentContainerStyle={styles.scrollContent}
         >
             <FilterButton
-            label="Price"
+            label="Giá cả"
             onPress={onPricePress}
             isActive={activePriceFilter}
             />
             <FilterButton
-            label="Model"
+            label="Mẫu Xe"
             onPress={onModelPress}
             isActive={activeModelFilter}
             />
             <FilterButton
-            label="Range"
+            label="Giới hạn"
             onPress={onAutopilotPress}
             isActive={activeAutopilotFilter}
             />

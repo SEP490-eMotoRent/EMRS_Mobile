@@ -1,8 +1,7 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { ContractHeader } from "../molecules/phase4/ContractHeader";
-import { ContractInfoRow } from "../molecules/phase4/ContractInfoRow";
-
+import { ContractHeader } from "../../molecules/phase4/ContractHeader";
+import { ContractInfoRow } from "../../molecules/phase4/ContractInfoRow";
 
 interface ContractDetailsCardProps {
     contractNumber: string;
@@ -34,7 +33,7 @@ export const ContractDetailsCard: React.FC<ContractDetailsCardProps> = ({
                     {imageUrl ? (
                         <Image source={{ uri: imageUrl }} style={styles.image} />
                     ) : (
-                        <Text style={styles.placeholder}>🛵</Text>
+                        <Text style={styles.placeholder}>Xe máy điện</Text>
                     )}
                 </View>
                 <View style={styles.vehicleInfo}>
@@ -47,9 +46,9 @@ export const ContractDetailsCard: React.FC<ContractDetailsCardProps> = ({
             <View style={styles.divider} />
 
             <View style={styles.infoSection}>
-                <ContractInfoRow label="Pickup Location" value={pickupLocation} />
-                <ContractInfoRow label="Total Amount" value={totalAmount} highlight />
-                <ContractInfoRow label="Security Deposit" value={securityDeposit} />
+                <ContractInfoRow label="Địa điểm nhận xe" value={pickupLocation} />
+                <ContractInfoRow label="Tổng tiền" value={totalAmount} highlight />
+                <ContractInfoRow label="Tiền đặt cọc" value={securityDeposit} />
             </View>
         </View>
     );

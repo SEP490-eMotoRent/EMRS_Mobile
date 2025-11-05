@@ -10,28 +10,28 @@ export interface PaymentStatusProps {
 }
 
 export const PaymentStatus: React.FC<PaymentStatusProps> = ({
-        depositAmount,
-        insuranceCoverage,
-        liability,
-        expectedRefund,
-    }) => {
-        return (
-            <View style={styles.card}>
-            <Text style={styles.cardTitle}>📋 Payment Status</Text>
-            <DetailRow label="Deposit Amount" value={depositAmount} />
-            <DetailRow label="Insurance Coverage" value={insuranceCoverage} />
+    depositAmount,
+    insuranceCoverage,
+    liability,
+    expectedRefund,
+}) => {
+    return (
+        <View style={styles.card}>
+            <Text style={styles.cardTitle}>Tình trạng thanh toán</Text>
+            <DetailRow label="Số tiền đặt cọc" value={depositAmount} />
+            <DetailRow label="Phạm vi bảo hiểm" value={insuranceCoverage} />
             <DetailRow
-                label="Your Liability"
+                label="Trách nhiệm của bạn"
                 value={liability}
                 valueColor="#F97316"
             />
             <DetailRow
-                label="Expected Refund"
+                label="Hoàn tiền dự kiến"
                 value={expectedRefund}
                 valueColor="#10B981"
             />
-            </View>
-        );
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({

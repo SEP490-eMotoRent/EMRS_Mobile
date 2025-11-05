@@ -5,10 +5,10 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
-import { ContractDetailsCard } from "../../organisms/ContractDetailsCard";
-import { ContractGenerationProgress } from "../../organisms/ContractGenerationProgress";
+import { ContractDetailsCard } from "../../organisms/contract/ContractDetailsCard";
+import { ContractGenerationProgress } from "../../organisms/contract/ContractGenerationProgress";
 import { NextStepsCard } from "../../organisms/NextStepsCard";
-import { PaymentSuccessHeader } from "../../organisms/PaymentSuccessHeader";
+import { PaymentSuccessHeader } from "../../organisms/payment/PaymentSuccessHeader";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'DigitalContract'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'DigitalContract'>;
@@ -38,7 +38,6 @@ export const DigitalContractScreen: React.FC = () => {
 
     const handleViewBooking = () => {
         console.log("View booking details:", contractNumber);
-        // Navigate to Trips tab to see booking
         navigation.getParent()?.getParent()?.navigate('Trips');
     };
 
@@ -58,15 +57,12 @@ export const DigitalContractScreen: React.FC = () => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Payment Success Header */}
                 <PaymentSuccessHeader amount={totalAmount} />
 
-                {/* Contract Generation Progress */}
                 {!contractGenerated && (
                     <ContractGenerationProgress onComplete={handleContractComplete} />
                 )}
 
-                {/* Booking Details (shown after generation) */}
                 {contractGenerated && (
                     <>
                         <ContractDetailsCard
@@ -76,48 +72,45 @@ export const DigitalContractScreen: React.FC = () => {
                             duration={duration}
                             pickupLocation={branchName}
                             totalAmount={totalAmount}
-                            securityDeposit={`${securityDeposit} (refundable)`}
+                            securityDeposit={`${securityDeposit} (có thể hoàn lại)`}
                         />
 
-                        {/* Booking Confirmation Message */}
                         <View style={styles.confirmationCard}>
-                            <Text style={styles.confirmationTitle}>🎉 Booking Confirmed!</Text>
+                            <Text style={styles.confirmationTitle}>Đặt xe thành công!</Text>
                             <Text style={styles.confirmationText}>
-                                Your booking has been successfully created. You will receive a confirmation email shortly.
+                                Đơn đặt xe của bạn đã được tạo thành công. Bạn sẽ nhận được email xác nhận trong giây lát.
                             </Text>
                             <Text style={styles.bookingReference}>
-                                Booking Reference: {contractNumber}
+                                Mã đặt xe: {contractNumber}
                             </Text>
                         </View>
 
-                        {/* Next Steps */}
                         <NextStepsCard />
 
-                        {/* Important Information */}
                         <View style={styles.infoCard}>
-                            <Text style={styles.infoTitle}>📋 Important Information</Text>
+                            <Text style={styles.infoTitle}>Thông tin quan trọng</Text>
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
                                 <Text style={styles.infoText}>
-                                    Please arrive at the branch 15 minutes before your pickup time
+                                    Vui lòng đến chi nhánh trước 20 phút so với giờ đặt nhận xe
                                 </Text>
                             </View>
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
                                 <Text style={styles.infoText}>
-                                    Bring your ID card and driving license
+                                    Mang theo CCCD và giấy phép lái xe
                                 </Text>
                             </View>
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
                                 <Text style={styles.infoText}>
-                                    Security deposit will be refunded within 3-5 business days after return
+                                    Tiền đặt cọc sẽ được hoàn lại trong vòng 7 ngày làm việc sau khi trả xe
                                 </Text>
                             </View>
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
                                 <Text style={styles.infoText}>
-                                    You can view your booking details in the "Trips" tab
+                                    Bạn có thể xem chi tiết đặt xe trong mục "Chuyến đi"
                                 </Text>
                             </View>
                         </View>
@@ -125,15 +118,14 @@ export const DigitalContractScreen: React.FC = () => {
                 )}
             </ScrollView>
 
-            {/* Action Buttons */}
             {contractGenerated && (
                 <View style={styles.footer}>
-                    <PrimaryButton 
-                        title="View My Bookings" 
+                    <PrimaryButton
+                        title="Xem những lần đặt xe"
                         onPress={handleViewBooking}
                     />
-                    <PrimaryButton 
-                        title="Back to Home" 
+                    <PrimaryButton
+                        title="Về trang chủ"
                         onPress={handleGoHome}
                         style={styles.secondaryButton}
                     />

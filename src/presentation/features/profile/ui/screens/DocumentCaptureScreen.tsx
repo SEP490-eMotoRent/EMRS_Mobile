@@ -79,10 +79,10 @@ export const DocumentCaptureScreen: React.FC<DocumentCaptureScreenProps> = ({
             <View style={styles.previewContainer}>
                 <View style={styles.previewHeader}>
                     <Text variant="title" style={styles.previewTitle}>
-                        Review Photo
+                        Kiểm tra ảnh chụp
                     </Text>
                     <Text style={styles.previewSubtitle}>
-                        Make sure the {documentName} is clear and readable
+                        Hãy đảm bảo {documentName} nhìn rõ ràng và có thể đọc được
                     </Text>
                 </View>
 
@@ -101,7 +101,7 @@ export const DocumentCaptureScreen: React.FC<DocumentCaptureScreenProps> = ({
                         variant="secondary"
                         disabled={isProcessing}
                     >
-                        <Text style={styles.retakeButtonText}>Retake</Text>
+                        <Text style={styles.retakeButtonText}>Chụp lại</Text>
                     </Button>
 
                     <Button 
@@ -112,7 +112,7 @@ export const DocumentCaptureScreen: React.FC<DocumentCaptureScreenProps> = ({
                         {isProcessing ? (
                             <ActivityIndicator color="#000" />
                         ) : (
-                            <Text style={styles.confirmButtonText}>Use This Photo</Text>
+                            <Text style={styles.confirmButtonText}>Dùng Hình Này</Text>
                         )}
                     </Button>
                 </View>

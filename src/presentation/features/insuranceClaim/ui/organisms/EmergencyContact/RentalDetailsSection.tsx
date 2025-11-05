@@ -14,11 +14,11 @@ export const RentalDetailsSection: React.FC<RentalDetailsSectionProps> = ({
     branch,
 }) => (
     <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Current Rental Details</Text>
+        <Text style={styles.sectionTitle}>Thông tin xe đang thuê</Text>
         <View style={styles.detailsContainer}>
-        <DetailRow label="Bike Model" value={bikeModel} />
-        <DetailRow label="License Plate" value={licensePlate} />
-        <DetailRow label="Branch" value={branch} />
+            <DetailRow label="Loại xe" value={bikeModel} />
+            <DetailRow label="Biển số" value={licensePlate} />
+            <DetailRow label="Chi nhánh" value={branch} />
         </View>
     </View>
 );
