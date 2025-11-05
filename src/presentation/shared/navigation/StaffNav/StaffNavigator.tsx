@@ -23,7 +23,7 @@ import {
 } from "../../../features/staff/home/ui/screens";
 import { StaffProfileScreen } from "../../../features/staff/profile/ui/screens";
 import { RentalScreen } from "../../../features/staff/rental/ui/screens";
-import { VehicleConfirmationScreen, ReturnInspectionScreen, AIAnalysisScreen } from "../../../features/staff/return/ui/screens";
+import { VehicleConfirmationScreen, ReturnInspectionScreen, AIAnalysisScreen, ManualInspectionScreen, AdditionalFeesScreen, ReturnReportScreen } from "../../../features/staff/return/ui/screens";
 import {
   ScanFaceScreen,
   ScanResultScreen,
@@ -105,6 +105,9 @@ export const StaffNavigator: React.FC = () => {
         />
         <Stack.Screen name="ReturnInspection" component={ReturnInspectionScreen} />
         <Stack.Screen name="AIAnalysis" component={AIAnalysisScreen} />
+        <Stack.Screen name="ManualInspection" component={ManualInspectionScreen} />
+        <Stack.Screen name="AdditionalFees" component={AdditionalFeesScreen} />
+        <Stack.Screen name="ReturnReport" component={ReturnReportScreen} />
         <Stack.Screen name="TrackingGPS" component={TrackingGPSScreen} />
         <Stack.Screen name="ScanFace" component={ScanFaceScreen} />
         <Stack.Screen name="BookingReturnList" component={BookingReturnListScreen} />

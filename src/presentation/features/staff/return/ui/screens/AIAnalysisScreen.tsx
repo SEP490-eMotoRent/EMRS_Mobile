@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -11,26 +10,31 @@ import {
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { StepProgressBar } from "../atoms";
-
-const vehicleImage = require("../../../../../../../assets/images/technician.png");
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type AIAnalysisScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
   "AIAnalysis"
 >;
 
+type AIAnalysisScreenRouteProp = RouteProp<StaffStackParamList, "AIAnalysis">;
+
 export const AIAnalysisScreen: React.FC = () => {
   const navigation = useNavigation<AIAnalysisScreenNavigationProp>();
+  const route = useRoute<AIAnalysisScreenRouteProp>();
+  const { bookingId, analyzeReturnData } = route.params;
   const [confirmIssue, setConfirmIssue] = useState(false);
 
   const handleContinue = () => {
-    console.log("Continue to manual check");
-    // Navigate to next step
+    navigation.navigate("ManualInspection", {
+      bookingId,
+      photos: analyzeReturnData?.uploadedImageUrls,
+    });
   };
 
   const toggleConfirmIssue = () => {
@@ -47,70 +51,148 @@ export const AIAnalysisScreen: React.FC = () => {
           onBack={() => navigation.goBack()}
           showBackButton={true}
         />
-        
+
         <StepProgressBar currentStep={2} totalSteps={4} />
 
         {/* Vehicle Verification Card */}
         <View style={styles.verificationCard}>
-          <View style={styles.verificationIcon}>
-            <AntDesign name="safety" size={32} color="#FFFFFF" />
+          <View
+            style={[
+              styles.verificationIcon,
+              !analyzeReturnData?.verificationResult?.isVerified &&
+                styles.verificationIconWarning,
+            ]}
+          >
+            <AntDesign
+              name={
+                analyzeReturnData?.verificationResult?.isVerified
+                  ? "check-circle"
+                  : "warning"
+              }
+              size={32}
+              color="#FFFFFF"
+            />
           </View>
           <View style={styles.verificationContent}>
             <View style={styles.verificationHeader}>
-              <Text style={styles.verificationTitle}>Vehicle Verified</Text>
-              <AntDesign name="check" size={16} color="#4CAF50" />
+              <Text style={styles.verificationTitle}>
+                {analyzeReturnData?.verificationResult?.isVerified
+                  ? "Vehicle Verified"
+                  : "Verification Failed"}
+              </Text>
+              <AntDesign
+                name={
+                  analyzeReturnData?.verificationResult?.isVerified
+                    ? "check"
+                    : "close-circle"
+                }
+                size={16}
+                color={
+                  analyzeReturnData?.verificationResult?.isVerified
+                    ? "#4CAF50"
+                    : "#FF6B35"
+                }
+              />
             </View>
             <Text style={styles.verificationDescription}>
-              Return Vehicle matched with handover photos
+              {analyzeReturnData?.verificationResult?.reason ||
+                (analyzeReturnData?.verificationResult?.isVerified
+                  ? "Return Vehicle matched with handover photos"
+                  : "Return Vehicle does not match with handover photos")}
             </Text>
+            {analyzeReturnData?.verificationResult?.confidence && (
+              <View style={styles.confidenceBar}>
+                <Text style={styles.confidenceLabel}>Confidence:</Text>
+                <Text style={styles.confidenceValue}>
+                  { analyzeReturnData?.verificationResult?.confidence ? Math.round(
+                    analyzeReturnData?.verificationResult?.confidence * 100
+                  ) : 0}
+                  %
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
         {/* AI Detected Issues Section */}
-        <View style={styles.issuesSection}>
-          <View style={styles.issuesHeader}>
-            <AntDesign name="warning" size={20} color="#FF6B35" />
-            <Text style={styles.issuesTitle}>AI Detected Issues</Text>
-          </View>
-          
-          <View style={styles.issuesCard}>
-            <View style={styles.issueImages}>
-              <Image source={vehicleImage} style={styles.issueImage} />
-              <Image source={vehicleImage} style={styles.issueImage} />
+        {analyzeReturnData?.damageResult?.hasNewDamages ? (
+          <View style={styles.issuesSection}>
+            <View style={styles.issuesHeader}>
+              <AntDesign name="warning" size={20} color="#FF6B35" />
+              <Text style={styles.issuesTitle}>AI Detected Issues</Text>
             </View>
-            
-            <View style={styles.issueDetails}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Location</Text>
-                <Text style={styles.detailValue}>Rear bumper - Right side</Text>
-              </View>
-              
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Severity</Text>
-                <View style={styles.severityTag}>
-                  <Text style={styles.severityText}>Minor</Text>
-                </View>
-              </View>
-              
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>AI Confidence</Text>
-                <Text style={styles.detailValue}>92%</Text>
-              </View>
-              
-              <TouchableOpacity 
-                style={styles.confirmRow}
-                onPress={toggleConfirmIssue}
-              >
-                <View style={styles.checkbox}>
-                  {confirmIssue && (
-                    <AntDesign name="check" size={12} color="#FFFFFF" />
+
+            <View style={styles.issuesCard}>
+              {analyzeReturnData?.uploadedImageUrls &&
+                analyzeReturnData.uploadedImageUrls.length > 0 && (
+                  <View style={styles.issueImages}>
+                    {analyzeReturnData.uploadedImageUrls
+                      .slice(0, 2)
+                      .map((uri, index) => (
+                        <Image
+                          key={index}
+                          source={{ uri }}
+                          style={styles.issueImage}
+                        />
+                      ))}
+                  </View>
+                )}
+
+              <View style={styles.issueDetails}>
+                {analyzeReturnData?.damageResult?.suggestions &&
+                  analyzeReturnData.damageResult.suggestions.length > 0 && (
+                    <>
+                      <Text style={styles.suggestionsTitle}>
+                        Damage Suggestions:
+                      </Text>
+                      {analyzeReturnData.damageResult.suggestions.map(
+                        (suggestion, index) => (
+                          <View key={index} style={styles.suggestionItem}>
+                            <AntDesign
+                              name="exclamation-circle"
+                              size={14}
+                              color="#FF6B35"
+                            />
+                            <Text style={styles.suggestionText}>
+                              {suggestion}
+                            </Text>
+                          </View>
+                        )
+                      )}
+                    </>
                   )}
-                </View>
-                <Text style={styles.confirmText}>Confirm Issue</Text>
-              </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.confirmRow}
+                  onPress={toggleConfirmIssue}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      confirmIssue && styles.checkboxChecked,
+                    ]}
+                  >
+                    {confirmIssue && (
+                      <AntDesign name="check" size={12} color="#FFFFFF" />
+                    )}
+                  </View>
+                  <Text style={styles.confirmText}>Confirm Issue</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.noIssuesCard}>
+            <View style={styles.noIssuesIcon}>
+              <AntDesign name="check-circle" size={48} color="#4CAF50" />
+            </View>
+            <Text style={styles.noIssuesTitle}>No New Damages Detected</Text>
+            <Text style={styles.noIssuesText}>
+              The vehicle condition matches the handover inspection. No new
+              damages found.
+            </Text>
+          </View>
+        )}
 
         {/* Disclaimer Bar */}
         <View style={styles.disclaimerBar}>
@@ -124,7 +206,9 @@ export const AIAnalysisScreen: React.FC = () => {
           style={styles.continueButton}
           onPress={handleContinue}
         >
-          <Text style={styles.continueButtonText}>Continue to Manual Check</Text>
+          <Text style={styles.continueButtonText}>
+            Continue to Manual Check
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -176,6 +260,10 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+  verificationIconWarning: {
+    backgroundColor: "#FF6B35",
+    shadowColor: "#FF6B35",
+  },
   verificationContent: {
     alignItems: "center",
   },
@@ -195,6 +283,23 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: "center",
     lineHeight: 20,
+    marginBottom: 12,
+  },
+  confidenceBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  confidenceLabel: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginRight: 8,
+  },
+  confidenceValue: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: colors.text.primary,
   },
   issuesSection: {
     marginHorizontal: 16,
@@ -236,6 +341,29 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 12,
     backgroundColor: "#444444",
+    resizeMode: "cover",
+  },
+  suggestionsTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.text.primary,
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  suggestionItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 8,
+    backgroundColor: "#1A1A1A",
+    padding: 12,
+    borderRadius: 8,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text.secondary,
+    marginLeft: 8,
+    lineHeight: 18,
   },
   issueDetails: {
     gap: 16,
@@ -283,6 +411,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
+  checkboxChecked: {
+    backgroundColor: "#C9B6FF",
+    borderColor: "#C9B6FF",
+  },
   confirmText: {
     fontSize: 16,
     color: colors.text.primary,
@@ -323,5 +455,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     letterSpacing: 0.5,
+  },
+  noIssuesCard: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 20,
+    padding: 32,
+    marginHorizontal: 16,
+    marginBottom: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#4CAF50",
+  },
+  noIssuesIcon: {
+    marginBottom: 16,
+  },
+  noIssuesTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  noIssuesText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });

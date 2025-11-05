@@ -45,7 +45,7 @@ import { ReceiptRemoteDataSourceImpl } from '../../data/datasources/implementati
 import { ReceiptRepositoryImpl } from '../../data/repositories/receipt/ReceiptRepositoryImpl';
 import { ReceiptRepository } from '../../domain/repositories/receipt/ReceiptRepository';
 import { UpdateRenterProfileUseCase } from "../../domain/usecases/account/Profile/UpdateRenterProfileUseCase";
-import { CreateHandoverReceiptUseCase } from '../../domain/usecases/receipt/CreateHandoverReceiptUseCase';
+import { CreateReceiptUseCase } from '../../domain/usecases/receipt/CreateReceiptUseCase';
 
 import { GenerateContractUseCase } from "../../domain/usecases/contract/GenerateContractUseCase";
 import { GetContractUseCase } from "../../domain/usecases/contract/GetContractUseCase";
@@ -82,6 +82,9 @@ import { InsurancePackageRepository } from "../../domain/repositories/insurance/
 import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
 
 import { AxiosClient } from "../network/AxiosClient";
+import { RentalReturnRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl";
+import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
+import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 
 
 /**
@@ -161,8 +164,8 @@ class ServiceLocator {
     this.services.set("ReceiptRemoteDataSource", receiptRemoteDataSource);
     const receiptRepository = new ReceiptRepositoryImpl(receiptRemoteDataSource);
     this.services.set("ReceiptRepository", receiptRepository);
-    const createHandoverReceiptUseCase = new CreateHandoverReceiptUseCase(receiptRepository);
-    this.services.set("CreateHandoverReceiptUseCase", createHandoverReceiptUseCase);
+    const createReceiptUseCase = new CreateReceiptUseCase(receiptRepository);
+    this.services.set("CreateReceiptUseCase", createReceiptUseCase);
 
     const generateContractUseCase = new GenerateContractUseCase(receiptRepository);
     this.services.set("GenerateContractUseCase", generateContractUseCase);
@@ -210,6 +213,14 @@ class ServiceLocator {
     this.services.set("SearchPlacesUseCase", searchPlacesUseCase);
     const getPlaceDetailsUseCase = new GetPlaceDetailsUseCase(geocodingRepository);
     this.services.set("GetPlaceDetailsUseCase", getPlaceDetailsUseCase);
+  
+    // Rental Return services
+    const rentalReturnRemoteDataSource = new RentalReturnRemoteDataSourceImpl(axiosClient);
+    this.services.set("RentalReturnRemoteDataSource", rentalReturnRemoteDataSource);
+    const rentalReturnRepository = new RentalReturnRepositoryImpl(rentalReturnRemoteDataSource);
+    this.services.set("RentalReturnRepository", rentalReturnRepository);
+    const analyzeReturnUseCase = new AiAnalyzeUseCase(rentalReturnRepository);
+    this.services.set("AiAnalyzeUseCase", analyzeReturnUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -264,8 +275,8 @@ class ServiceLocator {
     return this.get<ReceiptRepository>('ReceiptRepository');
   }
 
-  getCreateHandoverReceiptUseCase(): CreateHandoverReceiptUseCase {
-    return this.get<CreateHandoverReceiptUseCase>('CreateHandoverReceiptUseCase');
+  getCreateReceiptUseCase(): CreateReceiptUseCase {
+    return this.get<CreateReceiptUseCase>('CreateReceiptUseCase');
   }
 
   getGenerateContractUseCase(): GenerateContractUseCase {
@@ -348,6 +359,8 @@ class ServiceLocator {
     return this.get<DeleteDocumentUseCase>('DeleteDocumentUseCase');
   }
 
+  getAiAnalyzeUseCase(): AiAnalyzeUseCase {
+    return this.get<AiAnalyzeUseCase>('AiAnalyzeUseCase');
   getInsurancePackageRepository(): InsurancePackageRepository {
     return this.get<InsurancePackageRepository>('InsurancePackageRepository');
   }

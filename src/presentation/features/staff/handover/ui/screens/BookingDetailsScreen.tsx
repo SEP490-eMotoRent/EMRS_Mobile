@@ -156,6 +156,49 @@ export const BookingDetailsScreen: React.FC = () => {
     booking?.renter?.account?.id === user.id &&
     contract?.contractStatus === "Unsigned";
 
+  // Temporary summary (will be replaced by API output when available)
+  const returnSummary = {
+    baseRentalFee: 3130000,
+    totalChargingFee: 0,
+    totalAdditionalFees: 0,
+    feesBreakdown: {
+      damageFee: 0,
+      cleaningFee: 0,
+      lateReturnFee: 0,
+      crossBranchFee: 0,
+      excessKmFee: 0,
+    },
+    totalAmount: 3130000,
+    depositAmount: 2000000,
+    refundAmount: -1130000,
+  } as const;
+
+  const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " VND";
+
+  const openReturnReport = () => {
+    if (!booking) return;
+    const zero = 0;
+    navigation.navigate("ReturnReport", {
+      bookingId,
+      rentalReceiptId: rentalReceipt?.id || "",
+      settlement: {
+        baseRentalFee: zero,
+        depositAmount: zero,
+        totalAmount: zero,
+        totalChargingFee: zero,
+        totalAdditionalFees: zero,
+        refundAmount: zero,
+        feesBreakdown: {
+          cleaningFee: zero,
+          crossBranchFee: zero,
+          damageFee: zero,
+          excessKmFee: zero,
+          lateReturnFee: zero,
+        },
+      },
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Global loading overlay */}
@@ -299,6 +342,44 @@ export const BookingDetailsScreen: React.FC = () => {
           </InfoCard>
         </View>
 
+        {/* Return Summary */}
+        <View style={styles.section}>
+          <SectionHeader title="Tóm tắt trả xe" icon="profile" />
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryHeaderRow}>
+              <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
+              <View style={styles.summaryPill}><Text style={styles.summaryPillText}>Receipt</Text></View>
+            </View>
+
+            <View style={styles.summaryRow}> 
+              <Text style={styles.summaryKey}>Base Rental Fee</Text>
+              <Text style={styles.summaryVal}>{formatVnd(returnSummary.baseRentalFee)}</Text>
+            </View>
+            <View style={styles.summaryRow}> 
+              <Text style={styles.summaryKey}>Charging Fee</Text>
+              <Text style={styles.summaryVal}>{formatVnd(returnSummary.totalChargingFee)}</Text>
+            </View>
+            <View style={styles.summaryRow}> 
+              <Text style={styles.summaryKey}>Additional Fees</Text>
+              <Text style={styles.summaryVal}>{formatVnd(returnSummary.totalAdditionalFees)}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.summaryRow}> 
+              <Text style={styles.summaryKey}>Deposit Held</Text>
+              <Text style={styles.summaryVal}>{formatVnd(returnSummary.depositAmount)}</Text>
+            </View>
+
+            <View style={[styles.summaryRow, styles.summaryTotalRow]}> 
+              <Text style={styles.summaryTotalLabel}>Refund Amount</Text>
+              <Text style={[styles.summaryTotalValue, { color: returnSummary.refundAmount >= 0 ? '#22C55E' : '#F97316' }]}>
+                {formatVnd(returnSummary.refundAmount)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {hasRentalReceipt && (
           <View style={styles.section}>
             <SectionHeader title="Biên bản bàn giao" icon="file-text" />
@@ -309,6 +390,14 @@ export const BookingDetailsScreen: React.FC = () => {
               >
                 <AntDesign name="file" size={16} color="#000" />
                 <Text style={styles.actionBtnText}>Xem biên bản bàn giao</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.returnReportBtn]}
+                onPress={openReturnReport}
+              >
+                <AntDesign name="file-text" size={18} color="#000" />
+                <Text style={styles.returnReportBtnText}>Báo cáo trả xe</Text>
               </TouchableOpacity>
             </InfoCard>
           </View>
@@ -893,6 +982,22 @@ const styles = StyleSheet.create({
   contractCreateBtnDisabled: {
     opacity: 0.6,
   },
+  returnReportRow: {
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  returnReportBtn: {
+    backgroundColor: "#FFD666",
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 10,
+  },
+  returnReportBtnText: {
+    color: "#000",
+    fontWeight: "700",
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
   contractActionsRow: {
     flexDirection: "row",
     gap: 10,
@@ -926,6 +1031,41 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
+  // Return summary styles
+  summaryCard: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+  },
+  summaryHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  summaryHeaderTitle: { color: colors.text.primary, fontWeight: "700" },
+  summaryPill: {
+    backgroundColor: "rgba(201,182,255,0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+  },
+  summaryPillText: { color: "#C9B6FF", fontWeight: "700", fontSize: 12 },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  summaryKey: { color: colors.text.secondary, fontSize: 12 },
+  summaryVal: { color: colors.text.primary, fontSize: 12, fontWeight: "600" },
+  summaryTotalRow: { borderTopWidth: 1, borderTopColor: "#2A2A2A", paddingTop: 10, marginTop: 6 },
+  summaryTotalLabel: { color: colors.text.primary, fontWeight: "700" },
+  summaryTotalValue: { fontWeight: "800" },
   modalContainer: {
     flex: 1,
     backgroundColor: "#fff",

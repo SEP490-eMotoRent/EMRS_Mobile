@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,35 +7,200 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  Alert,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
-import { AntDesign, Entypo } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
+import { AntDesign } from "@expo/vector-icons";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StepProgressBar } from "../atoms";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { AiAnalyzeUseCase } from "../../../../../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
+import { AnalyzeReturnResponse } from "../../../../../../data/models/rentalReturn/AnalyzeReturnResponse";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 
 const customerAvatar = require("../../../../../../../assets/images/avatar2.png");
+
+type PhotoTileProps = {
+  uri: string | null;
+  labelTop?: string;
+  labelBottom?: string;
+  placeholderTitle?: string;
+  placeholderSubtitle?: string;
+  onPress: () => void;
+  isPrimary?: boolean;
+};
+
+const PhotoTile: React.FC<PhotoTileProps> = ({
+  uri,
+  labelTop,
+  labelBottom,
+  placeholderTitle,
+  placeholderSubtitle,
+  onPress,
+  isPrimary,
+}) => {
+  return (
+    <TouchableOpacity
+      style={[styles.tile, isPrimary && styles.tilePrimary]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      {uri ? (
+        <>
+          <Image source={{ uri }} style={styles.tileImage} />
+          {labelBottom && (
+            <View style={styles.retakeBadge}>
+              <Text style={styles.retakeText}>{labelBottom}</Text>
+            </View>
+          )}
+          {labelTop && <Text style={styles.tileTopLabel}>{labelTop}</Text>}
+        </>
+      ) : (
+        <View style={styles.placeholderInner}>
+          <AntDesign name="camera" size={26} color={colors.text.secondary} />
+          {!!placeholderTitle && (
+            <Text style={styles.placeholderTitle}>{placeholderTitle}</Text>
+          )}
+          {!!placeholderSubtitle && (
+            <Text style={styles.placeholderSubtitle}>
+              {placeholderSubtitle}
+            </Text>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+};
 
 type ReturnInspectionScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
   "ReturnInspection"
 >;
 
-export const ReturnInspectionScreen: React.FC = () => {
-  const navigation = useNavigation<ReturnInspectionScreenNavigationProp>();
-  const [batteryPercentage, setBatteryPercentage] = useState("57");
+type ReturnInspectionScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "ReturnInspection"
+>;
 
-  const handleContinue = () => {
-    console.log("Continue to AI Analysis");
-    navigation.navigate("AIAnalysis");
+export const ReturnInspectionScreen: React.FC = () => {
+  const route = useRoute<ReturnInspectionScreenRouteProp>();
+  const { bookingId } = route.params || {};
+  const navigation = useNavigation<ReturnInspectionScreenNavigationProp>(); 
+
+  const [photos, setPhotos] = useState<Record<string, string | null>>({
+    front: null,
+    back: null,
+    left: null,
+    right: null,
+  });
+  const [loading, setLoading] = useState(false);
+  const ensurePermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    return cam.status === "granted" && lib.status === "granted";
   };
 
-  const handleCapturePhoto = (angle: string) => {
-    console.log(`Capture photo for ${angle}`);
-    // Open camera for photo capture
+  const getPhotosCount = () => {
+    return Object.values(photos).filter(Boolean).length;
+  };
+
+  const handleContinue = async () => {
+    try {
+
+      // Validate required fields
+      // if (!endOdometerKm || !endBatteryPercentage) {
+      //   Alert.alert("Lỗi", "Vui lòng nhập số km và % pin bắt đầu");
+      //   setIsSubmitting(false);
+      //   return;
+      // }
+
+      if (!bookingId) {
+        Alert.alert("Lỗi", "Vui lòng chọn booking");
+        return;
+      }
+
+      if (getPhotosCount() < 4) {
+        Alert.alert(
+          "Lỗi",
+          "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)"
+        );
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const analyzeReturnUseCase = new AiAnalyzeUseCase(
+        sl.get("RentalReturnRepository")
+      );
+      
+      const analyzeReturnResponse = await analyzeReturnUseCase.execute({
+        bookingId,
+        returnImages: [photos.front, photos.back, photos.left, photos.right].filter(Boolean) as string[],
+      });
+
+      const analyzeReturnData: AnalyzeReturnResponse = unwrapResponse(analyzeReturnResponse);
+
+      Alert.alert(
+        "Thành công",
+        "Kiểm tra đã được hoàn thành"
+      );
+
+      navigation.navigate("AIAnalysis", {
+        bookingId,
+        analyzeReturnData,
+      });
+    } catch (error) {
+      Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openPicker = async (key: keyof typeof photos) => {
+    const ok = await ensurePermissions();
+    if (!ok) {
+      Alert.alert(
+        "Permission required",
+        "Please grant camera and media permissions."
+      );
+      return;
+    }
+
+    Alert.alert("Add photo", "Choose source", [
+      {
+        text: "Camera",
+        onPress: async () => {
+          const res = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 0.7,
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
+        },
+      },
+      {
+        text: "Library",
+        onPress: async () => {
+          const res = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            quality: 0.7,
+            mediaTypes: ["images"],
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   return (
@@ -55,115 +220,101 @@ export const ReturnInspectionScreen: React.FC = () => {
           <View style={styles.userInfo}>
             <Image source={customerAvatar} style={styles.userAvatar} />
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>John Nguyen</Text>
-              <Text style={styles.userBranch}>District 2 Branch</Text>
+              <Text style={styles.userName}>Customer Return</Text>
+              <Text style={styles.userBranch}>Booking ID: {bookingId ? `#${bookingId.slice(-10)}` : 'N/A'}</Text>
             </View>
           </View>
 
           <View style={styles.vehicleInfo}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Vehicle</Text>
-              <Text style={styles.infoValue}>VinFast Evo200 - 59X1-12345</Text>
+              <Text style={styles.infoLabel}>Trạng thái</Text>
+              <View style={styles.statusBadge}>
+                <AntDesign name="car" size={12} color="#FFC107" />
+                <Text style={styles.statusBadgeText}>Đang kiểm tra</Text>
+              </View>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Return Time</Text>
-              <Text style={styles.infoValue}>11:00 AM</Text>
+              <Text style={styles.infoLabel}>Thời gian kiểm tra</Text>
+              <Text style={styles.infoValue}>{new Date().toLocaleTimeString("vi-VN")}</Text>
             </View>
           </View>
         </View>
 
         {/* Capture Vehicle Photos Section */}
         <View style={styles.photoSection}>
-          <Text style={styles.sectionTitle}>
-            Capture Vehicle Photos (4 angles required)
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              Chụp ảnh xe (Yêu cầu 4 góc)
+            </Text>
+            <View style={styles.photoCountBadge}>
+              <Text style={styles.photoCountText}>
+                {getPhotosCount()}/4
+              </Text>
+            </View>
+          </View>
           <View style={styles.photoGrid}>
-            <TouchableOpacity
-              style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Front")}
-            >
-              <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Front</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Rear")}
-            >
-              <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Rear</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Left Side")}
-            >
-              <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Left Side</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.photoCard}
-              onPress={() => handleCapturePhoto("Right Side")}
-            >
-              <AntDesign name="camera" size={24} color="#FFFFFF" />
-              <Text style={styles.photoLabel}>Right Side</Text>
-              <Text style={styles.photoSubtext}>Tap to Capture</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Battery Status Section */}
-        <View style={styles.batterySection}>
-          <Text style={styles.sectionTitle}>Battery Status</Text>
-
-          <View style={styles.batteryContainer}>
-            <View style={styles.batteryCircle}>
-              <View style={styles.batteryInner}>
-                <Text style={styles.batteryPercentage}>57%</Text>
-                <View style={styles.batteryIcon}>
-                  <Entypo name="battery" size={16} color="#4CAF50" />
-                </View>
-              </View>
-            </View>
-            <Text style={styles.batteryLabel}>Current Battery %</Text>
-          </View>
-
-          <View style={styles.batteryInputContainer}>
-            <View style={styles.inputWrapper}>
-              <AntDesign name="edit" size={16} color={colors.text.secondary} />
-              <TextInput
-                style={styles.batteryInput}
-                value={batteryPercentage}
-                onChangeText={setBatteryPercentage}
-                keyboardType="numeric"
-                placeholder="Enter battery %"
-                placeholderTextColor={colors.text.secondary}
-              />
-            </View>
-          </View>
-
-          <View style={styles.lastRecordedContainer}>
-            <AntDesign
-              name="clock-circle"
-              size={14}
-              color={colors.text.secondary}
+            <PhotoTile
+              uri={photos.front}
+              placeholderTitle="Mặt trước"
+              placeholderSubtitle="Chạm để chụp"
+              onPress={() => openPicker("front")}
+              isPrimary
             />
-            <Text style={styles.lastRecorded}>Last recorded: 85%</Text>
+
+            <PhotoTile
+              uri={photos.back}
+              placeholderTitle="Mặt sau"
+              placeholderSubtitle="Chạm để chụp"
+              onPress={() => openPicker("back")}
+            />
+
+            <PhotoTile
+              uri={photos.left}
+              placeholderTitle="Bên trái"
+              placeholderSubtitle="Chạm để chụp"
+              onPress={() => openPicker("left")}
+            />
+
+            <PhotoTile
+              uri={photos.right}
+              placeholderTitle="Bên phải"
+              placeholderSubtitle="Chạm để chụp"
+              onPress={() => openPicker("right")}
+            />
           </View>
         </View>
 
         {/* Continue Button */}
         <TouchableOpacity
-          style={styles.continueButton}
+          style={[styles.continueButton, loading && styles.continueButtonDisabled]}
           onPress={handleContinue}
+          disabled={loading}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+                      {loading ? (
+              <>
+                <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.continueButtonText}>Đang phân tích...</Text>
+              </>
+            ) : (
+              <Text style={styles.continueButtonText}>Tiếp tục</Text>
+            )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.continueButton}
+          onPress={() => navigation.navigate("AIAnalysis", { bookingId, analyzeReturnData: null })}
+        >
+          <Text style={styles.continueButtonText}>Tiếp tục</Text>
         </TouchableOpacity>
       </ScrollView>
+      {/* Loading Modal while scanning */}
+      <Modal transparent visible={loading} animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <ActivityIndicator size="large" color="#C9B6FF" />
+            <Text style={styles.modalTitle}>Đang phân tích</Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -249,18 +400,47 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   photoSection: {
+    backgroundColor: "#1E1E1E",
+    borderRadius: 16,
     marginHorizontal: 16,
+    padding: 16,
+    marginBottom: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: colors.text.primary,
-    marginBottom: 16,
+    flex: 1,
+  },
+  photoCountBadge: {
+    backgroundColor: "#C9B6FF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  photoCountText: {
+    color: "#000",
+    fontSize: 12,
+    fontWeight: "700",
   },
   photoGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    gap: 10,
   },
   photoCard: {
     width: "48%",
@@ -291,82 +471,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
   },
-  batterySection: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 20,
-    padding: 24,
-    marginHorizontal: 16,
-    marginBottom: 32,
-  },
-  batteryContainer: {
-    alignItems: "center",
-    marginBottom: 28,
-  },
-  batteryCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 6,
-    borderColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-    shadowColor: "#4CAF50",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  batteryInner: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  batteryPercentage: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: colors.text.primary,
-    marginBottom: 4,
-  },
-  batteryIcon: {
-    marginTop: 4,
-  },
-  batteryLabel: {
-    fontSize: 16,
-    color: colors.text.secondary,
-    fontWeight: "500",
-  },
-  batteryInputContainer: {
-    marginBottom: 16,
-  },
-  inputWrapper: {
+  statusBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.input.background,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: "#444444",
+    backgroundColor: "rgba(255, 193, 7, 0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
   },
-  batteryInput: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.text.primary,
-    marginLeft: 12,
-    fontWeight: "500",
-  },
-  lastRecordedContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  lastRecorded: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginLeft: 8,
+  statusBadgeText: {
+    color: "#FFC107",
+    fontSize: 12,
+    fontWeight: "600",
   },
   continueButton: {
     backgroundColor: "#1E3A8A",
@@ -389,5 +506,70 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     letterSpacing: 0.5,
+  },
+  continueButtonDisabled: {
+    opacity: 0.6,
+  },
+  tile: {
+    width: "48%",
+    backgroundColor: "#2A2A2A",
+    borderRadius: 12,
+    height: 120,
+    overflow: "hidden",
+    position: "relative",
+  },
+  tilePrimary: { height: 120 },
+  tileImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  placeholderInner: { flex: 1, alignItems: "center", justifyContent: "center" },
+  placeholderTitle: {
+    color: colors.text.secondary,
+    marginTop: 10,
+    textTransform: "lowercase",
+  },
+  placeholderSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  retakeBadge: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  retakeText: { color: "#fff", fontSize: 12 },
+  tileTopLabel: {
+    position: "absolute",
+    bottom: 6,
+    left: 8,
+    color: "#fff",
+    fontWeight: "600",
+  },modalBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCard: {
+    width: 280,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    backgroundColor: "#222",
+    borderRadius: 16,
+    alignItems: "center",
+    gap: 12,
+  },
+  modalTitle: {
+    marginTop: 8,
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.text.primary,
   },
 });
