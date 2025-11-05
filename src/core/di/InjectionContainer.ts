@@ -361,6 +361,8 @@ class ServiceLocator {
 
   getAiAnalyzeUseCase(): AiAnalyzeUseCase {
     return this.get<AiAnalyzeUseCase>('AiAnalyzeUseCase');
+  }
+
   getInsurancePackageRepository(): InsurancePackageRepository {
     return this.get<InsurancePackageRepository>('InsurancePackageRepository');
   }
