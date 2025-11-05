@@ -1,5 +1,4 @@
-// src/features/auth/screens/OTPVerificationScreen/OTPVerificationScreen.tsx
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react';
 import {
@@ -37,12 +36,12 @@ export const OTPVerificationScreen: React.FC = () => {
             // Simulate API call delay
             await new Promise(resolve => setTimeout(resolve, 1500));
 
-            // ✅ SUCCESS: Just navigate to Login
+            // SUCCESS: Just navigate to Login
             navigation.navigate('Login');
 
         } catch (error: any) {
-            Alert.alert('Verification Failed', error.message || 'Invalid code');
-            console.error('❌ OTP verification error:', error);
+            Alert.alert('Xác minh thất bại', error.message || 'Mã không hợp lệ');
+            console.error('OTP verification error:', error);
         } finally {
             setLoading(false);
         }
@@ -56,10 +55,10 @@ export const OTPVerificationScreen: React.FC = () => {
             // Simulate API call delay
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            Alert.alert('Success', 'Verification code sent!');
+            Alert.alert('Thành công', 'Mã xác minh đã được gửi!');
         } catch (error: any) {
-            Alert.alert('Error', 'Failed to resend code');
-            console.error('❌ Resend OTP error:', error);
+            Alert.alert('Lỗi', 'Gửi lại mã thất bại');
+            console.error('Resend OTP error:', error);
         }
     };
 

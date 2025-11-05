@@ -29,32 +29,29 @@ export const OTPForm: React.FC<OTPFormProps> = ({
         newOtp[index] = text;
         setOtp(newOtp);
 
-        // ✅ Auto-focus next input when typing
+        // Auto-focus next input when typing
         if (text && index < 5) {
             inputRefs.current[index + 1]?.focus();
         }
 
-        // ✅ Auto-verify when all 6 digits are entered
+        // Auto-verify when all 6 digits are entered
         if (text && index === 5) {
             const fullCode = [...newOtp.slice(0, 5), text].join('');
             if (fullCode.length === 6) {
-                // Small delay to show the last digit before verifying
                 setTimeout(() => onVerify(fullCode), 100);
             }
         }
     };
 
     const handleKeyPress = (e: any, index: number) => {
-        // ✅ Handle backspace - go to previous input
+        // Handle backspace - go to previous input
         if (e.nativeEvent.key === 'Backspace') {
             if (!otp[index] && index > 0) {
-                // If current is empty, go back and clear previous
                 const newOtp = [...otp];
                 newOtp[index - 1] = '';
                 setOtp(newOtp);
                 inputRefs.current[index - 1]?.focus();
             } else if (otp[index]) {
-                // If current has value, just clear it
                 const newOtp = [...otp];
                 newOtp[index] = '';
                 setOtp(newOtp);
@@ -78,9 +75,9 @@ export const OTPForm: React.FC<OTPFormProps> = ({
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Verify Your Email</Text>
+            <Text style={styles.title}>Xác minh email</Text>
             <Text style={styles.subtitle}>
-                We've sent a 6-digit code to{'\n'}
+                Chúng tôi đã gửi mã 6 chữ số đến{'\n'}
                 <Text style={styles.email}>{email}</Text>
             </Text>
 
@@ -99,7 +96,7 @@ export const OTPForm: React.FC<OTPFormProps> = ({
             </View>
 
             <Button
-                title={loading ? 'Verifying...' : 'Verify'}
+                title={loading ? 'Đang xác minh...' : 'Xác minh'}
                 onPress={handleVerify}
                 variant="primary"
                 style={verifyButtonStyle}
@@ -116,7 +113,7 @@ export const OTPForm: React.FC<OTPFormProps> = ({
             )}
 
             <View style={styles.resendContainer}>
-                <Text style={styles.resendText}>Didn't receive the code? </Text>
+                <Text style={styles.resendText}>Chưa nhận được mã? </Text>
                 <ResendCodeButton onPress={onResend} disabled={loading} />
             </View>
         </View>

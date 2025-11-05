@@ -9,7 +9,6 @@ import {
     View,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { colors } from '../../../../common/theme/colors';
 
 interface DateOfBirthPickerProps {
     visible: boolean;
@@ -54,18 +53,18 @@ export const DateOfBirthPicker: React.FC<DateOfBirthPickerProps> = ({
     const formatDateDisplay = (dateStr: string | undefined) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const months = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];        
         return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     };
 
     const markedDates = tempDate
         ? {
-              [tempDate]: {
-                  selected: true,
-                  selectedColor: '#b8a4ff',
-                  selectedTextColor: '#000',
-              },
-          }
+                [tempDate]: {
+                    selected: true,
+                    selectedColor: '#b8a4ff',
+                    selectedTextColor: '#000',
+                },
+            }
         : {};
 
     return (
@@ -81,13 +80,13 @@ export const DateOfBirthPicker: React.FC<DateOfBirthPickerProps> = ({
                         <View style={styles.sheet}>
                             {/* Header */}
                             <View style={styles.header}>
-                                <Text style={styles.headerTitle}>Select Date of Birth</Text>
+                                <Text style={styles.headerTitle}>Chọn ngày sinh</Text>
                                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                                     <Text style={styles.closeIcon}>✕</Text>
                                 </TouchableOpacity>
                             </View>
 
-                            <Text style={styles.subtitle}>You must be at least 16 years old</Text>
+                            <Text style={styles.subtitle}>Bạn phải từ 16 tuổi trở lên</Text>
 
                             {/* Calendar */}
                             <View style={styles.calendarContainer}>
@@ -113,7 +112,7 @@ export const DateOfBirthPicker: React.FC<DateOfBirthPickerProps> = ({
                             {/* Selected Date Display */}
                             {tempDate && (
                                 <View style={styles.selectedDateContainer}>
-                                    <Text style={styles.selectedLabel}>Selected:</Text>
+                                    <Text style={styles.selectedLabel}>Đã chọn:</Text>
                                     <Text style={styles.selectedDate}>
                                         {formatDateDisplay(tempDate)}
                                     </Text>
@@ -126,7 +125,7 @@ export const DateOfBirthPicker: React.FC<DateOfBirthPickerProps> = ({
                                     style={styles.cancelButton} 
                                     onPress={onClose}
                                 >
-                                    <Text style={styles.cancelText}>Cancel</Text>
+                                    <Text style={styles.cancelText}>Hủy</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[
@@ -136,7 +135,7 @@ export const DateOfBirthPicker: React.FC<DateOfBirthPickerProps> = ({
                                     onPress={handleConfirm}
                                     disabled={!tempDate}
                                 >
-                                    <Text style={styles.confirmText}>Confirm</Text>
+                                    <Text style={styles.confirmText}>Xác Nhận</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>

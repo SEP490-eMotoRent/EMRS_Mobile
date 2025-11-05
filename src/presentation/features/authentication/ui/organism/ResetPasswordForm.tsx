@@ -27,7 +27,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onSubmit }
             </View>
 
             <Button
-                title="Reset Password"
+                title="Đặt lại mật khẩu"
                 onPress={handleSubmit}
                 variant="primary"
             />

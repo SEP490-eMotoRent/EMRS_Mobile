@@ -1,4 +1,3 @@
-// features/authentication/ui/screens/LoginScreen.tsx
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
@@ -10,27 +9,27 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
-import { RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { LoginForm } from "../../organism/login/LoginForm";
 import sl from "../../../../../../core/di/InjectionContainer";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
 import { LoginUseCase } from "../../../../../../domain/usecases/account/LoginUseCase";
+import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { colors } from "../../../../../common/theme/colors";
+import { RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { useAppDispatch } from "../../../store/hooks";
+import { addAuth } from "../../../store/slices/authSlice";
 import { BrandTitle } from "../../atoms/BrandTitle";
 import { PrivacyNotice } from "../../atoms/PrivacyNotice";
 import { SignUpPrompt } from "../../atoms/register/SignUpPrompt";
 import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
-import { unwrapResponse } from "../../../../../../core/network/APIResponse";
-import { addAuth } from "../../../store/slices/authSlice";
-import { useAppDispatch } from "../../../store/hooks";
-import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
+import { LoginForm } from "../../organism/login/LoginForm";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   "Auth"
 >;
 
-// ✅ Define JWT payload structure
+// Define JWT payload structure
 interface JWTPayload {
   Id: string;
   UserId: string;
@@ -62,10 +61,10 @@ export const LoginScreen: React.FC = () => {
           password: data.password,
         });
 
-        // ✅ Unwrap to get the JWT token string
+        // Unwrap to get the JWT token string
         const loginData: LoginResponseData  = unwrapResponse(response);
 
-        // ✅ Store auth data in Redux
+        // Store auth data in Redux
         dispatch(
           addAuth({
             token: loginData.accessToken,
@@ -80,20 +79,20 @@ export const LoginScreen: React.FC = () => {
           })
         );
 
-        console.log("✅ Login successful, auth data stored in Redux Persist");
+        console.log("Login successful, auth data stored in Redux Persist");
       } catch (error: any) {
         Alert.alert(
-          "Login Failed",
-          error.message || "Invalid username or password"
+          "Đăng nhập thất bại",
+          error.message || "Tên đăng nhập hoặc mật khẩu không đúng"
         );
-        console.error("❌ Login error:", error);
+        console.error("Login error:", error);
       } finally {
         setLoading(false);
       }
     }
     // Handle phone number login (TODO: Implement later)
     else if (data.phoneNumber) {
-      Alert.alert("Coming Soon", "Phone number login will be available soon!");
+      Alert.alert("Sắp ra mắt", "Đăng nhập bằng số điện thoại sẽ sớm có mặt!");
     }
   };
 
@@ -126,7 +125,7 @@ export const LoginScreen: React.FC = () => {
         >
           <BackButton onPress={() => navigation.goBack()} />
 
-          <BrandTitle subtitle="Sign in to your eMotoRent Account" />
+          <BrandTitle subtitle="Đăng nhập vào tài khoản eMotoRent của bạn" />
 
           <LoginForm onContinue={handleContinue} loading={loading} />
 

@@ -39,7 +39,7 @@ export const LoginMethodSelector: React.FC<LoginMethodSelectorProps> = ({
                     styles.tabText,
                     selectedMethod === 'phone' && styles.tabTextActive
                 ]}>
-                    Phone Number
+                    Số Điện Thoại
                 </Text>
             </TouchableOpacity>
         </View>
