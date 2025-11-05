@@ -1,23 +1,22 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/insuranceClaim/CreateInsuranceClaimRequest';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
-import { ProgressBar } from '../atoms';
-import { SubmitButton } from '../molecules';
-import { 
-    IncidentInfoSection, 
-    PhotosDocumentationSection, 
-    LocationInputSection, 
-    DescriptionSection, 
-    DateTimeSection 
-} from '../organisms';
-import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/CreateInsuranceClaimRequest';
 import { useCreateInsuranceClaim } from '../../hooks/IncidentManagement/useCreateInsuranceClaim';
 import { useFormProgress } from '../../hooks/IncidentManagement/useFormProgress';
 import { useIncidentForm } from '../../hooks/IncidentManagement/useIncidentForm';
-
+import { useLocation } from '../../hooks/IncidentManagement/useLocation';
+import { useVoiceRecording } from '../../hooks/IncidentManagement/useVoiceRecording';
+import { ProgressBar } from '../atoms';
+import { SubmitButton } from '../molecules';
+import {
+    DescriptionSection,
+    IncidentInfoSection,
+    LocationInputSection,
+    PhotosDocumentationSection,
+} from '../organisms';
 
 type NavigationProp = StackNavigationProp<TripStackParamList, 'IncidentReport'>;
 type RouteProp = any;
@@ -35,117 +34,89 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
     const route = useRoute<RouteProp>();
     const { bookingId } = route.params;
 
-    // Form state management
     const {
         formData,
         errors,
         setIncidentLocation,
         setDescription,
-        setDate,
-        setTime,
         addPhoto,
         removePhoto,
         validate,
         getIncidentDateTime,
     } = useIncidentForm();
 
-    // Dynamic progress tracking
+    const { location, isLoading: isLoadingLocation, refreshLocation } = useLocation();
+    const { isRecording, recordingDuration, startRecording, stopRecording } = useVoiceRecording();
     const { progress } = useFormProgress(formData);
-
-    // API hook
     const { isLoading, error: apiError, createClaim } = useCreateInsuranceClaim();
 
-    // Date/Time picker states
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showTimePicker, setShowTimePicker] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    useEffect(() => {
+        if (location && !formData.incidentLocation) {
+            setIncidentLocation(location.address);
+        }
+    }, [location, formData.incidentLocation, setIncidentLocation]);
 
-    // Format current date/time for display
-    const getCurrentDateTimeDisplay = () => {
+    const getCurrentDateTimeDisplay = (): string => {
         const now = new Date();
-        return now.toLocaleString('en-US', { 
+        return now.toLocaleString('en-US', {
             month: 'numeric',
             day: 'numeric',
             year: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
-            hour12: true 
+            hour12: true,
         });
     };
 
-    const handleDateChange = (event: any, selectedDate?: Date) => {
-        setShowDatePicker(false);
-        if (selectedDate) {
-            setSelectedDate(selectedDate);
-            setDate(selectedDate.toISOString().split('T')[0]);
+    const handleVoiceNote = async () => {
+        if (isRecording) {
+            const audioUri = await stopRecording();
+            if (audioUri) {
+                Alert.alert(
+                    'Voice Recording Saved',
+                    'Voice transcription feature coming soon. Please type your description manually.',
+                    [{ text: 'OK' }]
+                );
+            }
+        } else {
+            await startRecording();
         }
-    };
-
-    const handleTimeChange = (event: any, selectedTime?: Date) => {
-        setShowTimePicker(false);
-        if (selectedTime) {
-            const timeString = selectedTime.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            });
-            setTime(timeString);
-        }
-    };
-
-    const handleDatePress = () => {
-        setShowDatePicker(true);
-    };
-
-    const handleTimePress = () => {
-        setShowTimePicker(true);
-    };
-
-    const handleGpsPress = () => {
-        // TODO: Implement GPS location picker
-        Alert.alert('GPS Location', 'GPS location picker will be implemented here');
-    };
-
-    const handleVoiceNote = () => {
-        // TODO: Implement voice recording
-        Alert.alert('Voice Note', 'Voice recording will be implemented here');
     };
 
     const handleSubmit = async () => {
-        // Validate form
         if (!validate()) {
-            Alert.alert('Validation Error', 'Please fill in all required fields correctly');
+            Alert.alert('Validation Error', 'Please fix the errors below');
             return;
         }
 
-        // Prepare request
+        const incidentDate = getIncidentDateTime();
+        if (!incidentDate) {
+            Alert.alert('Error', 'Invalid date or time. Please check your input.');
+            return;
+        }
+
+        const imageFiles = formData.photos.map((uri, index) => ({
+            uri,
+            type: 'image/jpeg',
+            name: `incident_${Date.now()}_${index}.jpg`,
+        })) as any[];
+
         const request: CreateInsuranceClaimRequest = {
-            bookingId: bookingId,
-            incidentDate: getIncidentDateTime(),
+            bookingId,
+            incidentDate, // ← Date object, as required by model
             incidentLocation: formData.incidentLocation,
             description: formData.description,
-            incidentImageFiles: formData.photos.length > 0 ? formData.photos : undefined,
+            incidentImageFiles: imageFiles.length > 0 ? imageFiles : undefined,
         };
 
-        // Submit claim
         const result = await createClaim(request);
 
         if (result) {
-            Alert.alert(
-                'Success',
-                'Insurance claim submitted successfully',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => navigation.navigate('Trip'),
-                    },
-                ]
-            );
+            Alert.alert('Success', 'Insurance claim submitted successfully', [
+                { text: 'OK', onPress: () => navigation.navigate('Trip') },
+            ]);
         } else {
-            Alert.alert(
-                'Error',
-                apiError || 'Failed to submit insurance claim. Please try again.'
-            );
+            Alert.alert('Error', apiError || 'Failed to submit claim. Please try again.');
         }
     };
 
@@ -159,20 +130,26 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
                 <IncidentInfoSection
                     dateTime={getCurrentDateTimeDisplay()}
-                    location="Current Location"
-                    address="To be determined"
+                    location={location?.address || 'Fetching location...'}
+                    address={
+                        location
+                            ? `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`
+                            : 'GPS coordinates loading...'
+                    }
+                    isLoadingLocation={isLoadingLocation}
+                    onRefreshLocation={refreshLocation}
                 />
 
                 <PhotosDocumentationSection
                     photos={formData.photos}
                     onAddPhoto={addPhoto}
                     onRemovePhoto={removePhoto}
+                    bookingId={bookingId}
                 />
 
-                <LocationInputSection 
+                <LocationInputSection
                     value={formData.incidentLocation}
                     onChangeText={setIncidentLocation}
-                    onGpsPress={handleGpsPress}
                     error={errors.incidentLocation}
                 />
 
@@ -181,44 +158,18 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
                     onChangeText={setDescription}
                     onVoiceNote={handleVoiceNote}
                     error={errors.description}
-                />
-
-                <DateTimeSection
-                    date={formData.date}
-                    time={formData.time}
-                    onDatePress={handleDatePress}
-                    onTimePress={handleTimePress}
-                    dateError={errors.date}
-                    timeError={errors.time}
+                    isRecording={isRecording}
+                    recordingDuration={recordingDuration}
                 />
 
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
+                        <ActivityIndicator size="large" color="#7C3AED" />
                     </View>
                 ) : (
                     <SubmitButton onPress={handleSubmit} />
                 )}
             </ScrollView>
-
-            {showDatePicker && (
-                <DateTimePicker
-                    value={selectedDate}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                    maximumDate={new Date()}
-                />
-            )}
-
-            {showTimePicker && (
-                <DateTimePicker
-                    value={selectedDate}
-                    mode="time"
-                    display="default"
-                    onChange={handleTimeChange}
-                />
-            )}
         </View>
     );
 };

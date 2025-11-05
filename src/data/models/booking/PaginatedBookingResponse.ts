@@ -1,5 +1,4 @@
-import { Booking } from "../../../domain/entities/booking/Booking";
-import { BookingResponse } from "./BookingResponse";
+import { BookingResponse } from "./BookingResponseForRenter";
 import { BookingForStaffResponse } from "./staffResponse/BookingResponseForStaff";
 
 export interface PaginatedBookingResponse {

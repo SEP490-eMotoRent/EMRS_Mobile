@@ -5,7 +5,7 @@ export interface IncidentFormData {
     description: string;
     date: string;
     time: string;
-    photos: File[];
+    photos: string[]; // URIs instead of File[]
 }
 
 interface ValidationErrors {
@@ -23,30 +23,29 @@ interface UseIncidentFormResult {
     setDescription: (value: string) => void;
     setDate: (value: string) => void;
     setTime: (value: string) => void;
-    addPhoto: (file: File) => void;
+    addPhoto: (uri: string) => void;
     removePhoto: (index: number) => void;
     validate: () => boolean;
     reset: () => void;
     getIncidentDateTime: () => Date;
 }
 
-// Helper to get current date and time
 const getCurrentDateTime = () => {
     const now = new Date();
     return {
-        date: now.toISOString().split('T')[0], // YYYY-MM-DD
+        date: now.toISOString().split('T')[0],
         time: now.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: true 
-        }),
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+        }).replace(/^0/, '').trim(), // "3:30 PM", not "03:30 PM"
     };
 };
 
 const initialFormData: IncidentFormData = {
     incidentLocation: '',
     description: '',
-    ...getCurrentDateTime(), // Auto-fill with current date/time
+    ...getCurrentDateTime(),
     photos: [],
 };
 
@@ -57,92 +56,129 @@ export const useIncidentForm = (): UseIncidentFormResult => {
     const setIncidentLocation = (value: string) => {
         setFormData(prev => ({ ...prev, incidentLocation: value }));
         if (errors.incidentLocation) {
-        setErrors(prev => ({ ...prev, incidentLocation: undefined }));
+            setErrors(prev => ({ ...prev, incidentLocation: undefined }));
         }
     };
 
     const setDescription = (value: string) => {
         setFormData(prev => ({ ...prev, description: value }));
         if (errors.description) {
-        setErrors(prev => ({ ...prev, description: undefined }));
+            setErrors(prev => ({ ...prev, description: undefined }));
         }
     };
 
     const setDate = (value: string) => {
         setFormData(prev => ({ ...prev, date: value }));
         if (errors.date) {
-        setErrors(prev => ({ ...prev, date: undefined }));
+            setErrors(prev => ({ ...prev, date: undefined }));
         }
     };
 
     const setTime = (value: string) => {
         setFormData(prev => ({ ...prev, time: value }));
         if (errors.time) {
-        setErrors(prev => ({ ...prev, time: undefined }));
+            setErrors(prev => ({ ...prev, time: undefined }));
         }
     };
 
-    const addPhoto = (file: File) => {
+    const addPhoto = (uri: string) => {
         if (formData.photos.length < 4) {
-        setFormData(prev => ({ ...prev, photos: [...prev.photos, file] }));
-        if (errors.photos) {
-            setErrors(prev => ({ ...prev, photos: undefined }));
-        }
+            setFormData(prev => ({ ...prev, photos: [...prev.photos, uri] }));
+            if (errors.photos) {
+                setErrors(prev => ({ ...prev, photos: undefined }));
+            }
         }
     };
 
     const removePhoto = (index: number) => {
         setFormData(prev => ({
-        ...prev,
-        photos: prev.photos.filter((_, i) => i !== index),
+            ...prev,
+            photos: prev.photos.filter((_, i) => i !== index),
         }));
     };
 
-    const convertTo24Hour = (time12h: string): string => {
-        const [time, modifier] = time12h.split(' ');
-        let [hours, minutes] = time.split(':');
-        
-        if (hours === '12') {
-        hours = '00';
-        }
-        
-        if (modifier?.toUpperCase() === 'PM') {
-        hours = String(parseInt(hours, 10) + 12);
-        }
-        
-        return `${hours.padStart(2, '0')}:${minutes}:00`;
+    const convertTo24Hour = (time12h: string): string | null => {
+        if (!time12h || typeof time12h !== 'string') return null;
+
+        // Match: "3:30 PM", "03:45 AM", "12:00 PM"
+        const match = time12h.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (!match) return null;
+
+        let [_, hoursStr, minutesStr, period] = match;
+        const hours = parseInt(hoursStr, 10);
+        const minutes = parseInt(minutesStr, 10);
+
+        // Validate
+        if (isNaN(hours) || isNaN(minutes)) return null;
+        if (hours < 1 || hours > 12) return null;
+        if (minutes < 0 || minutes > 59) return null;
+
+        let hours24 = hours;
+        if (hours === 12) hours24 = 0;
+        if (period.toUpperCase() === 'PM') hours24 += 12;
+
+        return `${hours24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
     };
 
-    const getIncidentDateTime = (): Date => {
-        const time24h = convertTo24Hour(formData.time);
-        return new Date(`${formData.date}T${time24h}`);
+    const getIncidentDateTime = (): Date | null => {
+        try {
+            // Validate date: YYYY-MM-DD
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) {
+                return null;
+            }
+
+            const time24h = convertTo24Hour(formData.time);
+            if (!time24h) return null;
+
+            const isoString = `${formData.date}T${time24h}`;
+            const date = new Date(isoString);
+
+            // Android throws on invalid, iOS returns Invalid Date
+            if (isNaN(date.getTime())) return null;
+
+            // Extra: prevent rollover (Feb 30 → Mar 2)
+            const [y, m, d] = formData.date.split('-').map(Number);
+            if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+                return null;
+            }
+
+            return date;
+        } catch (err) {
+            console.error('Invalid date/time:', err);
+            return null;
+        }
     };
 
     const validate = (): boolean => {
         const newErrors: ValidationErrors = {};
 
         if (!formData.incidentLocation.trim()) {
-        newErrors.incidentLocation = 'Incident location is required';
+            newErrors.incidentLocation = 'Incident location is required';
         }
 
         if (!formData.description.trim()) {
-        newErrors.description = 'Description is required';
+            newErrors.description = 'Description is required';
         } else if (formData.description.trim().length < 10) {
-        newErrors.description = 'Description must be at least 10 characters';
+            newErrors.description = 'Description must be at least 10 characters';
         }
 
         if (!formData.date) {
-        newErrors.date = 'Date is required';
+            newErrors.date = 'Date is required';
+        } else if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) {
+            newErrors.date = 'Invalid date format';
         }
 
         if (!formData.time) {
-        newErrors.time = 'Time is required';
+            newErrors.time = 'Time is required';
+        } else if (!convertTo24Hour(formData.time)) {
+            newErrors.time = 'Invalid time format (use: 3:30 PM)';
         }
 
-        // Optional: Validate incident date is not in the future
         const incidentDate = getIncidentDateTime();
-        if (incidentDate > new Date()) {
-        newErrors.date = 'Incident date cannot be in the future';
+        if (!incidentDate) {
+            newErrors.date = 'Invalid date or time';
+        } else if (incidentDate > new Date()) {
+            newErrors.date = 'Incident date cannot be in the future';
         }
 
         setErrors(newErrors);
@@ -151,8 +187,8 @@ export const useIncidentForm = (): UseIncidentFormResult => {
 
     const reset = () => {
         setFormData({
-        ...initialFormData,
-        ...getCurrentDateTime(), // Reset with fresh current date/time
+            ...initialFormData,
+            ...getCurrentDateTime(),
         });
         setErrors({});
     };

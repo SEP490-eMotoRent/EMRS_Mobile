@@ -1,9 +1,7 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
-import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
-import { Booking } from "../../../../domain/entities/booking/Booking";
-import { RentalContract } from "../../../../domain/entities/booking/RentalContract";
 import { ScanFaceResponse } from "../../../../data/models/account/renter/ScanFaceResponse";
 import { AnalyzeReturnResponse } from "../../../../data/models/rentalReturn/AnalyzeReturnResponse";
+import { VehicleModel } from "../../../../domain/entities/vehicle/VehicleModel";
 
 export type AuthStackParamList = {
   Hello: undefined;
@@ -59,7 +57,7 @@ export type BookingStackParamList = {
     rentalDays: number;
     branchName: string;
     insurancePlan: string;
-    insurancePlanId: string;
+    insurancePlanId?: string;
     rentalFee: string;
     insuranceFee: string;
     securityDeposit: string;
@@ -126,6 +124,10 @@ export type TripStackParamList = {
       address: string;
     };
   };
+  IncidentPhotoCapture: {
+    bookingId: string;
+    onPhotoTaken: (uri: string) => void;
+  };
   TrackingGPS: {
     vehicleId?: string;
     licensePlate?: string;
@@ -136,6 +138,11 @@ export type TripStackParamList = {
 export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
+  DocumentCapture: {
+    documentType: 'citizen' | 'license';
+    side: 'front' | 'back';
+    onPhotoTaken: (uri: string, side: 'front' | 'back') => void;
+  };
   Auth: NavigatorScreenParams<AuthStackParamList>;
 };
 

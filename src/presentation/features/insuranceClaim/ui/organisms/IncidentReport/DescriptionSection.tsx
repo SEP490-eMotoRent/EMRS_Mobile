@@ -1,13 +1,15 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { TextInput } from '../../atoms';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { VoiceNoteButton } from '../../molecules';
+
 
 export interface DescriptionSectionProps {
     value: string;
     onChangeText: (text: string) => void;
     onVoiceNote?: () => void;
     error?: string;
+    isRecording?: boolean;
+    recordingDuration?: number;
 }
 
 export const DescriptionSection: React.FC<DescriptionSectionProps> = ({
@@ -15,6 +17,8 @@ export const DescriptionSection: React.FC<DescriptionSectionProps> = ({
     onChangeText,
     onVoiceNote,
     error,
+    isRecording = false,
+    recordingDuration = 0,
 }) => (
     <View style={styles.section}>
         <Text style={styles.title}>Description *</Text>
@@ -27,7 +31,18 @@ export const DescriptionSection: React.FC<DescriptionSectionProps> = ({
             textAlignVertical="top"
         />
         {error && <Text style={styles.errorText}>{error}</Text>}
-        {onVoiceNote && <VoiceNoteButton onPress={onVoiceNote} />}
+        {onVoiceNote && (
+            <VoiceNoteButton 
+                onPress={onVoiceNote} 
+                isRecording={isRecording}
+                duration={recordingDuration}
+            />
+        )}
+        {isRecording && (
+            <Text style={styles.recordingHint}>
+                Tap again to stop and transcribe
+            </Text>
+        )}
     </View>
 );
 
@@ -48,5 +63,12 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#FF4444',
         marginTop: 8,
+    },
+    recordingHint: {
+        fontSize: 12,
+        color: '#7C3AED',
+        marginTop: 8,
+        textAlign: 'center',
+        fontStyle: 'italic',
     },
 });

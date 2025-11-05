@@ -61,15 +61,22 @@ import { GetBranchByIdUseCase } from '../../domain/usecases/branch/GetBranchById
 import { InsuranceClaimRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/insurance/InsuranceClaimRemoteDataSourceImpl";
 import { InsuranceClaimRepositoryImpl } from "../../data/repositories/insurance/InsuranceClaimRepositoryImpl";
 import { InsuranceClaimRepository } from "../../domain/repositories/insurance/InsuranceClaimRepository";
-import { CreateInsuranceClaimUseCase } from "../../domain/usecases/insurance/CreateInsuranceClaimUseCase";
-import { GetInsuranceClaimDetailUseCase } from "../../domain/usecases/insurance/GetInsuranceClaimDetailUseCase";
-import { GetMyInsuranceClaimsUseCase } from "../../domain/usecases/insurance/GetMyInsuranceClaimsUseCase";
+import { CreateInsuranceClaimUseCase } from "../../domain/usecases/insurance/InsuranceClaim/CreateInsuranceClaimUseCase";
+import { GetInsuranceClaimDetailUseCase } from "../../domain/usecases/insurance/InsuranceClaim/GetInsuranceClaimDetailUseCase";
+import { GetMyInsuranceClaimsUseCase } from "../../domain/usecases/insurance/InsuranceClaim/GetMyInsuranceClaimsUseCase";
 
 // Google Maps Imports
 import { GeocodingRepositoryImpl } from '../../data/repositories/maps/GeocodingRepositoryImpl';
 import { GeocodingRepository } from '../../domain/repositories/map/GeocodingRepository';
 import { GetPlaceDetailsUseCase } from '../../domain/usecases/maps/GetPlaceDetailsUseCase';
 import { SearchPlacesUseCase } from '../../domain/usecases/maps/SearchPlacesUseCase';
+
+// Insurance Package imports
+import { InsurancePackageRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/insurance/InsurancePackageRemoteDataSourceImpl";
+import { InsurancePackageRepositoryImpl } from "../../data/repositories/insurance/InsurancePackageRepositoryImpl";
+import { GetAllInsurancePackagesUseCase } from "../../domain/usecases/insurance/InsurancePackage/GetAllInsurancePackagesUseCase";
+import { GetInsurancePackageByIdUseCase } from "../../domain/usecases/insurance/InsurancePackage/GetInsurancePackageByIdUseCase";
+import { InsurancePackageRepository } from "../../domain/repositories/insurance/InsurancePackageRepository";
 
 // Mapbox Maps Imports
 import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
@@ -78,6 +85,7 @@ import { AxiosClient } from "../network/AxiosClient";
 import { RentalReturnRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl";
 import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
 import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
+
 
 /**
  * Service Locator / Dependency Injection Container
@@ -185,6 +193,16 @@ class ServiceLocator {
     this.services.set("GetMyInsuranceClaimsUseCase", getMyInsuranceClaimsUseCase);
     const getInsuranceClaimDetailUseCase = new GetInsuranceClaimDetailUseCase(insuranceClaimRepository);
     this.services.set("GetInsuranceClaimDetailUseCase", getInsuranceClaimDetailUseCase);
+
+    // Insurance Package services
+    const insurancePackageRemoteDataSource = new InsurancePackageRemoteDataSourceImpl(axiosClient);
+    this.services.set("InsurancePackageRemoteDataSource", insurancePackageRemoteDataSource);
+    const insurancePackageRepository = new InsurancePackageRepositoryImpl(insurancePackageRemoteDataSource);
+    this.services.set("InsurancePackageRepository", insurancePackageRepository);
+    const getAllInsurancePackagesUseCase = new GetAllInsurancePackagesUseCase(insurancePackageRepository);
+    this.services.set("GetAllInsurancePackagesUseCase", getAllInsurancePackagesUseCase);
+    const getInsurancePackageByIdUseCase = new GetInsurancePackageByIdUseCase(insurancePackageRepository);
+    this.services.set("GetInsurancePackageByIdUseCase", getInsurancePackageByIdUseCase);
 
     // Geocoding services
     const geocodingDataSource = new MapboxGeocodingDataSourceImpl();
@@ -343,6 +361,16 @@ class ServiceLocator {
 
   getAiAnalyzeUseCase(): AiAnalyzeUseCase {
     return this.get<AiAnalyzeUseCase>('AiAnalyzeUseCase');
+  getInsurancePackageRepository(): InsurancePackageRepository {
+    return this.get<InsurancePackageRepository>('InsurancePackageRepository');
+  }
+
+  getGetAllInsurancePackagesUseCase(): GetAllInsurancePackagesUseCase {
+    return this.get<GetAllInsurancePackagesUseCase>('GetAllInsurancePackagesUseCase');
+  }
+
+  getGetInsurancePackageByIdUseCase(): GetInsurancePackageByIdUseCase {
+    return this.get<GetInsurancePackageByIdUseCase>('GetInsurancePackageByIdUseCase');
   }
 }
 

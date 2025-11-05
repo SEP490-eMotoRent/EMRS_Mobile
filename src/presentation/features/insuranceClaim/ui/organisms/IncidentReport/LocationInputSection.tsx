@@ -1,21 +1,20 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 
 export interface LocationInputSectionProps {
     value: string;
     onChangeText: (text: string) => void;
-    onGpsPress?: () => void;
     error?: string;
 }
 
 export const LocationInputSection: React.FC<LocationInputSectionProps> = ({ 
     value,
     onChangeText,
-    onGpsPress,
     error,
 }) => (
     <View style={styles.section}>
         <Text style={styles.title}>Incident Location *</Text>
+        <Text style={styles.hint}>Auto-populated from GPS. Edit if needed.</Text>
         <View style={styles.inputContainer}>
             <TextInput
                 style={styles.input}
@@ -24,11 +23,6 @@ export const LocationInputSection: React.FC<LocationInputSectionProps> = ({
                 value={value}
                 onChangeText={onChangeText}
             />
-            {onGpsPress && (
-                <TouchableOpacity style={styles.gpsButton} onPress={onGpsPress}>
-                    <Text style={styles.gpsIcon}>📍</Text>
-                </TouchableOpacity>
-            )}
         </View>
         {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
@@ -45,6 +39,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#fff',
+        marginBottom: 4,
+    },
+    hint: {
+        fontSize: 12,
+        color: '#666',
         marginBottom: 12,
     },
     inputContainer: {
@@ -53,21 +52,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#0A0A0A',
         borderRadius: 8,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#333',
     },
     input: {
         flex: 1,
         padding: 12,
         fontSize: 14,
         color: '#fff',
-    },
-    gpsButton: {
-        padding: 12,
-        backgroundColor: '#2A2A2A',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    gpsIcon: {
-        fontSize: 18,
     },
     errorText: {
         fontSize: 12,
