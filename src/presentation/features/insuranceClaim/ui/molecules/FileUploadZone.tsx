@@ -14,8 +14,8 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({ onUpload }) => {
         >
         <Text style={styles.uploadIcon}>↑</Text>
         <Text style={styles.uploadText}>
-            Drag & drop files here or{' '}
-            <Text style={styles.uploadLink}>browse</Text>
+            Kéo thả file, hoặc{' '}
+            <Text style={styles.uploadLink}>Tìm kiếm</Text>
         </Text>
         <Text style={styles.uploadHint}>PDF, JPG, PNG (max 10MB)</Text>
         </TouchableOpacity>

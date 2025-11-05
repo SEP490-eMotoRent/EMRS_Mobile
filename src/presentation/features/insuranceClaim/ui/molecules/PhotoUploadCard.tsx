@@ -9,7 +9,7 @@ export interface PhotoUploadCardProps {
 export const PhotoUploadCard: React.FC<PhotoUploadCardProps> = ({ onPress, hasPhoto }) => (
     <TouchableOpacity style={styles.card} onPress={onPress}>
         <Text style={styles.icon}>{hasPhoto ? '🖼️' : '📷'}</Text>
-        <Text style={styles.text}>Add Photo</Text>
+        <Text style={styles.text}>Thêm Ảnh</Text>
     </TouchableOpacity>
 );
 

@@ -9,13 +9,13 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-        title,
-        subtitle,
-        onBack,
-        onNotification,
-    }) => {
-        return (
-            <View style={styles.header}>
+    title,
+    subtitle,
+    onBack,
+    onNotification,
+}) => {
+    return (
+        <View style={styles.header}>
             <TouchableOpacity onPress={onBack} style={styles.headerButton}>
                 <Text style={styles.headerIcon}>←</Text>
             </TouchableOpacity>
@@ -28,8 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <Text style={styles.headerIcon}>🔔</Text>
                 </TouchableOpacity>
             )}
-            </View>
-        );
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({

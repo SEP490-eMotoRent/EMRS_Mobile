@@ -13,19 +13,19 @@ export const SatisfactionSurvey: React.FC<SatisfactionSurveyProps> = ({
     feedback,
     onFeedbackChange,
     onSubmit,
-    }) => {
+}) => {
     return (
         <View style={styles.card}>
-        <Text style={styles.cardTitle}>Satisfaction Survey</Text>
-        <Text style={styles.surveyDescription}>
-            Please rate your experience with our incident handling process
-        </Text>
-        <FeedbackInput
-            value={feedback}
-            onChangeText={onFeedbackChange}
-            placeholder="Share your feedback (optional)"
-        />
-        <Button title="Submit Feedback" onPress={onSubmit} variant="primary" />
+            <Text style={styles.cardTitle}>Khảo sát mức độ hài lòng</Text>
+            <Text style={styles.surveyDescription}>
+                Vui lòng đánh giá trải nghiệm xử lý sự cố của chúng tôi
+            </Text>
+            <FeedbackInput
+                value={feedback}
+                onChangeText={onFeedbackChange}
+                placeholder="Chia sẻ ý kiến của bạn (không bắt buộc)"
+            />
+            <Button title="Gửi phản hồi" onPress={onSubmit} variant="primary" />
         </View>
     );
 };

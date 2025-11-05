@@ -11,23 +11,23 @@ export interface IncidentDetailsProps {
 }
 
 export const IncidentDetails: React.FC<IncidentDetailsProps> = ({
-        incidentId,
-        dateTime,
-        vehicle,
-        description,
-    }) => {
-        return (
-            <View style={styles.card}>
-            <Text style={styles.cardTitle}>Incident Details</Text>
-            <DetailRow label="Incident ID" value={incidentId} />
-            <DetailRow label="Date/Time" value={dateTime} />
-            <DetailRow label="Vehicle" value={vehicle} />
+    incidentId,
+    dateTime,
+    vehicle,
+    description,
+}) => {
+    return (
+        <View style={styles.card}>
+            <Text style={styles.cardTitle}>Chi tiết sự cố</Text>
+            <DetailRow label="Mã sự cố" value={incidentId} />
+            <DetailRow label="Ngày/Giờ" value={dateTime} />
+            <DetailRow label="Phương tiện" value={vehicle} />
             <View style={styles.detailRow}>
-                <Label secondary>Description</Label>
+                <Label secondary>Mô tả</Label>
             </View>
             <Text style={styles.description}>{description}</Text>
-            </View>
-        );
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
