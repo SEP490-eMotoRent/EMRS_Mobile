@@ -39,16 +39,16 @@ export const ConfirmedBookingCard: React.FC<ConfirmedBookingCardProps> = ({
                 <BookingReference reference={booking.reference} />
                 
                 <View style={styles.row}>
-                    <Text style={styles.label}>Total amount</Text>
+                    <Text style={styles.label}>Tổng số tiền</Text>
                     <Text style={styles.amount}>{booking.totalAmount}</Text>
                 </View>
                 
                 <View style={styles.actions}>
                     <TouchableOpacity style={styles.primaryButton} onPress={onViewDetails}>
-                        <Text style={styles.primaryButtonText}>View Details</Text>
+                        <Text style={styles.primaryButtonText}>Chi Tiết</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                        <Text style={styles.cancelButtonText}>Hủy</Text>
                     </TouchableOpacity>
                 </View>
             </View>

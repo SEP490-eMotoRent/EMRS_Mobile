@@ -70,7 +70,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                     <View style={styles.warningRow}>
                         <Text style={styles.warningIcon}>⚠️</Text>
                         <View style={styles.warningContent}>
-                            <Text style={styles.warningLabel}>Late return fee</Text>
+                            <Text style={styles.warningLabel}>Phí Trả xe Trễ</Text>
                             <Text style={styles.warningAmount}>{trip.lateReturnFee}</Text>
                         </View>
                     </View>
@@ -98,7 +98,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                                     onRentAgain();
                                 }}
                             >
-                                <Text style={styles.primaryButtonText}>Rent Again</Text>
+                                <Text style={styles.primaryButtonText}>Thuê Lại</Text>
                             </TouchableOpacity>
                             <TouchableOpacity 
                                 style={styles.secondaryButton} 
@@ -107,7 +107,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                                     onViewReceipt();
                                 }}
                             >
-                                <Text style={styles.secondaryButtonText}>📄 View Receipt</Text>
+                                <Text style={styles.secondaryButtonText}>📄 Xem Hóa Đơn</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
@@ -118,7 +118,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                                 onBookSimilar?.();
                             }}
                         >
-                            <Text style={styles.primaryButtonText}>Book Similar</Text>
+                            <Text style={styles.primaryButtonText}>Đặt tương tự</Text>
                         </TouchableOpacity>
                     )}
                 </View>

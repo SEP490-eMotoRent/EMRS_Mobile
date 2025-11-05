@@ -23,7 +23,7 @@ export const TripsScreen: React.FC = () => {
     const navigation = useNavigation<TripsScreenNavigationProp>();
     const [activeTab, setActiveTab] = useState<TabType>("current");
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy, setSortBy] = useState("Recent first");
+    const [sortBy, setSortBy] = useState("Mới nhất");
     const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
 
     const getCurrentRenterBookingsUseCase = useMemo(
@@ -33,72 +33,62 @@ export const TripsScreen: React.FC = () => {
     
     const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(getCurrentRenterBookingsUseCase);
 
-    // ✅ Enhanced mapping with more details from API
-    const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
-        console.log("🔍 Mapping booking:", booking.id, "Status:", booking.bookingStatus);
-        
-        let status: "renting" | "confirmed" | "returned";
-        const bookingStatus = booking.bookingStatus?.toUpperCase();
-        
-        if (bookingStatus === "ACTIVE" || bookingStatus === "RENTING") {
-            status = "renting";
-        } else if (bookingStatus === "CONFIRMED" || bookingStatus === "BOOKED") {
-            status = "confirmed";
-        } else if (bookingStatus === "COMPLETED" || bookingStatus === "RETURNED") {
-            status = "returned";
-        } else if (bookingStatus === "CANCELLED") {
-            return null;
-        } else {
-            status = "confirmed";
-        }
+    // Helper: Format VND
+    const formatVnd = (amount?: number) => amount ? `${amount.toLocaleString('vi-VN')}đ` : undefined;
 
-        const formatDate = (date: Date) => {
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}`;
+    // Helper: Format date (e.g., "24 Thg 9")
+    const formatShortDate = (date: Date) => {
+        const months = ["Thg 1", "Thg 2", "Thg 3", "Thg 4", "Thg 5", "Thg 6",
+                        "Thg 7", "Thg 8", "Thg 9", "Thg 10", "Thg 11", "Thg 12"];
+        return `${date.getDate()} ${months[date.getMonth()]}`;
+    };
+
+    // Map to Current Trip
+    const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
+        const statusMap: Record<string, "renting" | "confirmed" | "returned"> = {
+            "ACTIVE": "renting",
+            "RENTING": "renting",
+            "CONFIRMED": "confirmed",
+            "BOOKED": "confirmed",
+            "COMPLETED": "returned",
+            "RETURNED": "returned",
         };
 
-        const startDate = booking.startDatetime ? formatDate(booking.startDatetime) : "";
-        const endDate = booking.endDatetime ? formatDate(booking.endDatetime) : "";
+        const bookingStatus = booking.bookingStatus?.toUpperCase();
+        const status = statusMap[bookingStatus] || "confirmed";
+        if (bookingStatus === "CANCELLED") return null;
 
-        // ✅ Get vehicle details from nested vehicleModel
-        const vehicleName = booking.vehicleModel?.modelName || "Unknown Vehicle";
+        const startDate = booking.startDatetime ? formatShortDate(booking.startDatetime) : "";
+        const endDate = booking.endDatetime ? formatShortDate(booking.endDatetime) : "";
+        const year = booking.startDatetime?.getFullYear() || "";
+
+        const vehicleName = booking.vehicleModel?.modelName || "Xe không xác định";
         const vehicleCategory = booking.vehicleModel?.category || "";
-        
-        // ✅ Calculate rental duration
+
         const calculateDuration = () => {
             if (booking.rentalDays && booking.rentalDays > 0) {
-                return `${booking.rentalDays} day${booking.rentalDays > 1 ? 's' : ''}`;
+                return `${booking.rentalDays} ngày`;
             }
             if (booking.rentalHours && booking.rentalHours > 0) {
-                return `${booking.rentalHours} hour${booking.rentalHours > 1 ? 's' : ''}`;
+                return `${booking.rentalHours} giờ`;
             }
             return "";
         };
 
-        // ✅ Calculate time remaining or time until start
         const calculateTimeInfo = () => {
             if (!booking.startDatetime) return undefined;
-            
             const now = new Date();
             const start = new Date(booking.startDatetime);
             const end = booking.endDatetime ? new Date(booking.endDatetime) : null;
-            
+
             if (status === "renting" && end) {
                 const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                if (daysLeft > 0) {
-                    return `${daysLeft} day${daysLeft > 1 ? 's' : ''} left`;
-                }
-                return "Ending soon";
+                return daysLeft > 0 ? `${daysLeft} ngày còn lại` : "Sắp kết thúc";
             }
-            
             if (status === "confirmed") {
                 const daysUntil = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                if (daysUntil > 0) {
-                    return `Starts in ${daysUntil} day${daysUntil > 1 ? 's' : ''}`;
-                }
-                return `Starts ${startDate}`;
+                return daysUntil > 0 ? `Bắt đầu sau ${daysUntil} ngày` : `Bắt đầu ${startDate}`;
             }
-            
             return undefined;
         };
 
@@ -106,46 +96,35 @@ export const TripsScreen: React.FC = () => {
             id: booking.id,
             vehicleName,
             vehicleCategory,
-            dates: `${startDate} - ${endDate}, ${booking.startDatetime?.getFullYear() || ""}`,
+            dates: `${startDate} - ${endDate}, ${year}`,
             duration: calculateDuration(),
             status,
             timeInfo: calculateTimeInfo(),
-            reference: `#${booking.id.substring(0, 8)}`,
-            location: "Branch",
-            totalAmount: booking.totalAmount ? `${booking.totalAmount.toLocaleString()}đ` : undefined,
-            depositAmount: booking.depositAmount ? `${booking.depositAmount.toLocaleString()}đ` : undefined,
-            baseRentalFee: booking.baseRentalFee ? `${booking.baseRentalFee.toLocaleString()}đ` : undefined,
+            reference: `#${booking.id.substring(0, 8).toUpperCase()}`,
+            location: "Chi nhánh",
+            totalAmount: formatVnd(booking.totalAmount),
+            depositAmount: formatVnd(booking.depositAmount),
+            baseRentalFee: formatVnd(booking.baseRentalFee),
             hasInsurance: !!booking.insurancePackage,
             vehicleAssigned: !!booking.vehicleId,
         };
     };
 
+    // Map to Past Trip
     const mapBookingToPastTrip = (booking: Booking): PastTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
-        
-        if (bookingStatus !== "COMPLETED" && bookingStatus !== "CANCELLED") {
-            return null;
-        }
+        if (!["COMPLETED", "CANCELLED"].includes(bookingStatus)) return null;
 
-        const formatDate = (date: Date) => {
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}`;
-        };
+        const startDate = booking.startDatetime ? formatShortDate(booking.startDatetime) : "";
+        const endDate = booking.endDatetime ? formatShortDate(booking.endDatetime) : "";
+        const year = booking.startDatetime?.getFullYear() || "";
 
-        const startDate = booking.startDatetime ? formatDate(booking.startDatetime) : "";
-        const endDate = booking.endDatetime ? formatDate(booking.endDatetime) : "";
-
-        const vehicleName = booking.vehicleModel?.modelName || "Unknown Vehicle";
+        const vehicleName = booking.vehicleModel?.modelName || "Xe không xác định";
         const vehicleCategory = booking.vehicleModel?.category || "";
 
-        // ✅ Calculate rental duration for past trips
         const calculateDuration = () => {
-            if (booking.rentalDays && booking.rentalDays > 0) {
-                return `${booking.rentalDays} day${booking.rentalDays > 1 ? 's' : ''}`;
-            }
-            if (booking.rentalHours && booking.rentalHours > 0) {
-                return `${booking.rentalHours} hour${booking.rentalHours > 1 ? 's' : ''}`;
-            }
+            if (booking.rentalDays && booking.rentalDays > 0) return `${booking.rentalDays} ngày`;
+            if (booking.rentalHours && booking.rentalHours > 0) return `${booking.rentalHours} giờ`;
             return "";
         };
 
@@ -153,111 +132,101 @@ export const TripsScreen: React.FC = () => {
             id: booking.id,
             vehicleName,
             vehicleCategory,
-            dates: `${startDate} - ${endDate}, ${booking.startDatetime?.getFullYear() || ""}`,
+            dates: `${startDate} - ${endDate}, ${year}`,
             duration: calculateDuration(),
             status: bookingStatus === "COMPLETED" ? "completed" : "cancelled",
             rating: bookingStatus === "COMPLETED" ? 5 : undefined,
-            totalAmount: booking.totalAmount ? `${booking.totalAmount.toLocaleString()}đ` : undefined,
-            refundedAmount: bookingStatus === "CANCELLED" && booking.depositAmount 
-                ? `${booking.depositAmount.toLocaleString()}đ` 
+            totalAmount: formatVnd(booking.totalAmount),
+            refundedAmount: bookingStatus === "CANCELLED" && booking.depositAmount
+                ? formatVnd(booking.depositAmount)
                 : undefined,
             hadInsurance: !!booking.insurancePackage,
-            lateReturnFee: booking.lateReturnFee && booking.lateReturnFee > 0 
-                ? `${booking.lateReturnFee.toLocaleString()}đ` 
+            lateReturnFee: booking.lateReturnFee && booking.lateReturnFee > 0
+                ? formatVnd(booking.lateReturnFee)
                 : undefined,
         };
     };
 
-    const currentTrips = useMemo(() => {
-        const trips = bookings
-            .map(mapBookingToCurrentTrip)
-            .filter((trip): trip is CurrentTrip => trip !== null);
-        console.log("📊 Current trips count:", trips.length);
-        return trips;
-    }, [bookings]);
+    const currentTrips = useMemo(() => 
+        bookings.map(mapBookingToCurrentTrip).filter((t): t is CurrentTrip => t !== null),
+        [bookings]
+    );
 
-    const pastTrips = useMemo(() => {
-        const trips = bookings
-            .map(mapBookingToPastTrip)
-            .filter((trip): trip is PastTrip => trip !== null);
-        console.log("📊 Past trips count:", trips.length);
-        return trips;
-    }, [bookings]);
+    const pastTrips = useMemo(() => 
+        bookings.map(mapBookingToPastTrip).filter((t): t is PastTrip => t !== null),
+        [bookings]
+    );
 
     const handleNotification = () => {
-        console.log("Open notifications");
+        console.log("Mở thông báo");
     };
 
     const handleSortPress = () => {
-        console.log("Open sort options");
+        console.log("Mở tùy chọn sắp xếp");
     };
 
     const handleViewDetails = (bookingId: string) => {
-        navigation.navigate('BookingDetails', {
-            bookingId,
-        });
+        navigation.navigate('BookingDetails', { bookingId });
     };
 
     const handleExtendRental = (tripId: string) => {
-        console.log("Extend rental", tripId);
+        console.log("Gia hạn thuê", tripId);
     };
 
     const handleReportIssue = (bookingId: string, trip: CurrentTrip) => {
         navigation.navigate('EmergencyContact', {
             bookingId,
             rentalDetails: {
-            bikeModel: trip.vehicleName,
-            licensePlate: 'ABC-123', // TODO: get from API later
-            branch: trip.location || 'Main Branch',
+                bikeModel: trip.vehicleName,
+                licensePlate: 'ABC-123',
+                branch: trip.location || 'Chi nhánh chính',
             },
         });
     };
 
     const handleCancelBooking = (tripId: string) => {
-        console.log("Cancel booking", tripId);
+        console.log("Hủy đặt xe", tripId);
     };
 
     const handleRentAgain = (tripId: string) => {
-        console.log("Rent again", tripId);
+        console.log("Thuê lại", tripId);
     };
 
     const handleViewReceipt = (tripId: string) => {
-        console.log("View receipt", tripId);
+        console.log("Xem hóa đơn", tripId);
     };
 
     const handleBookSimilar = (tripId: string) => {
-        console.log("Book similar", tripId);
+        console.log("Đặt xe tương tự", tripId);
     };
 
-    const filteredCurrentTrips = currentTrips.filter(trip => {
-        if (searchQuery) {
-            return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    trip.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
-        }
-        return true;
-    });
+    const filteredCurrentTrips = currentTrips.filter(trip =>
+        !searchQuery || 
+        trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trip.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const filteredPastTrips = pastTrips.filter(trip => {
         if (pastFilter && trip.status !== pastFilter) return false;
         if (searchQuery) {
             return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
+                   trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
         }
         return true;
     });
 
     const pastFilterTags = [
-        { id: "completed", label: "Completed", count: pastTrips.filter(t => t.status === "completed").length },
-        { id: "cancelled", label: "Cancelled", count: pastTrips.filter(t => t.status === "cancelled").length },
+        { id: "completed", label: "Hoàn thành", count: pastTrips.filter(t => t.status === "completed").length },
+        { id: "cancelled", label: "Đã hủy", count: pastTrips.filter(t => t.status === "cancelled").length },
     ];
 
     const renderCurrentTrips = () => {
         if (loading) {
             return (
                 <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color="#00ff00" />
-                    <Text style={styles.loadingText}>Loading trips...</Text>
+                    <ActivityIndicator size="large" color="#7C4DFF" />
+                    <Text style={styles.loadingText}>Đang tải chuyến đi...</Text>
                 </View>
             );
         }
@@ -265,7 +234,7 @@ export const TripsScreen: React.FC = () => {
         if (error) {
             return (
                 <View style={styles.centerContainer}>
-                    <Text style={styles.errorText}>Error: {error}</Text>
+                    <Text style={styles.errorText}>Lỗi: {error}</Text>
                 </View>
             );
         }
@@ -273,7 +242,7 @@ export const TripsScreen: React.FC = () => {
         return (
             <FlatList
                 data={filteredCurrentTrips}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
                 renderItem={({ item }) => (
                     <CurrentTripCard
                         trip={item}
@@ -286,7 +255,7 @@ export const TripsScreen: React.FC = () => {
                 contentContainerStyle={styles.listContentCurrent}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <Text style={styles.emptyText}>No current trips</Text>
+                    <Text style={styles.emptyText}>Bạn chưa có chuyến đi nào</Text>
                 }
             />
         );
@@ -296,8 +265,8 @@ export const TripsScreen: React.FC = () => {
         if (loading) {
             return (
                 <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color="#00ff00" />
-                    <Text style={styles.loadingText}>Loading trips...</Text>
+                    <ActivityIndicator size="large" color="#7C4DFF" />
+                    <Text style={styles.loadingText}>Đang tải lịch sử...</Text>
                 </View>
             );
         }
@@ -305,7 +274,7 @@ export const TripsScreen: React.FC = () => {
         if (error) {
             return (
                 <View style={styles.centerContainer}>
-                    <Text style={styles.errorText}>Error: {error}</Text>
+                    <Text style={styles.errorText}>Lỗi: {error}</Text>
                 </View>
             );
         }
@@ -313,7 +282,7 @@ export const TripsScreen: React.FC = () => {
         return (
             <FlatList
                 data={filteredPastTrips}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
                 renderItem={({ item, index }) => (
                     <View style={{ marginTop: index === 0 ? 0 : 4 }}>
                         <PastTripCard
@@ -321,18 +290,14 @@ export const TripsScreen: React.FC = () => {
                             onViewDetails={() => handleViewDetails(item.id)}
                             onRentAgain={() => handleRentAgain(item.id)}
                             onViewReceipt={() => handleViewReceipt(item.id)}
-                            onBookSimilar={
-                                item.status === "cancelled"
-                                    ? () => handleBookSimilar(item.id)
-                                    : undefined
-                            }
+                            onBookSimilar={item.status === "cancelled" ? () => handleBookSimilar(item.id) : undefined}
                         />
                     </View>
                 )}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <Text style={styles.emptyText}>No past trips</Text>
+                    <Text style={styles.emptyText}>Chưa có lịch sử chuyến đi</Text>
                 }
             />
         );
@@ -354,12 +319,12 @@ export const TripsScreen: React.FC = () => {
 
             <View style={styles.tabsContainer}>
                 <TabButton
-                    label="Current Trips"
+                    label="Đang diễn ra"
                     isActive={activeTab === "current"}
                     onPress={() => setActiveTab("current")}
                 />
                 <TabButton
-                    label="Past Trips"
+                    label="Lịch sử"
                     isActive={activeTab === "past"}
                     onPress={() => setActiveTab("past")}
                 />
@@ -414,7 +379,7 @@ const styles = StyleSheet.create({
         paddingTop: 40,
     },
     loadingText: {
-        color: "#666",
+        color: "#aaa",
         fontSize: 14,
         marginTop: 12,
     },
