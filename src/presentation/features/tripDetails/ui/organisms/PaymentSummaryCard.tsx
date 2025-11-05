@@ -22,35 +22,34 @@ export const PaymentSummaryCard: React.FC<PaymentSummaryCardProps> = ({
     securityDeposit,
     totalPaid,
     paymentMethod,
-}) => {
+    }) => {
     return (
         <View style={styles.container}>
-        <SectionTitle title="Payment Summary" />
+        <SectionTitle title="Tóm tắt thanh toán" />
         <View style={styles.card}>
-            <PaymentSummaryRow label="Rental fee (2 days 8 hours)" amount={rentalFee} />
+            <PaymentSummaryRow label="Phí thuê (2 ngày 8 giờ)" amount={rentalFee} />
             <PaymentSummaryRow 
-            label="Insurance" 
+            label="Bảo hiểm" 
             amount={insuranceFee} 
             badge={insuranceBadge}
             />
-            <PaymentSummaryRow label="Service fee" amount={serviceFee} />
+            <PaymentSummaryRow label="Phí dịch vụ" amount={serviceFee} />
             <PaymentSummaryRow 
-            label="Security deposit" 
+            label="Tiền cọc" 
             amount={securityDeposit}
             icon={<SecurityDepositIcon />}
             />
             <PaymentSummaryRow 
-            label="Total paid" 
+            label="Tổng thanh toán" 
             amount={totalPaid} 
             isTotal 
             />
             <View style={styles.divider} />
-            <BookingInfoRow label="Payment Method" value={paymentMethod} />
+            <BookingInfoRow label="Phương thức" value={paymentMethod} />
         </View>
         </View>
     );
 };
-
 // Simple icon component
 const SecurityDepositIcon = () => (
     <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#BB86FC' }} />

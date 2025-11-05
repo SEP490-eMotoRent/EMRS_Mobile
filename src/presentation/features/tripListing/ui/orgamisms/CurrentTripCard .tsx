@@ -3,8 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StatusBadge } from "../atoms/badges/StatusBadge";
 import { BookingReference } from "../atoms/text/BookingReference";
 import { TimeRemaining } from "../atoms/text/TimeRemaining";
-import { VehicleInfo } from "../molecules/VehicleInfo";
 import { MapPreview } from "../molecules/MapPreview";
+import { VehicleInfo } from "../molecules/VehicleInfo";
 
 export interface CurrentTrip {
     id: string;
@@ -56,7 +56,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                     {trip.vehicleAssigned && (
                         <View style={styles.indicator}>
                             <Text style={styles.indicatorIcon}>✓</Text>
-                            <Text style={styles.indicatorText}>Vehicle Ready</Text>
+                            <Text style={styles.indicatorText}>Xe đã sẵn sàng</Text>
                         </View>
                     )}
                 </View>
@@ -92,7 +92,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                     <View style={styles.amountSection}>
                         {trip.baseRentalFee && (
                             <View style={styles.row}>
-                                <Text style={styles.label}>Rental fee</Text>
+                                <Text style={styles.label}>Chi phí thuê</Text>
                                 <Text style={styles.value}>{trip.baseRentalFee}</Text>
                             </View>
                         )}
@@ -104,7 +104,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                         )}
                         {trip.totalAmount && (
                             <View style={[styles.row, styles.totalRow]}>
-                                <Text style={styles.totalLabel}>Total amount</Text>
+                                <Text style={styles.totalLabel}>Thành Tiền</Text>
                                 <Text style={styles.totalAmount}>{trip.totalAmount}</Text>
                             </View>
                         )}
@@ -122,7 +122,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                                     onViewDetails();
                                 }}
                             >
-                                <Text style={styles.primaryButtonText}>View Details</Text>
+                                <Text style={styles.primaryButtonText}>Chi Tiết</Text>
                             </TouchableOpacity>
                             {onExtendRental && (
                                 <TouchableOpacity 
@@ -132,7 +132,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                                         onExtendRental();
                                     }}
                                 >
-                                    <Text style={styles.primaryButtonText}>Extend Rental</Text>
+                                    <Text style={styles.primaryButtonText}>Tăng giờ thuê</Text>
                                 </TouchableOpacity>
                             )}
                         </View>
@@ -159,7 +159,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                                 onViewDetails();
                             }}
                         >
-                            <Text style={styles.primaryButtonText}>View Details</Text>
+                            <Text style={styles.primaryButtonText}>Chi Tiết</Text>
                         </TouchableOpacity>
                         {onCancel && (
                             <TouchableOpacity 
@@ -169,7 +169,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                                     onCancel();
                                 }}
                             >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                                <Text style={styles.cancelButtonText}>Hủy</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -183,7 +183,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                             onViewDetails();
                         }}
                     >
-                        <Text style={styles.primaryButtonText}>View Details</Text>
+                        <Text style={styles.primaryButtonText}>Chi Tiết</Text>
                     </TouchableOpacity>
                 )}
             </View>

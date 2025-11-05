@@ -13,7 +13,7 @@ export const TripsHeader: React.FC<TripsHeaderProps> = ({
 }) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>My Bookings</Text>
+            <Text style={styles.title}>Những chuyến xe đã đặt</Text>
             <NotificationBell count={notificationCount} onPress={onNotification} />
         </View>
     );

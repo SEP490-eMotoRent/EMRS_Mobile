@@ -58,7 +58,7 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
             {/* Distance Badge */}
             <View style={styles.topRow}>
                 <Text style={styles.distance}>
-                    {motorcycle.distance.toFixed(2)} Miles Away
+                    Cách Xa {motorcycle.distance.toFixed(2)} Km
                 </Text>
             </View>
 
