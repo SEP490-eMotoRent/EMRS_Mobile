@@ -10,30 +10,30 @@ import { LightningBoltIcon } from '../../atoms/icons/LightningBoltIcon2';
 
 export const TapBookGoSection: React.FC = () => (
     <View style={styles.container}>
-        <Heading1 style={styles.mainHeading}>Tap, Book, Go - It's That Easy</Heading1>
+        <Heading1 style={styles.mainHeading}>Nhấn, Đặt, Đi - Đơn giản vậy thôi</Heading1>
         
         <ProcessStepCard
             icon={<PhoneIcon />}
-            title="Choose Your Bike"
-            description="Top tier electric motorbikes all over the country"
+            title="Chọn xe của bạn"
+            description="Xe máy điện cao cấp khắp cả nước"
         />
         
         <ProcessStepCard
             icon={<LightningBoltIcon />}
-            title="Book Instantly"
-            description="Reserve your bikes in seconds, verify yourself once for your first rental"
+            title="Đặt ngay lập tức"
+            description="Đặt xe trong vài giây, xác minh một lần cho lần thuê đầu tiên"
         />
         
         <ProcessStepCard
             icon={<BikeIcon />}
-            title="Get In & Go"
-            description="Your bike will be ready when you are - Just arrive, pick-up and go!"
+            title="Nhận xe & Đi"
+            description="Xe sẽ sẵn sàng khi bạn đến - Chỉ cần đến, nhận xe và đi!"
         />
         
         <ProcessStepCard
             icon={<ClockIcon />}
-            title="Pickup Or Delivery 24/7"
-            description="Select either pickup or delivery and access your bike via the app no lines or hassles"
+            title="Nhận hoặc giao hàng 24/7"
+            description="Chọn nhận tại chỗ hoặc giao tận nơi và truy cập xe qua ứng dụng, không xếp hàng hay phiền phức"
         />
     </View>
 );

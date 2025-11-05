@@ -4,40 +4,40 @@ import { ComparisonFeature } from '../../molecules/features/ComparisonFeature';
 
 export const ComparisonSection: React.FC = () => {
     const eMotoFeatures = [
-        "No down payment",
-        "Flexible plans starting week to week",
-        "No depreciation or resell fees",
-        "Maintenance included",
-        "Delivered to you, just like lunch",
+        "Không cần đặt cọc",
+        "Gói linh hoạt từ tuần này sang tuần khác",
+        "Không mất giá trị hoặc phí bán lại",
+        "Bảo trì bao gồm",
+        "Giao tận nơi, như đặt cơm",
     ];
 
     const traditionalIssues = [
-        "Thousands of dollars, gone.",
-        "Locked in for years",
-        "Lose money with every mile",
-        "Pay out of pocket for everything",
-        "Not delivered to you",
+        "Hàng nghìn đô la, mất trắng.",
+        "Cam kết nhiều năm",
+        "Mất tiền theo mỗi cây số",
+        "Tự trả mọi chi phí",
+        "Không được giao tận nơi",
     ];
 
     return (
         <View style={styles.section}>
         <View style={styles.comparisonHeader}>
             <Text style={styles.comparisonMainTitle}>
-            More Convenience, Less Commitment
+            Tiện lợi hơn, ít ràng buộc hơn
             </Text>
             <Text style={styles.comparisonSubtitle}>
-            Why eMotoRent Subscriptions Beat Every other option
+            Tại sao thuê xe theo gói eMotoRent vượt trội mọi lựa chọn khác
             </Text>
         </View>
         <View style={styles.comparisonContainer}>
             <View style={styles.comparisonColumn}>
-            <Text style={styles.comparisonColumnTitle}>eMotoRent Subscription</Text>
+            <Text style={styles.comparisonColumnTitle}>Gói thuê eMotoRent</Text>
             {eMotoFeatures.map((feature, index) => (
                 <ComparisonFeature key={index} text={feature} isPositive={true} />
             ))}
             </View>
             <View style={styles.comparisonColumn}>
-            <Text style={styles.comparisonColumnTitle}>Traditional Ownership</Text>
+            <Text style={styles.comparisonColumnTitle}>Sở hữu truyền thống</Text>
             {traditionalIssues.map((issue, index) => (
                 <ComparisonFeature key={index} text={issue} isPositive={false} />
             ))}

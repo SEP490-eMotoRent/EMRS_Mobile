@@ -10,9 +10,9 @@ interface FeaturedBikesSectionProps {
 export const FeaturedBikesSection: React.FC<FeaturedBikesSectionProps> = ({ bikes }) => (
     <View style={styles.container}>
         <View style={styles.header}>
-        <Heading2 style={styles.heading}>Featured Bikes</Heading2>
+        <Heading2 style={styles.heading}>Xe nổi bật</Heading2>
         <TouchableOpacity>
-            <Text style={styles.viewAll}>View all ›</Text>
+            <Text style={styles.viewAll}>Xem tất cả</Text>
         </TouchableOpacity>
         </View>
         <ScrollView
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
     },
     viewAll: {
-        color: '#A78BFA', // purple-300
+        color: '#A78BFA',
         fontSize: 16,
     },
     bikeList: {

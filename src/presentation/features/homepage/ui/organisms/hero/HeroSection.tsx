@@ -13,13 +13,13 @@ export const HeroSection: React.FC = () => (
         <View style={styles.overlay} />
         <View style={styles.textContainer}>
         <Heading1 style={styles.heading}>
-            Ride the Future{'\n'}
-            Premium Electric{'\n'}
-            Motorbike Rentals
+            Chiếc xe tương lai{'\n'}
+            Thuê xe máy điện{'\n'}
+            cao cấp
         </Heading1>
         <BodyText style={styles.body}>
-            Experience the thrill of eco-friendly riding with our premium fleet of electric motorbikes.
-            Zero emissions, maximum excitement.
+            Trải nghiệm cảm giác lái xe thân thiện với môi trường với đội xe máy điện cao cấp của chúng tôi.
+            Không thải khí, tối đa hứng khởi.
         </BodyText>
         </View>
     </View>
