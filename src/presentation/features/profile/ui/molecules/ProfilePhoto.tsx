@@ -31,7 +31,7 @@ export const ProfilePhoto: React.FC<ProfilePhotoProps> = ({ imageUri, onPress })
             <Icon name="camera" size={16} />
             </View>
         </TouchableOpacity>
-        <Text style={styles.label}>Change Photo</Text>
+        <Text style={styles.label}>Đổi Ảnh</Text>
         </View>
     );
 };

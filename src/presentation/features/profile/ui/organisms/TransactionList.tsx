@@ -12,12 +12,12 @@ interface TransactionListProps {
 export const TransactionList: React.FC<TransactionListProps> = ({ transactions, onViewAll }) => {
     return (
         <View style={styles.transactionList}>
-        <Text style={styles.sectionTitle}>Recent Transactions</Text>
+        <Text style={styles.sectionTitle}>Giao Dịch Gần Đây</Text>
         {transactions.map((t, i) => (
             <TransactionItem key={i} {...t} />
         ))}
         <TouchableOpacity style={styles.viewAllButton} onPress={onViewAll}>
-            <Text style={styles.viewAllText}>View All Transactions</Text>
+            <Text style={styles.viewAllText}>Xem Tất Cả Giao Dịch</Text>
             <Icon name="arrow" />
         </TouchableOpacity>
         </View>

@@ -66,13 +66,13 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
         return (
             <View style={styles.permissionContainer}>
                 <Text variant="title" style={styles.permissionTitle}>
-                    Camera Permission Required
+                    Cần quyền truy cập Camera
                 </Text>
                 <Text style={styles.permissionText}>
-                    We need access to your camera to capture document photos.
+                    Chúng tôi cần quyền truy cập camera của bạn để chụp ảnh tài liệu.
                 </Text>
                 <Button onPress={requestPermission} style={styles.permissionButton}>
-                    <Text style={styles.permissionButtonText}>Grant Permission</Text>
+                    <Text style={styles.permissionButtonText}>Cấp Quyền Truy Cập</Text>
                 </Button>
             </View>
         );

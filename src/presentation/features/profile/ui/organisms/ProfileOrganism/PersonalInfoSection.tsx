@@ -36,26 +36,26 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
 }) => {
     return (
         <View style={styles.container}>
-            <Text variant="title" style={styles.title}>Personal Information</Text>
+            <Text variant="title" style={styles.title}>Thông Tin Cá Nhân</Text>
             
             <TextInput
-                label="Full Name*"
+                label="Họ Tên*"
                 value={fullName}
                 onChangeText={onFullNameChange}
-                placeholder="Enter your full name"
+                placeholder="Điền Họ Tên"
             />
 
             <TextInput
-                label="Email Address*"
+                label="Email*"
                 value={email}
                 onChangeText={onEmailChange}
-                placeholder="Enter your email"
+                placeholder="Điền Địa Chỉ Email"
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
 
             <PhoneInput
-                label="Phone Number*"
+                label="Số Điện Thoại*"
                 countryCode={countryCode}
                 phoneNumber={phoneNumber}
                 onCountryCodePress={onCountryCodePress}
@@ -63,17 +63,16 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
             />
 
             <DateInput
-                label="Date of Birth*"
+                label="Ngày Sinh*"
                 value={dateOfBirth}
                 onPress={onDatePress}
             />
 
-            {/* ✅ ADD ADDRESS FIELD */}
             <TextInput
-                label="Address*"
+                label="Địa Chỉ*"
                 value={address}
                 onChangeText={onAddressChange}
-                placeholder="Enter your address"
+                placeholder="Điền Địa Chỉ"
                 multiline
                 numberOfLines={3}
             />
