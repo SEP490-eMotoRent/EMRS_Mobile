@@ -8,7 +8,7 @@ import { DurationText } from "../../atoms/text/DurationText";
 import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
-import { BookingSummary } from "../../organisms/BookingSummary";
+import { BookingSummary } from "../../organisms/booking/BookingSummary";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ConfirmRentalDuration'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRentalDuration'>;
@@ -20,7 +20,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     
     const [startDate, setStartDate] = useState("Sep 01 5:00 PM");
     const [endDate, setEndDate] = useState("Sep 07 5:00 PM");
-    const [duration, setDuration] = useState("7 Days 0 Hours");
+    const [duration, setDuration] = useState("7 Ngày 0 Giờ");
     const [rentalDays, setRentalDays] = useState(7);
 
     console.log("Booking vehicle ID:", vehicleId);
@@ -66,7 +66,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const formatDateDisplay = (dateStr: string, timeStr: string) => {
         const date = new Date(dateStr);
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
         return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')} ${timeStr}`;
     };
 
@@ -86,7 +86,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             
             const { days, hours } = calculateDuration(startDateStr, endDateStr, startTimeStr, endTimeStr);
             
-            setDuration(`${days} Days ${hours} Hours`);
+            setDuration(`${days} Ngày ${hours} Giờ`);
             setRentalDays(days > 0 ? days : 1);
         }
     };
@@ -104,7 +104,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     
     return (
         <View style={styles.container}>
-            <PageHeader title="Renting Duration" onBack={handleBack} />
+            <PageHeader title="Thời gian thuê" onBack={handleBack} />
             <ProgressIndicator currentStep={1} totalSteps={4} />
 
             <ScrollView 
@@ -127,7 +127,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             </ScrollView>
 
             <View style={styles.footer}>
-                <PrimaryButton title="Continue" onPress={handleContinue} />
+                <PrimaryButton title="Tiếp tục" onPress={handleContinue} />
             </View>
         </View>
     );

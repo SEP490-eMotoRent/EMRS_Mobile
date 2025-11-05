@@ -1,8 +1,8 @@
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { RadioButton } from "../atoms/radio/RadioButton";
-import { InsuranceBulletPoint } from "../atoms/text/InsuranceBulletPoint";
-import { InsurancePlanHeader } from "../molecules/InsurancePlanHeader";
+import { RadioButton } from "../../atoms/radio/RadioButton";
+import { InsuranceBulletPoint } from "../../atoms/text/InsuranceBulletPoint";
+import { InsurancePlanHeader } from "../../molecules/InsurancePlanHeader";
 
 export interface InsurancePlan {
     id: string;

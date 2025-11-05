@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { ProgressBar } from "../atoms/progress/ProgressBar";
+import { ProgressBar } from "../../atoms/progress/ProgressBar";
 
 interface ContractGenerationProgressProps {
     onComplete: () => void;
@@ -29,18 +29,18 @@ export const ContractGenerationProgress: React.FC<ContractGenerationProgressProp
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Generating digital contract...</Text>
+                <Text style={styles.title}>Vui lòng đợi...</Text>
                 <View style={styles.statusIcon}>
-                    <Text style={styles.statusIconText}>✓</Text>
+                    <Text style={styles.statusIconText}>Hoàn tất</Text>
                 </View>
             </View>
             <Text style={styles.subtitle}>
-                Please wait while we prepare your rental agreement
+                Vui lòng đợi trong khi chúng tôi chuẩn bị hợp đồng thuê xe của bạn
             </Text>
             <View style={styles.progressContainer}>
-                <ProgressBar 
-                    progress={progress} 
-                    label={progress === 100 ? "Complete!" : ""} 
+                <ProgressBar
+                    progress={progress}
+                    label={progress === 100 ? "Hoàn tất!" : ""}
                 />
             </View>
         </View>

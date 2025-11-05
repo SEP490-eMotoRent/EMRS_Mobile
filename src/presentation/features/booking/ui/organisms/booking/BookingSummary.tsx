@@ -1,25 +1,27 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { SummaryRow } from "../atoms/text/SummaryRow";
+import { SummaryRow } from "../../atoms/text/SummaryRow";
 
-interface InsuranceBookingSummaryProps {
-    rentalFee: string;
-    insuranceFee: string;
+interface BookingSummaryProps {
+    rentalDays: number;
+    rentalPrice: string;
+    securityDeposit: string;
     total: string;
 }
 
-export const InsuranceBookingSummary: React.FC<InsuranceBookingSummaryProps> = ({
-    rentalFee,
-    insuranceFee,
+export const BookingSummary: React.FC<BookingSummaryProps> = ({
+    rentalDays,
+    rentalPrice,
+    securityDeposit,
     total,
 }) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Booking Summary</Text>
+            <Text style={styles.title}>Đặt Xe</Text>
             <View style={styles.content}>
-                <SummaryRow label="Rental fee" value={rentalFee} />
-                <SummaryRow label="Insurance" value={insuranceFee} />
-                <SummaryRow label="Total" value={total} isTotal />
+                <SummaryRow label={`Thuê (${rentalDays} ngày)`} value={rentalPrice} />
+                <SummaryRow label="Tiền đặt cọc" value={securityDeposit} />
+                <SummaryRow label="Tổng cộng" value={total} isTotal />
             </View>
         </View>
     );

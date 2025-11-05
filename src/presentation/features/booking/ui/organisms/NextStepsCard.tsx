@@ -5,16 +5,16 @@ import { NextStepItem } from "../molecules/phase4/NextStepItem";
 export const NextStepsCard: React.FC = () => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Next Steps</Text>
+            <Text style={styles.title}>Các bước tiếp theo</Text>
             <NextStepItem
                 number={1}
-                title="Contract is ready for digital signature"
-                description="You'll need to review and sign the contract"
+                title="Hợp đồng đã sẵn sàng để ký điện tử"
+                description="Bạn nên xem xét kỹ hợp đồng trước khi ký"
             />
             <NextStepItem
                 number={2}
-                title="You will receive an OTP code to complete signing"
-                description="OTP will be sent to your registered mobile number"
+                title="Bạn sẽ nhận được mã OTP để hoàn tất ký"
+                description="Mã OTP sẽ được gửi đến số điện thoại bạn sử dụng để đăng kí"
             />
         </View>
     );

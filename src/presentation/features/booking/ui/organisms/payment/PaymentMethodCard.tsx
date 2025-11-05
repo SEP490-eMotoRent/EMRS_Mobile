@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { RadioButton } from "../atoms/radio/RadioButton";
-import { WalletBalance } from "../molecules/WalletBalance";
+import { RadioButton } from "../../atoms/radio/RadioButton";
+import { WalletBalance } from "../../molecules/WalletBalance";
 
 interface PaymentMethodCardProps {
     isSelected: boolean;

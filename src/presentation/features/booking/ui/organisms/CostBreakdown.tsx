@@ -19,13 +19,13 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({
 }) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Cost Breakdown</Text>
+            <Text style={styles.title}>Chi tiết</Text>
             <View style={styles.content}>
-                <CostRow label="Rental fee" value={rentalFee} />
-                <CostRow label="Free insurance" value={insuranceFee} />
-                <CostRow label="Security deposit" value={securityDeposit} />
-                <CostRow label="Service fee" value={serviceFee} />
-                <CostRow label="Total amount" value={total} isTotal />
+                <CostRow label="Phí Thuê Xe" value={rentalFee} />
+                <CostRow label="Bảo Hiểm" value={insuranceFee} />
+                <CostRow label="Đặt Cọc" value={securityDeposit} />
+                <CostRow label="Phí Dịch Vụ" value={serviceFee} />
+                <CostRow label="Tổng giá tiền" value={total} isTotal />
             </View>
         </View>
     );

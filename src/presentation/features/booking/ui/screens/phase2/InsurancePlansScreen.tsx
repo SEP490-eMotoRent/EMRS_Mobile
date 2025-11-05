@@ -1,32 +1,30 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState, useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
+import React, { useMemo, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
+import { formatVND, transformToInsurancePlan } from "../../../../../common/utils/insurancePackageFormatter";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { useInsurancePackages } from "../../../hooks/useInsurancePackages";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { VehicleInfoHeader } from "../../molecules/VehicleInfoHeader";
-import { InsuranceBookingSummary } from "../../organisms/InsuranceBookingSummary";
-import { InsurancePlan, InsurancePlanCard } from "../../organisms/InsurancePlanCard";
-import { useInsurancePackages } from "../../../hooks/useInsurancePackages";
-import { formatVND, transformToInsurancePlan } from "../../../../../common/utils/insurancePackageFormatter";
-
+import { InsuranceBookingSummary } from "../../organisms/insurance/InsuranceBookingSummary";
+import { InsurancePlan, InsurancePlanCard } from "../../organisms/insurance/InsurancePlanCard";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsurancePlans'>;
 
-// "No Protection" option (always available)
 const noProtectionPlan: InsurancePlan = {
     id: "none",
-    icon: "🚫",
+    icon: "Không bảo vệ",
     iconColor: "#ef4444",
-    title: "No Protection",
-    price: "FREE",
+    title: "Không bảo vệ",
+    price: "MIỄN PHÍ",
     priceColor: "#333",
-    description: "No Coverage For Vehicle Or Rider",
+    description: "Không bao gồm bảo hiểm cho xe hoặc người lái",
     features: [
-        "You will be responsible for all damages and injuries that may occur during your rental period.",
+        "Bạn sẽ chịu trách nhiệm cho mọi hư hỏng và thương tích xảy ra trong thời gian thuê xe.",
     ],
 };
 
@@ -37,14 +35,12 @@ export const InsurancePlansScreen: React.FC = () => {
     const { vehicleId, startDate, endDate, duration, rentalDays } = route.params;
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
 
-    // Fetch insurance packages from API
     const { packages, loading, error, refetch } = useInsurancePackages();
 
     console.log("Insurance Plans - Vehicle ID:", vehicleId);
     console.log("Rental Duration:", duration);
     console.log("Fetched Packages:", packages.length);
 
-    // Transform API packages to UI format and prepend "No Protection"
     const insurancePlans: InsurancePlan[] = useMemo(() => {
         const apiPlans = packages.map(pkg => transformToInsurancePlan(pkg));
         return [noProtectionPlan, ...apiPlans];
@@ -58,15 +54,15 @@ export const InsurancePlansScreen: React.FC = () => {
     const selectedPackage = packages.find(p => p.id === selectedPlanId);
     
     const insuranceFee = selectedPlanId === "none" 
-        ? "FREE" 
+        ? "MIỄN PHÍ" 
         : selectedPackage 
             ? formatVND(selectedPackage.packageFee)
             : "0đ";
     
-    const rentalFee = "3,130,000đ"; // TODO: This should come from previous screen/API
+    const rentalFee = "3,130,000đ";
     
     const parsePrice = (price: string) => {
-        if (price === "FREE") return 0;
+        if (price === "MIỄN PHÍ") return 0;
         return parseInt(price.replace(/[^0-9]/g, "")) || 0;
     };
     
@@ -83,46 +79,44 @@ export const InsurancePlansScreen: React.FC = () => {
             endDate,
             duration,
             rentalDays,
-            branchName: "District 2, eMotoRent Branch",
-            insurancePlan: selectedPlan?.title || "No Protection",
+            branchName: "Quận 2, Chi nhánh eMotoRent",
+            insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
             rentalFee: "1,130,000đ",
-            insuranceFee: insuranceFee === "FREE" ? "0đ" : insuranceFee,
+            insuranceFee: insuranceFee === "MIỄN PHÍ" ? "0đ" : insuranceFee,
             securityDeposit: "2,000,000đ",
             serviceFee: "35,000đ",
             total: total,
         });
     };
 
-    // Loading state
     if (loading) {
         return (
             <View style={styles.container}>
-                <PageHeader title="Insurance Plans" onBack={handleBack} />
+                <PageHeader title="Gói bảo hiểm" onBack={handleBack} />
                 <ProgressIndicator currentStep={2} totalSteps={4} />
                 <View style={styles.centerContainer}>
                     <ActivityIndicator size="large" color="#fff" />
-                    <Text style={styles.loadingText}>Loading insurance packages...</Text>
+                    <Text style={styles.loadingText}>Đang tải gói bảo hiểm...</Text>
                 </View>
             </View>
         );
     }
 
-    // Error state with retry
     if (error) {
         return (
             <View style={styles.container}>
-                <PageHeader title="Insurance Plans" onBack={handleBack} />
+                <PageHeader title="Gói bảo hiểm" onBack={handleBack} />
                 <ProgressIndicator currentStep={2} totalSteps={4} />
                 <View style={styles.centerContainer}>
-                    <Text style={styles.errorText}>⚠️ {error}</Text>
+                    <Text style={styles.errorText}>{error}</Text>
                     <PrimaryButton 
-                        title="Retry" 
+                        title="Thử lại" 
                         onPress={refetch}
                         style={styles.retryButton}
                     />
                     <PrimaryButton 
-                        title="Continue Without Insurance" 
+                        title="Tiếp tục không bảo hiểm" 
                         onPress={() => {
                             setSelectedPlanId("none");
                             handleContinue();
@@ -134,10 +128,9 @@ export const InsurancePlansScreen: React.FC = () => {
         );
     }
 
-    // Success state - display packages
     return (
         <View style={styles.container}>
-            <PageHeader title="Insurance Plans" onBack={handleBack} />
+            <PageHeader title="Gói bảo hiểm" onBack={handleBack} />
             <ProgressIndicator currentStep={2} totalSteps={4} />
 
             <ScrollView 
@@ -150,11 +143,11 @@ export const InsurancePlansScreen: React.FC = () => {
                     rentalPeriod={`${startDate} - ${endDate}`}
                 />
 
-                <Text style={styles.sectionTitle}>Select Protection Plan</Text>
+                <Text style={styles.sectionTitle}>Chọn gói bảo vệ</Text>
 
                 {insurancePlans.length === 1 && (
                     <Text style={styles.warningText}>
-                        ⚠️ No insurance packages available at the moment. You can continue without protection.
+                        Hiện tại không có gói bảo hiểm nào. Bạn có thể tiếp tục mà không cần bảo vệ.
                     </Text>
                 )}
 
@@ -176,7 +169,7 @@ export const InsurancePlansScreen: React.FC = () => {
 
             <View style={styles.footer}>
                 <PrimaryButton 
-                    title="Continue" 
+                    title="Tiếp tục" 
                     onPress={handleContinue}
                     disabled={!selectedPlanId}
                 />
