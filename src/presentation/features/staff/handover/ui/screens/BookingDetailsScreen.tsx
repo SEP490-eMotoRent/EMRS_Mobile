@@ -397,7 +397,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 onPress={openReturnReport}
               >
                 <AntDesign name="file-text" size={18} color="#000" />
-                <Text style={styles.returnReportBtnText}>Báo cáo trả xe</Text>
+                <Text style={styles.returnReportBtnText}>Xem biên bản trả xe</Text>
               </TouchableOpacity>
             </InfoCard>
           </View>
@@ -995,7 +995,6 @@ const styles = StyleSheet.create({
   returnReportBtnText: {
     color: "#000",
     fontWeight: "700",
-    fontSize: 16,
     letterSpacing: 0.5,
   },
   contractActionsRow: {
