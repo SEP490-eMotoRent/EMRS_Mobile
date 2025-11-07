@@ -84,13 +84,13 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                     {hasDocument && existingDocument.verificationStatus && (
                         <View style={styles.verifiedBadge}>
                             <Icon name="check" size={12} color="#10B981" />
-                            <Text style={styles.verifiedText}>Verified</Text>
+                            <Text style={styles.verifiedText}>Đã duyệt</Text>
                         </View>
                     )}
                 </View>
                 <View style={styles.headerActions}>
                     <Button onPress={onUpdate} style={styles.updateButton} variant="ghost">
-                        <Text style={styles.updateText}>Update</Text>
+                        <Text style={styles.updateText}>Cập Nhập</Text>
                     </Button>
                     {hasDocument && onDeleteDocument && (
                         <Button 
@@ -118,19 +118,19 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             {hasDocument ? (
                 <View style={styles.documentInfo}>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Issue Date:</Text>
+                        <Text style={styles.infoLabel}>Ngày Phát Hành:</Text>
                         <Text style={styles.infoValue}>
                             {new Date(existingDocument.issueDate).toLocaleDateString()}
                         </Text>
                     </View>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Expiry Date:</Text>
+                        <Text style={styles.infoLabel}>Ngày Hết Hạn:</Text>
                         <Text style={styles.infoValue}>
                             {new Date(existingDocument.expiryDate).toLocaleDateString()}
                         </Text>
                     </View>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Issuing Authority:</Text>
+                        <Text style={styles.infoLabel}>Cơ Quan Cấp:</Text>
                         <Text style={styles.infoValue}>
                             {existingDocument.issuingAuthority}
                         </Text>
@@ -177,7 +177,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 <View style={styles.imagesContainer}>
                     {/* Front Image */}
                     <View style={styles.imageWrapper}>
-                        <Text style={styles.imageLabel}>Front Side</Text>
+                        <Text style={styles.imageLabel}>Mặt Trước</Text>
                         {(frontImage || frontUrl) ? (
                             <TouchableOpacity 
                                 style={styles.documentImageContainer}
@@ -191,20 +191,20 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                                 />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="document" size={20} color="#FFF" />
-                                    <Text style={styles.overlayText}>Front</Text>
+                                    <Text style={styles.overlayText}>Trước</Text>
                                 </View>
                             </TouchableOpacity>
                         ) : (
                             <View style={styles.placeholderBox}>
                                 <Icon name="image" size={32} color="#666" />
-                                <Text style={styles.placeholderText}>No front image</Text>
+                                <Text style={styles.placeholderText}>Thiếu Ảnh Mặt Trước</Text>
                             </View>
                         )}
                     </View>
 
                     {/* Back Image */}
                     <View style={styles.imageWrapper}>
-                        <Text style={styles.imageLabel}>Back Side</Text>
+                        <Text style={styles.imageLabel}>Mặt Sau</Text>
                         {(backImage || backUrl) ? (
                             <TouchableOpacity 
                                 style={styles.documentImageContainer}
@@ -218,13 +218,13 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                                 />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="document" size={20} color="#FFF" />
-                                    <Text style={styles.overlayText}>Back</Text>
+                                    <Text style={styles.overlayText}>Sau</Text>
                                 </View>
                             </TouchableOpacity>
                         ) : (
                             <View style={styles.placeholderBox}>
                                 <Icon name="image" size={32} color="#666" />
-                                <Text style={styles.placeholderText}>No back image</Text>
+                                <Text style={styles.placeholderText}>Thiếu Ảnh Mặt Sau</Text>
                             </View>
                         )}
                     </View>
@@ -239,14 +239,14 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                     <Icon name="check" size={16} color="#10B981" />
                     <Text style={styles.uploadedText}>
                         {frontImage && backImage 
-                            ? 'Both images ready. Click "Update" to save.'
-                            : 'Please capture both front and back images.'}
+                            ? 'Cả 2 ảnh đã có. Nhấn "Cập Nhập" để lưu.'
+                            : 'Vui lòng chụp cả mặt trước lẫn sau.'}
                     </Text>
                 </View>
             )}
 
             <View style={styles.autoFillContainer}>
-                <Text>Auto-fill from document</Text>
+                <Text>Tự động điền từ ảnh</Text>
                 <Switch value={autoFill} onValueChange={onAutoFillChange} />
             </View>
         </View>

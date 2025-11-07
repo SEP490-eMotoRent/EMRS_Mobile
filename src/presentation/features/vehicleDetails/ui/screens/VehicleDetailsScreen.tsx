@@ -2,25 +2,25 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useMemo, useState } from "react";
-import { 
-    ActivityIndicator, 
-    ScrollView, 
-    StyleSheet, 
-    View, 
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
     Text,
-    TouchableOpacity 
+    TouchableOpacity,
+    View
 } from "react-native";
 import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
-import { BookingButton } from "../atoms/buttons/BookingButton";
+import sl from "../../../../../core/di/InjectionContainer";
+import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { BackButton } from "../../../../common/components/atoms/buttons/BackButton";
+import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
+import { BookingButton } from "../atoms/buttons/BookingButton";
 import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
 import { PickupLocationSection } from "../organisms/PickupLocationSection";
 import { PricingSection } from "../organisms/PricingSection";
-import sl from "../../../../../core/di/InjectionContainer";
-import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
-import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 
 type RoutePropType = RouteProp<BrowseStackParamList, 'VehicleDetails'>;
 type NavProp = StackNavigationProp<HomeStackParamList>;
@@ -50,7 +50,7 @@ export const VehicleDetailsScreen: React.FC = () => {
     if (!data || error) {
         return (
             <View style={styles.center}>
-                <Text style={styles.error}>{error || "Vehicle not found"}</Text>
+                <Text style={styles.error}>{error || "Không Tìm Được Xe"}</Text>
             </View>
         );
     }
@@ -82,7 +82,7 @@ export const VehicleDetailsScreen: React.FC = () => {
                 {/* Back Button */}
                 <BackButton 
                     onPress={() => navigation.goBack()} 
-                    label="Back to List" 
+                    label="Quay về" 
                 />
 
                 <ImageGallery images={images} />
@@ -118,7 +118,7 @@ export const VehicleDetailsScreen: React.FC = () => {
                 {data.description && data.description !== "No description." && (
                     <View style={styles.descriptionContainer}>
                         <View style={styles.descriptionHeader}>
-                            <Text style={styles.descriptionTitle}>About</Text>
+                            <Text style={styles.descriptionTitle}>Thông Tin Xe</Text>
                             <TouchableOpacity 
                                 style={styles.showMoreButton}
                                 onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}

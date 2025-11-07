@@ -1,24 +1,24 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ReviewCard } from '../../molecules/cards/ReviewCard';
 
 export const ReviewsSection: React.FC = () => {
     const reviews = [
         {
-        title: "Perfect for City Commuting",
-        content: "Rented an electric bike from eMotoRent for my daily commute and it was fantastic! The booking process was smooth, and the bike was delivered right to my doorstep. Highly recommend for anyone looking for eco-friendly transportation!",
+        title: "Hoàn hảo cho đi lại trong thành phố",
+        content: "Thuê xe máy điện từ eMotoRent cho việc đi lại hàng ngày và thật tuyệt vời! Quy trình đặt xe mượt mà, xe được giao tận cửa. Rất khuyến khích cho bất kỳ ai tìm kiếm phương tiện thân thiện với môi trường!",
         author: "Sarah L.",
         rating: 5,
         },
         {
-        title: "Amazing Experience",
-        content: "The flexibility of eMotoRent is unmatched. I needed a bike for just a weekend trip, and their week-to-week plan was perfect. No long-term commitment, no hassle. The bike was well-maintained and fun to ride!",
+        title: "Trải nghiệm tuyệt vời",
+        content: "Tính linh hoạt của eMotoRent là vô song. Tôi cần xe cho chuyến đi cuối tuần, gói tuần này sang tuần khác rất phù hợp. Không cam kết dài hạn, không rắc rối. Xe bảo trì tốt và vui khi lái!",
         author: "Michael T.",
         rating: 5,
         },
         {
-        title: "Best Rental Service",
-        content: "I've tried several bike rental services, but eMotoRent stands out. The customer service is excellent, bikes are always in great condition, and the pricing is transparent. Will definitely use again!",
+        title: "Dịch vụ thuê xe tốt nhất",
+        content: "Tôi đã thử nhiều dịch vụ thuê xe, nhưng eMotoRent nổi bật. Dịch vụ khách hàng xuất sắc, xe luôn trong tình trạng tốt, giá minh bạch. Chắc chắn sẽ sử dụng lại!",
         author: "Jennifer R.",
         rating: 5,
         },
@@ -26,7 +26,7 @@ export const ReviewsSection: React.FC = () => {
 
     return (
         <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reviews</Text>
+        <Text style={styles.sectionTitle}>Đánh giá</Text>
         <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

@@ -1,4 +1,3 @@
-// src/features/auth/screens/AdditionalInfoScreen.tsx
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react';
@@ -54,13 +53,13 @@ export const AdditionalInfoScreen: React.FC = () => {
             avatarUrl: data.avatarUrl || '',
         });
 
-        Alert.alert('Success', 'Account created successfully!', [
+        Alert.alert('Thành công', 'Tạo tài khoản thành công!', [
             { text: 'OK', onPress: () => navigation.navigate('Login') }
         ]);
 
         } catch (error: any) {
-        Alert.alert('Registration Failed', error.message || 'Something went wrong');
-        console.error('❌ Registration error:', error);
+        Alert.alert('Đăng ký thất bại', error.message || 'Đã xảy ra lỗi');
+        console.error('Registration error:', error);
         } finally {
         setLoading(false);
         }
@@ -81,7 +80,7 @@ export const AdditionalInfoScreen: React.FC = () => {
             
             <BackButton onPress={() => navigation.goBack()} />
 
-            <BrandTitle subtitle="Complete Your Profile" />
+            <BrandTitle subtitle="Hoàn tất hồ sơ của bạn" />
 
             <AdditionalInfoForm onComplete={handleComplete} loading={loading} />
 

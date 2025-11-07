@@ -7,7 +7,7 @@ import { TripStackParamList } from '../../../../../shared/navigation/StackParame
 type NavigationProp = StackNavigationProp<TripStackParamList>;
 
 export interface PhotosDocumentationSectionProps {
-    photos: string[]; // Changed from File[] to string[] (URIs)
+    photos: string[];
     onAddPhoto: (uri: string) => void;
     onRemovePhoto: (index: number) => void;
     maxPhotos?: number;
@@ -35,14 +35,14 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
     return (
         <View style={styles.section}>
             <View style={styles.header}>
-                <Text style={styles.title}>Photos Documentation</Text>
+                <Text style={styles.title}>Chụp ảnh hiện trường</Text>
                 <TouchableOpacity onPress={handleTakePhoto} style={styles.headerRight}>
-                    <Text style={styles.icon}>📷</Text>
-                    <Text style={styles.headerAction}>Take Photo</Text>
+                    <Text style={styles.icon}>Camera</Text>
+                    <Text style={styles.headerAction}>Chụp ảnh</Text>
                 </TouchableOpacity>
             </View>
             <Text style={styles.hint}>
-                Upload up to {maxPhotos} photos of the incident ({photos.length}/{maxPhotos})
+                Tải lên tối đa {maxPhotos} ảnh ({photos.length}/{maxPhotos})
             </Text>
             <View style={styles.photoGrid}>
                 {photos.map((photoUri, index) => (
@@ -50,12 +50,13 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
                         <Image 
                             source={{ uri: photoUri }} 
                             style={styles.photoImage}
+                            resizeMode="cover"
                         />
                         <TouchableOpacity 
                             style={styles.removeButton}
                             onPress={() => onRemovePhoto(index)}
                         >
-                            <Text style={styles.removeIcon}>✕</Text>
+                            <Text style={styles.removeIcon}>×</Text>
                         </TouchableOpacity>
                     </View>
                 ))}
@@ -65,7 +66,7 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
                         onPress={handleTakePhoto}
                     >
                         <Text style={styles.addIcon}>+</Text>
-                        <Text style={styles.addText}>Add Photo</Text>
+                        <Text style={styles.addText}>Thêm ảnh</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -118,11 +119,11 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 8,
         position: 'relative',
+        overflow: 'hidden',
     },
     photoImage: {
         width: '100%',
         height: '100%',
-        borderRadius: 8,
     },
     removeButton: {
         position: 'absolute',

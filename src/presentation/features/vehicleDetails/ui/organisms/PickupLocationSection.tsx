@@ -21,7 +21,7 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
 }) => {
     return (
         <View style={styles.container}>
-            <SectionTitle title="Pick-Up Location" />
+            <SectionTitle title="Địa Điểm Nhận Xe" />
             
             {/* Address Selector (Static for now) */}
             <View style={styles.addressSelector}>
@@ -41,7 +41,7 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
             <View style={styles.branchCard}>
                 <View style={styles.branchHeader}>
                     <Text style={styles.branchName}>{branchName}</Text>
-                    <Text style={styles.distance}>2.5 km away</Text>
+                    <Text style={styles.distance}>Cách xa 2.5km</Text>
                 </View>
                 
                 <BranchInfoItem icon="📍" text={branchAddress} />

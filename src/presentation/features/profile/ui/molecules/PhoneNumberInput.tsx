@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, TextInput as RNTextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text } from '../atoms/Text';
+import { TextInput as RNTextInput, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Icon } from '../atoms/Icons/Icons';
+import { Text } from '../atoms/Text';
 
 interface PhoneInputProps {
     label: string;
@@ -30,7 +30,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
             style={styles.input}
             value={phoneNumber}
             onChangeText={onPhoneNumberChange}
-            placeholder="Phone number"
+            placeholder="Số Điện Thoại"
             placeholderTextColor="#666666"
             keyboardType="phone-pad"
             />

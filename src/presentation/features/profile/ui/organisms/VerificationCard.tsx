@@ -35,9 +35,9 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
     return (
         <View style={styles.verificationCard}>
             <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Account Verification</Text>
+                <Text style={styles.sectionTitle}>Xác Thực Tài Khoản</Text>
                 <TouchableOpacity onPress={onViewDetails}>
-                    <Text style={styles.viewDetails}>View Details</Text>
+                    <Text style={styles.viewDetails}>Xem Chi Tiết</Text>
                 </TouchableOpacity>
             </View>
 
@@ -47,15 +47,15 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
 
             {!allVerified && (
                 <View style={styles.verificationWarning}>
-                    <Text style={styles.warningIcon}>Warning</Text>
+                    <Text style={styles.warningIcon}>Cảnh Báo</Text>
                     <Text style={styles.warningText}>
-                        Verification incomplete. Cannot rent until all verifications are complete.
+                        Chưa xác thực hoàn toàn. Vui lòng hoàn tất xác thực để sử dụng đầy đủ tính năng.
                     </Text>
                 </View>
             )}
 
             <TouchableOpacity style={styles.verificationButton} onPress={onVerify}>
-                <Text style={styles.verificationButtonText}>Verification</Text>
+                <Text style={styles.verificationButtonText}>Xác Thực</Text>
             </TouchableOpacity>
         </View>
     );

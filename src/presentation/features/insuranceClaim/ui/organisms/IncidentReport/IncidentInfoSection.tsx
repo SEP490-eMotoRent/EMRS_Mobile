@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface InfoRowProps {
     label: string;
@@ -31,7 +31,7 @@ export const IncidentInfoSection: React.FC<IncidentInfoSectionProps> = ({
     <View style={styles.section}>
         <View style={styles.header}>
             <Text style={styles.icon}>📍</Text>
-            <Text style={styles.title}>Incident Time & Location</Text>
+            <Text style={styles.title}>Thời gian & Địa điểm sự cố</Text>
             {onRefreshLocation && (
                 <TouchableOpacity 
                     onPress={onRefreshLocation} 
@@ -41,15 +41,15 @@ export const IncidentInfoSection: React.FC<IncidentInfoSectionProps> = ({
                     {isLoadingLocation ? (
                         <ActivityIndicator size="small" color="#7C3AED" />
                     ) : (
-                        <Text style={styles.refreshIcon}>🔄</Text>
+                        <Text style={styles.refreshIcon}>Refresh</Text>
                     )}
                 </TouchableOpacity>
             )}
         </View>
         <View style={styles.content}>
-            <InfoRow label="Date & Time" value={dateTime} />
-            <InfoRow label="Location" value={location} />
-            <InfoRow label="Address" value={address} />
+            <InfoRow label="Ngày & Giờ" value={dateTime} />
+            <InfoRow label="Vị trí" value={location} />
+            <InfoRow label="Địa chỉ" value={address} />
         </View>
     </View>
 );

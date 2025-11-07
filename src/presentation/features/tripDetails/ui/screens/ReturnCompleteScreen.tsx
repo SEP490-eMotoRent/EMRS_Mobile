@@ -13,63 +13,55 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { AntDesign } from "@expo/vector-icons";
 import { colors } from "../../../../common/theme/colors";
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
+
 type NavProp = StackNavigationProp<TripStackParamList, "ReturnComplete">;
 type RouteP = RouteProp<TripStackParamList, "ReturnComplete">;
 
 export const ReturnCompleteScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<RouteP>();
-  //   const { finalizeData, summary } = route.params;
-//   const finalizeData = {}
 
   const formatVnd = (n: number) =>
-    new Intl.NumberFormat("vi-VN").format(n) + " VND";
+    new Intl.NumberFormat("vi-VN").format(n) + "đ";
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      month: "short",
+    return date.toLocaleString("vi-VN", {
       day: "numeric",
+      month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-//   const refundAmount =
-//     finalizeData?.paymentResult?.refundAmount ?? summary?.refundAmount ?? 0;
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Header with Success Icon */}
         <View style={styles.header}>
-          <Text style={styles.title}>Return Complete!</Text>
+          <Text style={styles.title}>Trả xe thành công!</Text>
           <View style={styles.successIconContainer}>
             <View style={styles.successIconCircle}>
               <AntDesign name="check" size={32} color="#22C55E" />
             </View>
           </View>
           <Text style={styles.successMessage}>
-            Vehicle successfully returned
+            Xe đã được trả thành công
           </Text>
           <Text style={styles.timestamp}>
-            {/* {finalizeData?.actualReturnDatetime
-              ? formatDate(finalizeData.actualReturnDatetime)
-              : formatDate(new Date().toISOString())} */}
+            {formatDate(new Date().toISOString())}
           </Text>
         </View>
 
-        {/* Completion Summary Card */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Completion Summary</Text>
+          <Text style={styles.cardHeader}>Tóm tắt hoàn tất</Text>
 
           <View style={styles.userRow}>
             <View style={styles.avatarContainer}>
               <AntDesign name="user" size={24} color={colors.text.secondary} />
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>John Nguyen</Text>
+              <Text style={styles.userName}>Nguyễn Văn A</Text>
               <Text style={styles.vehicleInfo}>
                 VinFast Evo200 - 59X1-12345
               </Text>
@@ -81,20 +73,20 @@ export const ReturnCompleteScreen: React.FC = () => {
               <AntDesign name="check" size={12} color="#22C55E" />
             </View>
             <Text style={styles.handoverStatusText}>
-              Great job! Another successful handover
+              Tuyệt vời! Lại một lần bàn giao thành công
             </Text>
           </View>
 
           <View style={styles.feedbackRow}>
-            <Text style={styles.feedbackLabel}>Customer feedback</Text>
+            <Text style={styles.feedbackLabel}>Đánh giá khách hàng</Text>
             <View style={styles.starsRow}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <AntDesign key={i} name="star" size={16} color="#FBBF24" />
               ))}
             </View>
             <Text style={styles.feedbackTime}>
-              Customer approved at{" "}
-              {new Date().toLocaleTimeString("en-US", {
+              Khách duyệt lúc{" "}
+              {new Date().toLocaleTimeString("vi-VN", {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
@@ -102,83 +94,68 @@ export const ReturnCompleteScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Financial Settlement Card */}
         <View style={[styles.card, styles.financialCard]}>
-          <Text style={styles.cardHeader}>Financial Settlement</Text>
+          <Text style={styles.cardHeader}>Thanh toán cuối cùng</Text>
 
           <View style={styles.financialRow}>
-            <Text style={styles.financialLabel}>Refund Processed</Text>
-            {/* <Text style={styles.refundAmount}>{formatVnd(refundAmount)}</Text> */}
+            <Text style={styles.financialLabel}>Hoàn tiền</Text>
+            <Text style={styles.refundAmount}>{formatVnd(156000)}</Text>
           </View>
 
           <View style={styles.financialRow}>
-            <Text style={styles.financialLabel}>Method</Text>
-            <Text style={styles.financialValue}>
-              {/* {finalizeData?.paymentResult?.transactionType === "WALLET"
-                ? "Auto-refunded to Wallet"
-                : "Wallet Refund"} */}
-            </Text>
+            <Text style={styles.financialLabel}>Phương thức</Text>
+            <Text style={styles.financialValue}>Tự động hoàn vào ví</Text>
           </View>
 
           <View style={styles.financialRow}>
-            <Text style={styles.financialLabel}>Status</Text>
+            <Text style={styles.financialLabel}>Trạng thái</Text>
             <View style={styles.statusRow}>
               <View style={styles.checkmarkCircleSmall}>
                 <AntDesign name="check" size={10} color="#22C55E" />
               </View>
-              <Text style={styles.completedText}>Completed</Text>
+              <Text style={styles.completedText}>Đã hoàn tất</Text>
             </View>
           </View>
         </View>
 
-        {/* Next Steps Card */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Next Steps</Text>
+          <Text style={styles.cardHeader}>Bước tiếp theo</Text>
 
           <View style={styles.stepsRow}>
-            <Text style={styles.stepsLabel}>Vehicle Status</Text>
+            <Text style={styles.stepsLabel}>Tình trạng xe</Text>
             <View style={styles.availableBadge}>
               <Text style={styles.availableBadgeText}>
-                Available for next rental
+                Sẵn sàng cho thuê tiếp
               </Text>
             </View>
           </View>
 
           <View style={styles.stepsRow}>
-            <Text style={styles.stepsLabel}>Active rentals</Text>
+            <Text style={styles.stepsLabel}>Đơn đang thuê</Text>
             <Text style={styles.stepsValue}>0</Text>
           </View>
 
           <View style={styles.stepsRow}>
-            <Text style={styles.stepsLabel}>Next Reservation</Text>
-            <Text style={styles.stepsValue}>Sep 22, 2:30 PM</Text>
+            <Text style={styles.stepsLabel}>Đặt xe tiếp theo</Text>
+            <Text style={styles.stepsValue}>22/09, 14:30</Text>
           </View>
         </View>
 
-        {/* Feedback Banner */}
         <View style={styles.feedbackBanner}>
           <Text style={styles.feedbackBannerText}>
-            Great job! Another successful return.
+            Tuyệt vời! Lại một lần trả xe thành công.
           </Text>
           <View style={styles.feedbackRatingRow}>
             <AntDesign name="star" size={12} color="#FBBF24" />
             <Text style={styles.feedbackRatingText}>
-              Customer feedback: 4.90
+              Đánh giá: 4.90
             </Text>
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <TouchableOpacity
-          style={styles.secondaryButton}
-        //   onPress={() =>
-        //     navigation.navigate("BookingDetails", {
-        //       bookingId: route.params.bookingId,
-        //     })
-        //   }
-        >
+        <TouchableOpacity style={styles.secondaryButton}>
           <AntDesign name="file-text" size={18} color={colors.text.primary} />
-          <Text style={styles.secondaryButtonText}>View Full Booking</Text>
+          <Text style={styles.secondaryButtonText}>Xem chi tiết đặt xe</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -186,7 +163,7 @@ export const ReturnCompleteScreen: React.FC = () => {
           onPress={() => navigation.navigate("Trip")}
         >
           <AntDesign name="home" size={18} color="#000" />
-          <Text style={styles.primaryButtonText}>Return to Dashboard</Text>
+          <Text style={styles.primaryButtonText}>Về trang chính</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

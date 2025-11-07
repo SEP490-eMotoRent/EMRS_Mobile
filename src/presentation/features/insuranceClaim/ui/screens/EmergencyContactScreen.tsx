@@ -32,22 +32,18 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<EmergencyContactRouteProp>();
 
-    // Extract bookingId from route params
     const { bookingId, rentalDetails: routeRentalDetails } = route.params ?? {};
 
-    // Initialize use case
     const getBookingByIdUseCase = useMemo(
         () => new GetBookingByIdUseCase(sl.get("BookingRepository")),
         []
     );
 
-    // Fetch emergency contact data from API
     const { data: emergencyData, loading, error } = useEmergencyContactData(
         bookingId || '',
         getBookingByIdUseCase
     );
 
-    // Determine final rental details (priority: API > route > props)
     const finalRentalDetails = emergencyData?.vehicleInfo
         ? {
                 bikeModel: emergencyData.vehicleInfo.model,
@@ -58,18 +54,12 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
 
     const branchPhone = emergencyData?.branchInfo.phone;
 
-    // =========================================================================
-    // HANDLERS
-    // =========================================================================
-
-    // Handle back navigation
     const handleGoBack = () => {
         if (navigation.canGoBack()) {
             navigation.goBack();
         }
     };
 
-    // Handle call branch hotline
     const handleCallBranch = () => {
         if (branchPhone && branchPhone !== '1900-XXXX' && branchPhone !== 'N/A') {
             const phoneUrl = `tel:${branchPhone}`;
@@ -78,23 +68,22 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     if (supported) {
                         return Linking.openURL(phoneUrl);
                     } else {
-                        Alert.alert('Error', `Could not dial: ${branchPhone}`);
+                        Alert.alert('Lỗi', `Không thể gọi: ${branchPhone}`);
                     }
                 })
                 .catch(() => {
-                    Alert.alert('Error', 'Could not open phone dialer');
+                    Alert.alert('Lỗi', 'Không thể mở ứng dụng gọi');
                 });
         } else {
-            Alert.alert('Branch Contact', 'Branch phone number not available. Please contact support.');
+            Alert.alert('Liên hệ chi nhánh', 'Số điện thoại chi nhánh không khả dụng. Vui lòng liên hệ hỗ trợ.');
         }
     };
 
-    // Handle report insurance claim
     const handleReportClaim = () => {
         const now = new Date();
-        const formattedDateTime = now.toLocaleString('en-US', {
-            month: 'short',
+        const formattedDateTime = now.toLocaleString('vi-VN', {
             day: 'numeric',
+            month: 'short',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
@@ -104,50 +93,43 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
             bookingId: bookingId || '',
             initialData: {
                 dateTime: formattedDateTime,
-                location: 'Getting location...',
-                address: 'Detecting address...',
+                location: 'Đang xác định vị trí...',
+                address: 'Đang phát hiện địa chỉ...',
             },
         });
     };
 
     const safetyItems = [
-        'Ensure you are in a safe location away from traffic',
-        'Turn on hazard lights if applicable',
-        'Document the incident with photos',
-        'Exchange information if another party is involved',
+        'Đảm bảo bạn đang ở vị trí an toàn, tránh xa giao thông',
+        'Bật đèn cảnh báo nếu có thể',
+        'Chụp ảnh hiện trường sự cố',
+        'Trao đổi thông tin nếu có bên thứ ba liên quan',
     ];
 
-    // =========================================================================
-    // RENDER STATES
-    // =========================================================================
-
-    // Loading state
     if (loading) {
         return (
             <View style={styles.container}>
                 <View style={styles.headerContainer}>
-                    <BackButton onPress={handleGoBack} label="Back" />
+                    <BackButton onPress={handleGoBack} label="Quay lại" />
                 </View>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#00ff00" />
-                    <Text style={styles.loadingText}>Loading emergency contact info...</Text>
+                    <Text style={styles.loadingText}>Đang tải thông tin liên hệ khẩn cấp...</Text>
                 </View>
             </View>
         );
     }
 
-    // Error state with safety checklist still visible
     if (error && !emergencyData) {
         return (
             <View style={styles.container}>
-                {/* Header with back button */}
                 <View style={styles.headerContainer}>
                     <View style={styles.headerTop}>
-                        <BackButton onPress={handleGoBack} label="Back" />
+                        <BackButton onPress={handleGoBack} label="Quay lại" />
                     </View>
                     <View style={styles.headerTextBlock}>
-                        <Text style={styles.headerTitle}>Emergency Contact</Text>
-                        <Text style={styles.headerSubtitle}>Get immediate assistance</Text>
+                        <Text style={styles.headerTitle}>Liên hệ khẩn cấp</Text>
+                        <Text style={styles.headerSubtitle}>Nhận hỗ trợ ngay lập tức</Text>
                     </View>
                 </View>
 
@@ -157,21 +139,20 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     contentContainerStyle={styles.scrollContentContainer}
                 >
                     <View style={styles.errorContainer}>
-                        <Text style={styles.errorIcon}>⚠️</Text>
+                        <Text style={styles.errorIcon}>Warning</Text>
                         <Text style={styles.errorText}>{error}</Text>
                         <Text style={styles.errorSubtext}>
-                            You can still call emergency services or use the safety checklist below.
+                            Bạn vẫn có thể gọi cứu hộ hoặc sử dụng danh sách kiểm tra an toàn bên dưới.
                         </Text>
                     </View>
                     <SafetyChecklistSection items={safetyItems} />
                     <View style={styles.bottomSpacing} />
                 </ScrollView>
 
-                {/* Fixed Call Button */}
                 <View style={styles.fixedButtonContainer}>
                     <ActionButton
                         icon="phone"
-                        label="Call Branch Hotline"
+                        label="Gọi chi nhánh"
                         onPress={handleCallBranch}
                         variant="primary"
                     />
@@ -180,18 +161,16 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
         );
     }
 
-    // Missing booking ID - fallback mode
     if (!bookingId || !finalRentalDetails) {
         return (
             <View style={styles.container}>
-                {/* Header with back button */}
                 <View style={styles.headerContainer}>
                     <View style={styles.headerTop}>
-                        <BackButton onPress={handleGoBack} label="Back" />
+                        <BackButton onPress={handleGoBack} label="Quay lại" />
                     </View>
                     <View style={styles.headerTextBlock}>
-                        <Text style={styles.headerTitle}>Emergency Contact</Text>
-                        <Text style={styles.headerSubtitle}>Get immediate assistance</Text>
+                        <Text style={styles.headerTitle}>Liên hệ khẩn cấp</Text>
+                        <Text style={styles.headerSubtitle}>Nhận hỗ trợ ngay lập tức</Text>
                     </View>
                 </View>
 
@@ -201,21 +180,20 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     contentContainerStyle={styles.scrollContentContainer}
                 >
                     <View style={styles.errorContainer}>
-                        <Text style={styles.errorIcon}>⚠️</Text>
-                        <Text style={styles.errorText}>Missing booking information</Text>
+                        <Text style={styles.errorIcon}>Warning</Text>
+                        <Text style={styles.errorText}>Thiếu thông tin đặt xe</Text>
                         <Text style={styles.errorSubtext}>
-                            Some features may be unavailable. Please return to your trip and try again.
+                            Một số tính năng có thể không khả dụng. Vui lòng quay lại chuyến đi và thử lại.
                         </Text>
                     </View>
                     <SafetyChecklistSection items={safetyItems} />
                     <View style={styles.bottomSpacing} />
                 </ScrollView>
 
-                {/* Fixed Call Button */}
                 <View style={styles.fixedButtonContainer}>
                     <ActionButton
                         icon="phone"
-                        label="Call Branch Hotline"
+                        label="Gọi chi nhánh"
                         onPress={handleCallBranch}
                         variant="primary"
                     />
@@ -224,43 +202,36 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
         );
     }
 
-    // =========================================================================
-    // MAIN RENDER - Priority: Emergency Actions > Data > Safety Tips
-    // =========================================================================
-
     return (
         <View style={styles.container}>
-            {/* Fixed Header with Back Button */}
             <View style={styles.headerContainer}>
                 <View style={styles.headerTop}>
-                    <BackButton onPress={handleGoBack} label="Back" />
+                    <BackButton onPress={handleGoBack} label="Quay lại" />
                 </View>
                 <View style={styles.headerTextBlock}>
-                    <Text style={styles.headerTitle}>Emergency Contact</Text>
-                    <Text style={styles.headerSubtitle}>Get immediate assistance</Text>
+                    <Text style={styles.headerTitle}>Liên hệ khẩn cấp</Text>
+                    <Text style={styles.headerSubtitle}>Nhận hỗ trợ ngay lập tức</Text>
                 </View>
             </View>
 
-            {/* Scrollable content */}
             <ScrollView 
                 style={styles.scrollContent} 
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContentContainer}
             >
-                {/* Priority 1: Your Contact Info - Prominent */}
                 {emergencyData?.renterInfo && (
                     <View style={styles.prominentCard}>
                         <View style={styles.cardHeader}>
-                            <Text style={styles.cardIcon}>👤</Text>
-                            <Text style={styles.cardTitle}>Your Contact Details</Text>
+                            <Text style={styles.cardIcon}>Person</Text>
+                            <Text style={styles.cardTitle}>Thông tin liên hệ của bạn</Text>
                         </View>
                         <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>Name</Text>
+                            <Text style={styles.infoLabel}>Họ tên</Text>
                             <Text style={styles.infoValue}>{emergencyData.renterInfo.name}</Text>
                         </View>
                         <View style={styles.infoDivider} />
                         <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>Phone</Text>
+                            <Text style={styles.infoLabel}>Số điện thoại</Text>
                             <Text style={styles.infoValue}>{emergencyData.renterInfo.phone}</Text>
                         </View>
                         <View style={styles.infoDivider} />
@@ -271,29 +242,27 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     </View>
                 )}
 
-                {/* Priority 2: Rental Details - Important */}
                 <RentalDetailsSection
                     bikeModel={finalRentalDetails.bikeModel}
                     licensePlate={finalRentalDetails.licensePlate}
                     branch={finalRentalDetails.branch}
                 />
 
-                {/* Priority 3: Booking Context */}
                 {emergencyData?.bookingContext && (
                     <View style={styles.compactCard}>
                         <View style={styles.cardHeader}>
-                            <Text style={styles.cardIcon}>📋</Text>
-                            <Text style={styles.cardTitle}>Booking Information</Text>
+                            <Text style={styles.cardIcon}>Clipboard</Text>
+                            <Text style={styles.cardTitle}>Thông tin đặt xe</Text>
                         </View>
                         <View style={styles.compactInfoGrid}>
                             <View style={styles.compactInfoItem}>
-                                <Text style={styles.compactLabel}>Booking ID</Text>
+                                <Text style={styles.compactLabel}>Mã đặt xe</Text>
                                 <Text style={styles.compactValue}>
                                     #{emergencyData.bookingContext.id.slice(-8).toUpperCase()}
                                 </Text>
                             </View>
                             <View style={styles.compactInfoItem}>
-                                <Text style={styles.compactLabel}>Status</Text>
+                                <Text style={styles.compactLabel}>Trạng thái</Text>
                                 <Text style={[styles.compactValue, styles.statusBadge]}>
                                     {emergencyData.bookingContext.status}
                                 </Text>
@@ -303,14 +272,14 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                             <>
                                 <View style={styles.infoDivider} />
                                 <View style={styles.infoRow}>
-                                    <Text style={styles.compactLabel}>Rental Period</Text>
+                                    <Text style={styles.compactLabel}>Thời gian thuê</Text>
                                     <Text style={styles.compactValueSmall}>
-                                        {emergencyData.bookingContext.startDate.toLocaleDateString('en-US', { 
-                                            month: 'short', 
-                                            day: 'numeric' 
-                                        })} - {emergencyData.bookingContext.endDate.toLocaleDateString('en-US', { 
-                                            month: 'short', 
+                                        {new Date(emergencyData.bookingContext.startDate).toLocaleDateString('vi-VN', { 
+                                            day: 'numeric', 
+                                            month: 'short' 
+                                        })} - {new Date(emergencyData.bookingContext.endDate).toLocaleDateString('vi-VN', { 
                                             day: 'numeric',
+                                            month: 'short',
                                             year: 'numeric'
                                         })}
                                     </Text>
@@ -320,20 +289,17 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     </View>
                 )}
 
-                {/* Priority 4: Safety Checklist - Helpful but less urgent */}
                 <SafetyChecklistSection items={safetyItems} />
 
-                {/* Bottom spacing for fixed buttons */}
                 <View style={styles.bottomSpacing} />
             </ScrollView>
 
-            {/* Fixed bottom action buttons - Critical actions always accessible */}
             <View style={styles.fixedButtonContainer}>
                 <View style={styles.buttonRow}>
                     <View style={styles.secondaryButton}>
                         <ActionButton
                             icon="file-text"
-                            label="Report Claim"
+                            label="Báo cáo bảo hiểm"
                             onPress={handleReportClaim}
                             variant="danger"
                         />
@@ -341,7 +307,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     <View style={styles.primaryButton}>
                         <ActionButton
                             icon="phone"
-                            label="Call Branch"
+                            label="Gọi chi nhánh"
                             onPress={handleCallBranch}
                             variant="primary"
                         />
@@ -368,9 +334,7 @@ const styles = StyleSheet.create({
     headerTop: {
         marginBottom: 12,
     },
-    headerTextBlock: {
-        // Text block styling
-    },
+    headerTextBlock: {},
     headerTitle: {
         fontSize: 28,
         fontWeight: 'bold',
@@ -423,8 +387,6 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         textAlign: 'center',
     },
-    
-    // Prominent Card - For most important info (user contact)
     prominentCard: {
         backgroundColor: '#1A1A1A',
         borderRadius: 16,
@@ -477,8 +439,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#2A2A2A',
         marginVertical: 4,
     },
-
-    // Compact Card - For secondary info (booking details)
     compactCard: {
         backgroundColor: '#1A1A1A',
         borderRadius: 12,
@@ -514,12 +474,9 @@ const styles = StyleSheet.create({
         color: '#00ff00',
         textTransform: 'capitalize',
     },
-
     bottomSpacing: {
         height: 100,
     },
-    
-    // Fixed buttons at bottom
     fixedButtonContainer: {
         position: 'absolute',
         bottom: 0,
@@ -532,10 +489,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#1A1A1A',
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: -4,
-        },
+        shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 8,

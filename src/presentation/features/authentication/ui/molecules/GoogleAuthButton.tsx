@@ -17,12 +17,12 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
         <View style={styles.container}>
             {showSeparator && (
                 <View style={styles.separatorContainer}>
-                    <Text style={styles.separatorText}>Or</Text>
+                    <Text style={styles.separatorText}>Hoặc</Text>
                 </View>
             )}
 
             <SocialButton
-                title="Sign Up With Google"
+                title="Đăng ký bằng Google"
                 onPress={onPress}
                 icon={<AntDesign name="google" size={24} color="white" />}
             />

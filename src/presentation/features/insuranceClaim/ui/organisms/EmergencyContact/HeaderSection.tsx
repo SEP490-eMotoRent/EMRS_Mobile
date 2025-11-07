@@ -8,11 +8,11 @@ export interface HeaderSectionProps {
 
 export const HeaderSection: React.FC<HeaderSectionProps> = ({ onCallPress }) => (
     <View style={styles.headerSection}>
-        <Text style={styles.headerTitle}>Emergency Contact</Text>
-        <Text style={styles.headerSubtitle}>Get immediate assistance</Text>
+        <Text style={styles.headerTitle}>Liên hệ khẩn cấp</Text>
+        <Text style={styles.headerSubtitle}>Nhận hỗ trợ ngay lập tức</Text>
         <ActionButton
             icon="phone"
-            label="Call Branch Hotline"
+            label="Gọi chi nhánh"
             onPress={onCallPress}
             variant="primary"
         />

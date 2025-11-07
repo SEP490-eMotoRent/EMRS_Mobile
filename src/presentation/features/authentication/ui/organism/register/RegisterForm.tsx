@@ -34,7 +34,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onContinue, loading 
         <View style={styles.container}>
             <View style={styles.inputContainer}>
                 <Input
-                    placeholder="Username"
+                    placeholder="Tên đăng nhập"
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
@@ -49,14 +49,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onContinue, loading 
                     editable={!loading}
                 />
                 <Input
-                    placeholder="Password"
+                    placeholder="Mật khẩu"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={true}
                     editable={!loading}
                 />
                 <Input
-                    placeholder="Confirm Password"
+                    placeholder="Xác nhận mật khẩu"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry={true}
@@ -65,7 +65,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onContinue, loading 
             </View>
 
             <Button
-                title={loading ? 'Creating Account...' : 'Continue'}
+                title={loading ? 'Đang tạo tài khoản...' : 'Tiếp tục'}
                 onPress={handleContinue}
                 variant="primary"
                 style={styles.continueButton}

@@ -25,27 +25,27 @@ export const ContractInformationCard: React.FC<ContractInformationCardProps> = (
         <SectionTitle title="Contract Information" />
         <View style={styles.card}>
             <BookingInfoRow 
-            label="Digital signature" 
+            label="Kí Điện Tử" 
             value={
                 <VerificationCheckmark 
-                label="Completed" 
+                label="Hoàn Tất" 
                 verified={digitalSignatureCompleted} 
                 />
             } 
             />
-            <BookingInfoRow label="Signed on" value={signedOn} />
+            <BookingInfoRow label="Kí tại" value={signedOn} />
             <BookingInfoRow 
-            label="OTP verification" 
+            label="Kiểm Tra OTP" 
             value={
                 <VerificationCheckmark 
-                label="Verified" 
+                label="Đã Xác Minh" 
                 verified={otpVerified} 
                 />
             } 
             />
             
             <View style={styles.termsContainer}>
-            <Text style={styles.termsTitle}>Key Terms Summary</Text>
+            <Text style={styles.termsTitle}>Tóm Tắt Điều Khoản</Text>
             {keyTerms.map((term, index) => (
                 <KeyTermItem key={index} text={term} />
             ))}
@@ -61,7 +61,7 @@ export const ContractInformationCard: React.FC<ContractInformationCardProps> = (
             </View>
 
             <TouchableOpacity style={styles.contractButton} onPress={onViewFullContract}>
-            <Text style={styles.contractButtonText}>📄 View Full Contract</Text>
+            <Text style={styles.contractButtonText}>📄 Xem Đầy Đủ Hợp Đồng</Text>
             </TouchableOpacity>
         </View>
         </View>

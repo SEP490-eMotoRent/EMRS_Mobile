@@ -13,17 +13,17 @@ export const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({ navigation }) 
     return (
         <View style={styles.container}>
         <AppButton
-            text="Sign Up"
+            text="Đăng ký"
             onPress={() => navigation.navigate('Register')}
             color={AppColors.blue}
-            accessibilityLabel="Sign up to create a new account"
+            accessibilityLabel="Đăng ký tài khoản mới"
         />
         <View style={styles.spacer} />
         <AppButton
-            text="Sign In"
+            text="Đăng nhập"
             onPress={() => navigation.navigate('Login')}
             color={AppColors.darkGray}
-            accessibilityLabel="Sign in to your account"
+            accessibilityLabel="Đăng nhập vào tài khoản của bạn"
         />
         </View>
     );

@@ -39,7 +39,7 @@ export const ForgotPasswordScreen: React.FC = () => {
 
           <PageTitle 
             title="eMotoRent" 
-            subtitle="Reset Your Password"
+            subtitle="Đặt lại mật khẩu"
           />
 
           <ResetPasswordForm onSubmit={handleResetPassword} />

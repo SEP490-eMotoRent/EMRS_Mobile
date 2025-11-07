@@ -9,11 +9,11 @@ export const MapPreview: React.FC<MapPreviewProps> = ({ location }) => {
     return (
         <View style={styles.container}>
             <View style={styles.mapPlaceholder}>
-                <Text style={styles.mapText}>🗺️ Map</Text>
+                <Text style={styles.mapText}>🗺️ Bản Đồ</Text>
             </View>
             <View style={styles.locationBadge}>
                 <Text style={styles.locationIcon}>📍</Text>
-                <Text style={styles.locationText}>Live Location</Text>
+                <Text style={styles.locationText}>Địa Điểm Trực Tiếp</Text>
             </View>
         </View>
     );

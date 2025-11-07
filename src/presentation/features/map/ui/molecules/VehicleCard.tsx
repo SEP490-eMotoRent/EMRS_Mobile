@@ -4,7 +4,6 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
-// This is a UI-only interface for displaying vehicle models in the map
 export interface ElectricVehicle {
     id: number;
     name: string;
@@ -19,7 +18,6 @@ export interface ElectricVehicle {
     features: string[];
 }
 
-// Change to BrowseStackParamList since VehicleDetails is there
 type VehicleCardNavigationProp = StackNavigationProp<BrowseStackParamList>;
 
 interface VehicleCardProps {
@@ -31,7 +29,6 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
     const navigation = useNavigation<VehicleCardNavigationProp>();
 
     const handleCardPress = () => {
-        // Convert number to string for navigation
         navigation.navigate('VehicleDetails', { vehicleId: vehicle.id.toString() });
     };
 
@@ -41,9 +38,8 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
             onPress={handleCardPress}
             activeOpacity={0.9}
         >
-            {/* Header with Brand and Image */}
+            {/* Phần trên: Thương hiệu & Hình xe */}
             <View style={styles.topSection}>
-                {/* Left: Brand Info */}
                 <View style={styles.brandContainer}>
                     <View style={styles.brandLogo}>
                         <Text style={styles.brandIcon}>⚡</Text>
@@ -54,13 +50,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
                     </View>
                 </View>
 
-                {/* Right: Vehicle Image */}
                 <View style={styles.vehicleImageContainer}>
                     <Text style={styles.vehicleImage}>🛵</Text>
                 </View>
             </View>
 
-            {/* Specs Row */}
+            {/* Hàng thông số */}
             <View style={styles.specsRow}>
                 <View style={styles.specItem}>
                     <Text style={styles.specIcon}>🔋</Text>
@@ -72,17 +67,17 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
                 </View>
                 <View style={styles.specItem}>
                     <View style={[styles.colorDot, { backgroundColor: vehicle.colorHex }]}>
-                        {vehicle.color === "White" && <View style={styles.colorDotBorder} />}
+                        {vehicle.color === "Trắng" && <View style={styles.colorDotBorder} />}
                     </View>
                     <Text style={styles.specText}>{vehicle.color}</Text>
                 </View>
             </View>
 
-            {/* Price and Book Button */}
+            {/* Giá & Nút đặt xe */}
             <View style={styles.footer}>
                 <View style={styles.priceSection}>
-                    <Text style={styles.price}>${vehicle.price} / day</Text>
-                    <Text style={styles.total}>Total ${vehicle.price * 3}</Text>
+                    <Text style={styles.price}>{vehicle.price.toLocaleString('vi-VN')}đ / ngày</Text>
+                    <Text style={styles.total}>Tổng { (vehicle.price * 3).toLocaleString('vi-VN') }đ</Text>
                 </View>
                 <TouchableOpacity 
                     style={styles.bookButton}
@@ -91,7 +86,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
                         onBookPress(vehicle.id);
                     }}
                 >
-                    <Text style={styles.bookButtonText}>Book</Text>
+                    <Text style={styles.bookButtonText}>Đặt xe</Text>
                 </TouchableOpacity>
             </View>
         </TouchableOpacity>

@@ -25,14 +25,14 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Avatar name={name} />
             <View style={styles.profileDetails}>
             <Text style={styles.profileName}>{name}</Text>
-            <Text style={styles.profileMeta}>Member since {memberSince}</Text>
-            <Text style={styles.profileMeta}>{trips} trips completed, {distance} traveled</Text>
+            <Text style={styles.profileMeta}>Thành viên kể từ: {memberSince}</Text>
+            <Text style={styles.profileMeta}>{trips} Chuyến đi hoàn thành, đã đi được {distance}</Text>
             </View>
         </View>
         <TouchableOpacity onPress={onEdit} style={styles.editButton}>
             <Icon name="edit" />
         </TouchableOpacity>
-        <Badge type="error">Verification Needed</Badge>
+        <Badge type="error">Cần Kiếm Chứng Tài Khoản</Badge>
         </View>
     );
 };

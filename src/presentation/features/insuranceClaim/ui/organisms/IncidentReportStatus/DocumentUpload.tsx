@@ -8,18 +8,18 @@ export interface DocumentUploadProps {
 }
 
 export const DocumentUpload: React.FC<DocumentUploadProps> = ({
-        onUpload,
-        instructions,
-    }) => {
-        return (
-            <View style={styles.card}>
+    onUpload,
+    instructions,
+}) => {
+    return (
+        <View style={styles.card}>
             <View style={styles.uploadHeader}>
-                <Text style={styles.uploadTitle}>📄 Document Upload</Text>
+                <Text style={styles.uploadTitle}>Tải lên</Text>
             </View>
             <Text style={styles.uploadInstructions}>{instructions}</Text>
             <FileUploadZone onUpload={onUpload} />
-            </View>
-        );
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({

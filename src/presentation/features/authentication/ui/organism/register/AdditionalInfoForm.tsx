@@ -48,8 +48,8 @@ export const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
     const formatDateDisplay = (dateStr: string) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+        const months = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+        return `${date.getDate()} ${months[date.getMonth()]}, ${date.getFullYear()}`;
     };
 
     const isFormValid = 
@@ -68,28 +68,28 @@ export const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
         <View style={styles.container}>
             <View style={styles.inputContainer}>
                 <Input
-                    placeholder="Full Name"
+                    placeholder="Họ và tên"
                     value={fullname}
                     onChangeText={setFullname}
                     autoCapitalize="words"
                     editable={!loading}
                 />
                 <Input
-                    placeholder="Username"
+                    placeholder="Tên đăng nhập"
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
                     editable={!loading}
                 />
                 <Input
-                    placeholder="Phone Number"
+                    placeholder="Số điện thoại"
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
                     editable={!loading}
                 />
                 <Input
-                    placeholder="Address"
+                    placeholder="Địa chỉ"
                     value={address}
                     onChangeText={setAddress}
                     editable={!loading}
@@ -105,20 +105,20 @@ export const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
                     <View style={styles.dateContent}>
                         {dateOfBirth ? (
                             <>
-                                <Text style={styles.dateLabel}>Date of Birth</Text>
+                                <Text style={styles.dateLabel}>Ngày sinh</Text>
                                 <Text style={styles.dateText}>
                                     {formatDateDisplay(dateOfBirth)}
                                 </Text>
                             </>
                         ) : (
-                            <Text style={styles.datePlaceholder}>Select Date of Birth</Text>
+                            <Text style={styles.datePlaceholder}>Chọn ngày sinh</Text>
                         )}
                     </View>
                 </TouchableOpacity>
             </View>
 
             <Button
-                title={loading ? 'Creating Account...' : 'Complete Registration'}
+                title={loading ? 'Đang tạo tài khoản...' : 'Hoàn tất đăng ký'}
                 onPress={handleComplete}
                 variant="primary"
                 style={buttonStyle}

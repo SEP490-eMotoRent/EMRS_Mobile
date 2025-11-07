@@ -27,7 +27,7 @@ export const MapScreen: React.FC = () => {
     // Get navigation parameters
     const { location, dateRange, address } = route.params || {
         location: "1 Phạm Văn Hai, Street, Tân Bình...",
-        dateRange: "Select dates",
+        dateRange: "Chọn Ngày",
         address: "1 Phạm Văn Hai, Street, Tân Bình..."
     };
 

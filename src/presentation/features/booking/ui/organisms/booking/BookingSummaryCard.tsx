@@ -1,6 +1,6 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { BookingInfoItem } from "../molecules/BookingInfoItem";
+import { BookingInfoItem } from "../../molecules/BookingInfoItem";
 
 interface BookingSummaryCardProps {
     vehicleName: string;
@@ -26,7 +26,7 @@ export const BookingSummaryCard: React.FC<BookingSummaryCardProps> = ({
                     {imageUrl ? (
                         <Image source={{ uri: imageUrl }} style={styles.image} />
                     ) : (
-                        <Text style={styles.placeholder}>🛵</Text>
+                        <Text style={styles.placeholder}>Xe máy điện</Text>
                     )}
                 </View>
                 <View style={styles.info}>
@@ -37,8 +37,8 @@ export const BookingSummaryCard: React.FC<BookingSummaryCardProps> = ({
             </View>
             
             <View style={styles.details}>
-                <BookingInfoItem icon="📍" text={branchName} />
-                <BookingInfoItem icon="🛡️" text={insurancePlan} />
+                <BookingInfoItem icon="Địa điểm" text={branchName} />
+                <BookingInfoItem icon="Bảo hiểm" text={insurancePlan} />
             </View>
         </View>
     );

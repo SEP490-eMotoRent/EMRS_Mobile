@@ -11,7 +11,7 @@ export const ConditionSection: React.FC<ConditionSectionProps> = ({ requirements
     return (
         <View style={styles.container}>
             <SectionTitle title="Condition" />
-            <Text style={styles.subtitle}>Requirement</Text>
+            <Text style={styles.subtitle}>Yêu Cầu</Text>
             <View style={styles.requirementsList}>
                 {requirements.map((req, index) => (
                     <RequirementItem key={index} text={req} />

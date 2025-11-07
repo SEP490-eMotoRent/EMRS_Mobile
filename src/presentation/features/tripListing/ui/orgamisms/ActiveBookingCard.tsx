@@ -30,7 +30,7 @@ export const ActiveBookingCard: React.FC<ActiveBookingCardProps> = ({
 }) => {
     return (
         <View style={styles.card}>
-            <StatusBadge status="active" />
+            <StatusBadge status="renting" />
             
             <View style={styles.content}>
                 <VehicleInfo name={booking.vehicleName} dates={booking.dates} />
@@ -41,15 +41,15 @@ export const ActiveBookingCard: React.FC<ActiveBookingCardProps> = ({
                 
                 <View style={styles.actions}>
                     <TouchableOpacity style={styles.secondaryButton} onPress={onViewDetails}>
-                        <Text style={styles.secondaryButtonText}>View Details</Text>
+                        <Text style={styles.secondaryButtonText}>Chi Tiết</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.secondaryButton} onPress={onExtendRental}>
-                        <Text style={styles.secondaryButtonText}>Extend Rental</Text>
+                        <Text style={styles.secondaryButtonText}>Mở Rộng Thời Hạn Mượn Xe</Text>
                     </TouchableOpacity>
                 </View>
                 
                 <TouchableOpacity style={styles.reportButton} onPress={onReportIssue}>
-                    <Text style={styles.reportButtonText}>Report Issue</Text>
+                    <Text style={styles.reportButtonText}>Báo Cáo Vấn Đề</Text>
                 </TouchableOpacity>
             </View>
         </View>

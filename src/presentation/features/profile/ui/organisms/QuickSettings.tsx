@@ -13,7 +13,7 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({ onSignOut }) => {
     
     return (
         <View style={styles.quickSettings}>
-        <Text style={styles.sectionTitle}>Quick Settings</Text>
+        <Text style={styles.sectionTitle}>Cài Đặt</Text>
         
         <View style={styles.settingsGroup}>
             <SettingToggle
@@ -45,7 +45,7 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({ onSignOut }) => {
         
         <TouchableOpacity style={styles.signOutButton} onPress={onSignOut}>
             <Icon name="logout" color="#f87171" />
-            <Text style={styles.signOutText}>Sign Out</Text>
+            <Text style={styles.signOutText}>Đăng Xuất</Text>
         </TouchableOpacity>
         </View>
     );

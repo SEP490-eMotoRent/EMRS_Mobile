@@ -46,10 +46,10 @@ export const BikeCard: React.FC<BikeCardProps> = ({ bike }) => (
 
         <View style={styles.footer}>
             <View>
-            <Caption style={styles.caption}>Starting from</Caption>
+            <Caption style={styles.caption}>Bắt đầu từ: </Caption>
             <Heading2 style={styles.price}>{bike.price}</Heading2>
             </View>
-            <SecondaryButton onPress={() => {}}>Book Now</SecondaryButton>
+            <SecondaryButton onPress={() => {}}>ĐẶT XE NGAY</SecondaryButton>
         </View>
         </View>
     </View>

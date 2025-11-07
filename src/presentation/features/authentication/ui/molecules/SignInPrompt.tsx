@@ -10,9 +10,9 @@ export const SignInPrompt: React.FC<SignInPromptProps> = ({ onSignInPress }) => 
     return (
         <View style={styles.container}>
             <Text style={styles.text}>
-                I already Have An Account!{' '}
+                Tôi đã có tài khoản!{' '}
                 <Text style={styles.link} onPress={onSignInPress}>
-                    Sign In
+                    Đăng nhập
                 </Text>
             </Text>
         </View>

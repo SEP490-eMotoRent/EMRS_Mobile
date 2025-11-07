@@ -11,47 +11,46 @@ interface PickupDetailsCardProps {
     onCallBranch: () => void;
 }
 
-export const PickupDetailsCard: React.FC<PickupDetailsCardProps> = ({
-    branchName,
-    address,
-    operatingHours,
-    phoneNumber,
-    onGetDirections,
-    onCallBranch,
-}) => {
-    return (
-        <View style={styles.container}>
-        <SectionTitle title="Pickup Details" />
-        <View style={styles.card}>
-            <View style={styles.mapPlaceholder}>
-            {/* Map placeholder - integrate with actual map component */}
-            <Text style={styles.mapText}>Map View</Text>
-            </View>
-            
-            <View style={styles.detailsContainer}>
-            <Text style={styles.branchName}>{branchName}</Text>
-            <Text style={styles.address}>{address}</Text>
-            
-            <View style={styles.infoRow}>
-                <Text style={styles.label}>Operating Hours</Text>
-                <Text style={styles.value}>{operatingHours}</Text>
-            </View>
-            
-            <View style={styles.infoRow}>
-                <Text style={styles.label}>Branch Contact</Text>
-                <TouchableOpacity onPress={onCallBranch}>
-                <Text style={styles.phoneNumber}>{phoneNumber}</Text>
-                </TouchableOpacity>
-            </View>
-            
-            <TouchableOpacity style={styles.directionsButton} onPress={onGetDirections}>
-                <Text style={styles.directionsText}>Get Directions</Text>
-            </TouchableOpacity>
-            </View>
-        </View>
-        </View>
-    );
-};
+    export const PickupDetailsCard: React.FC<PickupDetailsCardProps> = ({
+            branchName,
+            address,
+            operatingHours,
+            phoneNumber,
+            onGetDirections,
+            onCallBranch,
+        }) => {
+            return (
+                <View style={styles.container}>
+                <SectionTitle title="Thông tin nhận xe" />
+                    <View style={styles.card}>
+                        <View style={styles.mapPlaceholder}>
+                        <Text style={styles.mapText}>Bản đồ</Text>
+                        </View>
+
+                        <View style={styles.detailsContainer}>
+                        <Text style={styles.branchName}>{branchName}</Text>
+                        <Text style={styles.address}>{address}</Text>
+
+                        <View style={styles.infoRow}>
+                            <Text style={styles.label}>Giờ mở cửa</Text>
+                            <Text style={styles.value}>{operatingHours}</Text>
+                        </View>
+
+                        <View style={styles.infoRow}>
+                            <Text style={styles.label}>Liên hệ chi nhánh</Text>
+                            <TouchableOpacity onPress={onCallBranch}>
+                            <Text style={styles.phoneNumber}>{phoneNumber}</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity style={styles.directionsButton} onPress={onGetDirections}>
+                            <Text style={styles.directionsText}>Chỉ đường</Text>
+                        </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            );
+    };
 
 const styles = StyleSheet.create({
     container: {

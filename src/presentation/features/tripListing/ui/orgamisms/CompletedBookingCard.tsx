@@ -57,15 +57,15 @@ export const CompletedBookingCard: React.FC<CompletedBookingCardProps> = ({
                     {booking.status === "completed" ? (
                         <>
                             <TouchableOpacity style={styles.primaryButton} onPress={onRentAgain}>
-                                <Text style={styles.primaryButtonText}>Rent Again</Text>
+                                <Text style={styles.primaryButtonText}>Thuê Lại</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.secondaryButton} onPress={onViewReceipt}>
-                                <Text style={styles.secondaryButtonText}>📄 View Receipt</Text>
+                                <Text style={styles.secondaryButtonText}>📄 Xem Biên Bản</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
                         <TouchableOpacity style={styles.primaryButton} onPress={onBookSimilar}>
-                            <Text style={styles.primaryButtonText}>Book Similar</Text>
+                            <Text style={styles.primaryButtonText}>Đặt tương tự</Text>
                         </TouchableOpacity>
                     )}
                 </View>

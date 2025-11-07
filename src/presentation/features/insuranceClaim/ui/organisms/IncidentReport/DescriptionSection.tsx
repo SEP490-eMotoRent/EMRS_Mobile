@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { VoiceNoteButton } from '../../molecules';
 
-
 export interface DescriptionSectionProps {
     value: string;
     onChangeText: (text: string) => void;
@@ -21,14 +20,16 @@ export const DescriptionSection: React.FC<DescriptionSectionProps> = ({
     recordingDuration = 0,
 }) => (
     <View style={styles.section}>
-        <Text style={styles.title}>Description *</Text>
+        <Text style={styles.title}>Mô tả sự cố *</Text>
         <TextInput
             multiline
-            placeholder="Describe what happened in detail... (minimum 10 characters)"
+            placeholder="Mô tả chi tiết sự cố... (tối thiểu 10 ký tự)"
+            placeholderTextColor="#666"
             value={value}
             onChangeText={onChangeText}
             numberOfLines={6}
             textAlignVertical="top"
+            style={styles.input}
         />
         {error && <Text style={styles.errorText}>{error}</Text>}
         {onVoiceNote && (
@@ -40,7 +41,7 @@ export const DescriptionSection: React.FC<DescriptionSectionProps> = ({
         )}
         {isRecording && (
             <Text style={styles.recordingHint}>
-                Tap again to stop and transcribe
+                Nhấn lại để dừng ghi âm
             </Text>
         )}
     </View>
@@ -58,6 +59,16 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
         marginBottom: 12,
+    },
+    input: {
+        backgroundColor: '#0A0A0A',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 14,
+        color: '#fff',
+        minHeight: 100,
+        borderWidth: 1,
+        borderColor: '#333',
     },
     errorText: {
         fontSize: 12,

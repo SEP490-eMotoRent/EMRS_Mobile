@@ -1,4 +1,3 @@
-// src/features/auth/screens/RegisterScreen/RegisterScreen.tsx
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react';
@@ -36,17 +35,17 @@ export const RegisterScreen: React.FC = () => {
   }) => {
     // Validation
     if (data.password !== data.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert('Lỗi', 'Mật khẩu không khớp');
       return;
     }
 
     if (data.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
 
     if (data.username.length < 3) {
-      Alert.alert('Error', 'Username must be at least 3 characters');
+      Alert.alert('Lỗi', 'Tên đăng nhập phải có ít nhất 3 ký tự');
       return;
     }
 
@@ -67,15 +66,15 @@ export const RegisterScreen: React.FC = () => {
         avatarUrl: '', // Optional - empty string
       });
 
-      // ✅ SUCCESS: Navigate to OTP Verification Screen
+      // SUCCESS: Navigate to OTP Verification Screen
       navigation.navigate('OTPVerification', {
         email: data.email,
         userId: data.username, // Can also extract from API response if needed
       });
 
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'Something went wrong');
-      console.error('❌ Registration error:', error);
+      Alert.alert('Đăng ký thất bại', error.message || 'Đã xảy ra lỗi');
+      console.error('Registration error:', error);
     } finally {
       setLoading(false);
     }
@@ -104,7 +103,7 @@ export const RegisterScreen: React.FC = () => {
           
           <BackButton onPress={() => navigation.goBack()} />
 
-          <BrandTitle subtitle="Let's Create Your eMotoRent Account" />
+          <BrandTitle subtitle="Hãy tạo tài khoản eMotoRent của bạn" />
 
           <RegisterForm onContinue={handleContinue} loading={loading} />
 

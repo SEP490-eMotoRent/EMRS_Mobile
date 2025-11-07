@@ -5,7 +5,7 @@ interface SearchBarProps {
     placeholder?: string;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ placeholder = 'Search For An Address' }) => (
+export const SearchBar: React.FC<SearchBarProps> = ({ placeholder = 'Nhập địa chỉ của bạn' }) => (
     <TouchableOpacity style={styles.container}>
         <Text style={styles.text}>{placeholder}</Text>
     </TouchableOpacity>
