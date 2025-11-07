@@ -22,6 +22,17 @@ export type HomeStackParamList = {
   Home: undefined;
   Browse: NavigatorScreenParams<BrowseStackParamList>;
   Booking: NavigatorScreenParams<BookingStackParamList>;
+  ListView: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
+  Map: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
+  VehicleDetails: { vehicleId: string };
 };
 
 export type BrowseStackParamList = {
@@ -77,6 +88,7 @@ export type BookingStackParamList = {
     securityDeposit: string;
     contractNumber: string;
   };
+  Trips: undefined;
 };
 
 export type TripStackParamList = {

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Dimensions } from 'react-native';
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 import { ActivityIndicator } from 'react-native';
 import { Text } from '../atoms/Text';
@@ -14,6 +15,12 @@ interface DocumentCameraViewProps {
     onCapture: (photoUri: string) => void;
     onClose: () => void;
 }
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Guide dimensions (must match GuideOverlay)
+const GUIDE_WIDTH = SCREEN_WIDTH * 0.85;
+const GUIDE_HEIGHT = GUIDE_WIDTH / 1.6;
 
 export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
     documentType,
@@ -30,6 +37,46 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
         setFlashMode(current => current === 'off' ? 'on' : 'off');
     };
 
+    const cropToGuide = async (photoUri: string, photoWidth: number, photoHeight: number) => {
+        try {
+            // Calculate the crop region based on screen guide position
+            // The guide is centered on screen
+            const guideLeft = (SCREEN_WIDTH - GUIDE_WIDTH) / 2;
+            const guideTop = (SCREEN_HEIGHT - GUIDE_HEIGHT) / 2;
+
+            // Convert screen coordinates to photo coordinates
+            const scaleX = photoWidth / SCREEN_WIDTH;
+            const scaleY = photoHeight / SCREEN_HEIGHT;
+
+            const cropX = guideLeft * scaleX;
+            const cropY = guideTop * scaleY;
+            const cropWidth = GUIDE_WIDTH * scaleX;
+            const cropHeight = GUIDE_HEIGHT * scaleY;
+
+            // Crop the image
+            const croppedImage = await ImageManipulator.manipulateAsync(
+                photoUri,
+                [
+                    {
+                        crop: {
+                            originX: cropX,
+                            originY: cropY,
+                            width: cropWidth,
+                            height: cropHeight,
+                        },
+                    },
+                ],
+                { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+            );
+
+            return croppedImage.uri;
+        } catch (error) {
+            console.error('❌ Crop failed:', error);
+            // Return original if crop fails
+            return photoUri;
+        }
+    };
+
     const handleCapture = async () => {
         if (!cameraRef.current || isCapturing) return;
 
@@ -42,11 +89,25 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
             });
 
             if (photo?.uri) {
-                onCapture(photo.uri);
+                console.log('📸 Original photo:', {
+                    uri: photo.uri,
+                    width: photo.width,
+                    height: photo.height,
+                });
+
+                // Crop to guide region
+                const croppedUri = await cropToGuide(
+                    photo.uri,
+                    photo.width,
+                    photo.height
+                );
+
+                console.log('✂️ Cropped photo:', croppedUri);
+                onCapture(croppedUri);
             }
         } catch (error: any) {
-            console.error('Failed to capture photo:', error);
-            Alert.alert('Error', 'Failed to capture photo. Please try again.');
+            console.error('❌ Failed to capture photo:', error);
+            Alert.alert('Lỗi', 'Không thể chụp ảnh. Vui lòng thử lại.');
         } finally {
             setIsCapturing(false);
         }
@@ -79,8 +140,8 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
     }
 
     const instruction = documentType === 'front' 
-        ? `Position the front of your ${documentName} within the frame`
-        : `Position the back of your ${documentName} within the frame`;
+        ? `Đặt mặt trước ${documentName} vào trong khung hình`
+        : `Đặt mặt sau ${documentName} vào trong khung hình`;
 
     return (
         <View style={styles.container}>
@@ -91,7 +152,7 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
                 flash={flashMode}
             >
                 <DocumentGuide
-                    title={`Capture ${documentType === 'front' ? 'Front' : 'Back'} Side`}
+                    title={`Chụp mặt ${documentType === 'front' ? 'trước' : 'sau'}`}
                     instruction={instruction}
                 />
 
@@ -105,6 +166,14 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
                     />
                 </View>
             </CameraView>
+
+            {/* Processing overlay */}
+            {isCapturing && (
+                <View style={styles.processingOverlay}>
+                    <ActivityIndicator size="large" color="#7C3AED" />
+                    <Text style={styles.processingText}>Đang xử lý...</Text>
+                </View>
+            )}
         </View>
     );
 };
@@ -148,5 +217,16 @@ const styles = StyleSheet.create({
     permissionButtonText: {
         color: '#000',
         fontWeight: '600',
+    },
+    processingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 12,
+    },
+    processingText: {
+        color: '#FFFFFF',
+        fontSize: 16,
     },
 });

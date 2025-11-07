@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { SearchBar } from '../../../../common/components/atoms/inputs/SearchBar';
 import { BookingModal } from '../../../../common/components/organisms/bookingSearchBar/BookingModal';
 import { Bike } from '../molecules/cards/BikeCard';
@@ -11,8 +13,13 @@ import { ReviewsSection } from '../organisms/sections/ReviewsSection';
 import { TapBookGoSection } from '../organisms/sections/TapBookGoSection';
 import { WhyChooseSection } from '../organisms/whyChoose/WhyChooseSection';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { HomeStackParamList } from '../../../../shared/navigation/StackParameters/types';
+
+type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 
 export const HomeScreen: React.FC = () => {
+    const navigation = useNavigation<HomeScreenNavigationProp>();
+    
     const bikes: Bike[] = [
         { name: 'Zero SR/F', category: 'Sport', range: '200 km', speed: '124 mph', price: '$89', rating: '4.9' },
         { name: 'Zero SR/F', category: 'Sport', range: '200 km', speed: '124 mph', price: '$89', rating: '4.9' },
@@ -20,6 +27,14 @@ export const HomeScreen: React.FC = () => {
     ];
 
     const [modalVisible, setModalVisible] = useState(false);
+
+    const handleViewAllBikes = () => {
+        navigation.navigate('ListView', {
+            location: 'Ho Chi Minh City, Vietnam',
+            dateRange: 'Oct 20 | 10:00 AM - Oct 23 | 10:00 AM',
+            address: 'Ho Chi Minh City, Vietnam',
+        });
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -33,7 +48,7 @@ export const HomeScreen: React.FC = () => {
                 </View>
 
                 <HeroSection />
-                <FeaturedBikesSection bikes={bikes} />
+                <FeaturedBikesSection bikes={bikes} onViewAll={handleViewAllBikes} />
                 <WhyChooseSection />
                 <TapBookGoSection />
                 <ReviewsSection />

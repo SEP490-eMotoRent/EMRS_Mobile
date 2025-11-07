@@ -1,8 +1,8 @@
-import { AxiosClient } from "../../../../../core/network/AxiosClient";
+import { ServerException } from "../../../../../core/errors/ServerException";
 import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse, unwrapResponse } from "../../../../../core/network/APIResponse";
+import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { AppLogger } from "../../../../../core/utils/Logger";
-import { ServerException } from "../../../../../core/errors/ServerException";
 import { DocumentCreateRequest } from "../../../../models/account/document/DocumentCreateRequest";
 import { DocumentDetailResponse } from "../../../../models/account/document/DocumentDetailResponse";
 import { DocumentUpdateRequest } from "../../../../models/account/document/DocumentUpdateRequest";
@@ -23,15 +23,40 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
 
             const formData = new FormData();
             
-            // Add all fields
+            // ✅ CRITICAL: Add required fields first
             formData.append('DocumentNumber', request.documentNumber);
-            if (request.issueDate) formData.append('IssueDate', request.issueDate);
-            if (request.expiryDate) formData.append('ExpiryDate', request.expiryDate);
-            if (request.issuingAuthority) formData.append('IssuingAuthority', request.issuingAuthority);
             formData.append('VerificationStatus', request.verificationStatus);
-            if (request.verifiedAt) formData.append('VerifiedAt', request.verifiedAt);
 
-            // Add files
+            // ✅ FIXED: Only add dates if they exist AND are valid
+            if (request.issueDate) {
+                // Ensure it's in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
+                const isoDate = this.ensureISOFormat(request.issueDate);
+                if (isoDate) {
+                    formData.append('IssueDate', isoDate);
+                    this.logger.info(`IssueDate appended: ${isoDate}`);
+                }
+            }
+            
+            if (request.expiryDate) {
+                const isoDate = this.ensureISOFormat(request.expiryDate);
+                if (isoDate) {
+                    formData.append('ExpiryDate', isoDate);
+                    this.logger.info(`ExpiryDate appended: ${isoDate}`);
+                }
+            }
+            
+            if (request.issuingAuthority && request.issuingAuthority.trim()) {
+                formData.append('IssuingAuthority', request.issuingAuthority);
+            }
+            
+            if (request.verifiedAt) {
+                const isoDate = this.ensureISOFormat(request.verifiedAt);
+                if (isoDate) {
+                    formData.append('VerifiedAt', isoDate);
+                }
+            }
+
+            // ✅ Add file objects for React Native FormData
             formData.append('FrontDocumentFile', {
                 uri: request.frontDocumentFile.uri,
                 name: request.frontDocumentFile.name,
@@ -44,15 +69,22 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
                 type: request.backDocumentFile.type,
             } as any);
 
+            // ✅ Set proper headers for multipart/form-data
             const response = await this.apiClient.post<ApiResponse<DocumentDetailResponse>>(
                 ApiEndpoints.document.createCitizen,
-                formData
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
             );
 
             this.logger.info('Citizen document created successfully');
             return unwrapResponse(response.data);
         } catch (error: any) {
             this.logger.error(`Failed to create citizen document: ${error.message}`);
+            this.logger.error(`Error response: ${JSON.stringify(error.response?.data)}`);
             throw new ServerException(
                 error.response?.data?.message || 'Failed to create citizen document',
                 error.response?.status || 500
@@ -67,11 +99,26 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
             const formData = new FormData();
             
             formData.append('DocumentNumber', request.documentNumber);
-            if (request.issueDate) formData.append('IssueDate', request.issueDate);
-            if (request.expiryDate) formData.append('ExpiryDate', request.expiryDate);
-            if (request.issuingAuthority) formData.append('IssuingAuthority', request.issuingAuthority);
             formData.append('VerificationStatus', request.verificationStatus);
-            if (request.verifiedAt) formData.append('VerifiedAt', request.verifiedAt);
+
+            if (request.issueDate) {
+                const isoDate = this.ensureISOFormat(request.issueDate);
+                if (isoDate) formData.append('IssueDate', isoDate);
+            }
+            
+            if (request.expiryDate) {
+                const isoDate = this.ensureISOFormat(request.expiryDate);
+                if (isoDate) formData.append('ExpiryDate', isoDate);
+            }
+            
+            if (request.issuingAuthority && request.issuingAuthority.trim()) {
+                formData.append('IssuingAuthority', request.issuingAuthority);
+            }
+            
+            if (request.verifiedAt) {
+                const isoDate = this.ensureISOFormat(request.verifiedAt);
+                if (isoDate) formData.append('VerifiedAt', isoDate);
+            }
 
             formData.append('FrontDocumentFile', {
                 uri: request.frontDocumentFile.uri,
@@ -87,13 +134,19 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
 
             const response = await this.apiClient.post<ApiResponse<DocumentDetailResponse>>(
                 ApiEndpoints.document.createDriving,
-                formData
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
             );
 
             this.logger.info('Driving document created successfully');
             return unwrapResponse(response.data);
         } catch (error: any) {
             this.logger.error(`Failed to create driving document: ${error.message}`);
+            this.logger.error(`Error response: ${JSON.stringify(error.response?.data)}`);
             throw new ServerException(
                 error.response?.data?.message || 'Failed to create driving document',
                 error.response?.status || 500
@@ -109,14 +162,28 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
             
             formData.append('Id', request.id);
             formData.append('DocumentNumber', request.documentNumber);
-            if (request.issueDate) formData.append('IssueDate', request.issueDate);
-            if (request.expiryDate) formData.append('ExpiryDate', request.expiryDate);
-            if (request.issuingAuthority) formData.append('IssuingAuthority', request.issuingAuthority);
             formData.append('VerificationStatus', request.verificationStatus);
-            if (request.verifiedAt) formData.append('VerifiedAt', request.verifiedAt);
-            
             formData.append('IdFileFront', request.idFileFront);
             formData.append('IdFileBack', request.idFileBack);
+
+            if (request.issueDate) {
+                const isoDate = this.ensureISOFormat(request.issueDate);
+                if (isoDate) formData.append('IssueDate', isoDate);
+            }
+            
+            if (request.expiryDate) {
+                const isoDate = this.ensureISOFormat(request.expiryDate);
+                if (isoDate) formData.append('ExpiryDate', isoDate);
+            }
+            
+            if (request.issuingAuthority && request.issuingAuthority.trim()) {
+                formData.append('IssuingAuthority', request.issuingAuthority);
+            }
+            
+            if (request.verifiedAt) {
+                const isoDate = this.ensureISOFormat(request.verifiedAt);
+                if (isoDate) formData.append('VerifiedAt', isoDate);
+            }
 
             // Only add files if they're being updated
             if (request.frontDocumentFile) {
@@ -137,7 +204,12 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
 
             const response = await this.apiClient.put<ApiResponse<DocumentDetailResponse>>(
                 ApiEndpoints.document.updateCitizen,
-                formData
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
             );
 
             this.logger.info('Citizen document updated successfully');
@@ -159,14 +231,28 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
             
             formData.append('Id', request.id);
             formData.append('DocumentNumber', request.documentNumber);
-            if (request.issueDate) formData.append('IssueDate', request.issueDate);
-            if (request.expiryDate) formData.append('ExpiryDate', request.expiryDate);
-            if (request.issuingAuthority) formData.append('IssuingAuthority', request.issuingAuthority);
             formData.append('VerificationStatus', request.verificationStatus);
-            if (request.verifiedAt) formData.append('VerifiedAt', request.verifiedAt);
-            
             formData.append('IdFileFront', request.idFileFront);
             formData.append('IdFileBack', request.idFileBack);
+
+            if (request.issueDate) {
+                const isoDate = this.ensureISOFormat(request.issueDate);
+                if (isoDate) formData.append('IssueDate', isoDate);
+            }
+            
+            if (request.expiryDate) {
+                const isoDate = this.ensureISOFormat(request.expiryDate);
+                if (isoDate) formData.append('ExpiryDate', isoDate);
+            }
+            
+            if (request.issuingAuthority && request.issuingAuthority.trim()) {
+                formData.append('IssuingAuthority', request.issuingAuthority);
+            }
+            
+            if (request.verifiedAt) {
+                const isoDate = this.ensureISOFormat(request.verifiedAt);
+                if (isoDate) formData.append('VerifiedAt', isoDate);
+            }
 
             if (request.frontDocumentFile) {
                 formData.append('FrontDocumentFile', {
@@ -186,7 +272,12 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
 
             const response = await this.apiClient.put<ApiResponse<DocumentDetailResponse>>(
                 ApiEndpoints.document.updateDriving,
-                formData
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
             );
 
             this.logger.info('Driving document updated successfully');
@@ -216,6 +307,33 @@ export class DocumentRemoteDataSourceImpl implements DocumentRemoteDataSource {
                 error.response?.data?.message || 'Failed to delete document',
                 error.response?.status || 500
             );
+        }
+    }
+
+    /**
+     * ✅ Helper: Ensure date is in ISO 8601 format
+     * Handles: DD/MM/YYYY, YYYY-MM-DD, or already ISO strings
+     */
+    private ensureISOFormat(dateInput: string): string | null {
+        if (!dateInput || !dateInput.trim()) return null;
+
+        try {
+            // If already in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
+            if (/^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
+                return dateInput;
+            }
+
+            // If in DD/MM/YYYY format, convert to YYYY-MM-DD
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateInput)) {
+                const [day, month, year] = dateInput.split('/');
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+
+            this.logger.warn(`Invalid date format: ${dateInput}`);
+            return null;
+        } catch (error) {
+            this.logger.error(`Date conversion error: ${error}`);
+            return null;
         }
     }
 }

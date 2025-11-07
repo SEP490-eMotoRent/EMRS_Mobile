@@ -8,6 +8,7 @@ import { RepairRequest } from "../maintenance/RepairRequest";
 import { VehicleTransferRequest } from "../vehicle/VehicleTransferRequest";
 import { Branch } from "../operations/Branch";
 import { ChargingRecord } from "../operations/ChargingRecord";
+import { Ticket } from "./Ticket";
 
 export class Staff implements BaseEntity {
     public readonly id: string;
@@ -28,6 +29,7 @@ export class Staff implements BaseEntity {
     public repairRequests: RepairRequest[] = [];
     public vehicleTransferRequests: VehicleTransferRequest[] = [];
     public chargingRecords: ChargingRecord[] = [];
+    public tickets: Ticket[] = [];
 
     constructor(
         id: string,
