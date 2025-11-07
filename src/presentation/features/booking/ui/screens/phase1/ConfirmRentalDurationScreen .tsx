@@ -1,6 +1,6 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
@@ -15,15 +15,37 @@ type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRen
 
 export const ConfirmRentalDurationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
+    const { vehicleId, pricePerDay, securityDeposit } = route.params;
     const navigation = useNavigation<NavigationPropType>();
-    const { vehicleId } = route.params;
     
-    const [startDate, setStartDate] = useState("Sep 01 5:00 PM");
-    const [endDate, setEndDate] = useState("Sep 07 5:00 PM");
+    // Initialize with current date/time
+    const now = new Date();
+    const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const formatInitialDate = (date: Date) => {
+        const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", 
+                        "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        const timeStr = `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`;
+        return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')} ${timeStr}`;
+    };
+    
+    const [startDate, setStartDate] = useState(formatInitialDate(now));
+    const [endDate, setEndDate] = useState(formatInitialDate(weekLater));
     const [duration, setDuration] = useState("7 Ngày 0 Giờ");
     const [rentalDays, setRentalDays] = useState(7);
 
+    // Calculate prices dynamically
+    const rentalPrice = useMemo(() => pricePerDay * rentalDays, [pricePerDay, rentalDays]);
+    const total = useMemo(() => rentalPrice + securityDeposit, [rentalPrice, securityDeposit]);
+
     console.log("Booking vehicle ID:", vehicleId);
+    console.log("Price per day:", pricePerDay);
+    console.log("Rental days:", rentalDays);
+    console.log("Calculated rental price:", rentalPrice);
 
     const handleBack = () => {
         navigation.goBack();
@@ -66,7 +88,8 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const formatDateDisplay = (dateStr: string, timeStr: string) => {
         const date = new Date(dateStr);
-        const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+        const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", 
+                       "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
         return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')} ${timeStr}`;
     };
 
@@ -95,10 +118,13 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         console.log("Continue to next step for vehicle:", vehicleId);
         navigation.navigate('InsurancePlans', { 
             vehicleId,
+            pricePerDay,
+            securityDeposit,
             startDate,
             endDate,
             duration,
             rentalDays,
+            rentalPrice,
         });
     };
     
@@ -120,9 +146,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 <DurationText duration={duration} />
                 <BookingSummary
                     rentalDays={rentalDays}
-                    rentalPrice="1,050,000đ"
-                    securityDeposit="2,000,000đ"
-                    total="3,150,000đ"
+                    rentalPrice={`${rentalPrice.toLocaleString()}đ`}
+                    securityDeposit={`${securityDeposit.toLocaleString()}đ`}
+                    total={`${total.toLocaleString()}đ`}
                 />
             </ScrollView>
 

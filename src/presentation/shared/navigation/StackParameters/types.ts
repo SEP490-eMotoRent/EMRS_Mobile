@@ -50,19 +50,25 @@ export type BrowseStackParamList = {
 };
 
 export type BookingStackParamList = {
-  ConfirmRentalDuration: {
-    vehicleId: string;
+  ConfirmRentalDuration: { 
+      vehicleId: string;
+      pricePerDay: number;
+      securityDeposit: number;
   };
   InsurancePlans: {
-    vehicleId: string;
-    startDate: string;
-    endDate: string;
-    duration: string;
-    rentalDays: number;
+      vehicleId: string;
+      pricePerDay: number;
+      securityDeposit: number;
+      startDate: string;
+      endDate: string;
+      duration: string;
+      rentalDays: number;
+      rentalPrice: number;
   };
   PaymentConfirmation: {
     vehicleId: string;
     startDate: string;
+    pricePerDay : number;
     endDate: string;
     duration: string;
     rentalDays: number;

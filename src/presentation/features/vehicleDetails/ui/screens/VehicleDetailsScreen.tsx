@@ -68,10 +68,13 @@ export const VehicleDetailsScreen: React.FC = () => {
     const handleBooking = () => {
         navigation.navigate('Booking', {
             screen: 'ConfirmRentalDuration',
-            params: { vehicleId }
+            params: { 
+                vehicleId,
+                pricePerDay: data.pricePerDay,  // ADD THIS
+                securityDeposit: 2000000,        // ADD THIS (or calculate from pricePerDay)
+            }
         });
     };
-
     return (
         <View style={styles.container}>
             <ScrollView
