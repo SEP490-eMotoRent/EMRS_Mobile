@@ -60,12 +60,13 @@ export const ApiEndpoints = {
   // Receipt endpoints
   receipt: {
     create: "/rental/receipt",
-    generateContract: (bookingId: string) => `/rental/contract/${bookingId}`,
+    getDetails: (bookingId: string) => `/rental/receipt/${bookingId}`,
+    generateContract: (bookingId: string, receiptId: string) => `/rental/contract/${bookingId}/${receiptId}`,
     getContract: (bookingId: string) => `/rental/contract/${bookingId}`,
     generateOtp: (contractId: string) =>
       `/rental/contract/${contractId}/send-otp-code`,
-    signContract: (contractId: string, otpCode: string) =>
-      `/rental/contract/${contractId}/${otpCode}/confirm`,
+    signContract: (contractId: string, receiptId: string, otpCode: string) =>
+      `/rental/contract/${contractId}/${receiptId}/${otpCode}/confirm`,
     updateRentalReceipt: "/rental/receipt",
   },
 

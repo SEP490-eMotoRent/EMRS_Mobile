@@ -19,7 +19,6 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../../core/di/InjectionContainer";
-import { useAppSelector } from "../../../../authentication/store/hooks";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { HandoverReceiptResponse } from "../../../../../../data/models/receipt/HandoverReceiptResponse";
 import { AssignVehicleToBookingUseCase } from "../../../../../../domain/usecases/booking/AssignVehicleToBookingUseCase";
@@ -91,7 +90,6 @@ export const VehicleInspectionScreen: React.FC = () => {
   const route = useRoute<VehicleInspectionScreenRouteProp>();
   const { vehicleId, bookingId, currentOdometerKm, batteryHealthPercentage } =
     route.params || {};
-  const user = useAppSelector((state) => state.auth.user);
   const navigation = useNavigation<InspectionNav>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [photos, setPhotos] = useState<Record<string, string | null>>({
@@ -100,7 +98,9 @@ export const VehicleInspectionScreen: React.FC = () => {
     left: null,
     right: null,
   });
-  const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>({});
+  const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>(
+    {}
+  );
   const [notes, setNotes] = useState("");
   const [startOdometerKm, setStartOdometerKm] = useState(
     currentOdometerKm?.toString() || ""
@@ -320,45 +320,6 @@ export const VehicleInspectionScreen: React.FC = () => {
         return;
       }
 
-      // Create FormData for multipart/form-data
-      const formData = new FormData();
-
-      // Add text fields
-      formData.append("Notes", notes);
-      formData.append("StartOdometerKm", startOdometerKm);
-      formData.append("StartBatteryPercentage", startBatteryPercentage);
-      formData.append("BookingId", bookingId);
-
-      // Add photos as files
-      if (photos.front) {
-        formData.append("VehicleFiles", {
-          uri: photos.front,
-          type: "image/jpeg",
-          name: "front.jpg",
-        } as any);
-      }
-      if (photos.back) {
-        formData.append("VehicleFiles", {
-          uri: photos.back,
-          type: "image/jpeg",
-          name: "back.jpg",
-        } as any);
-      }
-      if (photos.left) {
-        formData.append("VehicleFiles", {
-          uri: photos.left,
-          type: "image/jpeg",
-          name: "left.jpg",
-        } as any);
-      }
-      if (photos.right) {
-        formData.append("VehicleFiles", {
-          uri: photos.right,
-          type: "image/jpeg",
-          name: "right.jpg",
-        } as any);
-      }
-
       // Capture and add checklist file
       let checklistUri: string | null = null;
       if (checklistRef.current) {
@@ -367,37 +328,38 @@ export const VehicleInspectionScreen: React.FC = () => {
           quality: 0.8,
           result: "tmpfile", // tạo file thật để upload
         });
-
-        formData.append("CheckListFile", {
-          uri: checklistUri,
-          type: "image/png",
-          name: "checklist.png",
-        } as any);
       }
+      const assignVehicleToBookingUseCase = new AssignVehicleToBookingUseCase(
+        sl.get("BookingRepository")
+      );
+
+      await assignVehicleToBookingUseCase.execute(vehicleId, bookingId);
 
       const createReceiptUseCase = new CreateReceiptUseCase(
         sl.get("ReceiptRepository")
       );
 
-      const assignVehicleToBookingUseCase = new AssignVehicleToBookingUseCase(
-        sl.get("BookingRepository")
+      const handoverResponse = await createReceiptUseCase.execute({
+        notes,
+        startOdometerKm: parseInt(startOdometerKm),
+        startBatteryPercentage: parseInt(startBatteryPercentage),
+        bookingId,
+        vehicleFiles: [
+          photos.front,
+          photos.back,
+          photos.left,
+          photos.right,
+        ].filter(Boolean) as string[],
+        checkListFile: checklistUri,
+      });
+
+      const receiptData: HandoverReceiptResponse =
+        unwrapResponse(handoverResponse);
+
+      Alert.alert(
+        "Thành công",
+        "Kiểm tra đã được hoàn thành và xe đã được gán cho booking"
       );
-
-      const [handoverResponse, assignResponse] = await Promise.all([
-        createReceiptUseCase.execute({
-          notes,
-          startOdometerKm: parseInt(startOdometerKm),
-          startBatteryPercentage: parseInt(startBatteryPercentage),
-          bookingId,
-          vehicleFiles: [photos.front, photos.back, photos.left, photos.right].filter(Boolean) as string[],
-          checkListFile: checklistUri,
-        }),
-        assignVehicleToBookingUseCase.execute(vehicleId, bookingId),
-      ]);
-
-      const receiptData: HandoverReceiptResponse = unwrapResponse(handoverResponse);
-
-      Alert.alert("Thành công", "Kiểm tra đã được hoàn thành và xe đã được gán cho booking");
 
       navigation.navigate("HandoverReport", {
         receiptId: receiptData.id,

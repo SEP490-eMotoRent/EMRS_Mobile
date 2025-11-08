@@ -70,6 +70,8 @@ export const ReturnReportScreen: React.FC = () => {
         finalizeReturnResponse
       );
 
+      // Navigate to Return Complete screen
+      Alert.alert("Success", "Trả xe thành công");
       navigation.navigate("ReturnComplete");
     } catch (error: any) {
       Alert.alert("Lỗi", `Không thể hoàn tất trả xe: ${error.message}`);

@@ -5,8 +5,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { RootNavigator } from "./src/presentation/shared/navigation/RootNavigator";
 import { AuthProvider } from "./src/presentation/features/authentication/notifiers/AuthContext";
 import { Provider } from "react-redux";
-import { store, persistor } from "./src/presentation/features/authentication/store";
+import {
+  store,
+  persistor,
+} from "./src/presentation/features/authentication/store";
 import { PersistGate } from "redux-persist/integration/react";
+import Toast from "react-native-toast-message";
 
 export default function App() {
   return (
@@ -21,6 +25,7 @@ export default function App() {
           </GestureHandlerRootView>
         </AuthProvider>
       </PersistGate>
+      <Toast />
     </Provider>
   );
 }

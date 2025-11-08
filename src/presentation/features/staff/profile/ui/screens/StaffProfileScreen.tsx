@@ -18,6 +18,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useAppDispatch, useAppSelector } from '../../../../authentication/store/hooks';
 import { removeAuth } from '../../../../authentication/store/slices/authSlice';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 type StaffProfileScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Profile'>;
 
@@ -96,6 +97,11 @@ export const StaffProfileScreen: React.FC = () => {
           style: 'destructive',
           onPress: () => {
             dispatch(removeAuth());
+            Toast.show({
+              type: "success",
+              text1: "Đăng xuất thành công",
+              text2: "Chào mừng bạn đến với eMotoRent",
+            });
           },
         },
       ]
