@@ -17,7 +17,7 @@ type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsuranceP
 
 const noProtectionPlan: InsurancePlan = {
     id: "none",
-    icon: "Không bảo vệ",
+    icon: "🚫",
     iconColor: "#ef4444",
     title: "Không bảo vệ",
     price: "MIỄN PHÍ",

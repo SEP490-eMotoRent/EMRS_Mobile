@@ -26,7 +26,7 @@ export const BookingSummaryCard: React.FC<BookingSummaryCardProps> = ({
                     {imageUrl ? (
                         <Image source={{ uri: imageUrl }} style={styles.image} />
                     ) : (
-                        <Text style={styles.placeholder}>Xe máy điện</Text>
+                        <Text style={styles.placeholderIcon}>🛵</Text>
                     )}
                 </View>
                 <View style={styles.info}>
@@ -35,7 +35,7 @@ export const BookingSummaryCard: React.FC<BookingSummaryCardProps> = ({
                     <Text style={styles.duration}>{duration}</Text>
                 </View>
             </View>
-            
+
             <View style={styles.details}>
                 <BookingInfoItem icon="Địa điểm" text={branchName} />
                 <BookingInfoItem icon="Bảo hiểm" text={insurancePlan} />
@@ -69,8 +69,9 @@ const styles = StyleSheet.create({
         height: "100%",
         borderRadius: 12,
     },
-    placeholder: {
-        fontSize: 32,
+    placeholderIcon: {
+        fontSize: 28,
+        textAlign: "center",
     },
     info: {
         flex: 1,
