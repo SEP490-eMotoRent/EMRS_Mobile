@@ -5,5 +5,6 @@ export interface BranchRepository {
     delete(branch: Branch): Promise<void>;
     getAll(): Promise<Branch[]>;
     getById(id: string): Promise<Branch | null>;
+    getByVehicleModelId(vehicleModelId: string): Promise<Branch[]>;
     update(branch: Branch): Promise<void>;
 }

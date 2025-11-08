@@ -17,7 +17,7 @@ type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsuranceP
 
 const noProtectionPlan: InsurancePlan = {
     id: "none",
-    icon: "Không bảo vệ",
+    icon: "🚫",
     iconColor: "#ef4444",
     title: "Không bảo vệ",
     price: "MIỄN PHÍ",
@@ -28,17 +28,37 @@ const noProtectionPlan: InsurancePlan = {
     ],
 };
 
+// Service fee - could be moved to config if needed
+const SERVICE_FEE = 35000;
+
 export const InsurancePlansScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
     
-    const { vehicleId, startDate, endDate, duration, rentalDays } = route.params;
+    const { 
+        vehicleId, 
+        vehicleName,
+        vehicleImageUrl,
+        branchId,
+        branchName,
+        pricePerDay,
+        securityDeposit,
+        startDate, 
+        endDate, 
+        duration, 
+        rentalDays,
+        rentalPrice 
+    } = route.params;
+    
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
 
     const { packages, loading, error, refetch } = useInsurancePackages();
 
     console.log("Insurance Plans - Vehicle ID:", vehicleId);
+    console.log("Vehicle Name:", vehicleName);
+    console.log("Branch:", branchName);
     console.log("Rental Duration:", duration);
+    console.log("Rental Price:", rentalPrice);
     console.log("Fetched Packages:", packages.length);
 
     const insurancePlans: InsurancePlan[] = useMemo(() => {
@@ -53,20 +73,20 @@ export const InsurancePlansScreen: React.FC = () => {
     const selectedPlan = insurancePlans.find(p => p.id === selectedPlanId);
     const selectedPackage = packages.find(p => p.id === selectedPlanId);
     
-    const insuranceFee = selectedPlanId === "none" 
+    // Calculate insurance fee
+    const insuranceFeeValue = selectedPlanId === "none" 
+        ? 0
+        : selectedPackage?.packageFee || 0;
+    
+    const insuranceFee = insuranceFeeValue === 0 
         ? "MIỄN PHÍ" 
-        : selectedPackage 
-            ? formatVND(selectedPackage.packageFee)
-            : "0đ";
+        : formatVND(insuranceFeeValue);
     
-    const rentalFee = "3,130,000đ";
+    // Format rental fee from the calculated value
+    const rentalFee = `${rentalPrice.toLocaleString()}đ`;
     
-    const parsePrice = (price: string) => {
-        if (price === "MIỄN PHÍ") return 0;
-        return parseInt(price.replace(/[^0-9]/g, "")) || 0;
-    };
-    
-    const totalAmount = parsePrice(rentalFee) + parsePrice(insuranceFee);
+    // Calculate total
+    const totalAmount = rentalPrice + insuranceFeeValue + SERVICE_FEE;
     const total = `${totalAmount.toLocaleString()}đ`;
 
     const handleContinue = () => {
@@ -75,17 +95,21 @@ export const InsurancePlansScreen: React.FC = () => {
         
         navigation.navigate('PaymentConfirmation', {
             vehicleId,
+            vehicleName,
+            vehicleImageUrl,
+            branchId,
+            branchName,
+            pricePerDay,
             startDate,
             endDate,
             duration,
             rentalDays,
-            branchName: "Quận 2, Chi nhánh eMotoRent",
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
-            rentalFee: "1,130,000đ",
-            insuranceFee: insuranceFee === "MIỄN PHÍ" ? "0đ" : insuranceFee,
-            securityDeposit: "2,000,000đ",
-            serviceFee: "35,000đ",
+            rentalFee: `${rentalPrice.toLocaleString()}đ`,
+            insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
+            securityDeposit: `${securityDeposit.toLocaleString()}đ`,
+            serviceFee: `${SERVICE_FEE.toLocaleString()}đ`,
             total: total,
         });
     };
@@ -139,7 +163,7 @@ export const InsurancePlansScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <VehicleInfoHeader
-                    vehicleName="VinFast Evo200"
+                    vehicleName={vehicleName}
                     rentalPeriod={`${startDate} - ${endDate}`}
                 />
 

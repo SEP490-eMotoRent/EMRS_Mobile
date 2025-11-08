@@ -48,23 +48,23 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
     return (
         <View style={[styles.container, { backgroundColor }]}>
             <NavItem
-                icon={<HomeIcon size={24} />}
-                label="Home"
+                icon={<HomeIcon size={22} />}
+                label="Trang Chủ"
                 isActive={activeRoute === 'home'}
                 onPress={() => handlePress('home')}
                 activeColor={activeColor}
                 inactiveColor={inactiveColor}
             />
             <NavItem
-                icon={<ScheduleIcon size={24} />}
-                label="Trips"
+                icon={<ScheduleIcon size={22} />}
+                label="Chuyến Đi"
                 isActive={activeRoute === 'trip'}
                 onPress={() => handlePress('trip')}
                 activeColor={activeColor}
                 inactiveColor={inactiveColor}
             />
             <NavItem
-                icon={<BatteryIcon size={24} />}
+                icon={<BatteryIcon size={22} />}
                 label="Battery"
                 isActive={activeRoute === 'battery'}
                 onPress={() => handlePress('battery')}
@@ -72,8 +72,8 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
                 inactiveColor={inactiveColor}
             />
             <NavItem
-                icon={<ProfileIcon size={24} />}
-                label="Profile"
+                icon={<ProfileIcon size={22} />}
+                label="Hồ Sơ"
                 isActive={activeRoute === 'profile'}
                 onPress={() => handlePress('profile')}
                 activeColor={activeColor}

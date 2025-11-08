@@ -22,6 +22,17 @@ export type HomeStackParamList = {
   Home: undefined;
   Browse: NavigatorScreenParams<BrowseStackParamList>;
   Booking: NavigatorScreenParams<BookingStackParamList>;
+  ListView: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
+  Map: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
+  VehicleDetails: { vehicleId: string };
 };
 
 export type BrowseStackParamList = {
@@ -39,23 +50,40 @@ export type BrowseStackParamList = {
 };
 
 export type BookingStackParamList = {
-  ConfirmRentalDuration: {
-    vehicleId: string;
+  ConfirmRentalDuration: { 
+      vehicleId: string;
+      vehicleName: string;
+      vehicleImageUrl?: string;
+      branchId: string;
+      branchName: string;
+      pricePerDay: number;
+      securityDeposit: number;
   };
   InsurancePlans: {
-    vehicleId: string;
-    startDate: string;
-    endDate: string;
-    duration: string;
-    rentalDays: number;
+      vehicleId: string;
+      vehicleName: string;
+      vehicleImageUrl?: string;
+      branchId: string;
+      branchName: string;
+      pricePerDay: number;
+      securityDeposit: number;
+      startDate: string;
+      endDate: string;
+      duration: string;
+      rentalDays: number;
+      rentalPrice: number;
   };
   PaymentConfirmation: {
     vehicleId: string;
+    vehicleName: string;
+    vehicleImageUrl?: string;
+    branchId: string;
+    branchName: string;
     startDate: string;
+    pricePerDay: number;
     endDate: string;
     duration: string;
     rentalDays: number;
-    branchName: string;
     insurancePlan: string;
     insurancePlanId?: string;
     rentalFee: string;
@@ -67,6 +95,7 @@ export type BookingStackParamList = {
   DigitalContract: {
     vehicleId: string;
     vehicleName: string;
+    vehicleImageUrl?: string;
     startDate: string;
     endDate: string;
     duration: string;
@@ -77,6 +106,7 @@ export type BookingStackParamList = {
     securityDeposit: string;
     contractNumber: string;
   };
+  Trips: undefined;
 };
 
 export type TripStackParamList = {

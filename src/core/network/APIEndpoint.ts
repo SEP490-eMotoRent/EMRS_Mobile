@@ -10,6 +10,7 @@ export const ApiEndpoints = {
     model: {
       create: "/Vehicle/model/create",
       list: "/Vehicle/model/list",
+      search: "/Vehicle/model/search",
       detail: (id: string) => `/Vehicle/model/detail/${id}`,
     },
     pricing: {
@@ -73,6 +74,7 @@ export const ApiEndpoints = {
   branch: {
     list: "/Branch",
     detail: (id: string) => `/Branch/${id}`,
+    byVehicleModel: (vehicleModelId: string) => `/Branch/${vehicleModelId}`,
     create: "/Branch/create",
     update: (id: string) => `/Branch/${id}`,
     delete: (id: string) => `/Branch/${id}`,

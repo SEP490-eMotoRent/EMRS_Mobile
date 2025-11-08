@@ -5,24 +5,25 @@ import { Bike, BikeCard } from '../../molecules/cards/BikeCard';
 
 interface FeaturedBikesSectionProps {
     bikes: Bike[];
+    onViewAll?: () => void;
 }
 
-export const FeaturedBikesSection: React.FC<FeaturedBikesSectionProps> = ({ bikes }) => (
+export const FeaturedBikesSection: React.FC<FeaturedBikesSectionProps> = ({ bikes, onViewAll }) => (
     <View style={styles.container}>
         <View style={styles.header}>
-        <Heading2 style={styles.heading}>Xe nổi bật</Heading2>
-        <TouchableOpacity>
-            <Text style={styles.viewAll}>Xem tất cả</Text>
-        </TouchableOpacity>
+            <Heading2 style={styles.heading}>Xe nổi bật</Heading2>
+            <TouchableOpacity onPress={onViewAll}>
+                <Text style={styles.viewAll}>Xem tất cả</Text>
+            </TouchableOpacity>
         </View>
         <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.bikeList}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.bikeList}
         >
-        {bikes.map((bike, index) => (
-            <BikeCard key={index} bike={bike} />
-        ))}
+            {bikes.map((bike, index) => (
+                <BikeCard key={index} bike={bike} />
+            ))}
         </ScrollView>
     </View>
 );

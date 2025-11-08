@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Text } from '../../atoms/Text';
 import { Icon } from '../../atoms/Icons/Icons';
 import { Button } from '../../atoms/Button';
@@ -8,7 +8,6 @@ import { DocumentUploadPlaceholder } from '../../molecules/DocumentUploadPlaceho
 import { TextInput } from '../../molecules/TextInput';
 import { DateInput } from '../../molecules/DateInput';
 
-// ✅ UPDATED: Changed fileUrl to images array
 interface DocumentData {
     id: string;
     documentNumber: string;
@@ -37,13 +36,13 @@ interface DocumentSectionProps {
     onDeleteDocument?: () => void;
     frontImage?: string;
     backImage?: string;
-    // Document metadata fields
     issueDate?: string;
     expiryDate?: string;
     issuingAuthority?: string;
     onIssueDatePress?: () => void;
     onExpiryDatePress?: () => void;
     onIssuingAuthorityChange?: (text: string) => void;
+    ocrProcessing?: boolean;
 }
 
 export const DocumentSection: React.FC<DocumentSectionProps> = ({
@@ -67,11 +66,11 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     onIssueDatePress,
     onExpiryDatePress,
     onIssuingAuthorityChange,
+    ocrProcessing = false,
 }) => {
     const hasDocument = !!existingDocument;
     const hasNewImages = !!(frontImage || backImage);
     
-    // ✅ UPDATED: Get URLs from images array instead of fileUrl
     const frontUrl = existingDocument?.images?.[0]?.fileUrl;
     const backUrl = existingDocument?.images?.[1]?.fileUrl;
 
@@ -104,9 +103,19 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 </View>
             </View>
 
+            {/* ✅ OCR Processing Indicator */}
+            {ocrProcessing && (
+                <View style={styles.ocrProcessingBanner}>
+                    <ActivityIndicator size="small" color="#7C3AED" />
+                    <Text style={styles.ocrProcessingText}>
+                        Đang trích xuất dữ liệu từ ảnh...
+                    </Text>
+                </View>
+            )}
+
             <View style={hasDocument ? styles.disabledInput : undefined}>
                 <TextInput
-                    label={`${title === "Citizen ID (ID)" ? "Citizen ID" : "License"} Number*`}
+                    label={`${title === "Căn Cước Công Dân" ? "Citizen ID" : "License"} Number*`}
                     value={documentNumber}
                     onChangeText={onDocumentNumberChange}
                     placeholder="Enter number"
@@ -137,7 +146,6 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                     </View>
                 </View>
             ) : (
-                // Editable fields for new documents
                 <View style={styles.editableFields}>
                     {onIssueDatePress && (
                         <DateInput
@@ -169,7 +177,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             <Text variant="label" style={styles.uploadLabel}>
                 {hasDocument || hasNewImages 
                     ? 'Document Images' 
-                    : `Upload ${title === "Citizen ID (ID)" ? "ID" : "License"} Images`}
+                    : `Upload ${title === "Căn Cước Công Dân" ? "ID" : "License"} Images`}
             </Text>
 
             {/* Show images: either new uploaded ones or existing ones */}
@@ -234,7 +242,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             )}
 
             {/* Show status message if new images are uploaded */}
-            {hasNewImages && (
+            {hasNewImages && !ocrProcessing && (
                 <View style={styles.uploadedBadge}>
                     <Icon name="check" size={16} color="#10B981" />
                     <Text style={styles.uploadedText}>
@@ -246,8 +254,21 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             )}
 
             <View style={styles.autoFillContainer}>
-                <Text>Tự động điền từ ảnh</Text>
-                <Switch value={autoFill} onValueChange={onAutoFillChange} />
+                <View style={styles.autoFillLeft}>
+                    <Text>Tự động điền từ ảnh</Text>
+                    {autoFill && (
+                        <View style={styles.autoFillBadge}>
+                            <Icon name="cross" size={12} color="#7C3AED" />
+                            <Text style={styles.autoFillBadgeText}>AI</Text>
+                        </View>
+                    )}
+                </View>
+                <Switch 
+                    value={autoFill} 
+                    onValueChange={onAutoFillChange}
+                    trackColor={{ false: '#767577', true: '#7C3AED80' }}
+                    thumbColor={autoFill ? '#7C3AED' : '#f4f3f4'}
+                />
             </View>
         </View>
     );
@@ -300,6 +321,21 @@ const styles = StyleSheet.create({
     },
     deleteButton: {
         padding: 8,
+    },
+    ocrProcessingBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#7C3AED20',
+        padding: 12,
+        borderRadius: 8,
+        gap: 12,
+        marginBottom: 12,
+    },
+    ocrProcessingText: {
+        flex: 1,
+        color: '#7C3AED',
+        fontSize: 13,
+        fontWeight: '500',
     },
     documentInfo: {
         backgroundColor: '#F3F4F6',
@@ -401,6 +437,25 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginTop: 12,
+    },
+    autoFillLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    autoFillBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#7C3AED20',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 8,
+        gap: 3,
+    },
+    autoFillBadgeText: {
+        color: '#7C3AED',
+        fontSize: 10,
+        fontWeight: '700',
     },
     disabledInput: {
         opacity: 0.6,

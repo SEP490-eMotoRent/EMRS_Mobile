@@ -44,30 +44,32 @@ export class DocumentVerificationHelper {
      */
     static getDriverLicenseVerification(documents: DocumentResponse[]): VerificationInfo {
         const licenseDoc = documents.find(doc => 
-        doc.documentType === 'DriverLicense' || doc.documentType === 'License'
+            doc.documentType === 'Driving' ||  // ✅ ADD THIS!
+            doc.documentType === 'DriverLicense' || 
+            doc.documentType === 'License'
         );
         
         if (!licenseDoc) {
-        return {
-            label: "Driver's license",
-            status: 'needed'
-        };
+            return {
+                label: "Driver's license",
+                status: 'needed'
+            };
         }
 
         const expiryDate = new Date(licenseDoc.expiryDate);
         const now = new Date();
 
         if (expiryDate < now) {
-        return {
-            label: "Driver's license",
-            status: 'expired'
-        };
+            return {
+                label: "Driver's license",
+                status: 'expired'
+            };
         }
 
         return {
-        label: "Driver's license",
-        status: 'valid',
-        validUntil: expiryDate.getFullYear().toString()
+            label: "Driver's license",
+            status: 'valid',
+            validUntil: expiryDate.getFullYear().toString()
         };
     }
 
