@@ -1,10 +1,10 @@
-import { AxiosClient } from '../../../../../core/network/AxiosClient';
 import { ApiEndpoints } from '../../../../../core/network/APIEndpoint';
-import { BranchRemoteDataSource } from '../../../interfaces/remote/branch/BranchRemoteDataSource';
+import { ApiResponse } from '../../../../../core/network/APIResponse';
+import { AxiosClient } from '../../../../../core/network/AxiosClient';
 import { BranchResponse } from '../../../../models/branch/BranchResponse';
 import { CreateBranchRequest } from '../../../../models/branch/CreateBranchRequest';
 import { UpdateBranchRequest } from '../../../../models/branch/UpdateBranchRequest';
-import { ApiResponse } from '../../../../../core/network/APIResponse';
+import { BranchRemoteDataSource } from '../../../interfaces/remote/branch/BranchRemoteDataSource';
 
 export class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
     constructor(private axiosClient: AxiosClient) {}
@@ -27,6 +27,13 @@ export class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
     async getById(id: string): Promise<BranchResponse> {
         const response = await this.axiosClient.get<ApiResponse<BranchResponse>>(
             ApiEndpoints.branch.detail(id)
+        );
+        return response.data.data;
+    }
+
+    async getByVehicleModelId(vehicleModelId: string): Promise<BranchResponse[]> {
+        const response = await this.axiosClient.get<ApiResponse<BranchResponse[]>>(
+            ApiEndpoints.branch.byVehicleModel(vehicleModelId)
         );
         return response.data.data;
     }

@@ -15,7 +15,15 @@ type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRen
 
 export const ConfirmRentalDurationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
-    const { vehicleId, pricePerDay, securityDeposit } = route.params;
+    const { 
+        vehicleId, 
+        vehicleName, 
+        vehicleImageUrl, 
+        branchId, 
+        branchName, 
+        pricePerDay, 
+        securityDeposit 
+    } = route.params;
     const navigation = useNavigation<NavigationPropType>();
     
     // Initialize with current date/time
@@ -43,6 +51,8 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const total = useMemo(() => rentalPrice + securityDeposit, [rentalPrice, securityDeposit]);
 
     console.log("Booking vehicle ID:", vehicleId);
+    console.log("Vehicle name:", vehicleName);
+    console.log("Branch:", branchName);
     console.log("Price per day:", pricePerDay);
     console.log("Rental days:", rentalDays);
     console.log("Calculated rental price:", rentalPrice);
@@ -118,6 +128,10 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         console.log("Continue to next step for vehicle:", vehicleId);
         navigation.navigate('InsurancePlans', { 
             vehicleId,
+            vehicleName,
+            vehicleImageUrl,
+            branchId,
+            branchName,
             pricePerDay,
             securityDeposit,
             startDate,

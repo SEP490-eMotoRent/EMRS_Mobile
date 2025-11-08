@@ -21,6 +21,7 @@ export const DigitalContractScreen: React.FC = () => {
     const {
         vehicleId,
         vehicleName,
+        vehicleImageUrl,
         startDate,
         endDate,
         duration,
@@ -33,6 +34,10 @@ export const DigitalContractScreen: React.FC = () => {
 
     const [contractGenerated, setContractGenerated] = useState(false);
     const [showContractModal, setShowContractModal] = useState(false);
+
+    console.log("Digital Contract - Vehicle:", vehicleName);
+    console.log("Branch:", branchName);
+    console.log("Contract Number:", contractNumber);
 
     const handleContractComplete = () => setContractGenerated(true);
 
@@ -54,7 +59,7 @@ export const DigitalContractScreen: React.FC = () => {
         }
     };
 
-    // ✅ HTML contract content
+    // HTML contract content with dynamic data
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="vi">
@@ -80,12 +85,13 @@ export const DigitalContractScreen: React.FC = () => {
         <p class="center bold">Độc lập – Tự do – Hạnh phúc</p>
 
         <h1>HỢP ĐỒNG THUÊ XE</h1>
+        <p class="center">Số: ${contractNumber}</p>
 
         <p class="italic">Hôm nay, tại ${branchName}, chúng tôi gồm:</p>
 
         <div class="section">
             <h2>1. BÊN GIAO XE</h2>
-            <p>Công ty: CarX</p>
+            <p>Công ty: eMotoRent</p>
             <p>Địa điểm giao xe: ${branchName}</p>
         </div>
 
@@ -93,19 +99,37 @@ export const DigitalContractScreen: React.FC = () => {
             <h2>2. BÊN NHẬN XE</h2>
             <p>Người thuê: [Tên người thuê]</p>
             <p>Số CCCD: [Số CCCD]</p>
+            <p class="italic">* Thông tin sẽ được cập nhật khi ký hợp đồng</p>
         </div>
 
         <div class="section">
-            <h3>Điều 1. Xe thuê</h3>
-            <p>Nhãn hiệu: ${vehicleName}</p>
+            <h3>Điều 1. Thông tin xe thuê</h3>
+            <p>Nhãn hiệu xe: ${vehicleName}</p>
             <p>Thời gian thuê: ${startDate} - ${endDate}</p>
-            <p>Giá thuê: ${totalAmount} VNĐ</p>
+            <p>Thời lượng: ${duration}</p>
+            <p>Giá thuê: ${totalAmount}</p>
+            <p>Tiền đặt cọc: ${securityDeposit}</p>
         </div>
 
         <div class="section">
-            <h3>Điều 2. Nghĩa vụ</h3>
-            <p>- Bên thuê chịu trách nhiệm bảo quản xe.</p>
-            <p>- Bên cho thuê hỗ trợ khi có sự cố.</p>
+            <h3>Điều 2. Nghĩa vụ của các bên</h3>
+            <p class="bold">Bên cho thuê:</p>
+            <p>- Giao xe đúng thời gian, địa điểm đã thỏa thuận</p>
+            <p>- Đảm bảo xe trong tình trạng tốt, an toàn khi giao</p>
+            <p>- Hỗ trợ bên thuê khi có sự cố trong quá trình sử dụng</p>
+            
+            <p class="bold">Bên thuê:</p>
+            <p>- Thanh toán đầy đủ chi phí thuê xe theo thỏa thuận</p>
+            <p>- Bảo quản xe cẩn thận, sử dụng đúng mục đích</p>
+            <p>- Trả xe đúng thời gian, địa điểm đã thỏa thuận</p>
+            <p>- Chịu trách nhiệm về mọi hư hỏng phát sinh trong thời gian thuê</p>
+        </div>
+
+        <div class="section">
+            <h3>Điều 3. Điều khoản chung</h3>
+            <p>- Hợp đồng có hiệu lực kể từ ngày ký</p>
+            <p>- Mọi tranh chấp sẽ được giải quyết thông qua thương lượng</p>
+            <p>- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản</p>
         </div>
 
         <div class="signature-row">
@@ -150,11 +174,10 @@ export const DigitalContractScreen: React.FC = () => {
                             securityDeposit={`${securityDeposit} (có thể hoàn lại)`}
                         />
 
-                        {/* ✅ New Contract Preview Section */}
                         <View style={styles.contractPreviewCard}>
                             <Text style={styles.contractTitle}>Hợp đồng thuê xe</Text>
                             <Text style={styles.contractSummary}>
-                                Đây là bản hợp đồng thuê xe giữa bạn và CarX, bao gồm thông tin xe, thời gian thuê,
+                                Đây là bản hợp đồng thuê xe giữa bạn và eMotoRent, bao gồm thông tin xe, thời gian thuê,
                                 giá thuê và nghĩa vụ hai bên.
                             </Text>
                             <PrimaryButton
@@ -180,7 +203,7 @@ export const DigitalContractScreen: React.FC = () => {
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
                                 <Text style={styles.infoText}>
-                                    Vui lòng đến chi nhánh trước 20 phút so với giờ đặt nhận xe
+                                    Vui lòng đến chi nhánh {branchName} trước 20 phút so với giờ đặt nhận xe
                                 </Text>
                             </View>
                             <View style={styles.infoItem}>
@@ -190,7 +213,7 @@ export const DigitalContractScreen: React.FC = () => {
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
                                 <Text style={styles.infoText}>
-                                    Tiền đặt cọc sẽ được hoàn lại trong vòng 7 ngày làm việc sau khi trả xe
+                                    Tiền đặt cọc {securityDeposit} sẽ được hoàn lại trong vòng 7 ngày làm việc sau khi trả xe
                                 </Text>
                             </View>
                             <View style={styles.infoItem}>
@@ -215,7 +238,6 @@ export const DigitalContractScreen: React.FC = () => {
                 </View>
             )}
 
-            {/* ✅ Modal for digital contract */}
             <Modal visible={showContractModal} animationType="slide" transparent={false}>
                 <View style={styles.modalContainer}>
                     <WebView originWhitelist={["*"]} source={{ html: htmlContent }} />
@@ -262,8 +284,6 @@ const styles = StyleSheet.create({
         borderTopColor: "#1a1a1a",
     },
     secondaryButton: { marginTop: 12, backgroundColor: "#1a1a1a" },
-
-    // ✅ Contract preview styles
     contractPreviewCard: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,
@@ -273,8 +293,6 @@ const styles = StyleSheet.create({
     contractTitle: { color: "#fff", fontSize: 16, fontWeight: "700", marginBottom: 8 },
     contractSummary: { color: "#999", fontSize: 14, lineHeight: 20, marginBottom: 12 },
     readButton: { backgroundColor: "#4169E1" },
-
-    // ✅ Modal
     modalContainer: { flex: 1, backgroundColor: "#fff" },
     modalFooter: {
         padding: 16,
