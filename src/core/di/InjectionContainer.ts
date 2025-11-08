@@ -16,12 +16,12 @@ import { GetCurrentRenterUseCase } from '../../domain/usecases/account/Profile/G
 //Documents Import
 import { DocumentRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/account/DocumentRemoteDataSourceImpl";
 import { DocumentRepositoryImpl } from "../../data/repositories/account/DocumentRepositoryImpl";
+import { DocumentRepository } from "../../domain/repositories/account/DocumentRepository";
 import { DeleteDocumentUseCase } from "../../domain/usecases/account/Documents/DeleteDocumentUseCase";
 import { CreateDrivingDocumentUseCase } from "../../domain/usecases/account/Documents/DriverLicense/CreateDrivingDocumentUseCase";
 import { UpdateDrivingDocumentUseCase } from "../../domain/usecases/account/Documents/DriverLicense/UpdateDrivingDocumentUseCase";
 import { CreateCitizenDocumentUseCase } from "../../domain/usecases/account/Documents/IdentificationCard/CreateCitizenDocumentUseCase";
 import { UpdateCitizenDocumentUseCase } from "../../domain/usecases/account/Documents/IdentificationCard/UpdateCitizenDocumentUseCase";
-import { DocumentRepository } from "../../domain/repositories/account/DocumentRepository";
 
 // Vehicle imports
 import { VehicleRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl';
@@ -32,6 +32,7 @@ import { VehicleRepository } from '../../domain/repositories/vehicle/VehicleRepo
 import { VehicleModelRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/vehicle/VehicleModelRemoteDataSourceImpl";
 import { VehicleModelRepositoryImpl } from "../../data/repositories/vehicle/VehicleModelRepositoryImpl";
 import { VehicleModelRepository } from "../../domain/repositories/vehicle/VehicleModelRepository";
+import { SearchVehiclesUseCase } from "../../domain/usecases/vehicle/SearchVehiclesUseCase";
 
 // Booking imports
 import { BookingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/booking/BookingRemoteDataSourceImpl';
@@ -74,17 +75,17 @@ import { SearchPlacesUseCase } from '../../domain/usecases/maps/SearchPlacesUseC
 // Insurance Package imports
 import { InsurancePackageRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/insurance/InsurancePackageRemoteDataSourceImpl";
 import { InsurancePackageRepositoryImpl } from "../../data/repositories/insurance/InsurancePackageRepositoryImpl";
+import { InsurancePackageRepository } from "../../domain/repositories/insurance/InsurancePackageRepository";
 import { GetAllInsurancePackagesUseCase } from "../../domain/usecases/insurance/InsurancePackage/GetAllInsurancePackagesUseCase";
 import { GetInsurancePackageByIdUseCase } from "../../domain/usecases/insurance/InsurancePackage/GetInsurancePackageByIdUseCase";
-import { InsurancePackageRepository } from "../../domain/repositories/insurance/InsurancePackageRepository";
 
 // Mapbox Maps Imports
 import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
 
-import { AxiosClient } from "../network/AxiosClient";
 import { RentalReturnRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl";
 import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
 import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
+import { AxiosClient } from "../network/AxiosClient";
 
 
 /**
@@ -148,6 +149,8 @@ class ServiceLocator {
     this.services.set("VehicleModelRemoteDataSource", vehicleModelRemoteDataSource);
     const vehicleModelRepository = new VehicleModelRepositoryImpl(vehicleModelRemoteDataSource);
     this.services.set("VehicleModelRepository", vehicleModelRepository);
+    const searchVehiclesUseCase = new SearchVehiclesUseCase(vehicleModelRepository);
+    this.services.set("SearchVehiclesUseCase", searchVehiclesUseCase);
 
     // Booking services
     const bookingRemoteDataSource = new BookingRemoteDataSourceImpl(axiosClient);
@@ -373,6 +376,10 @@ class ServiceLocator {
 
   getGetInsurancePackageByIdUseCase(): GetInsurancePackageByIdUseCase {
     return this.get<GetInsurancePackageByIdUseCase>('GetInsurancePackageByIdUseCase');
+  }
+
+  getSearchVehiclesUseCase(): SearchVehiclesUseCase {
+    return this.get<SearchVehiclesUseCase>('SearchVehiclesUseCase');
   }
 }
 

@@ -8,7 +8,7 @@ const CARD_SPACING = 12;
 
 interface VehicleCarouselProps {
     vehicles: ElectricVehicle[];
-    onBookVehicle: (vehicleId: number) => void;
+    onBookVehicle: (vehicleId: string) => void;
 }
 
 export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({ vehicles, onBookVehicle }) => {
