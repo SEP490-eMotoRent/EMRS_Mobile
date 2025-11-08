@@ -1,11 +1,11 @@
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
 export interface ElectricVehicle {
-    id: number;
+    id: string;
     name: string;
     brand: string;
     type: string;
@@ -16,20 +16,33 @@ export interface ElectricVehicle {
     colorHex: string;
     price: number;
     features: string[];
+    rentalDays?: number;
+    imageUrl?: string;
 }
 
 type VehicleCardNavigationProp = StackNavigationProp<BrowseStackParamList>;
 
 interface VehicleCardProps {
     vehicle: ElectricVehicle;
-    onBookPress: (vehicleId: number) => void;
+    onBookPress: (vehicleId: string) => void;
 }
+
+/**
+ * Calculates total price based on daily rate and rental duration (including hours)
+ * Formula: (dailyRate / 24) * totalHours
+ */
+const calculateTotalPrice = (dailyRate: number, rentalDays: number): string => {
+    const totalHours = rentalDays * 24;
+    const hourlyRate = dailyRate / 24;
+    const totalPrice = Math.round(hourlyRate * totalHours);
+    return `${totalPrice.toLocaleString('vi-VN')}đ`;
+};
 
 export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }) => {
     const navigation = useNavigation<VehicleCardNavigationProp>();
 
     const handleCardPress = () => {
-        navigation.navigate('VehicleDetails', { vehicleId: vehicle.id.toString() });
+        navigation.navigate('VehicleDetails', { vehicleId: vehicle.id });
     };
 
     return (
@@ -38,8 +51,21 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
             onPress={handleCardPress}
             activeOpacity={0.9}
         >
-            {/* Phần trên: Thương hiệu & Hình xe */}
-            <View style={styles.topSection}>
+            {/* Vehicle Image - Full Width */}
+            <View style={styles.imageContainer}>
+                {vehicle.imageUrl ? (
+                    <Image
+                        source={{ uri: vehicle.imageUrl }}
+                        style={styles.vehicleImage}
+                        resizeMode="contain"
+                    />
+                ) : (
+                    <Text style={styles.vehicleImagePlaceholder}>🛵</Text>
+                )}
+            </View>
+
+            {/* Vehicle Info */}
+            <View style={styles.infoSection}>
                 <View style={styles.brandContainer}>
                     <View style={styles.brandLogo}>
                         <Text style={styles.brandIcon}>⚡</Text>
@@ -50,44 +76,42 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onBookPress }
                     </View>
                 </View>
 
-                <View style={styles.vehicleImageContainer}>
-                    <Text style={styles.vehicleImage}>🛵</Text>
-                </View>
-            </View>
-
-            {/* Hàng thông số */}
-            <View style={styles.specsRow}>
-                <View style={styles.specItem}>
-                    <Text style={styles.specIcon}>🔋</Text>
-                    <Text style={styles.specText}>{vehicle.range}</Text>
-                </View>
-                <View style={styles.specItem}>
-                    <Text style={styles.specIcon}>⚡</Text>
-                    <Text style={styles.specText}>{vehicle.battery}</Text>
-                </View>
-                <View style={styles.specItem}>
-                    <View style={[styles.colorDot, { backgroundColor: vehicle.colorHex }]}>
-                        {vehicle.color === "Trắng" && <View style={styles.colorDotBorder} />}
+                {/* Specs Row */}
+                <View style={styles.specsRow}>
+                    <View style={styles.specItem}>
+                        <Text style={styles.specIcon}>🔋</Text>
+                        <Text style={styles.specText}>{vehicle.range}</Text>
                     </View>
-                    <Text style={styles.specText}>{vehicle.color}</Text>
+                    <View style={styles.specItem}>
+                        <Text style={styles.specIcon}>⚡</Text>
+                        <Text style={styles.specText}>{vehicle.battery}</Text>
+                    </View>
+                    <View style={styles.specItem}>
+                        <View style={[styles.colorDot, { backgroundColor: vehicle.colorHex }]}>
+                            {vehicle.color === "Trắng" && <View style={styles.colorDotBorder} />}
+                        </View>
+                        <Text style={styles.specText}>{vehicle.color}</Text>
+                    </View>
                 </View>
-            </View>
 
-            {/* Giá & Nút đặt xe */}
-            <View style={styles.footer}>
-                <View style={styles.priceSection}>
-                    <Text style={styles.price}>{vehicle.price.toLocaleString('vi-VN')}đ / ngày</Text>
-                    <Text style={styles.total}>Tổng { (vehicle.price * 3).toLocaleString('vi-VN') }đ</Text>
+                {/* Price & Book Button */}
+                <View style={styles.footer}>
+                    <View style={styles.priceSection}>
+                        <Text style={styles.price}>{vehicle.price.toLocaleString('vi-VN')}đ / ngày</Text>
+                        <Text style={styles.total}>
+                            Tổng {calculateTotalPrice(vehicle.price, vehicle.rentalDays || 1)}
+                        </Text>
+                    </View>
+                    <TouchableOpacity 
+                        style={styles.bookButton}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onBookPress(vehicle.id);
+                        }}
+                    >
+                        <Text style={styles.bookButtonText}>Đặt xe</Text>
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity 
-                    style={styles.bookButton}
-                    onPress={(e) => {
-                        e.stopPropagation();
-                        onBookPress(vehicle.id);
-                    }}
-                >
-                    <Text style={styles.bookButtonText}>Đặt xe</Text>
-                </TouchableOpacity>
             </View>
         </TouchableOpacity>
     );
@@ -97,20 +121,33 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: "#2a2a2a",
         borderRadius: 16,
-        padding: 12,
         marginHorizontal: 8,
         width: 320,
+        overflow: "hidden",
     },
-    topSection: {
-        flexDirection: "row",
-        justifyContent: "space-between",
+    imageContainer: {
+        width: "100%",
+        height: 100,
+        backgroundColor: "#1f1f1f",
+        justifyContent: "center",
         alignItems: "center",
-        marginBottom: 10,
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+    },
+    vehicleImage: {
+        width: "100%",
+        height: "100%",
+    },
+    vehicleImagePlaceholder: {
+        fontSize: 40,
+    },
+    infoSection: {
+        padding: 10,
     },
     brandContainer: {
         flexDirection: "row",
         alignItems: "center",
-        flex: 1,
+        marginBottom: 6,
     },
     brandLogo: {
         width: 32,
@@ -137,20 +174,13 @@ const styles = StyleSheet.create({
         color: "#999",
         marginTop: 1,
     },
-    vehicleImageContainer: {
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    vehicleImage: {
-        fontSize: 60,
-    },
     specsRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        paddingVertical: 8,
+        paddingVertical: 6,
         borderTopWidth: 1,
         borderTopColor: "#3a3a3a",
-        marginBottom: 10,
+        marginBottom: 8,
     },
     specItem: {
         flex: 1,

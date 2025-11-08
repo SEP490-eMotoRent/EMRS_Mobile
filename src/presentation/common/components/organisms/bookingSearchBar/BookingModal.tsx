@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
+    ActivityIndicator,
 } from "react-native";
 import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
@@ -17,8 +18,10 @@ import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { CityCard } from "../../molecules/cards/CityCard";
 import { InputField } from "../../molecules/InputField";
 import { DateTimeModal } from "./DateTimeModal";
+import { useBranches } from "../../../../features/map/hooks/useBranches";
 
 type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
+
 interface BookingModalProps {
     visible: boolean;
     onClose: () => void;
@@ -26,6 +29,7 @@ interface BookingModalProps {
 
 export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) => {
     const navigation = useNavigation<NavigationProp>();
+    const { branches, loading, error } = useBranches();
     const [dateModalVisible, setDateModalVisible] = useState(false);
 
     const [address, setAddress] = useState("1 Phạm Văn Hai, Street, Tân Bình...");
@@ -36,8 +40,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
         setDateModalVisible(false);
     };
 
-    const handleCitySelect = (cityName: string, state: string) => {
-        setAddress(`${cityName}, ${state}`);
+    const handleBranchSelect = (branchName: string, branchAddress: string) => {
+        setAddress(`${branchName}, ${branchAddress}`);
     };
 
     const formatDateRange = (range: string | null) => {
@@ -87,14 +91,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
 
     const formattedDates = formatDateRange(selectedDates);
 
-    const popularCities = [
-        { name: "Quận 1", state: "Hồ Chí Minh, Việt Nam" },
-        { name: "Quận 3", state: "Hồ Chí Minh, Việt Nam" },
-        { name: "Quận 10", state: "Hồ Chí Minh, Việt Nam" },
-        { name: "Tân Bình", state: "Hồ Chí Minh, Việt Nam" },
-        { name: "Bình Thạnh", state: "Hồ Chí Minh, Việt Nam" }
-    ];
-
     return (
         <>
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -133,15 +129,39 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         </View>
                     </TouchableOpacity>
 
-                    <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Popular Districts</Text>
-                    {popularCities.map((city, i) => (
+                    <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Available Branches</Text>
+                    
+                    {/* Loading State */}
+                    {loading && (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="small" color="#A78BFA" />
+                            <Text style={styles.loadingText}>Loading branches...</Text>
+                        </View>
+                    )}
+
+                    {/* Error State */}
+                    {error && (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    )}
+
+                    {/* Branches List */}
+                    {!loading && !error && branches.map((branch) => (
                         <CityCard
-                            key={i}
-                            cityName={city.name}
-                            state={city.state}
-                            onPress={() => handleCitySelect(city.name, city.state)}
+                            key={branch.id}
+                            cityName={branch.branchName}
+                            state={branch.address}
+                            onPress={() => handleBranchSelect(branch.branchName, branch.address)}
                         />
                     ))}
+
+                    {/* Empty State */}
+                    {!loading && !error && branches.length === 0 && (
+                        <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyText}>Không có chi nhánh</Text>
+                        </View>
+                    )}
 
                     <View style={{ marginVertical: 20 }}>
                         <PrimaryButton title="Search" onPress={handleSearch} />
@@ -206,5 +226,35 @@ const styles = StyleSheet.create({
     dateText: {
         color: "#fff",
         fontSize: 15,
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+    },
+    loadingText: {
+        color: '#888',
+        marginLeft: 10,
+        fontSize: 14,
+    },
+    errorContainer: {
+        padding: 16,
+        backgroundColor: '#2a0a0a',
+        borderRadius: 10,
+        marginVertical: 8,
+    },
+    errorText: {
+        color: '#ff6b6b',
+        fontSize: 14,
+        textAlign: 'center',
+    },
+    emptyContainer: {
+        padding: 20,
+        alignItems: 'center',
+    },
+    emptyText: {
+        color: '#888',
+        fontSize: 14,
     },
 });

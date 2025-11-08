@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { Badge } from '../../atoms/badges/Badge';
 import { RatingBadge } from '../../atoms/badges/RatingBadge';
 import { SecondaryButton } from '../../atoms/buttons/SecondaryButton';

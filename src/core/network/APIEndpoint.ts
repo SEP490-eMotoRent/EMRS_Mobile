@@ -10,6 +10,7 @@ export const ApiEndpoints = {
     model: {
       create: "/Vehicle/model/create",
       list: "/Vehicle/model/list",
+      search: "/Vehicle/model/search",
       detail: (id: string) => `/Vehicle/model/detail/${id}`,
     },
     pricing: {

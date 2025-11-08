@@ -8,6 +8,8 @@ import { useUpdateDocument } from '../../hooks/documents/useUpdateDocument';
 import { useRenterProfile } from '../../hooks/profile/useRenterProfile';
 import { useUpdateRenterProfile } from '../../hooks/profile/useUpdateRenterProfile';
 import { EditProfileTemplate } from '../templates/EditProfileTemplate';
+import { DatePickerModal } from '../organisms/DatePickerModal';
+import { useDocumentOCR } from '../../hooks/documents/useDocumentOCR';
 
 // Helper: Normalize URI to string (handles string | string[] | undefined)
 const normalizeUri = (uri: string | string[] | undefined): string | undefined => {
@@ -17,6 +19,28 @@ const normalizeUri = (uri: string | string[] | undefined): string | undefined =>
         return firstItem && typeof firstItem === 'string' ? firstItem : undefined;
     }
     return typeof uri === 'string' ? uri : undefined;
+};
+
+// Helper: Convert DD/MM/YYYY to YYYY-MM-DD
+const convertDisplayToISO = (displayDate: string): string | undefined => {
+    if (!displayDate || !displayDate.trim()) return undefined;
+    if (!displayDate.includes('/')) return undefined;
+    
+    const parts = displayDate.split('/');
+    if (parts.length !== 3) return undefined;
+    
+    const [day, month, year] = parts;
+    if (!day || !month || !year) return undefined;
+    
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
+
+// Helper: Convert YYYY-MM-DD to DD/MM/YYYY
+const convertISOToDisplay = (isoDate: string): string => {
+    if (!isoDate) return '';
+    if (isoDate.includes('/')) return isoDate; // Already in display format
+    const [year, month, day] = isoDate.split('-');
+    return `${day}/${month}/${year}`;
 };
 
 export const EditProfileScreen = ({ navigation }: any) => {
@@ -29,6 +53,9 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const { updateCitizen, updateDriving, loading: updateDocLoading } = useUpdateDocument();
     const { deleteDocument, loading: deleteLoading } = useDeleteDocument();
 
+    // OCR hook
+    const { processCitizenID, processDriverLicense, loading: ocrLoading } = useDocumentOCR();
+
     // Form state
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -37,6 +64,9 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const [dateOfBirth, setDateOfBirth] = useState('');
     const [address, setAddress] = useState('');
     const [profileImageUri, setProfileImageUri] = useState<string | undefined>(undefined);
+
+    // Date picker state
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     // Document state
     const [citizenDoc, setCitizenDoc] = useState<DocumentResponse | undefined>();
@@ -59,6 +89,14 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const [licenseIssueDate, setLicenseIssueDate] = useState('');
     const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
     const [licenseAuthority, setLicenseAuthority] = useState('');
+
+    // Auto-fill toggles
+    const [citizenAutoFill, setCitizenAutoFill] = useState(true);
+    const [licenseAutoFill, setLicenseAutoFill] = useState(true);
+
+    // OCR processing states
+    const [citizenOCRProcessing, setCitizenOCRProcessing] = useState(false);
+    const [licenseOCRProcessing, setLicenseOCRProcessing] = useState(false);
 
     // Populate form when data is loaded
     useEffect(() => {
@@ -95,14 +133,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 doc => doc.documentType === 'Driving' || doc.documentType === 'License' || doc.documentType === 'DriverLicense'
             );
 
-            console.log('📄 Documents found:', {
-                citizenDoc: citizenDocument?.documentNumber,
-                citizenImages: citizenDocument?.images?.length,
-                licenseDoc: licenseDocument?.documentNumber,
-                licenseImages: licenseDocument?.images?.length,
-                licenseType: licenseDocument?.documentType
-            });
-
             setCitizenDoc(citizenDocument);
             setLicenseDoc(licenseDocument);
 
@@ -110,41 +140,84 @@ export const EditProfileScreen = ({ navigation }: any) => {
             if (citizenDocument) {
                 setCitizenIdNumber(citizenDocument.documentNumber || '');
                 if (citizenDocument.issueDate) {
-                    const issueDate = new Date(citizenDocument.issueDate);
-                    setCitizenIssueDate(
-                        `${issueDate.getDate().toString().padStart(2, '0')}/${(issueDate.getMonth() + 1).toString().padStart(2, '0')}/${issueDate.getFullYear()}`
-                    );
+                    setCitizenIssueDate(convertISOToDisplay(citizenDocument.issueDate));
                 }
                 if (citizenDocument.expiryDate) {
-                    const expiryDate = new Date(citizenDocument.expiryDate);
-                    setCitizenExpiryDate(
-                        `${expiryDate.getDate().toString().padStart(2, '0')}/${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}/${expiryDate.getFullYear()}`
-                    );
+                    setCitizenExpiryDate(convertISOToDisplay(citizenDocument.expiryDate));
                 }
                 setCitizenAuthority(citizenDocument.issuingAuthority || '');
             }
 
             // Populate license fields
             if (licenseDocument) {
-                console.log('🚗 Populating license fields:', licenseDocument);
                 setLicenseNumber(licenseDocument.documentNumber || '');
-                
                 if (licenseDocument.issueDate) {
-                    const issueDate = new Date(licenseDocument.issueDate);
-                    setLicenseIssueDate(
-                        `${issueDate.getDate().toString().padStart(2, '0')}/${(issueDate.getMonth() + 1).toString().padStart(2, '0')}/${issueDate.getFullYear()}`
-                    );
+                    setLicenseIssueDate(convertISOToDisplay(licenseDocument.issueDate));
                 }
                 if (licenseDocument.expiryDate) {
-                    const expiryDate = new Date(licenseDocument.expiryDate);
-                    setLicenseExpiryDate(
-                        `${expiryDate.getDate().toString().padStart(2, '0')}/${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}/${expiryDate.getFullYear()}`
-                    );
+                    setLicenseExpiryDate(convertISOToDisplay(licenseDocument.expiryDate));
                 }
                 setLicenseAuthority(licenseDocument.issuingAuthority || '');
             }
         }
     }, [renter, renterResponse]);
+
+    // OCR Processing for Citizen ID
+    useEffect(() => {
+        const processOCR = async () => {
+            if (!citizenAutoFill || !citizenFrontImage || !citizenBackImage) return;
+            if (citizenDoc) return; // Don't OCR if document already exists
+            
+            setCitizenOCRProcessing(true);
+            
+            try {
+                const result = await processCitizenID(citizenFrontImage, citizenBackImage);
+                
+                if (result) {
+                    // Fill in the fields with OCR data
+                    if (result.documentNumber) setCitizenIdNumber(result.documentNumber);
+                    if (result.issueDate) setCitizenIssueDate(result.issueDate);
+                    if (result.expiryDate) setCitizenExpiryDate(result.expiryDate);
+                    if (result.authority) setCitizenAuthority(result.authority);
+                }
+            } catch (error) {
+                console.error('Citizen OCR error:', error);
+            } finally {
+                setCitizenOCRProcessing(false);
+            }
+        };
+
+        processOCR();
+    }, [citizenFrontImage, citizenBackImage, citizenAutoFill, citizenDoc]);
+
+    // OCR Processing for Driver's License
+    useEffect(() => {
+        const processOCR = async () => {
+            if (!licenseAutoFill || !licenseFrontImage || !licenseBackImage) return;
+            if (licenseDoc) return; // Don't OCR if document already exists
+            
+            setLicenseOCRProcessing(true);
+            
+            try {
+                const result = await processDriverLicense(licenseFrontImage, licenseBackImage);
+                
+                if (result) {
+                    // Fill in the fields with OCR data
+                    if (result.documentNumber) setLicenseNumber(result.documentNumber);
+                    if (result.issueDate) setLicenseIssueDate(result.issueDate);
+                    if (result.expiryDate) setLicenseExpiryDate(result.expiryDate);
+                    if (result.authority) setLicenseAuthority(result.authority);
+                    if (result.licenseClass) setLicenseClass(result.licenseClass);
+                }
+            } catch (error) {
+                console.error('License OCR error:', error);
+            } finally {
+                setLicenseOCRProcessing(false);
+            }
+        };
+
+        processOCR();
+    }, [licenseFrontImage, licenseBackImage, licenseAutoFill, licenseDoc]);
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -158,6 +231,14 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 setProfileImageUri(uri);
             }
         }
+    };
+
+    const handleDateOfBirthPress = () => {
+        setShowDatePicker(true);
+    };
+
+    const handleDateOfBirthConfirm = (date: string) => {
+        setDateOfBirth(date);
     };
 
     const handleCitizenUpload = (method: 'camera' | 'gallery') => {
@@ -302,15 +383,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 return;
             }
 
-            const formatDate = (date: string) => {
-                if (!date) return undefined;
-                if (date.includes('/')) {
-                    const [day, month, year] = date.split('/');
-                    return `${year}-${month}-${day}`;
-                }
-                return date;
-            };
-
             if (!citizenDoc) {
                 // CREATE new document
                 if (!citizenFrontImage || !citizenBackImage) {
@@ -318,11 +390,13 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     return;
                 }
 
-                await createCitizen({
+                // ✅ Ensure dates are properly converted or omitted
+                const issueDate = convertDisplayToISO(citizenIssueDate);
+                const expiryDate = convertDisplayToISO(citizenExpiryDate);
+
+                // ✅ Build request with conditional fields
+                const createRequest: any = {
                     documentNumber: citizenIdNumber,
-                    issueDate: formatDate(citizenIssueDate),
-                    expiryDate: formatDate(citizenExpiryDate),
-                    issuingAuthority: citizenAuthority,
                     verificationStatus: 'Pending',
                     frontDocumentFile: {
                         uri: citizenFrontImage,
@@ -334,13 +408,38 @@ export const EditProfileScreen = ({ navigation }: any) => {
                         name: 'citizen_back.jpg',
                         type: 'image/jpeg',
                     },
-                });
+                };
+
+                // Only add optional fields if they have values
+                if (issueDate) createRequest.issueDate = issueDate;
+                if (expiryDate) createRequest.expiryDate = expiryDate;
+                if (citizenAuthority && citizenAuthority.trim()) {
+                    createRequest.issuingAuthority = citizenAuthority;
+                }
+
+                console.log('📤 CREATE CITIZEN REQUEST:');
+                console.log('  documentNumber:', createRequest.documentNumber);
+                console.log('  issueDate:', createRequest.issueDate);
+                console.log('  expiryDate:', createRequest.expiryDate);
+                console.log('  issuingAuthority:', createRequest.issuingAuthority);
+                console.log('  verificationStatus:', createRequest.verificationStatus);
+                console.log('  frontFile uri:', createRequest.frontDocumentFile.uri);
+                console.log('  backFile uri:', createRequest.backDocumentFile.uri);
+                console.log('\n📋 FULL REQUEST OBJECT:');
+                console.log(JSON.stringify(createRequest, null, 2));
+                
+                console.log('\n🔍 OCR EXTRACTED VALUES (before conversion):');
+                console.log('  Raw citizenIssueDate:', citizenIssueDate);
+                console.log('  Raw citizenExpiryDate:', citizenExpiryDate);
+                console.log('  Raw citizenAuthority:', citizenAuthority);
+                console.log('  Raw citizenIdNumber:', citizenIdNumber);
+
+                await createCitizen(createRequest);
 
                 Alert.alert('Success', 'Citizen ID uploaded successfully!');
                 await refresh();
             } else {
                 // UPDATE existing document
-                // ✅ Use new images structure with Media IDs
                 if (!citizenDoc.images || citizenDoc.images.length < 2) {
                     Alert.alert(
                         'Invalid Document', 
@@ -352,12 +451,12 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 const updateRequest: any = {
                     id: citizenDoc.id,
                     documentNumber: citizenIdNumber,
-                    issueDate: formatDate(citizenIssueDate),
-                    expiryDate: formatDate(citizenExpiryDate),
+                    issueDate: convertDisplayToISO(citizenIssueDate),
+                    expiryDate: convertDisplayToISO(citizenExpiryDate),
                     issuingAuthority: citizenAuthority,
                     verificationStatus: citizenDoc.verificationStatus,
-                    idFileFront: citizenDoc.images[0].id,  // ✅ Use Media ID from images array
-                    idFileBack: citizenDoc.images[1].id,   // ✅ Use Media ID from images array
+                    idFileFront: citizenDoc.images[0].id,
+                    idFileBack: citizenDoc.images[1].id,
                 };
 
                 // Only add new files if user uploaded them
@@ -376,14 +475,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                         type: 'image/jpeg',
                     };
                 }
-
-                console.log('📤 Citizen Update Request:', {
-                    id: updateRequest.id,
-                    idFileFront: updateRequest.idFileFront,
-                    idFileBack: updateRequest.idFileBack,
-                    hasFrontFile: !!updateRequest.frontDocumentFile,
-                    hasBackFile: !!updateRequest.backDocumentFile
-                });
 
                 await updateCitizen(updateRequest);
                 Alert.alert('Success', 'Citizen ID updated successfully!');
@@ -406,15 +497,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 return;
             }
 
-            const formatDate = (date: string) => {
-                if (!date) return undefined;
-                if (date.includes('/')) {
-                    const [day, month, year] = date.split('/');
-                    return `${year}-${month}-${day}`;
-                }
-                return date;
-            };
-
             if (!licenseDoc) {
                 // CREATE new document
                 if (!licenseFrontImage || !licenseBackImage) {
@@ -424,8 +506,8 @@ export const EditProfileScreen = ({ navigation }: any) => {
 
                 await createDriving({
                     documentNumber: licenseNumber,
-                    issueDate: formatDate(licenseIssueDate),
-                    expiryDate: formatDate(licenseExpiryDate),
+                    issueDate: convertDisplayToISO(licenseIssueDate),
+                    expiryDate: convertDisplayToISO(licenseExpiryDate),
                     issuingAuthority: licenseAuthority,
                     verificationStatus: 'Pending',
                     frontDocumentFile: {
@@ -444,7 +526,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 await refresh();
             } else {
                 // UPDATE existing document
-                // ✅ Use new images structure with Media IDs
                 if (!licenseDoc.images || licenseDoc.images.length < 2) {
                     Alert.alert(
                         'Invalid Document', 
@@ -456,12 +537,12 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 const updateRequest: any = {
                     id: licenseDoc.id,
                     documentNumber: licenseNumber,
-                    issueDate: formatDate(licenseIssueDate),
-                    expiryDate: formatDate(licenseExpiryDate),
+                    issueDate: convertDisplayToISO(licenseIssueDate),
+                    expiryDate: convertDisplayToISO(licenseExpiryDate),
                     issuingAuthority: licenseAuthority,
                     verificationStatus: licenseDoc.verificationStatus,
-                    idFileFront: licenseDoc.images[0].id,  // ✅ Use Media ID from images array
-                    idFileBack: licenseDoc.images[1].id,   // ✅ Use Media ID from images array
+                    idFileFront: licenseDoc.images[0].id,
+                    idFileBack: licenseDoc.images[1].id,
                 };
 
                 // Only add new files if user uploaded them
@@ -480,14 +561,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                         type: 'image/jpeg',
                     };
                 }
-
-                console.log('📤 License Update Request:', {
-                    id: updateRequest.id,
-                    idFileFront: updateRequest.idFileFront,
-                    idFileBack: updateRequest.idFileBack,
-                    hasFrontFile: !!updateRequest.frontDocumentFile,
-                    hasBackFile: !!updateRequest.backDocumentFile
-                });
 
                 await updateDriving(updateRequest);
                 Alert.alert('Success', 'Driver\'s License updated successfully!');
@@ -626,68 +699,91 @@ export const EditProfileScreen = ({ navigation }: any) => {
     }
 
     const isSaving = updateLoading || createDocLoading || updateDocLoading || deleteLoading;
+    
+    // Convert dateOfBirth from DD/MM/YYYY to YYYY-MM-DD for DatePickerModal
+    const getInitialDateForPicker = () => {
+        if (!dateOfBirth) return undefined;
+        if (dateOfBirth.includes('/')) {
+            const [day, month, year] = dateOfBirth.split('/');
+            return `${year}-${month}-${day}`;
+        }
+        return dateOfBirth;
+    };
+
     return (
-        <EditProfileTemplate
-            profileImageUri={profileImageUri}
-            fullName={fullName}
-            email={email}
-            countryCode={countryCode}
-            phoneNumber={phoneNumber}
-            dateOfBirth={dateOfBirth}
-            address={address}
-            citizenId={citizenIdNumber}
-            citizenIdAutoFill={false}
-            existingCitizenDoc={citizenDoc}
-            citizenFrontImage={citizenFrontImage}
-            citizenBackImage={citizenBackImage}
-            citizenIssueDate={citizenIssueDate}
-            citizenExpiryDate={citizenExpiryDate}
-            citizenAuthority={citizenAuthority}
-            licenseNumber={licenseNumber}
-            licenseClass={licenseClass}
-            licenseExpiry={licenseExpiryDate}
-            licenseAutoFill={false}
-            existingLicenseDoc={licenseDoc}
-            licenseFrontImage={licenseFrontImage}
-            licenseBackImage={licenseBackImage}
-            licenseIssueDate={licenseIssueDate}
-            licenseAuthority={licenseAuthority}
-            onBack={() => navigation.goBack()}
-            onSave={handleSave}
-            onCancel={() => navigation.goBack()}
-            onChangePhoto={pickImage}
-            onFullNameChange={setFullName}
-            onEmailChange={setEmail}
-            onCountryCodePress={() => {}}
-            onPhoneNumberChange={setPhoneNumber}
-            onDatePress={() => {}}
-            onAddressChange={setAddress}
-            onCitizenIdChange={setCitizenIdNumber}
-            onCitizenIdAutoFillChange={() => {}}
-            onCitizenIdUpload={handleCitizenUpload}
-            onCitizenIdUpdate={handleCitizenDocumentSubmit}
-            onViewCitizenDoc={() => citizenDoc?.images?.[0]?.fileUrl && handleViewDocument(
-                citizenDoc.images[0].fileUrl
-            )}
-            onDeleteCitizenDoc={citizenDoc ? handleDeleteCitizenDoc : undefined}
-            onCitizenIssueDatePress={handleCitizenIssueDatePress}
-            onCitizenExpiryDatePress={handleCitizenExpiryDatePress}
-            onCitizenAuthorityChange={setCitizenAuthority}
-            onLicenseNumberChange={setLicenseNumber}
-            onLicenseClassChange={setLicenseClass}
-            onLicenseExpiryPress={() => {}}
-            onLicenseAutoFillChange={() => {}}
-            onLicenseUpload={handleLicenseUpload}
-            onLicenseUpdate={handleLicenseDocumentSubmit}
-            onViewLicenseDoc={() => licenseDoc?.images?.[0]?.fileUrl && handleViewDocument(
-                licenseDoc.images[0].fileUrl
-            )}
-            onDeleteLicenseDoc={licenseDoc ? handleDeleteLicenseDoc : undefined}
-            onLicenseIssueDatePress={handleLicenseIssueDatePress}
-            onLicenseAuthorityChange={setLicenseAuthority}
-            onChangePassword={() => {}}
-            saving={isSaving}
-        />
+        <>
+            <EditProfileTemplate
+                profileImageUri={profileImageUri}
+                fullName={fullName}
+                email={email}
+                countryCode={countryCode}
+                phoneNumber={phoneNumber}
+                dateOfBirth={dateOfBirth}
+                address={address}
+                citizenId={citizenIdNumber}
+                citizenIdAutoFill={citizenAutoFill}
+                existingCitizenDoc={citizenDoc}
+                citizenFrontImage={citizenFrontImage}
+                citizenBackImage={citizenBackImage}
+                citizenIssueDate={citizenIssueDate}
+                citizenExpiryDate={citizenExpiryDate}
+                citizenAuthority={citizenAuthority}
+                citizenOCRProcessing={citizenOCRProcessing}
+                licenseNumber={licenseNumber}
+                licenseClass={licenseClass}
+                licenseExpiry={licenseExpiryDate}
+                licenseAutoFill={licenseAutoFill}
+                existingLicenseDoc={licenseDoc}
+                licenseFrontImage={licenseFrontImage}
+                licenseBackImage={licenseBackImage}
+                licenseIssueDate={licenseIssueDate}
+                licenseAuthority={licenseAuthority}
+                licenseOCRProcessing={licenseOCRProcessing}
+                onBack={() => navigation.goBack()}
+                onSave={handleSave}
+                onCancel={() => navigation.goBack()}
+                onChangePhoto={pickImage}
+                onFullNameChange={setFullName}
+                onEmailChange={setEmail}
+                onCountryCodePress={() => {}}
+                onPhoneNumberChange={setPhoneNumber}
+                onDatePress={handleDateOfBirthPress}
+                onAddressChange={setAddress}
+                onCitizenIdChange={setCitizenIdNumber}
+                onCitizenIdAutoFillChange={setCitizenAutoFill}
+                onCitizenIdUpload={handleCitizenUpload}
+                onCitizenIdUpdate={handleCitizenDocumentSubmit}
+                onViewCitizenDoc={() => citizenDoc?.images?.[0]?.fileUrl && handleViewDocument(
+                    citizenDoc.images[0].fileUrl
+                )}
+                onDeleteCitizenDoc={citizenDoc ? handleDeleteCitizenDoc : undefined}
+                onCitizenIssueDatePress={handleCitizenIssueDatePress}
+                onCitizenExpiryDatePress={handleCitizenExpiryDatePress}
+                onCitizenAuthorityChange={setCitizenAuthority}
+                onLicenseNumberChange={setLicenseNumber}
+                onLicenseClassChange={setLicenseClass}
+                onLicenseExpiryPress={handleLicenseExpiryDatePress}
+                onLicenseAutoFillChange={setLicenseAutoFill}
+                onLicenseUpload={handleLicenseUpload}
+                onLicenseUpdate={handleLicenseDocumentSubmit}
+                onViewLicenseDoc={() => licenseDoc?.images?.[0]?.fileUrl && handleViewDocument(
+                    licenseDoc.images[0].fileUrl
+                )}
+                onDeleteLicenseDoc={licenseDoc ? handleDeleteLicenseDoc : undefined}
+                onLicenseIssueDatePress={handleLicenseIssueDatePress}
+                onLicenseAuthorityChange={setLicenseAuthority}
+                onChangePassword={() => {}}
+                saving={isSaving}
+            />
+            
+            <DatePickerModal
+                visible={showDatePicker}
+                onClose={() => setShowDatePicker(false)}
+                onConfirm={handleDateOfBirthConfirm}
+                initialDate={getInitialDateForPicker()}
+                title="Select Date of Birth"
+            />
+        </>
     );
 };
 

@@ -93,7 +93,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
             console.log("Start:", startDate, "→", startDateTime.toISOString());
             console.log("End:", endDate, "→", endDateTime.toISOString());
 
-            const TEMP_BRANCH_ID = "019a20b1-8d81-75e2-88bd-de6998d5c79c";
+            const TEMP_BRANCH_ID = "019a5996-84f2-739f-bcfe-cd8051df5f68";
             console.log("Using temporary branch ID:", TEMP_BRANCH_ID);
 
             const isValidGuid = (str: string) => {

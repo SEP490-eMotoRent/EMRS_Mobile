@@ -45,7 +45,7 @@ export const MapScreen: React.FC = () => {
         handleSearchBarPress,
         handleBookingModalClose,
         handleBookVehicle,
-    } = useMapInteractions();
+    } = useMapInteractions({ dateRange }); // ✅ FIXED: Pass dateRange here!
 
     // Navigation handlers
     const handleListViewPress = () => {

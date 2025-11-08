@@ -2,7 +2,7 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState, useMemo } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ListHeader } from "../orgamism/ListHeader";
 import { ListControls } from "../orgamism/ListControls";
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
@@ -14,8 +14,9 @@ import { ErrorState } from "../molecules/state/ErrorState";
 import { LoadingState } from "../molecules/state/LoadingState";
 import { MotorcycleCard } from "../orgamism/MotorcycleCard";
 
-type ListViewRouteProp = RouteProp<BrowseStackParamList, "ListView">;
-type ListViewNavigationProp = StackNavigationProp<BrowseStackParamList, "ListView">;
+// Support both route types
+type ListViewRouteProp = RouteProp<BrowseStackParamList, "ListView"> | RouteProp<HomeStackParamList, "ListView">;
+type ListViewNavigationProp = StackNavigationProp<BrowseStackParamList, "ListView"> | StackNavigationProp<HomeStackParamList, "ListView">;
 
 type SortType = "closest" | "price-low" | "price-high";
 
@@ -63,6 +64,7 @@ export const ListView: React.FC = () => {
     };
 
     const handleMapViewPress = () => {
+        // @ts-ignore - navigation will work from both stacks
         navigation.navigate("Map", { location, dateRange, address });
     };
 

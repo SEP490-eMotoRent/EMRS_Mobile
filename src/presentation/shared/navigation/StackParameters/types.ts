@@ -22,6 +22,17 @@ export type HomeStackParamList = {
   Home: undefined;
   Browse: NavigatorScreenParams<BrowseStackParamList>;
   Booking: NavigatorScreenParams<BookingStackParamList>;
+  ListView: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
+  Map: {
+    location: string;
+    dateRange: string;
+    address: string;
+  };
+  VehicleDetails: { vehicleId: string };
 };
 
 export type BrowseStackParamList = {
@@ -39,19 +50,25 @@ export type BrowseStackParamList = {
 };
 
 export type BookingStackParamList = {
-  ConfirmRentalDuration: {
-    vehicleId: string;
+  ConfirmRentalDuration: { 
+      vehicleId: string;
+      pricePerDay: number;
+      securityDeposit: number;
   };
   InsurancePlans: {
-    vehicleId: string;
-    startDate: string;
-    endDate: string;
-    duration: string;
-    rentalDays: number;
+      vehicleId: string;
+      pricePerDay: number;
+      securityDeposit: number;
+      startDate: string;
+      endDate: string;
+      duration: string;
+      rentalDays: number;
+      rentalPrice: number;
   };
   PaymentConfirmation: {
     vehicleId: string;
     startDate: string;
+    pricePerDay : number;
     endDate: string;
     duration: string;
     rentalDays: number;
@@ -77,6 +94,7 @@ export type BookingStackParamList = {
     securityDeposit: string;
     contractNumber: string;
   };
+  Trips: undefined;
 };
 
 export type TripStackParamList = {
