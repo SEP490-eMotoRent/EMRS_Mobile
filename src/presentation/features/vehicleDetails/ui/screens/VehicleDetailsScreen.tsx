@@ -14,8 +14,10 @@ import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/nav
 
 import sl from "../../../../../core/di/InjectionContainer";
 import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
+import { GetBranchesByVehicleModelUseCase } from "../../../../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
 import { BackButton } from "../../../../common/components/atoms/buttons/BackButton";
 import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
+import { useVehicleBranches } from "../../hooks/useVehicleBranches";
 import { BookingButton } from "../atoms/buttons/BookingButton";
 import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
@@ -36,10 +38,16 @@ export const VehicleDetailsScreen: React.FC = () => {
         sl.get<VehicleModelRemoteDataSource>("VehicleModelRemoteDataSource"), 
         []
     );
+
+    const branchUseCase = useMemo(() =>
+        sl.getBranchesByVehicleModelUseCase(),
+        []
+    );
     
     const { data, loading, error } = useVehicleDetail(vehicleId, remote);
+    const { branches, loading: branchesLoading, error: branchesError } = useVehicleBranches(vehicleId, branchUseCase);
 
-    if (loading) {
+    if (loading || branchesLoading) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color="#a78bfa" />
@@ -68,11 +76,12 @@ export const VehicleDetailsScreen: React.FC = () => {
             screen: 'ConfirmRentalDuration',
             params: { 
                 vehicleId,
-                pricePerDay: data.pricePerDay,  // ADD THIS
-                securityDeposit: 2000000,        // ADD THIS (or calculate from pricePerDay)
+                pricePerDay: data.pricePerDay,
+                securityDeposit: 2000000,
             }
         });
     };
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -153,11 +162,8 @@ export const VehicleDetailsScreen: React.FC = () => {
                 />
 
                 <PickupLocationSection
-                    address="6 Hoàng Văn Thụ, P2, Tân Bình"
-                    branchName="District 2 eMotoRent Branch"
-                    branchAddress="6 Hoàng Văn Thụ, District 2, Tân Bình"
-                    phone="+84 123 456 789"
-                    mapImageUri="https://via.placeholder.com/400x200/1a1a1a/a78bfa?text=Map+View"
+                    branches={branches}
+                    branchesError={branchesError}
                 />
             </ScrollView>
 
