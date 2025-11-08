@@ -37,6 +37,10 @@ export const InsurancePlansScreen: React.FC = () => {
     
     const { 
         vehicleId, 
+        vehicleName,
+        vehicleImageUrl,
+        branchId,
+        branchName,
         pricePerDay,
         securityDeposit,
         startDate, 
@@ -51,6 +55,8 @@ export const InsurancePlansScreen: React.FC = () => {
     const { packages, loading, error, refetch } = useInsurancePackages();
 
     console.log("Insurance Plans - Vehicle ID:", vehicleId);
+    console.log("Vehicle Name:", vehicleName);
+    console.log("Branch:", branchName);
     console.log("Rental Duration:", duration);
     console.log("Rental Price:", rentalPrice);
     console.log("Fetched Packages:", packages.length);
@@ -89,12 +95,15 @@ export const InsurancePlansScreen: React.FC = () => {
         
         navigation.navigate('PaymentConfirmation', {
             vehicleId,
+            vehicleName,
+            vehicleImageUrl,
+            branchId,
+            branchName,
             pricePerDay,
             startDate,
             endDate,
             duration,
             rentalDays,
-            branchName: "Quận 2, Chi nhánh eMotoRent", // TODO: Should come from vehicle/branch data
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
             rentalFee: `${rentalPrice.toLocaleString()}đ`,
@@ -154,7 +163,7 @@ export const InsurancePlansScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <VehicleInfoHeader
-                    vehicleName="VinFast Evo200" // TODO: Should come from vehicle data
+                    vehicleName={vehicleName}
                     rentalPeriod={`${startDate} - ${endDate}`}
                 />
 

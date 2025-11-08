@@ -1,3 +1,4 @@
+// presentation/features/vehicleDetails/ui/organisms/PickupLocationSection.tsx
 import { FontAwesome } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -10,13 +11,16 @@ import { BranchInfoItem } from "../molecules/BranchInfoItem";
 interface PickupLocationSectionProps {
     branches: BranchUI[];
     branchesError: string | null;
+    selectedBranchId: string | null;
+    onBranchSelect: (branchId: string) => void;
 }
 
 export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
     branches,
     branchesError,
+    selectedBranchId,
+    onBranchSelect,
 }) => {
-    const [selectedBranchIndex, setSelectedBranchIndex] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);
 
     if (branchesError) {
@@ -32,16 +36,16 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
         return (
             <View style={styles.container}>
                 <SectionTitle title="Địa Điểm Nhận Xe" />
-                <Text style={styles.errorText}>No branches available for this vehicle</Text>
+                <Text style={styles.errorText}>Hiện tại không có chi nhánh nào có xe này</Text>
             </View>
         );
     }
 
-    const selectedBranch = branches[selectedBranchIndex];
+    const selectedBranch = branches.find(b => b.id === selectedBranchId) || branches[0];
 
     return (
         <View style={styles.container}>
-            <SectionTitle title="Địa Điểm Nhận Xe" />
+            <SectionTitle title="Chọn Địa Điểm Nhận Xe" />
             
             {/* Branch Selector Dropdown */}
             <View>
@@ -57,22 +61,22 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                 {/* Dropdown List */}
                 {showDropdown && (
                     <View style={styles.dropdownList}>
-                        {branches.map((branch, index) => (
+                        {branches.map((branch) => (
                             <TouchableOpacity
                                 key={branch.id}
                                 style={[
                                     styles.dropdownItem,
-                                    index === selectedBranchIndex && styles.dropdownItemSelected
+                                    branch.id === selectedBranchId && styles.dropdownItemSelected
                                 ]}
                                 onPress={() => {
-                                    setSelectedBranchIndex(index);
+                                    onBranchSelect(branch.id);
                                     setShowDropdown(false);
                                 }}
                                 activeOpacity={0.7}
                             >
                                 <Text style={[
                                     styles.dropdownItemText,
-                                    index === selectedBranchIndex && styles.dropdownItemTextSelected
+                                    branch.id === selectedBranchId && styles.dropdownItemTextSelected
                                 ]}>
                                     {branch.name}
                                 </Text>
