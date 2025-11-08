@@ -59,8 +59,6 @@ export const VehicleDetailsScreen: React.FC = () => {
 
     const dailyPrice = data.pricePerDay;
     const pricingOptions = [
-        { duration: "4 Hours", price: dailyPrice > 0 ? `${Math.round(dailyPrice * 0.3).toLocaleString()}đ` : "N/A" },
-        { duration: "8 Hours", price: dailyPrice > 0 ? `${Math.round(dailyPrice * 0.5).toLocaleString()}đ` : "N/A" },
         { duration: "24 Hours", price: dailyPrice > 0 ? `${dailyPrice.toLocaleString()}đ` : "N/A" },
         { duration: "3+ Days", price: dailyPrice > 0 ? `${Math.round(dailyPrice * 0.85).toLocaleString()}đ/day` : "N/A" },
     ];

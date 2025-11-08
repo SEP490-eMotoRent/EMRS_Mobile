@@ -73,6 +73,7 @@ export const ApiEndpoints = {
   branch: {
     list: "/Branch",
     detail: (id: string) => `/Branch/${id}`,
+    byVehicleModel: (vehicleModelId: string) => `/Branch/${vehicleModelId}`,
     create: "/Branch/create",
     update: (id: string) => `/Branch/${id}`,
     delete: (id: string) => `/Branch/${id}`,
