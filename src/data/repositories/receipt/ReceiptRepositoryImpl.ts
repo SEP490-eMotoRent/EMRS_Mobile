@@ -1,6 +1,6 @@
 import { ApiResponse } from "../../../core/network/APIResponse";
 import { RentalContract } from "../../../domain/entities/booking/RentalContract";
-import { UpdateRentalReceiptInput } from "../../../domain/entities/booking/RentalReceipt";
+import { RentalReceipt, UpdateRentalReceiptInput } from "../../../domain/entities/booking/RentalReceipt";
 import { ReceiptRepository } from "../../../domain/repositories/receipt/ReceiptRepository";
 import { CreateReceiptUseCaseInput } from "../../../domain/usecases/receipt/CreateReceiptUseCase";
 import { ReceiptRemoteDataSource } from "../../datasources/interfaces/remote/receipt/ReceiptRemoteDataSource";
@@ -53,8 +53,12 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
         return await this.remote.updateRentalReceipt(request);
     }
 
-    async generateContract(bookingId: string): Promise<ApiResponse<string>> {
-        return await this.remote.generateContract(bookingId);
+    async generateContract(bookingId: string, receiptId: string): Promise<ApiResponse<string>> {
+        return await this.remote.generateContract(bookingId, receiptId);
+    }
+
+    async getReceiptDetails(bookingId: string): Promise<ApiResponse<RentalReceipt>> {
+        return await this.remote.getReceiptDetails(bookingId);
     }
 
     async getContract(bookingId: string): Promise<RentalContract | null> {
@@ -66,8 +70,8 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
         return await this.remote.generateOtp(contractId);
     }
 
-    async signContract(contractId: string, otpCode: string): Promise<ApiResponse<string>> {
-        return await this.remote.signContract(contractId, otpCode);
+    async signContract(contractId: string, receiptId: string, otpCode: string): Promise<ApiResponse<string>> {
+        return await this.remote.signContract(contractId, receiptId, otpCode);
     }
 
     private mapToEntity(dto: GetContractResponse): RentalContract {

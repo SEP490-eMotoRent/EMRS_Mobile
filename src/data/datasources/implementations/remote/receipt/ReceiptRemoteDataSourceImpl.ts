@@ -1,6 +1,7 @@
 import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
+import { RentalReceipt } from "../../../../../domain/entities/booking/RentalReceipt";
 import { CreateReceiptRequest } from "../../../../models/receipt/CreateReceiptRequest";
 import { GetContractResponse } from "../../../../models/receipt/GetContractResponse";
 import { HandoverReceiptResponse } from "../../../../models/receipt/HandoverReceiptResponse";
@@ -80,10 +81,27 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
     }
   }
 
-  async generateContract(bookingId: string): Promise<ApiResponse<string>> {
+  async getReceiptDetails(bookingId: string): Promise<ApiResponse<RentalReceipt>> {
+    try {
+      const response = await this.axiosClient.get<ApiResponse<RentalReceipt>>(
+        ApiEndpoints.receipt.getDetails(bookingId)
+      );
+      return {
+        success: true,
+        message: "Receipt details retrieved successfully",
+        data: response.data.data,
+        code: response.status,
+      };
+    } catch (error: any) {
+      console.error("Error getting receipt details:", error);
+      throw error;
+    }
+  }
+
+  async generateContract(bookingId: string, receiptId: string): Promise<ApiResponse<string>> {
     try {
       const response = await this.axiosClient.post<ApiResponse<string>>(
-        ApiEndpoints.receipt.generateContract(bookingId)
+        ApiEndpoints.receipt.generateContract(bookingId, receiptId)
       );
       return response.data;
     } catch (error: any) {
@@ -116,10 +134,10 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
     }
   }
 
-  async signContract(contractId: string, otpCode: string): Promise<ApiResponse<string>> {
+  async signContract(contractId: string, receiptId: string, otpCode: string): Promise<ApiResponse<string>> {
     try {
       const response = await this.axiosClient.post<ApiResponse<string>>(
-        ApiEndpoints.receipt.signContract(contractId, otpCode)
+        ApiEndpoints.receipt.signContract(contractId, receiptId, otpCode)
       );
       return response.data;
     } catch (error: any) {

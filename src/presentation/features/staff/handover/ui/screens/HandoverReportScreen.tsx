@@ -48,10 +48,12 @@ export const HandoverReportScreen: React.FC = () => {
       const generateContractUseCase = new GenerateContractUseCase(
         sl.get("ReceiptRepository")
       );
-      const response = await generateContractUseCase.execute(bookingId);
-      console.log("response", response);
+      const response = await generateContractUseCase.execute(
+        bookingId,
+        receiptId
+      );
       // if (response.success) {
-        navigation.navigate("AwaitingApproval");
+      navigation.navigate("AwaitingApproval");
       // }
     } catch (error) {
       console.log("error", error);

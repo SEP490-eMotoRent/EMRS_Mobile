@@ -34,7 +34,7 @@ type SignContractScreenNavigationProp = any;
 export const SignContractScreen: React.FC = () => {
   const route = useRoute<SignContractScreenRouteProp>();
   const navigation = useNavigation<SignContractScreenNavigationProp>();
-  const { bookingId, email, fullName } = route.params || {};
+  const { bookingId, email, fullName, receiptId } = route.params || {};
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [submitting, setSubmitting] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -122,12 +122,17 @@ export const SignContractScreen: React.FC = () => {
     //   navigation.goBack();
     // }, 1200);
     try {
+      if (!contract?.id || !receiptId) {
+        Alert.alert("Lỗi", "Hợp đồng hoặc receiptId không tồn tại");
+        return;
+      }
       setSubmitting(true);
       const signContractUseCase = new SignContractUseCase(
         sl.get("ReceiptRepository")
       );
       const response = await signContractUseCase.execute(
-        contract?.id || "",
+        contract.id,
+        receiptId,
         otp.join("")
       );
       if (response.success) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -34,6 +34,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../authentication/store";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
+import { GetReceiptDetailsUseCase } from "../../../../../../domain/usecases/receipt/GetReceiptDetails";
+import { useFocusEffect } from "@react-navigation/native";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -64,10 +66,19 @@ export const BookingDetailsScreen: React.FC = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  useEffect(() => {
-    fetchBooking();
-    fetchVehicleModels();
-  }, [bookingId]);
+  // useEffect(() => {
+  //   fetchBooking();
+  //   fetchVehicleModels();
+  //   fetchRentalReceipt();
+  // }, [bookingId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchBooking();
+      fetchVehicleModels();
+      fetchRentalReceipt();
+    }, [])
+  );
 
   const fetchBooking = async () => {
     try {
@@ -78,7 +89,6 @@ export const BookingDetailsScreen: React.FC = () => {
       const booking = await getBookingByIdUseCase.execute(bookingId);
       setBooking(booking);
       setContract(booking?.rentalContract);
-      setRentalReceipt(booking?.rentalReceipt);
     } catch (error) {
       console.error("Error fetching booking:", error);
     } finally {
@@ -86,14 +96,25 @@ export const BookingDetailsScreen: React.FC = () => {
     }
   };
 
+  const fetchRentalReceipt = async () => {
+    try {
+      const getReceiptDetailsUseCase = new GetReceiptDetailsUseCase(
+        sl.get("ReceiptRepository")
+      );
+      const rentalReceipt = await getReceiptDetailsUseCase.execute(bookingId);
+      setRentalReceipt(rentalReceipt.data);
+    } catch (error) {
+      console.error("Error fetching rental receipt:", error);
+      return null;
+    }
+  };
   const generateConstract = async () => {
     try {
       setIsLoading(true);
       const generateContractUseCase = new GenerateContractUseCase(
         sl.get("ReceiptRepository")
       );
-      const response = await generateContractUseCase.execute(bookingId);
-      console.log("response", response);
+      const response = await generateContractUseCase.execute(bookingId, rentalReceipt?.id);
       // if (response.success) {
         navigation.navigate("AwaitingApproval");
       // }
@@ -153,7 +174,7 @@ export const BookingDetailsScreen: React.FC = () => {
 
   const canSignContract =
     user?.id &&
-    booking?.renter?.account?.id === user.id &&
+    booking?.renter?.id === user.id &&
     contract?.contractStatus === "Unsigned";
 
   // Temporary summary (will be replaced by API output when available)
@@ -419,6 +440,7 @@ export const BookingDetailsScreen: React.FC = () => {
                       bookingId,
                       email: booking?.renter?.email,
                       fullName: booking?.renter?.account?.fullname,
+                      receiptId: rentalReceipt?.id,
                     })
                   }
                 >
@@ -555,29 +577,29 @@ export const BookingDetailsScreen: React.FC = () => {
                 <View style={[styles.infoItem]}>
                   <Text style={styles.infoLabel}>Ghi chú:</Text>
                   <Text style={styles.infoValue}>
-                    {booking?.rentalReceipt?.notes || "-"}
+                    {rentalReceipt?.notes || "-"}
                   </Text>
                 </View>
                 <View style={[styles.infoItem]}>
                   <Text style={styles.infoLabel}>Số km bắt đầu:</Text>
                   <Text style={styles.infoValue}>
-                    {booking?.rentalReceipt?.startOdometerKm} km
+                    {rentalReceipt?.startOdometerKm} km
                   </Text>
                 </View>
                 <View style={styles.infoItem}>
                   <Text style={styles.infoLabel}>Pin bắt đầu:</Text>
                   <Text style={styles.infoValue}>
-                    {booking?.rentalReceipt?.startBatteryPercentage}%
+                    {rentalReceipt?.startBatteryPercentage}%
                   </Text>
                 </View>
               </InfoCard>
 
               {/* Vehicle photos grid */}
-              {!!booking?.rentalReceipt?.vehicleFiles?.length && (
+              {!!rentalReceipt?.handOverVehicleImageFiles?.length && (
                 <View style={styles.section}>
                   <SectionHeader title="Ảnh xe bàn giao" icon="picture" />
                   <View style={styles.photoGrid}>
-                    {booking?.rentalReceipt?.vehicleFiles.map(
+                    {rentalReceipt?.handOverVehicleImageFiles.map(
                       (uri: string, idx: number) => (
                         <View key={idx} style={styles.photoItem}>
                           <Image
@@ -592,13 +614,13 @@ export const BookingDetailsScreen: React.FC = () => {
                 </View>
               )}
 
-              {!!booking?.rentalReceipt?.checkListFile && (
+              {!!rentalReceipt?.checkListFile && (
                 <View style={styles.section}>
                   <SectionHeader title="Checklist" icon="profile" />
                   <View style={styles.checklistWrapImg}>
                     <Image
                       source={{
-                        uri: booking?.rentalReceipt?.checkListFile as string,
+                        uri: rentalReceipt?.checkListFile as string,
                       }}
                       style={styles.checklistImg}
                       resizeMode="cover"

@@ -474,7 +474,7 @@ export const SelectVehicleScreen: React.FC = () => {
                             vehicle.batteryHealthPercentage,
                         })
                       }
-                      disabled={vehicleCard.disabled}
+                      // disabled={vehicleCard.disabled}
                     >
                       <AntDesign name="camera" size={16} color={vehicleCard.disabled ? "#999" : "#000"} />
                       <Text style={[styles.inspectionBtnText, vehicleCard.disabled && styles.inspectionBtnTextDisabled]}>Inspection</Text>

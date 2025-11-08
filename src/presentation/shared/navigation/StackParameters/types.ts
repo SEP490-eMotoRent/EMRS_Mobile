@@ -107,6 +107,7 @@ export type TripStackParamList = {
     bookingId: string;
     email: string;
     fullName: string;
+    receiptId: string;
   };
   EmergencyContact: {
     bookingId: string;
@@ -217,6 +218,7 @@ export type StaffStackParamList = {
     bookingId: string;
     email: string;
     fullName: string;
+    receiptId: string;
   };
   TrackingGPS: {
     vehicleId?: string;

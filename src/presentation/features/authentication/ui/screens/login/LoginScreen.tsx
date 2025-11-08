@@ -23,6 +23,7 @@ import { PrivacyNotice } from "../../atoms/PrivacyNotice";
 import { SignUpPrompt } from "../../atoms/register/SignUpPrompt";
 import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
 import { LoginForm } from "../../organism/login/LoginForm";
+import Toast from "react-native-toast-message";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -79,7 +80,11 @@ export const LoginScreen: React.FC = () => {
           })
         );
 
-        console.log("Login successful, auth data stored in Redux Persist");
+        Toast.show({
+          type: "success",
+          text1: "Đăng nhập thành công",
+          text2: "Chào mừng bạn đến với eMotoRent",
+        });
       } catch (error: any) {
         Alert.alert(
           "Đăng nhập thất bại",
