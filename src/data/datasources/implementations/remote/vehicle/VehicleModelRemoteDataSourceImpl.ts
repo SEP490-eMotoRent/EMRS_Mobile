@@ -5,6 +5,7 @@ import { CreateVehicleModelRequest } from "../../../../models/vehicle_model/Crea
 import { VehicleModelResponse } from "../../../../models/vehicle_model/VehicleModelResponse";
 import { VehicleModelRemoteDataSource } from "../../../interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { VehicleModelDetailResponse } from '../../../../models/vehicle_model/VehicleModelDetailResponse';
+import { VehicleModelSearchResponse } from '../../../../models/vehicle_model/VehicleModelSearchResponse';
 
 export class VehicleModelRemoteDataSourceImpl implements VehicleModelRemoteDataSource {
     constructor(private axiosClient: AxiosClient) {}
@@ -33,6 +34,26 @@ export class VehicleModelRemoteDataSourceImpl implements VehicleModelRemoteDataS
             if (error.response?.status === 404) return null;
             console.error("Failed to fetch detail:", error);
             return null;
+        }
+    }
+
+    async search(startTime?: string, endTime?: string, branchId?: string): Promise<VehicleModelSearchResponse[]> {
+        try {
+            const params: Record<string, string> = {};
+            
+            if (startTime) params.startTime = startTime;
+            if (endTime) params.endTime = endTime;
+            if (branchId) params.branchId = branchId;
+
+            const response = await this.axiosClient.get<ApiResponse<VehicleModelSearchResponse[]>>(
+                ApiEndpoints.vehicle.model.search,
+                { params }
+            );
+            
+            return unwrapResponse(response.data);
+        } catch (error: any) {
+            console.error("Failed to search vehicles:", error);
+            throw error;
         }
     }
 }

@@ -5,6 +5,7 @@ import { InsurancePlansScreen } from '../../../../features/booking/ui/screens/ph
 import { PaymentConfirmationScreen } from '../../../../features/booking/ui/screens/phase3/PaymentConfirmationScreen';
 import { DigitalContractScreen } from '../../../../features/booking/ui/screens/phase4/DigitalContractScreen';
 import { BookingStackParamList } from '../../StackParameters/types';
+import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
 
 const Stack = createStackNavigator<BookingStackParamList>();
 
@@ -19,6 +20,7 @@ export const BookingNavigator: React.FC = () => {
             <Stack.Screen name="InsurancePlans" component={InsurancePlansScreen} />
             <Stack.Screen name="PaymentConfirmation" component={PaymentConfirmationScreen} />
             <Stack.Screen name="DigitalContract" component={DigitalContractScreen} />
+            <Stack.Screen name="Trips" component={TripsScreen} />
         </Stack.Navigator>
     );
 };

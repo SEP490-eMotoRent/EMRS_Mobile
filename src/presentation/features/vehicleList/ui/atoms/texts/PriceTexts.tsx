@@ -10,10 +10,10 @@ export const PriceText: React.FC<PriceTextProps> = ({ price, total }) => {
     return (
         <View style={styles.container}>
             <View style={styles.priceRow}>
-                <Text style={styles.price}>${price}</Text>
-                <Text style={styles.period}>/day</Text>
+                <Text style={styles.price}>{price}đ</Text>
+                <Text style={styles.period}>/ngày</Text>
             </View>
-            <Text style={styles.total}>Total ${total}</Text>
+            <Text style={styles.total}>Tổng: {total}</Text>
         </View>
     );
 };

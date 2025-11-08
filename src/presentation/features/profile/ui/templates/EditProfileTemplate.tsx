@@ -42,6 +42,7 @@ interface EditProfileTemplateProps {
     citizenIssueDate?: string;
     citizenExpiryDate?: string;
     citizenAuthority?: string;
+    citizenOCRProcessing?: boolean;
     
     // License props
     licenseNumber: string;
@@ -53,6 +54,7 @@ interface EditProfileTemplateProps {
     licenseBackImage?: string;
     licenseIssueDate?: string;
     licenseAuthority?: string;
+    licenseOCRProcessing?: boolean;
     
     // Handlers
     onBack: () => void;
@@ -163,6 +165,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onIssueDatePress={props.onCitizenIssueDatePress}
                         onExpiryDatePress={props.onCitizenExpiryDatePress}
                         onIssuingAuthorityChange={props.onCitizenAuthorityChange}
+                        ocrProcessing={props.citizenOCRProcessing}
                     />
 
                     {/* Driver's License */}
@@ -186,6 +189,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onIssueDatePress={props.onLicenseIssueDatePress}
                         onExpiryDatePress={props.onLicenseExpiryPress}
                         onIssuingAuthorityChange={props.onLicenseAuthorityChange}
+                        ocrProcessing={props.licenseOCRProcessing}
                         additionalFields={
                             <>
                                 <TextInput

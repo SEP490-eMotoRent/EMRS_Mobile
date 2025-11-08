@@ -1,12 +1,14 @@
 import { BaseEntity, CreateEntityInput, UpdateEntityInput } from "../shared/BaseEntity";
 
-import { Account } from "./Account";
-import { Wallet } from "../financial/Wallet";
-import { Document } from "./Document";
 import { Booking } from "../booking/Booking";
 import { Feedback } from "../booking/Feedback";
-import { InsuranceClaim } from "../insurance/InsuranceClaim";
 import { Membership } from "../financial/Membership";
+import { Wallet } from "../financial/Wallet";
+import { InsuranceClaim } from "../insurance/InsuranceClaim";
+import { Account } from "./Account";
+import { Document } from "./Document";
+import { Ticket } from "./Ticket";
+
 export class Renter implements BaseEntity {
   public readonly id: string;
   public createdAt: Date;
@@ -33,6 +35,7 @@ export class Renter implements BaseEntity {
   public bookings: Booking[] = [];
   public feedbacks: Feedback[] = [];
   public insuranceClaims: InsuranceClaim[] = [];
+  public tickets: Ticket[] = [];
 
   constructor(
     id: string,

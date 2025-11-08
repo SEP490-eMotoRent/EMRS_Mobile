@@ -9,7 +9,7 @@ export const MapViewButton: React.FC<MapViewButtonProps> = ({ onPress }) => {
     return (
         <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.9}>
             <Text style={styles.icon}>🗺️</Text>
-            <Text style={styles.text}>Map View</Text>
+            <Text style={styles.text}>Bản Đồ</Text>
         </TouchableOpacity>
     );
 };

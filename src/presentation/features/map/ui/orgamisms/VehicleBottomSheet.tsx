@@ -4,14 +4,14 @@ import { VehicleCarousel } from "./VehicleCarousel";
 import { ElectricVehicle } from "../molecules/VehicleCard";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-const BOTTOM_SHEET_HEIGHT = 280;
+const BOTTOM_SHEET_HEIGHT = 320;
 
 interface VehicleBottomSheetProps {
     visible: boolean;
     vehicles: ElectricVehicle[];
     markerType?: "price" | "cluster";
     onClose: () => void;
-    onBookVehicle: (vehicleId: number) => void;
+    onBookVehicle: (vehicleId: string) => void;
 }
 
 export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({

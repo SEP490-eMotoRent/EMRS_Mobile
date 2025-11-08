@@ -5,6 +5,7 @@ import { VehicleModelRepository } from "../../../domain/repositories/vehicle/Veh
 import { VehicleModelRemoteDataSource } from "../../datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { CreateVehicleModelRequest } from "../../models/vehicle_model/CreateVehicleModelRequest";
 import { VehicleModelResponse } from "../../models/vehicle_model/VehicleModelResponse";
+import { VehicleModelSearchResponse } from "../../models/vehicle_model/VehicleModelSearchResponse";
 
 export class VehicleModelRepositoryImpl implements VehicleModelRepository {
     constructor(private remote: VehicleModelRemoteDataSource) {}
@@ -43,6 +44,10 @@ export class VehicleModelRepositoryImpl implements VehicleModelRepository {
     // NEW: Return raw DTOs for UI mapper
     async getAllRaw(): Promise<VehicleModelResponse[]> {
         return this.remote.getAll();
+    }
+
+    async search(startTime?: string, endTime?: string, branchId?: string): Promise<VehicleModelSearchResponse[]> {
+        return this.remote.search(startTime, endTime, branchId);
     }
 
     private mapToEntity(dto: VehicleModelResponse): VehicleModel {
