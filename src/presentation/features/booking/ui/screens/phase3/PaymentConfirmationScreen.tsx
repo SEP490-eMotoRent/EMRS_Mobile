@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { CreateBookingUseCase } from "../../../../../../domain/usecases/booking/CreateBookingUseCase";
+import { CreateVNPayBookingUseCase, VNPayBookingResultWithExpiry } from "../../../../../../domain/usecases/booking/CreateVNPayBookingUseCase";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useAppSelector } from "../../../../authentication/store/hooks";
@@ -50,6 +51,12 @@ export const PaymentConfirmationScreen: React.FC = () => {
         sl.get<CreateBookingUseCase>("CreateBookingUseCase"), 
         []
     );
+
+    const createVNPayBookingUseCase = useMemo(() => 
+        sl.get<CreateVNPayBookingUseCase>("CreateVNPayBookingUseCase"), 
+        []
+    );
+
     
     const { createBooking, loading: bookingLoading, error: bookingError } = useCreateBooking(createBookingUseCase);
 
@@ -86,6 +93,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
     const handlePayment = async () => {
         console.log("Processing payment for vehicle:", vehicleName);
+        console.log("Payment method:", selectedPaymentMethod);
         console.log("Total amount:", total);
 
         if (!userId) {
@@ -111,10 +119,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     ? insurancePlanId
                     : undefined;
 
-            console.log("Insurance Plan:", insurancePlan);
-            console.log("Insurance Package ID:", insurancePackageId);
-
-            const bookingData = {
+            const bookingInput = {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
                 endDatetime: endDateTime,
@@ -130,29 +135,51 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 renterId: userId,
             };
 
-            console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
+            console.log("Booking Data:", JSON.stringify(bookingInput, null, 2));
 
-            const booking = await createBooking(bookingData);
+            // ✅ WALLET PAYMENT (existing)
+            if (selectedPaymentMethod === "wallet") {
+                const booking = await createBooking(bookingInput);
 
-            console.log("Booking created successfully!");
-            console.log("Booking ID:", booking.id);
-            console.log("Booking Code:", booking.bookingCode);
-            console.log("Booking Status:", booking.bookingStatus);
+                console.log("Booking created successfully with wallet!");
+                console.log("Booking ID:", booking.id);
+                console.log("Booking Code:", booking.bookingCode);
+                console.log("Booking Status:", booking.bookingStatus);
 
-            navigation.navigate('DigitalContract', {
-                vehicleId,
-                vehicleName,
-                vehicleImageUrl,
-                startDate,
-                endDate,
-                duration,
-                rentalDays,
-                branchName,
-                insurancePlan,
-                totalAmount: total,
-                securityDeposit,
-                contractNumber: booking.bookingCode || booking.id,
-            });
+                navigation.navigate('DigitalContract', {
+                    vehicleId,
+                    vehicleName,
+                    vehicleImageUrl,
+                    startDate,
+                    endDate,
+                    duration,
+                    rentalDays,
+                    branchName,
+                    insurancePlan,
+                    totalAmount: total,
+                    securityDeposit,
+                    contractNumber: booking.bookingCode || booking.id,
+                });
+            }
+            // ✅ VNPAY PAYMENT (new)
+            // else if (selectedPaymentMethod === "vnpay") {
+            //     const result: VNPayBookingResultWithExpiry = await createVNPayBookingUseCase.execute(bookingInput);
+
+            //     console.log("VNPay booking created successfully!");
+            //     console.log("Booking ID:", result.booking.id);
+            //     console.log("VNPay URL:", result.vnpayUrl);
+            //     console.log("Expires at:", result.expiresAt);
+
+            //     // Navigate to VNPay WebView
+            //     navigation.navigate('VNPayWebView', {
+            //         vnpayUrl: result.vnpayUrl,
+            //         bookingId: result.booking.id,
+            //         expiresAt: result.expiresAt,
+            //         vehicleName,
+            //         totalAmount: total,
+            //     });
+            // }
+
         } catch (err: any) {
             console.error("Booking creation failed:", err);
             console.error("Error details:", err.response?.data || err.message);

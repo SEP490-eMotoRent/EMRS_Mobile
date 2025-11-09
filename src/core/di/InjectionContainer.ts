@@ -40,6 +40,7 @@ import { BookingRepositoryImpl } from '../../data/repositories/booking/BookingRe
 import { BookingRepository } from '../../domain/repositories/booking/BookingRepository';
 import { CreateBookingUseCase } from '../../domain/usecases/booking/CreateBookingUseCase';
 import { GetCurrentRenterBookingsUseCase } from '../../domain/usecases/booking/GetCurrentRenterBookingsUseCase';
+import { CreateVNPayBookingUseCase } from "../../domain/usecases/booking/CreateVNPayBookingUseCase";
 
 // Receipt imports
 import { ReceiptRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/receipt/ReceiptRemoteDataSourceImpl';
@@ -84,9 +85,9 @@ import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementa
 
 import { RentalReturnRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl";
 import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
+import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
 import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 import { AxiosClient } from "../network/AxiosClient";
-import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
 
 
 /**
@@ -162,6 +163,8 @@ class ServiceLocator {
     this.services.set("CreateBookingUseCase", createBookingUseCase);
     const getCurrentRenterBookingsUseCase = new GetCurrentRenterBookingsUseCase(bookingRepository);
     this.services.set("GetCurrentRenterBookingsUseCase", getCurrentRenterBookingsUseCase);
+    const createVNPayBookingUseCase = new CreateVNPayBookingUseCase(bookingRepository);
+    this.services.set("CreateVNPayBookingUseCase", createVNPayBookingUseCase);
 
     // Receipt services
     const receiptRemoteDataSource = new ReceiptRemoteDataSourceImpl(axiosClient);
@@ -387,6 +390,10 @@ class ServiceLocator {
 
   getBranchesByVehicleModelUseCase(): GetBranchesByVehicleModelUseCase {
     return this.get<GetBranchesByVehicleModelUseCase>('GetBranchesByVehicleModelUseCase');
+  }
+
+  getCreateVNPayBookingUseCase(): CreateVNPayBookingUseCase {
+    return this.get<CreateVNPayBookingUseCase>('CreateVNPayBookingUseCase');
   }
 }
 

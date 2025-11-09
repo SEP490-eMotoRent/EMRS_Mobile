@@ -1,5 +1,10 @@
-import { Booking } from "../../entities/booking/Booking";
 import { PaginatedBooking } from "../../../data/models/booking/PaginatedBooking";
+import { Booking } from "../../entities/booking/Booking";
+
+export interface VNPayBookingResult {
+  booking: Booking;
+  vnpayUrl: string;
+}
 
 export interface BookingRepository {
   create(booking: Booking): Promise<Booking>;
@@ -15,4 +20,6 @@ export interface BookingRepository {
     pageSize: number,
   ): Promise<PaginatedBooking>;
   assignVehicle(vehicleId: string, bookingId: string): Promise<void>;
+  createVNPay(booking: Booking): Promise<VNPayBookingResult>;
+
 }

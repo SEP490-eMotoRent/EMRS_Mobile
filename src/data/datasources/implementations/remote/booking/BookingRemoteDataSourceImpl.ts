@@ -5,6 +5,7 @@ import {
 } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { BookingResponseForRenter } from "../../../../models/booking/BookingResponseForRenter";
+import { BookingWithoutWalletResponse } from "../../../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
@@ -19,7 +20,6 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       JSON.stringify(request, null, 2)
     );
 
-    // ✅ Build request object - CRITICAL: null for optional Guid, not undefined
     const cleanedRequest: Record<string, any> = {
       startDatetime: request.startDatetime,
       endDatetime: request.endDatetime,
@@ -32,7 +32,6 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       vehicleModelId: request.vehicleModelId,
       averageRentalPrice: request.averageRentalPrice,
       totalRentalFee: request.totalRentalFee,
-      // ✅ CRITICAL: C# expects null for Nullable<Guid>, not undefined or empty string
       insurancePackageId: request.insurancePackageId || null,
     };
 
@@ -57,6 +56,47 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       console.error("❌ Error Response:", JSON.stringify(error.response?.data, null, 2));
       console.error("❌ Request that failed:", JSON.stringify(cleanedRequest, null, 2));
       throw error;
+    }
+  }
+
+  // ✅ NEW: VNPay booking creation
+  async createVNPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse> {
+    console.log(
+      "📤 VNPay booking request:",
+      JSON.stringify(request, null, 2)
+    );
+
+    const cleanedRequest: Record<string, any> = {
+      startDatetime: request.startDatetime,
+      endDatetime: request.endDatetime,
+      handoverBranchId: request.handoverBranchId,
+      baseRentalFee: request.baseRentalFee,
+      depositAmount: request.depositAmount,
+      rentalDays: request.rentalDays,
+      rentalHours: request.rentalHours,
+      rentingRate: request.rentingRate,
+      vehicleModelId: request.vehicleModelId,
+      averageRentalPrice: request.averageRentalPrice,
+      totalRentalFee: request.totalRentalFee,
+      insurancePackageId: request.insurancePackageId || null,
+    };
+
+    try {
+        const response = await this.axiosClient.post<ApiResponse<BookingWithoutWalletResponse>>(
+            ApiEndpoints.booking.createVNPay,
+            cleanedRequest
+        );
+        return unwrapResponse(response.data);
+    } catch (error: any) {
+        console.error("❌ [CREATE VNPAY BOOKING] API Error:", error);
+        
+        // Extract meaningful error message
+        const errorMessage = error.response?.data?.message 
+            || error.response?.data?.error
+            || error.message 
+            || "Failed to create VNPay booking";
+        
+        throw new Error(errorMessage);
     }
   }
 
