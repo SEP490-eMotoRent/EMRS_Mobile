@@ -14,8 +14,10 @@ import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/nav
 
 import sl from "../../../../../core/di/InjectionContainer";
 import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
+import { GetBranchesByVehicleModelUseCase } from "../../../../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
 import { BackButton } from "../../../../common/components/atoms/buttons/BackButton";
 import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
+import { useVehicleBranches } from "../../hooks/useVehicleBranches";
 import { BookingButton } from "../atoms/buttons/BookingButton";
 import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
@@ -31,15 +33,29 @@ export const VehicleDetailsScreen: React.FC = () => {
     const { vehicleId } = route.params;
 
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
 
     const remote = useMemo(() =>
         sl.get<VehicleModelRemoteDataSource>("VehicleModelRemoteDataSource"), 
         []
     );
+
+    const branchUseCase = useMemo(() =>
+        sl.getBranchesByVehicleModelUseCase(),
+        []
+    );
     
     const { data, loading, error } = useVehicleDetail(vehicleId, remote);
+    const { branches, loading: branchesLoading, error: branchesError } = useVehicleBranches(vehicleId, branchUseCase);
 
-    if (loading) {
+    // Auto-select first branch when branches load
+    React.useEffect(() => {
+        if (branches.length > 0 && !selectedBranchId) {
+            setSelectedBranchId(branches[0].id);
+        }
+    }, [branches, selectedBranchId]);
+
+    if (loading || branchesLoading) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color="#a78bfa" />
@@ -59,22 +75,32 @@ export const VehicleDetailsScreen: React.FC = () => {
 
     const dailyPrice = data.pricePerDay;
     const pricingOptions = [
-        { duration: "4 Hours", price: dailyPrice > 0 ? `${Math.round(dailyPrice * 0.3).toLocaleString()}đ` : "N/A" },
-        { duration: "8 Hours", price: dailyPrice > 0 ? `${Math.round(dailyPrice * 0.5).toLocaleString()}đ` : "N/A" },
         { duration: "24 Hours", price: dailyPrice > 0 ? `${dailyPrice.toLocaleString()}đ` : "N/A" },
         { duration: "3+ Days", price: dailyPrice > 0 ? `${Math.round(dailyPrice * 0.85).toLocaleString()}đ/day` : "N/A" },
     ];
 
+    const selectedBranch = branches.find(b => b.id === selectedBranchId);
+
     const handleBooking = () => {
+        if (!selectedBranchId || !selectedBranch) {
+            // Show alert or toast that branch must be selected
+            return;
+        }
+
         navigation.navigate('Booking', {
             screen: 'ConfirmRentalDuration',
             params: { 
                 vehicleId,
-                pricePerDay: data.pricePerDay,  // ADD THIS
-                securityDeposit: 2000000,        // ADD THIS (or calculate from pricePerDay)
+                vehicleName: data.name,
+                vehicleImageUrl: data.imageUrl,
+                branchId: selectedBranchId,
+                branchName: selectedBranch.name,
+                pricePerDay: data.pricePerDay,
+                securityDeposit: 2000000,
             }
         });
     };
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -155,15 +181,17 @@ export const VehicleDetailsScreen: React.FC = () => {
                 />
 
                 <PickupLocationSection
-                    address="6 Hoàng Văn Thụ, P2, Tân Bình"
-                    branchName="District 2 eMotoRent Branch"
-                    branchAddress="6 Hoàng Văn Thụ, District 2, Tân Bình"
-                    phone="+84 123 456 789"
-                    mapImageUri="https://via.placeholder.com/400x200/1a1a1a/a78bfa?text=Map+View"
+                    branches={branches}
+                    branchesError={branchesError}
+                    selectedBranchId={selectedBranchId}
+                    onBranchSelect={setSelectedBranchId}
                 />
             </ScrollView>
 
-            <BookingButton onPress={handleBooking} />
+            <BookingButton 
+                onPress={handleBooking}
+                disabled={!selectedBranchId}
+            />
         </View>
     );
 };

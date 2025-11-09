@@ -24,11 +24,14 @@ export const PaymentConfirmationScreen: React.FC = () => {
     
     const {
         vehicleId,
+        vehicleName,
+        vehicleImageUrl,
+        branchId,
+        branchName,
         startDate,
         endDate,
         duration,
         rentalDays,
-        branchName,
         insurancePlan,
         insurancePlanId,
         rentalFee,
@@ -49,6 +52,10 @@ export const PaymentConfirmationScreen: React.FC = () => {
     );
     
     const { createBooking, loading: bookingLoading, error: bookingError } = useCreateBooking(createBookingUseCase);
+
+    console.log("Payment Confirmation - Vehicle:", vehicleName);
+    console.log("Branch ID:", branchId);
+    console.log("Branch Name:", branchName);
 
     const handleBack = () => {
         navigation.goBack();
@@ -78,7 +85,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
     };
 
     const handlePayment = async () => {
-        console.log("Processing payment for vehicle:", vehicleId);
+        console.log("Processing payment for vehicle:", vehicleName);
         console.log("Total amount:", total);
 
         if (!userId) {
@@ -92,9 +99,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
             
             console.log("Start:", startDate, "→", startDateTime.toISOString());
             console.log("End:", endDate, "→", endDateTime.toISOString());
-
-            const TEMP_BRANCH_ID = "019a5996-84f2-739f-bcfe-cd8051df5f68";
-            console.log("Using temporary branch ID:", TEMP_BRANCH_ID);
+            console.log("Using branch ID:", branchId);
 
             const isValidGuid = (str: string) => {
                 const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -102,8 +107,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
             };
 
             const insurancePackageId =
-                insurancePlan && isValidGuid(insurancePlan)
-                    ? insurancePlan
+                insurancePlanId && isValidGuid(insurancePlanId)
+                    ? insurancePlanId
                     : undefined;
 
             console.log("Insurance Plan:", insurancePlan);
@@ -113,7 +118,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
                 endDatetime: endDateTime,
-                handoverBranchId: TEMP_BRANCH_ID,
+                handoverBranchId: branchId,
                 rentalDays: rentalDays,
                 rentalHours: 0,
                 baseRentalFee: parsePrice(rentalFee),
@@ -136,7 +141,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
             navigation.navigate('DigitalContract', {
                 vehicleId,
-                vehicleName: "VinFast Evo200",
+                vehicleName,
+                vehicleImageUrl,
                 startDate,
                 endDate,
                 duration,
@@ -168,6 +174,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
     };
     
     const totalAmount = parsePrice(total);
+    // TODO: Get actual balance from wallet API when implemented
     const currentBalance = 5000000;
     const afterBalance = currentBalance - totalAmount;
     const isSufficient = afterBalance >= 0;
@@ -183,7 +190,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <BookingSummaryCard
-                    vehicleName="VinFast Evo200"
+                    vehicleName={vehicleName}
                     rentalPeriod={`${startDate} - ${endDate}`}
                     duration={duration}
                     branchName={branchName}

@@ -41,6 +41,11 @@ export class BranchRepositoryImpl implements BranchRepository {
         }
     }
 
+    async getByVehicleModelId(vehicleModelId: string): Promise<Branch[]> {
+        const responses = await this.remoteDataSource.getByVehicleModelId(vehicleModelId);
+        return responses.map(response => this.mapToEntity(response));
+    }
+
     async update(branch: Branch): Promise<void> {
         const request: UpdateBranchRequest = {
             branchName: branch.branchName,

@@ -86,6 +86,7 @@ import { RentalReturnRemoteDataSourceImpl } from "../../data/datasources/impleme
 import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
 import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 import { AxiosClient } from "../network/AxiosClient";
+import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
 
 
 /**
@@ -184,6 +185,8 @@ class ServiceLocator {
     this.services.set("GetAllBranchesUseCase", getAllBranchesUseCase);
     const getBranchByIdUseCase = new GetBranchByIdUseCase(branchRepository);
     this.services.set("GetBranchByIdUseCase", getBranchByIdUseCase);
+    const getBranchesByVehicleModelUseCase = new GetBranchesByVehicleModelUseCase(branchRepository);
+    this.services.set("GetBranchesByVehicleModelUseCase", getBranchesByVehicleModelUseCase);
 
     // Insurance Claim services
     const insuranceClaimRemoteDataSource = new InsuranceClaimRemoteDataSourceImpl(axiosClient);
@@ -380,6 +383,10 @@ class ServiceLocator {
 
   getSearchVehiclesUseCase(): SearchVehiclesUseCase {
     return this.get<SearchVehiclesUseCase>('SearchVehiclesUseCase');
+  }
+
+  getBranchesByVehicleModelUseCase(): GetBranchesByVehicleModelUseCase {
+    return this.get<GetBranchesByVehicleModelUseCase>('GetBranchesByVehicleModelUseCase');
   }
 }
 

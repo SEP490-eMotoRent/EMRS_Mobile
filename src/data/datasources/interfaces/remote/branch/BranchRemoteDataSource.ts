@@ -6,6 +6,7 @@ export interface BranchRemoteDataSource {
     create(request: CreateBranchRequest): Promise<BranchResponse>;
     getAll(): Promise<BranchResponse[]>;
     getById(id: string): Promise<BranchResponse>;
+    getByVehicleModelId(vehicleModelId: string): Promise<BranchResponse[]>;
     update(id: string, request: UpdateBranchRequest): Promise<BranchResponse>;
     delete(id: string): Promise<void>;
 }

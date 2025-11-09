@@ -9,4 +9,5 @@ export interface BranchResponse {
     longitude: number;
     openingTime: string;
     closingTime: string;
+    vehicleCount?: number; //Optional field
 }
