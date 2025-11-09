@@ -23,7 +23,7 @@ export class CreateBookingUseCase {
     constructor(private bookingRepository: BookingRepository) {}
 
     async execute(input: CreateBookingInput): Promise<Booking> {
-        // Create mock renter (will be populated by backend)
+        // Create mock renter (to be populated by backend later)
         const mockRenter = new Renter(
             input.renterId,
             "unknown@email.com",
@@ -35,7 +35,7 @@ export class CreateBookingUseCase {
             ""
         );
 
-        // Create mock vehicle model (will be populated by backend)
+        // Create mock vehicle model (to be populated by backend later)
         const mockVehicleModel = new VehicleModel(
             input.vehicleModelId,
             "Unknown Model",
@@ -49,10 +49,10 @@ export class CreateBookingUseCase {
             new Date()
         );
 
-        // Create booking entity with CORRECT parameter order
-        const booking = new Booking(
-            "", // id - will be assigned by backend
-            "", // ✅ bookingCode - will be assigned by backend
+        // Construct Booking entity in the correct order
+    const booking = new Booking(
+            "", // id
+            "", // bookingCode
             input.baseRentalFee,
             input.depositAmount,
             input.rentalDays,
@@ -69,30 +69,33 @@ export class CreateBookingUseCase {
             input.totalRentalFee, // totalAmount
             0, // refundAmount
             "Pending", // bookingStatus
-            input.vehicleModelId, // ✅ vehicleModelId (REQUIRED)
-            input.renterId, // ✅ renterId (REQUIRED)
-            mockRenter, // ✅ renter (REQUIRED)
-            mockVehicleModel, // ✅ vehicleModel (REQUIRED)
-            undefined, // vehicleId (OPTIONAL)
-            undefined, // vehicle (OPTIONAL)
-            input.startDatetime, // startDatetime
-            input.endDatetime, // endDatetime
+            input.vehicleModelId,
+            input.renterId,
+            mockRenter, // renter
+            mockVehicleModel, // vehicleModel
+            undefined, // vehicleId
+            undefined, // vehicle
+            input.startDatetime,
+            input.endDatetime,
             undefined, // actualReturnDatetime
-            input.insurancePackageId, // ✅ insurancePackageId (OPTIONAL)
-            undefined, // insurancePackage (will be populated by backend)
+            input.insurancePackageId,
+            undefined, // insurancePackage
             undefined, // rentalContract
-            undefined, // rentalReceipt
-            input.handoverBranchId, // ✅ handoverBranchId (OPTIONAL but we provide it)
+            undefined, // rentalReceipts (plural!)
+            input.handoverBranchId,
             undefined, // handoverBranch
             undefined, // returnBranchId
             undefined, // returnBranch
+            undefined, // feedback
+            undefined, // insuranceClaims
+            undefined, // additionalFees
+            undefined, // chargingRecords
             new Date(), // createdAt
             null, // updatedAt
             null, // deletedAt
             false // isDeleted
         );
 
-        // Save via repository
         return await this.bookingRepository.create(booking);
     }
 }

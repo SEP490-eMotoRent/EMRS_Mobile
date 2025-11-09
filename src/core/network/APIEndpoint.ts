@@ -21,6 +21,8 @@ export const ApiEndpoints = {
   // Booking endpoints
   booking: {
     create: "/Booking/create",
+    createVNPay: "/Booking/vnpay",
+    vnpayIPN: "/Booking/vnpay/ipn",
     detail: (id: string) => `/Booking/${id}`,
     byRenter: (renterId: string) => `/Booking/renter/${renterId}`,
     byCurrentRenter: "/Booking/renter/get",

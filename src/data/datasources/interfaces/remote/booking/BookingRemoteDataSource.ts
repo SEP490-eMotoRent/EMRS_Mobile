@@ -1,4 +1,5 @@
-import { BookingResponse } from "../../../../models/booking/BookingResponseForRenter";
+import { BookingResponseForRenter } from "../../../../models/booking/BookingResponseForRenter";
+import { BookingWithoutWalletResponse } from "../../../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
@@ -11,7 +12,7 @@ export interface BookingRemoteDataSource {
   /**
    * Create a new booking
    */
-  create(request: CreateBookingRequest): Promise<BookingResponse>;
+  create(request: CreateBookingRequest): Promise<BookingResponseForRenter>;
 
   /**
    * Get booking by ID (returns staff response with full details)
@@ -22,14 +23,14 @@ export interface BookingRemoteDataSource {
    * Get bookings by renter ID
    * ✅ UPDATED: Returns BookingResponse[] (BookingListForRenterResponse[])
    */
-  getByRenter(renterId: string): Promise<BookingResponse[]>;
+  getByRenter(renterId: string): Promise<BookingResponseForRenter[]>;
 
   /**
    * Get current authenticated renter's bookings
    * ✅ UPDATED: Returns BookingResponse[] (BookingListForRenterResponse[])
    */
-  getCurrentRenterBookings(): Promise<BookingResponse[]>;
-
+  getCurrentRenterBookings(): Promise<BookingResponseForRenter[]>;
+  createVNPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse>;
   /**
    * Get paginated list of bookings with filters
    */

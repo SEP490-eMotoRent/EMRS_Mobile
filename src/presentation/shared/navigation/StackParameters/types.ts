@@ -92,6 +92,46 @@ export type BookingStackParamList = {
     serviceFee: string;
     total: string;
   };
+  // ✅ NEW: VNPay payment flow
+  VNPayWebView: {
+    vnpayUrl: string;
+    bookingId: string;
+    expiresAt: string; // ISO string for Date
+    vehicleName: string;
+    totalAmount: string;
+    // Pass-through params for next screens
+    vehicleId: string;
+    vehicleImageUrl?: string;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+    branchName: string;
+    insurancePlan: string;
+    securityDeposit: string;
+  };
+  
+  PaymentProcessing: {
+    bookingId: string;
+    vehicleName: string;
+    totalAmount: string;
+    vehicleId: string;
+    vehicleImageUrl?: string;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+    branchName: string;
+    insurancePlan: string;
+    securityDeposit: string;
+  };
+  
+  PaymentFailed: {
+    bookingId: string;
+    vehicleName: string;
+    errorMessage?: string;
+  };
+  
   DigitalContract: {
     vehicleId: string;
     vehicleName: string;

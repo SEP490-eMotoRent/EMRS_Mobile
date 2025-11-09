@@ -8,13 +8,11 @@ import { InsurancePackage } from "../../../domain/entities/insurance/InsurancePa
 import { Branch } from "../../../domain/entities/operations/Branch";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
 import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
-import { BookingRepository } from "../../../domain/repositories/booking/BookingRepository";
+import { BookingRepository, VNPayBookingResult } from "../../../domain/repositories/booking/BookingRepository";
 import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/booking/BookingRemoteDataSource";
-import {
-  BookingResponse,
-
-} from "../../models/booking/BookingResponse";
+import { BookingResponse } from "../../models/booking/BookingResponse";
 import { BookingResponseForRenter, InsurancePackageResponse, RenterDetailResponse, VehicleModelResponse } from "../../models/booking/BookingResponseForRenter";
+import { BookingWithoutWalletResponse } from "../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../models/booking/CreateBookingRequest";
 import { PaginatedBooking } from "../../models/booking/PaginatedBooking";
 import { PaginatedBookingResponse } from "../../models/booking/PaginatedBookingResponse";
@@ -33,7 +31,7 @@ export class BookingRepositoryImpl implements BookingRepository {
   constructor(private remote: BookingRemoteDataSource) {}
 
   // =========================================================================
-  // CREATE - Now handles simple BookingResponse
+  // CREATE
   // =========================================================================
   async create(booking: Booking): Promise<Booking> {
     const request: CreateBookingRequest = {
@@ -53,6 +51,38 @@ export class BookingRepositoryImpl implements BookingRepository {
 
     const response = await this.remote.create(request);
     return this.mapSimpleResponseToEntity(response);
+  }
+
+  // =========================================================================
+  // CREATE VNPAY - Returns minimal entity
+  // =========================================================================
+  async createVNPay(booking: Booking): Promise<VNPayBookingResult> {
+    const request: CreateBookingRequest = {
+      startDatetime: booking.startDatetime?.toISOString(),
+      endDatetime: booking.endDatetime?.toISOString(),
+      handoverBranchId: booking.handoverBranchId!,
+      baseRentalFee: booking.baseRentalFee,
+      depositAmount: booking.depositAmount,
+      rentalDays: booking.rentalDays,
+      rentalHours: booking.rentalHours,
+      rentingRate: booking.rentingRate,
+      vehicleModelId: booking.vehicleModelId,
+      averageRentalPrice: booking.averageRentalPrice,
+      insurancePackageId: booking.insurancePackageId,
+      totalRentalFee: booking.totalRentalFee,
+    };
+
+    const response = await this.remote.createVNPay(request);
+    
+    // ✅ Validate response has required fields
+    if (!response.id || !response.vnpayUrl) {
+        throw new Error("Invalid VNPay booking response from server");
+    }
+    
+    return {
+      booking: this.mapVNPayResponseToEntity(response),
+      vnpayUrl: response.vnpayUrl,
+    };
   }
 
   // =========================================================================
@@ -123,21 +153,14 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   // =========================================================================
-  // ✅ Map simple BookingResponse to Entity (from create/assign/update endpoints)
+  // ✅ VNPAY MAPPER - NO MOCK DATA
   // =========================================================================
-  private mapSimpleResponseToEntity(dto: BookingResponse): Booking {
-    console.log("🔄 Mapping simple booking response:", dto.id);
-
-    // Create mock objects for IDs only
-    const mockVehicleModel = this.createMockVehicleModel(dto.vehicleModelId);
-    const mockRenter = this.createMockRenter(dto.renterId);
-    const mockVehicle = dto.vehicleId
-      ? this.createMockVehicle(dto.vehicleId, dto.vehicleModelId)
-      : undefined;
+  private mapVNPayResponseToEntity(dto: BookingWithoutWalletResponse): Booking {
+    console.log("🔄 Mapping VNPay booking response (minimal):", dto.id);
 
     return new Booking(
       dto.id,
-      dto.bookingCode,
+      "", // bookingCode - Backend generates but doesn't include in response
       dto.baseRentalFee,
       dto.depositAmount,
       dto.rentalDays,
@@ -153,24 +176,28 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.totalRentalFee,
       dto.totalAmount,
       0, // refundAmount
-      dto.bookingStatus,
+      dto.bookingStatus, // "Pending"
       dto.vehicleModelId,
       dto.renterId,
-      mockRenter,
-      mockVehicleModel,
+      undefined, // renter - Not in response
+      undefined, // vehicleModel - Not in response
       dto.vehicleId,
-      mockVehicle,
+      undefined, // vehicle - Not in response
       dto.startDatetime ? new Date(dto.startDatetime) : undefined,
       dto.endDatetime ? new Date(dto.endDatetime) : undefined,
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
       undefined, // insurancePackageId
       undefined, // insurancePackage
       undefined, // rentalContract
-      undefined, // rentalReceipt
+      undefined, // rentalReceipts (collection)
       undefined, // handoverBranchId
       undefined, // handoverBranch
       undefined, // returnBranchId
       undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims (collection)
+      undefined, // additionalFees (collection)
+      undefined, // chargingRecords (collection)
       new Date(),
       null,
       null,
@@ -179,30 +206,10 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   // =========================================================================
-  // ✅ Map BookingListForRenterResponse to Entity (with nested objects)
+  // ✅ SIMPLE MAPPER - NO MOCK DATA
   // =========================================================================
-  private mapListResponseToEntity(dto: BookingResponseForRenter): Booking {
-    console.log("🔄 Mapping list booking response:", dto.id);
-
-    // Map VehicleModel
-    const vehicleModel = dto.vehicleModel
-      ? this.mapVehicleModelFromListResponse(dto.vehicleModel)
-      : this.createMockVehicleModel(dto.vehicleModelId);
-
-    // Map Renter
-    const renter = dto.renter
-      ? this.mapRenterFromListResponse(dto.renter)
-      : this.createMockRenter(dto.renterId);
-
-    // Map InsurancePackage
-    const insurancePackage = dto.insurancePackage
-      ? this.mapInsurancePackageFromResponse(dto.insurancePackage)
-      : undefined;
-
-    // Create mock vehicle if vehicleId exists
-    const vehicle = dto.vehicleId
-      ? this.createMockVehicle(dto.vehicleId, dto.vehicleModelId)
-      : undefined;
+  private mapSimpleResponseToEntity(dto: BookingResponse): Booking {
+    console.log("🔄 Mapping simple booking response:", dto.id);
 
     return new Booking(
       dto.id,
@@ -225,21 +232,25 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.bookingStatus,
       dto.vehicleModelId,
       dto.renterId,
-      renter,
-      vehicleModel,
+      undefined, // renter
+      undefined, // vehicleModel
       dto.vehicleId,
-      vehicle,
+      undefined, // vehicle
       dto.startDatetime ? new Date(dto.startDatetime) : undefined,
       dto.endDatetime ? new Date(dto.endDatetime) : undefined,
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-      insurancePackage?.id,
-      insurancePackage,
+      undefined, // insurancePackageId
+      undefined, // insurancePackage
       undefined, // rentalContract
-      undefined, // rentalReceipt
+      undefined, // rentalReceipts
       undefined, // handoverBranchId
       undefined, // handoverBranch
       undefined, // returnBranchId
       undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims
+      undefined, // additionalFees
+      undefined, // chargingRecords
       new Date(),
       null,
       null,
@@ -248,11 +259,74 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   // =========================================================================
-  // Mappers for BookingListForRenterResponse nested objects
+  // ✅ LIST MAPPER - WITH NESTED OBJECTS
   // =========================================================================
-  private mapVehicleModelFromListResponse(
-    dto: VehicleModelResponse
-  ): VehicleModel {
+  private mapListResponseToEntity(dto: BookingResponseForRenter): Booking {
+    console.log("🔄 Mapping list booking response:", dto.id);
+
+    const vehicleModel = dto.vehicleModel
+      ? this.mapVehicleModelFromListResponse(dto.vehicleModel)
+      : undefined;
+
+    const renter = dto.renter
+      ? this.mapRenterFromListResponse(dto.renter)
+      : undefined;
+
+    const insurancePackage = dto.insurancePackage
+      ? this.mapInsurancePackageFromResponse(dto.insurancePackage)
+      : undefined;
+
+    return new Booking(
+      dto.id,
+      dto.bookingCode,
+      dto.baseRentalFee,
+      dto.depositAmount,
+      dto.rentalDays,
+      dto.rentalHours,
+      dto.rentingRate,
+      dto.lateReturnFee || 0,
+      dto.averageRentalPrice,
+      0,
+      0,
+      0,
+      0,
+      0,
+      dto.totalRentalFee,
+      dto.totalAmount,
+      0,
+      dto.bookingStatus,
+      dto.vehicleModelId,
+      dto.renterId,
+      renter,
+      vehicleModel,
+      dto.vehicleId,
+      undefined, // vehicle - Not in list response
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      insurancePackage?.id,
+      insurancePackage,
+      undefined, // rentalContract
+      undefined, // rentalReceipts
+      undefined, // handoverBranchId
+      undefined, // handoverBranch
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims
+      undefined, // additionalFees
+      undefined, // chargingRecords
+      new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  // =========================================================================
+  // NESTED OBJECT MAPPERS
+  // =========================================================================
+  private mapVehicleModelFromListResponse(dto: VehicleModelResponse): VehicleModel {
     return new VehicleModel(
       dto.id,
       dto.modelName,
@@ -298,9 +372,7 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapInsurancePackageFromResponse(
-    dto: InsurancePackageResponse
-  ): InsurancePackage {
+  private mapInsurancePackageFromResponse(dto: InsurancePackageResponse): InsurancePackage {
     return new InsurancePackage(
       dto.id,
       dto.packageName,
@@ -320,7 +392,7 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   // =========================================================================
-  // MAP STAFF RESPONSE (BookingForStaffResponse - nested)
+  // STAFF RESPONSE MAPPER - FULL DETAILS
   // =========================================================================
   private mapStaffResponseToEntity(dto: BookingForStaffResponse): Booking {
     const renter = this.mapRenterFromStaffResponse(dto.renter);
@@ -371,11 +443,15 @@ export class BookingRepositoryImpl implements BookingRepository {
       undefined,
       undefined,
       rentalContract,
-      rentalReceipt,
+      rentalReceipt ? [rentalReceipt] : undefined, // ✅ Convert to array
       undefined,
       undefined,
       undefined,
       undefined,
+      undefined, // feedback
+      undefined, // insuranceClaims
+      undefined, // additionalFees
+      undefined, // chargingRecords
       new Date(),
       null,
       null,
@@ -393,9 +469,7 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapVehicleModelFromStaffResponse(
-    dto: VehicleModelBookingResponse
-  ): VehicleModel {
+  private mapVehicleModelFromStaffResponse(dto: VehicleModelBookingResponse): VehicleModel {
     return new VehicleModel(
       dto.id,
       dto.modelName,
@@ -413,9 +487,7 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapRentalContractFromStaffResponse(
-    dto: RentalContractBookingResponse
-  ): RentalContract {
+  private mapRentalContractFromStaffResponse(dto: RentalContractBookingResponse): RentalContract {
     return new RentalContract(
       dto.id,
       dto.contractNumber,
@@ -428,9 +500,7 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapRentalReceiptFromStaffResponse(
-    dto: RentalReceiptBookingResponse
-  ): RentalReceipt {
+  private mapRentalReceiptFromStaffResponse(dto: RentalReceiptBookingResponse): RentalReceipt {
     return new RentalReceipt(
       dto.id,
       dto.startOdometerKm,
@@ -484,8 +554,6 @@ export class BookingRepositoryImpl implements BookingRepository {
       new Date()
     );
 
-    const mockBranch = this.createMockBranch();
-
     return new Vehicle(
       dto.id,
       dto.licensePlate,
@@ -496,7 +564,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       "",
       "unknown",
       dto.vehicleModel?.id,
-      mockBranch,
+      undefined, // branch - Not needed
       vehicleModel,
       [],
       [],
@@ -510,71 +578,7 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  // =========================================================================
-  // MOCK HELPERS
-  // =========================================================================
-  private createMockRenter(id: string): Renter {
-    return new Renter(
-      id,
-      "unknown@email.com",
-      "",
-      "",
-      id,
-      "mock-membership",
-      false,
-      ""
-    );
-  }
-
-  private createMockVehicleModel(id: string): VehicleModel {
-    return new VehicleModel(
-      id,
-      "Unknown Model",
-      "Unknown",
-      0,
-      0,
-      0,
-      "",
-      "",
-      undefined,
-      new Date()
-    );
-  }
-
-  private createMockVehicle(
-    vehicleId: string,
-    vehicleModelId: string
-  ): Vehicle {
-    const mockBranch = this.createMockBranch();
-    const mockVehicleModel = this.createMockVehicleModel(vehicleModelId);
-
-    return new Vehicle(
-      vehicleId,
-      "UNKNOWN",
-      "Unknown",
-      0,
-      100,
-      "Available",
-      "",
-      "unknown",
-      vehicleModelId,
-      mockBranch,
-      mockVehicleModel,
-      [],
-      [],
-      [],
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      new Date()
-    );
-  }
-
-  private mapRentalPricingFromStaffResponse(
-    dto: RentalPricingBookingResponse
-  ): RentalPricing {
+  private mapRentalPricingFromStaffResponse(dto: RentalPricingBookingResponse): RentalPricing {
     return new RentalPricing(
       dto.id,
       dto.rentalPrice,
@@ -585,13 +589,5 @@ export class BookingRepositoryImpl implements BookingRepository {
       null,
       false
     );
-  }
-
-  private createMockBranch(): Branch {
-    return {
-      id: "mock",
-      branchName: "Unknown",
-      createdAt: new Date(),
-    } as Branch;
   }
 }
