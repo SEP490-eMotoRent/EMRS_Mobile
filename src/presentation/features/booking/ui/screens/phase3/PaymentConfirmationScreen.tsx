@@ -69,24 +69,44 @@ export const PaymentConfirmationScreen: React.FC = () => {
     };
 
     const parseDateString = (dateStr: string): Date => {
-        const months: { [key: string]: number } = {
-            Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-            Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+        // Vietnamese month names
+        const monthNames: { [key: string]: number } = {
+            "Tháng 1": 0, "Tháng 2": 1, "Tháng 3": 2, "Tháng 4": 3,
+            "Tháng 5": 4, "Tháng 6": 5, "Tháng 7": 6, "Tháng 8": 7,
+            "Tháng 9": 8, "Tháng 10": 9, "Tháng 11": 10, "Tháng 12": 11
         };
         
-        const match = dateStr.match(/(\w+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM)/);
-        if (!match) return new Date();
+        // Match Vietnamese format: "Tháng 11 09 10:00 AM"
+        const match = dateStr.match(/(Tháng \d+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM)/);
         
-        const [, month, day, hours, minutes, period] = match;
+        if (!match) {
+            console.error("❌ Failed to parse date:", dateStr);
+            throw new Error(`Invalid date format: ${dateStr}`);
+        }
+        
+        const [, monthStr, day, hours, minutes, period] = match;
+        
+        const monthIndex = monthNames[monthStr];
+        if (monthIndex === undefined) {
+            console.error("❌ Unknown month:", monthStr);
+            throw new Error(`Unknown month: ${monthStr}`);
+        }
+        
         let hour = parseInt(hours);
-        
         if (period === 'PM' && hour !== 12) hour += 12;
         if (period === 'AM' && hour === 12) hour = 0;
         
         const year = new Date().getFullYear();
-        return new Date(year, months[month], parseInt(day), hour, parseInt(minutes));
+        const date = new Date(year, monthIndex, parseInt(day), hour, parseInt(minutes), 0, 0);
+        
+        console.log("✅ Parsed date:", {
+            input: dateStr,
+            output: date.toISOString(),
+            year, month: monthIndex, day, hour, minutes
+        });
+        
+        return date;
     };
-
     const parsePrice = (price: string): number => {
         return parseInt(price.replace(/[^0-9]/g, "")) || 0;
     };
