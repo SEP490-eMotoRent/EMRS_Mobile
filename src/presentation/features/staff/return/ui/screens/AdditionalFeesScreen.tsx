@@ -56,12 +56,11 @@ export const AdditionalFeesScreen: React.FC = () => {
   ]);
   const [openTypeIdx, setOpenTypeIdx] = useState<number | null>(null);
   const feeTypeOptions = [
-    "Cleaning",
-    "Late Return",
-    "Cross-branch Return",
-    "Damage",
-    "Compensation",
-    "Manual Adjustment",
+    "CLEANING",
+    "LATE_RETURN",
+    "CROSS_BRANCH",
+    "DAMAGE",
+    "EXCESS_KM",
   ];
 
   const formatCurrency = (amount: number) => {
@@ -136,8 +135,8 @@ export const AdditionalFeesScreen: React.FC = () => {
           .filter((f) => (f.feeType?.trim() || "") !== "" && f.amount > 0)
           .map((f) => ({
             feeType: f.feeType,
-            amount: f.amount,
             description: f.description || "",
+            amount: f.amount,
           })),
       });
 
