@@ -1,5 +1,11 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -8,27 +14,37 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StepProgressBar } from "../atoms";
+import { SummaryResponse } from "../../../../../../data/models/rentalReturn/SummaryResponse";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import { RentalReturnSummaryUseCase } from "../../../../../../domain/usecases/rentalReturn/SummaryReceiptUseCase";
+import sl from "../../../../../../core/di/InjectionContainer";
 
- type ReturnReportNavigationProp = StackNavigationProp<
+type ReturnReportNavigationProp = StackNavigationProp<
   StaffStackParamList,
   "ReturnReport"
- >;
+>;
 
- type ReturnReportRouteProp = RouteProp<StaffStackParamList, "ReturnReport">;
+type ReturnReportRouteProp = RouteProp<StaffStackParamList, "ReturnReport">;
 
- export const ReturnReportScreen: React.FC = () => {
+export const ReturnReportScreen: React.FC = () => {
   const navigation = useNavigation<ReturnReportNavigationProp>();
   const route = useRoute<ReturnReportRouteProp>();
   const { bookingId, rentalReceiptId, settlement } = route.params;
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const formatCurrency = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " VND";
+  const formatCurrency = (n: number) =>
+    new Intl.NumberFormat("vi-VN").format(n) + " VND";
 
-  const distanceFee = settlement.feesBreakdown.excessKmFee || 0;
-  const chargingFee = settlement.totalChargingFee || 0;
-  const damageFee = settlement.feesBreakdown.damageFee || 0;
-  const lateReturnFee = settlement.feesBreakdown.lateReturnFee || 0;
-  const cleaningFee = settlement.feesBreakdown.cleaningFee || 0;
+  // const distanceFee = settlement.feesBreakdown.excessKmFee || 0;
+  // const chargingFee = settlement.totalChargingFee || 0;
+  // const damageFee = settlement.feesBreakdown.damageFee || 0;
+  // const lateReturnFee = settlement.feesBreakdown.lateReturnFee || 0;
+  // const cleaningFee = settlement.feesBreakdown.cleaningFee || 0;
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [bookingId]);
 
   const handleRefresh = async () => {
     if (isRefreshing) return;
@@ -36,6 +52,19 @@ import { StepProgressBar } from "../atoms";
     // TODO: call API to refresh status if available
     navigation.navigate("Rental");
     setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  const fetchSummary = async () => {
+    try {
+      const getSummaryUseCase = new RentalReturnSummaryUseCase(
+        sl.get("RentalReturnRepository")
+      );
+      const summaryResponse = await getSummaryUseCase.execute(bookingId);
+      const summaryData: SummaryResponse = unwrapResponse(summaryResponse);
+      setSummary(summaryData);
+    } catch (error) {
+      console.error("Error fetching summary:", error);
+    }
   };
 
   return (
@@ -65,27 +94,33 @@ import { StepProgressBar } from "../atoms";
         {/* Report Summary */}
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Report Summary</Text>
-          <View style={styles.summaryRow}> 
+          <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Vehicle</Text>
-            <Text style={styles.summaryValueRight}>VinFast Evo200 (59X1-12345)</Text>
+            <Text style={styles.summaryValueRight}>
+              VinFast Evo200 (59X1-12345)
+            </Text>
           </View>
-          <View style={styles.summaryRow}> 
+          <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Return Time</Text>
-            <Text style={styles.summaryValueRight}>{new Date().toLocaleTimeString("vi-VN")}</Text>
+            <Text style={styles.summaryValueRight}>
+              {new Date().toLocaleTimeString("vi-VN")}
+            </Text>
           </View>
-          <View style={styles.summaryRow}> 
+          <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Odometer</Text>
             <Text style={styles.summaryValueRight}>—</Text>
           </View>
-          <View style={styles.summaryRow}> 
+          <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Battery</Text>
             <Text style={styles.summaryValueRight}>—</Text>
           </View>
-          <View style={styles.summaryRow}> 
+          <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Condition</Text>
-            <Text style={[styles.summaryValueRight, { color: "#F59E0B" }]}>Minor damage detected</Text>
+            <Text style={[styles.summaryValueRight, { color: "#F59E0B" }]}>
+              Minor damage detected
+            </Text>
           </View>
-          <View style={styles.summaryRow}> 
+          <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Photos</Text>
             <Text style={styles.summaryValueRight}>4 angles captured</Text>
           </View>
@@ -94,64 +129,139 @@ import { StepProgressBar } from "../atoms";
         {/* Financial Summary */}
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Financial Summary</Text>
-          <View style={styles.totalLine}>
-            <Text style={styles.totalTitle}>Total Additional Fees</Text>
-            <Text style={styles.totalValue}>{formatCurrency((settlement.totalAdditionalFees || 0) + chargingFee)}</Text>
+          <View style={styles.feeRow}>
+            <Text style={styles.feeLabel}>Phí thuê xe</Text>
+            <Text style={styles.feeAmount}>
+              {formatCurrency(summary?.baseRentalFee || 0)}
+            </Text>
           </View>
+          {summary?.feesBreakdown.excessKmFee !== 0 && (
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Phí quãng đường</Text>
+              <Text style={styles.feeAmount}>
+                {formatCurrency(summary?.feesBreakdown.excessKmFee || 0)}
+              </Text>
+            </View>
+          )}
+          {summary?.totalChargingFee !== 0 && (
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Phí sạc pin</Text>
+              <Text style={styles.feeAmount}>
+                {formatCurrency(summary?.totalChargingFee || 0)}
+              </Text>
+            </View>
+          )}
+          {summary?.feesBreakdown.damageFee !== 0 && (
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Phí hư hỏng</Text>
+              <Text style={styles.feeAmount}>
+                {formatCurrency(summary?.feesBreakdown.damageFee || 0)}
+              </Text>
+            </View>
+          )}
+          {summary?.feesBreakdown.cleaningFee !== 0 && (
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Phí vệ sinh</Text>
+              <Text style={styles.feeAmount}>
+                {formatCurrency(summary?.feesBreakdown.cleaningFee || 0)}
+              </Text>
+            </View>
+          )}
+          {summary?.feesBreakdown.crossBranchFee !== 0 && (
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Phí chuyển chi nhánh</Text>
+              <Text style={styles.feeAmount}>
+                {formatCurrency(summary?.feesBreakdown.crossBranchFee || 0)}
+              </Text>
+            </View>
+          )}
+          {summary?.feesBreakdown.excessKmFee !== 0 && (
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Phí quá quãng đường</Text>
+              <Text style={styles.feeAmount}>
+                {formatCurrency(summary?.feesBreakdown.excessKmFee || 0)}
+              </Text>
+            </View>
+          )}
+          {summary?.feesBreakdown.lateReturnFee !== 0 && (
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>Trả muộn</Text>
+              <Text style={styles.feeAmount}>
+                {formatCurrency(summary?.feesBreakdown.lateReturnFee || 0)}
+              </Text>
+            </View>
+          )}
 
-          <View style={styles.feeRow}> 
-            <Text style={styles.feeLabel}>Distance Fee</Text>
-            <Text style={styles.feeAmount}>{formatCurrency(distanceFee)}</Text>
+          <View style={styles.divider} />
+          <View style={styles.feeRow}>
+            <Text style={styles.feeLabel}>Tổng phụ phí</Text>
+            <Text style={styles.feeAmount}>
+              {formatCurrency(summary?.totalAmount || 0)}
+            </Text>
           </View>
-          <View style={styles.feeRow}> 
-            <Text style={styles.feeLabel}>Battery Fee</Text>
-            <Text style={styles.feeAmount}>{formatCurrency(chargingFee)}</Text>
+          <View style={styles.feeRow}>
+            <Text style={styles.feeLabel}>Tiền cọc</Text>
+            <Text style={styles.feeAmount}>
+              {formatCurrency(summary?.depositAmount || 0)}
+            </Text>
           </View>
-          <View style={styles.feeRow}> 
-            <Text style={styles.feeLabel}>Damage Fee</Text>
-            <Text style={styles.feeAmount}>{formatCurrency(damageFee)}</Text>
-          </View>
-          <View style={styles.feeRow}> 
-            <Text style={styles.feeLabel}>Late Return</Text>
-            <Text style={styles.feeAmount}>{formatCurrency(lateReturnFee)}</Text>
-          </View>
-          <View style={styles.feeRow}> 
-            <Text style={styles.feeLabel}>Cleaning</Text>
-            <Text style={styles.feeAmount}>{formatCurrency(cleaningFee)}</Text>
-          </View>
+          <View style={styles.divider} />
 
-          <View style={styles.depositRow}> 
-            <Text style={styles.depositLabel}>Deposit</Text>
-            <Text style={styles.depositValue}>{formatCurrency(settlement.depositAmount || 0)}</Text>
-          </View>
+          <View style={styles.refundRow}>
+            <Text style={styles.refundLabel}>
+              {(summary?.refundAmount || 0) >= 0
+                ? "Số tiền hoàn lại"
+                : "Số tiền cần thanh toán thêm"}
+            </Text>
 
-          <View style={styles.refundRow}> 
-            <Text style={styles.refundLabel}>Refund Amount</Text>
-            <Text style={[styles.refundValue, { color: (settlement.refundAmount || 0) >= 0 ? "#4CAF50" : "#FF6B35" }]}>
-              {formatCurrency(settlement.refundAmount || 0)}
+            <Text
+              style={[
+                styles.refundValue,
+                {
+                  color:
+                    (summary?.refundAmount || 0) >= 0 ? "#4CAF50" : "#FF6B35",
+                },
+              ]}
+            >
+              {formatCurrency(Math.abs(summary?.refundAmount || 0))}
             </Text>
           </View>
         </View>
 
         {/* Hint box */}
         <View style={styles.hintCard}>
-          <Text style={styles.hintText}>If customer doesn't respond in 15 mins, you can force complete</Text>
+          <Text style={styles.hintText}>
+            If customer doesn't respond in 15 mins, you can force complete
+          </Text>
         </View>
 
         {/* Actions */}
-        <TouchableOpacity style={styles.refreshBtn} onPress={handleRefresh} disabled={isRefreshing}>
+        <TouchableOpacity
+          style={styles.refreshBtn}
+          onPress={handleRefresh}
+          disabled={isRefreshing}
+        >
           <AntDesign name="reload" size={16} color="#C9B6FF" />
-          <Text style={styles.refreshText}>{isRefreshing ? "Refreshing..." : "Refresh Status"}</Text>
+          <Text style={styles.refreshText}>
+            {isRefreshing ? "Refreshing..." : "Refresh Status"}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.waitingBtn} disabled>
           <Text style={styles.waitingText}>Waiting for Customer...</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.homeBtn}
+          onPress={() => navigation.navigate("Rental")}
+        >
+          <AntDesign name="home" size={16} color="#000" />
+          <Text style={styles.homeText}>Back to Home</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
- };
+};
 
- const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -252,14 +362,16 @@ import { StepProgressBar } from "../atoms";
   },
   depositLabel: { color: colors.text.secondary, fontSize: 12 },
   depositValue: { color: colors.text.primary, fontSize: 12 },
+  divider: {
+    height: 1,
+    backgroundColor: "#dedede",
+    marginVertical: 4,
+    marginBottom: 8,
+  },
   refundRow: {
     marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#444444",
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
   },
   refundLabel: { color: colors.text.primary, fontWeight: "700" },
   refundValue: { fontWeight: "800", fontSize: 18 },
@@ -296,4 +408,16 @@ import { StepProgressBar } from "../atoms";
     alignItems: "center",
   },
   waitingText: { color: colors.text.secondary, fontWeight: "600" },
- });
+  homeBtn: {
+    backgroundColor: "#C9B6FF",
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginTop: 16,
+    marginHorizontal: 16,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  homeText: { color: "#000", fontWeight: "700" },
+});

@@ -17,7 +17,6 @@ import { SectionHeader } from "../molecules/SectionHeader";
 import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
 import { InfoItem } from "../../../../../common/components/molecules/InfoItem";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -36,6 +35,9 @@ import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalR
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
 import { GetReceiptDetailsUseCase } from "../../../../../../domain/usecases/receipt/GetReceiptDetails";
 import { useFocusEffect } from "@react-navigation/native";
+import { RentalReturnSummaryUseCase } from "../../../../../../domain/usecases/rentalReturn/SummaryReceiptUseCase";
+import { SummaryResponse } from "../../../../../../data/models/rentalReturn/SummaryResponse";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -65,7 +67,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
   // useEffect(() => {
   //   fetchBooking();
   //   fetchVehicleModels();
@@ -77,6 +79,7 @@ export const BookingDetailsScreen: React.FC = () => {
       fetchBooking();
       fetchVehicleModels();
       fetchRentalReceipt();
+      fetchSummary();
     }, [])
   );
 
@@ -108,15 +111,32 @@ export const BookingDetailsScreen: React.FC = () => {
       return null;
     }
   };
+
+  const fetchSummary = async () => {
+    try {
+      const getSummaryUseCase = new RentalReturnSummaryUseCase(
+        sl.get("RentalReturnRepository")
+      );
+      const summaryResponse = await getSummaryUseCase.execute(bookingId);
+      const summaryData: SummaryResponse = unwrapResponse(summaryResponse);
+      setSummary(summaryData);
+    } catch (error) {
+      console.error("Error fetching summary:", error);
+    }
+  };
+
   const generateConstract = async () => {
     try {
       setIsLoading(true);
       const generateContractUseCase = new GenerateContractUseCase(
         sl.get("ReceiptRepository")
       );
-      const response = await generateContractUseCase.execute(bookingId, rentalReceipt?.id);
+      const response = await generateContractUseCase.execute(
+        bookingId,
+        rentalReceipt?.id
+      );
       // if (response.success) {
-        navigation.navigate("AwaitingApproval");
+      navigation.navigate("AwaitingApproval");
       // }
     } catch (error) {
       console.log("error", error);
@@ -194,7 +214,8 @@ export const BookingDetailsScreen: React.FC = () => {
     refundAmount: -1130000,
   } as const;
 
-  const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " VND";
+  const formatVnd = (n: number) =>
+    new Intl.NumberFormat("vi-VN").format(n) + " VND";
 
   const openReturnReport = () => {
     if (!booking) return;
@@ -369,35 +390,112 @@ export const BookingDetailsScreen: React.FC = () => {
           <View style={styles.summaryCard}>
             <View style={styles.summaryHeaderRow}>
               <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
-              <View style={styles.summaryPill}><Text style={styles.summaryPillText}>Receipt</Text></View>
+              <View style={styles.summaryPill}>
+                <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
+              </View>
             </View>
 
-            <View style={styles.summaryRow}> 
-              <Text style={styles.summaryKey}>Base Rental Fee</Text>
-              <Text style={styles.summaryVal}>{formatVnd(returnSummary.baseRentalFee)}</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryKey}>Phí thuê xe</Text>
+              <Text style={styles.summaryVal}>
+                {formatVnd(summary?.baseRentalFee || 0)}
+              </Text>
             </View>
-            <View style={styles.summaryRow}> 
-              <Text style={styles.summaryKey}>Charging Fee</Text>
-              <Text style={styles.summaryVal}>{formatVnd(returnSummary.totalChargingFee)}</Text>
+            {summary?.feesBreakdown?.excessKmFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí quãng đường</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
+                </Text>
+              </View>
+            )}
+            {summary?.totalChargingFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí sạc pin</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.totalChargingFee || 0)}
+                </Text>
+              </View>
+            )}
+            {summary?.feesBreakdown?.damageFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí hư hỏng</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.damageFee || 0)}
+                </Text>
+              </View>
+            )}
+            {summary?.feesBreakdown?.cleaningFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí vệ sinh</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
+                </Text>
+              </View>
+            )}
+            {summary?.feesBreakdown?.crossBranchFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
+                </Text>
+              </View>
+            )}
+            {summary?.feesBreakdown?.excessKmFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
+                </Text>
+              </View>
+            )}
+            {summary?.feesBreakdown?.lateReturnFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Trả muộn</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.divider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryKey}>Tổng phụ phí</Text>
+              <Text style={styles.summaryVal}>
+                {formatVnd(summary?.totalAmount || 0)}
+              </Text>
             </View>
-            <View style={styles.summaryRow}> 
-              <Text style={styles.summaryKey}>Additional Fees</Text>
-              <Text style={styles.summaryVal}>{formatVnd(returnSummary.totalAdditionalFees)}</Text>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryKey}>Tiền cọc</Text>
+              <Text style={styles.summaryVal}>
+                {formatVnd(summary?.depositAmount || 0)}
+              </Text>
             </View>
 
             <View style={styles.divider} />
-
-            <View style={styles.summaryRow}> 
-              <Text style={styles.summaryKey}>Deposit Held</Text>
-              <Text style={styles.summaryVal}>{formatVnd(returnSummary.depositAmount)}</Text>
-            </View>
-
-            <View style={[styles.summaryRow, styles.summaryTotalRow]}> 
-              <Text style={styles.summaryTotalLabel}>Refund Amount</Text>
-              <Text style={[styles.summaryTotalValue, { color: returnSummary.refundAmount >= 0 ? '#22C55E' : '#F97316' }]}>
-                {formatVnd(returnSummary.refundAmount)}
+            <View style={[styles.summaryRow]}>
+              <Text style={styles.summaryTotalLabel}>
+                {summary?.refundAmount >= 0
+                  ? "Số tiền hoàn lại"
+                  : "Số tiền cần thanh toán thêm"}
+              </Text>
+              <Text
+                style={[
+                  styles.summaryTotalValue,
+                  {
+                    color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
+                  },
+                ]}
+              >
+                {formatVnd(Math.abs(summary?.refundAmount || 0))}
               </Text>
             </View>
+            {summary?.refundAmount < 0 && (
+              <Text style={styles.paymentNote}>
+                Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
+              </Text>
+            )}
           </View>
         </View>
 
@@ -418,7 +516,9 @@ export const BookingDetailsScreen: React.FC = () => {
                 onPress={openReturnReport}
               >
                 <AntDesign name="file-text" size={18} color="#000" />
-                <Text style={styles.returnReportBtnText}>Xem biên bản trả xe</Text>
+                <Text style={styles.returnReportBtnText}>
+                  Xem biên bản trả xe
+                </Text>
               </TouchableOpacity>
             </InfoCard>
           </View>
@@ -899,7 +999,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     textAlign: "right",
   },
-  divider: { height: 1, backgroundColor: "#2A2A2A", marginVertical: 4 },
+  divider: {
+    height: 1,
+    backgroundColor: "#dedede",
+    marginVertical: 4,
+    marginBottom: 8,
+  },
   bullet: {
     fontSize: 14,
     color: colors.text.secondary,
@@ -1084,7 +1189,12 @@ const styles = StyleSheet.create({
   },
   summaryKey: { color: colors.text.secondary, fontSize: 12 },
   summaryVal: { color: colors.text.primary, fontSize: 12, fontWeight: "600" },
-  summaryTotalRow: { borderTopWidth: 1, borderTopColor: "#2A2A2A", paddingTop: 10, marginTop: 6 },
+  summaryTotalRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#2A2A2A",
+    paddingTop: 10,
+    marginTop: 6,
+  },
   summaryTotalLabel: { color: colors.text.primary, fontWeight: "700" },
   summaryTotalValue: { fontWeight: "800" },
   modalContainer: {
@@ -1277,4 +1387,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   signContractBtnText: { color: "#fff", fontWeight: "700" },
+  paymentNote: {
+    color: "#F97316",
+    fontSize: 12,
+    textAlign: "left",
+    marginTop: 8,
+    marginHorizontal: 16,
+  },
 });

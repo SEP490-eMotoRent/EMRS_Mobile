@@ -62,8 +62,12 @@ export class RentalReturnRemoteDataSourceImpl
         JSON.stringify(request.returnImageUrls)
       );
       formData.append("ChecklistImage", request.checkListImage);
-      formData.append("AdditionalFees", request.additionalFees.toString());
+      formData.append("AdditionalFees", JSON.stringify(request.additionalFees));
 
+      console.log("=== FormData Content ===");
+      (formData as any)._parts.forEach(([key, value]: [string, any]) => {
+        console.log(`${key}:`, value);
+      });
       const response = await this.axiosClient.post<
         ApiResponse<CreateReceiptResponse>
       >(ApiEndpoints.rentalReturn.createReceipt, formData);
@@ -101,13 +105,12 @@ export class RentalReturnRemoteDataSourceImpl
     request: FinalizeReturnRequest
   ): Promise<ApiResponse<FinalizeReturnResponse>> {
     try {
-      const response = await this.axiosClient.put<ApiResponse<FinalizeReturnResponse>>(
-        ApiEndpoints.rentalReturn.finalizeReturn,
-        {
-          bookingId: request.bookingId,
-          renterConfirmed: request.renterConfirmed,
-        }
-      );
+      const response = await this.axiosClient.put<
+        ApiResponse<FinalizeReturnResponse>
+      >(ApiEndpoints.rentalReturn.finalizeReturn, {
+        bookingId: request.bookingId,
+        renterConfirmed: request.renterConfirmed,
+      });
 
       return {
         success: true,

@@ -299,12 +299,12 @@ export const ReturnInspectionScreen: React.FC = () => {
               <Text style={styles.continueButtonText}>Tiếp tục</Text>
             )}
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.continueButton}
           onPress={() => navigation.navigate("AIAnalysis", { bookingId, analyzeReturnData: null })}
         >
           <Text style={styles.continueButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
       {/* Loading Modal while scanning */}
       <Modal transparent visible={loading} animationType="fade">

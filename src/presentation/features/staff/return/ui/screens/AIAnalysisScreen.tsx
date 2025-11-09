@@ -100,7 +100,7 @@ export const AIAnalysisScreen: React.FC = () => {
                   ? "Return Vehicle matched with handover photos"
                   : "Return Vehicle does not match with handover photos")}
             </Text>
-            {analyzeReturnData?.verificationResult?.confidence && (
+            {/* {analyzeReturnData?.verificationResult?.confidence && (
               <View style={styles.confidenceBar}>
                 <Text style={styles.confidenceLabel}>Confidence:</Text>
                 <Text style={styles.confidenceValue}>
@@ -110,7 +110,7 @@ export const AIAnalysisScreen: React.FC = () => {
                   %
                 </Text>
               </View>
-            )}
+            )} */}
           </View>
         </View>
 
