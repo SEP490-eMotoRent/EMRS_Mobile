@@ -3,6 +3,7 @@ import { BookingWithoutWalletResponse } from "../../../../models/booking/Booking
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
+import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 
 /**
  * Remote data source interface for booking operations
@@ -41,7 +42,7 @@ export interface BookingRemoteDataSource {
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBookingResponse>;
-
+  confirmVNPayPayment(request: VNPayCallback): Promise<void>;
   /**
    * Assign a vehicle to a booking
    */

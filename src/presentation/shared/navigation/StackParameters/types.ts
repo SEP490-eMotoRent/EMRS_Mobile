@@ -94,21 +94,30 @@ export type BookingStackParamList = {
   };
   // ✅ NEW: VNPay payment flow
   VNPayWebView: {
-    vnpayUrl: string;
-    bookingId: string;
-    expiresAt: string; // ISO string for Date
-    vehicleName: string;
-    totalAmount: string;
-    // Pass-through params for next screens
-    vehicleId: string;
-    vehicleImageUrl?: string;
-    startDate: string;
-    endDate: string;
-    duration: string;
-    rentalDays: number;
-    branchName: string;
-    insurancePlan: string;
-    securityDeposit: string;
+      vnpayUrl: string;
+      bookingId: string;
+      expiresAt: string;
+      vehicleName: string;
+      totalAmount: string;
+      // Pass-through data for contract screen after payment
+      vehicleId: string;
+      vehicleImageUrl: string;
+      startDate: string;
+      endDate: string;
+      duration: string;
+      rentalDays: number;
+      branchName: string;
+      insurancePlan: string;
+      securityDeposit: string;
+  };
+  VNPayCallback: {
+    vnp_ResponseCode?: string;
+    vnp_TxnRef?: string;
+    vnp_Amount?: string;
+    vnp_OrderInfo?: string;
+    vnp_TransactionNo?: string;
+    vnp_BankCode?: string;
+    vnp_SecureHash?: string;
   };
   
   PaymentProcessing: {
@@ -213,6 +222,11 @@ export type ProfileStackParamList = {
     documentType: 'citizen' | 'license';
     side: 'front' | 'back';
     onPhotoTaken: (uri: string, side: 'front' | 'back') => void;
+  };
+  //Coi những claims bảo hiểm của mình:
+  InsuranceClaims: undefined;
+  InsuranceClaimDetail: {
+    claimId: string;
   };
   Auth: NavigatorScreenParams<AuthStackParamList>;
 };

@@ -39,9 +39,9 @@ import { BookingRemoteDataSourceImpl } from '../../data/datasources/implementati
 import { BookingRepositoryImpl } from '../../data/repositories/booking/BookingRepositoryImpl';
 import { BookingRepository } from '../../domain/repositories/booking/BookingRepository';
 import { CreateBookingUseCase } from '../../domain/usecases/booking/CreateBookingUseCase';
-import { GetCurrentRenterBookingsUseCase } from '../../domain/usecases/booking/GetCurrentRenterBookingsUseCase';
 import { CreateVNPayBookingUseCase } from "../../domain/usecases/booking/CreateVNPayBookingUseCase";
-
+import { GetBookingByIdUseCase } from '../../domain/usecases/booking/GetBookingByIdUseCase';
+import { GetCurrentRenterBookingsUseCase } from '../../domain/usecases/booking/GetCurrentRenterBookingsUseCase';
 // Receipt imports
 import { ReceiptRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/receipt/ReceiptRemoteDataSourceImpl';
 import { ReceiptRepositoryImpl } from '../../data/repositories/receipt/ReceiptRepositoryImpl';
@@ -88,6 +88,12 @@ import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn
 import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
 import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 import { AxiosClient } from "../network/AxiosClient";
+import { ConfirmVNPayPaymentUseCase } from "../../domain/usecases/booking/ConfirmVNPayPaymentUseCase";
+import { WalletRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/wallet/WalletRemoteDataSourceImpl";
+import { WalletRepositoryImpl } from "../../data/repositories/wallet/WalletRepositoryImpl";
+import { WalletRepository } from "../../domain/repositories/wallet/WalletRepository";
+import { CreateWalletUseCase } from "../../domain/usecases/wallet/CreateWalletUseCase";
+import { GetWalletBalanceUseCase } from "../../domain/usecases/wallet/GetWalletBalanceUseCase";
 
 
 /**
@@ -165,7 +171,8 @@ class ServiceLocator {
     this.services.set("GetCurrentRenterBookingsUseCase", getCurrentRenterBookingsUseCase);
     const createVNPayBookingUseCase = new CreateVNPayBookingUseCase(bookingRepository);
     this.services.set("CreateVNPayBookingUseCase", createVNPayBookingUseCase);
-
+    const getBookingByIdUseCase = new GetBookingByIdUseCase(bookingRepository);
+    this.services.set("GetBookingByIdUseCase", getBookingByIdUseCase);
     // Receipt services
     const receiptRemoteDataSource = new ReceiptRemoteDataSourceImpl(axiosClient);
     this.services.set("ReceiptRemoteDataSource", receiptRemoteDataSource);
@@ -173,7 +180,8 @@ class ServiceLocator {
     this.services.set("ReceiptRepository", receiptRepository);
     const createReceiptUseCase = new CreateReceiptUseCase(receiptRepository);
     this.services.set("CreateReceiptUseCase", createReceiptUseCase);
-
+    const confirmVNPayPaymentUseCase = new ConfirmVNPayPaymentUseCase(bookingRepository);
+    this.services.set("ConfirmVNPayPaymentUseCase", confirmVNPayPaymentUseCase);
     const generateContractUseCase = new GenerateContractUseCase(receiptRepository);
     this.services.set("GenerateContractUseCase", generateContractUseCase);
     const getContractUseCase = new GetContractUseCase(receiptRepository);
@@ -230,6 +238,17 @@ class ServiceLocator {
     this.services.set("RentalReturnRepository", rentalReturnRepository);
     const analyzeReturnUseCase = new AiAnalyzeUseCase(rentalReturnRepository);
     this.services.set("AiAnalyzeUseCase", analyzeReturnUseCase);
+
+
+    // Wallet services
+    const walletRemoteDataSource = new WalletRemoteDataSourceImpl(axiosClient);
+    this.services.set("WalletRemoteDataSource", walletRemoteDataSource);
+    const walletRepository = new WalletRepositoryImpl(walletRemoteDataSource);
+    this.services.set("WalletRepository", walletRepository);
+    const createWalletUseCase = new CreateWalletUseCase(walletRepository);
+    this.services.set("CreateWalletUseCase", createWalletUseCase);
+    const getWalletBalanceUseCase = new GetWalletBalanceUseCase(walletRepository);
+    this.services.set("GetWalletBalanceUseCase", getWalletBalanceUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -394,6 +413,26 @@ class ServiceLocator {
 
   getCreateVNPayBookingUseCase(): CreateVNPayBookingUseCase {
     return this.get<CreateVNPayBookingUseCase>('CreateVNPayBookingUseCase');
+  }
+
+  getGetBookingByIdUseCase(): GetBookingByIdUseCase {
+    return this.get<GetBookingByIdUseCase>('GetBookingByIdUseCase');
+  }
+
+  getConfirmVNPayPaymentUseCase(): ConfirmVNPayPaymentUseCase {
+    return this.get<ConfirmVNPayPaymentUseCase>("ConfirmVNPayPaymentUseCase");
+  }
+
+  getWalletRepository(): WalletRepository {
+    return this.get<WalletRepository>('WalletRepository');
+  }
+
+  getCreateWalletUseCase(): CreateWalletUseCase {
+    return this.get<CreateWalletUseCase>('CreateWalletUseCase');
+  }
+
+  getGetWalletBalanceUseCase(): GetWalletBalanceUseCase {
+    return this.get<GetWalletBalanceUseCase>('GetWalletBalanceUseCase');
   }
 }
 

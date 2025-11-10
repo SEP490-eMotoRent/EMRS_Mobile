@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "emrs",
     "name": "eMotoRent_Mobile",
     "slug": "eMotoRent_Mobile",
     "version": "1.0.0",
