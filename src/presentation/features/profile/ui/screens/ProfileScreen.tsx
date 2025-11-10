@@ -1,4 +1,3 @@
-// src/features/profile/screens/ProfileScreen.tsx
 import { StackNavigationProp } from "@react-navigation/stack";
 import React from "react";
 import {
@@ -51,6 +50,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleViewAllTransactions = () => console.log("View all transactions");
   const handleVerify = () => console.log("Start verification");
   const handleViewDetails = () => console.log("View verification details");
+  const handleInsuranceClaims = () => navigation.navigate("InsuranceClaims");
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -148,7 +148,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onVerify={handleVerify}
           onViewDetails={handleViewDetails}
         />
-        <QuickSettings onSignOut={handleSignOut} />
+        <QuickSettings 
+          onSignOut={handleSignOut}
+          onInsuranceClaims={handleInsuranceClaims}
+        />
       </ScrollView>
     </View>
   );

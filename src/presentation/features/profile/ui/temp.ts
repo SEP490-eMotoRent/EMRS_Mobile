@@ -12,4 +12,4 @@ export interface Verification {
 
 export type BadgeType = 'error' | 'warning' | 'success';
 export type IconName = 'edit' | 'wallet' | 'minus' | 'plus' | 'arrow' | 'check' | 'cross' | 
-  'bell' | 'card' | 'location' | 'language' | 'gift' | 'document' | 'help' | 'terms' | 'logout';
+  'bell' | 'card' | 'location' | 'language' | 'gift' | 'document' | 'help' | 'terms' | 'logout' | 'shield';

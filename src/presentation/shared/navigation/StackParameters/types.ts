@@ -214,6 +214,11 @@ export type ProfileStackParamList = {
     side: 'front' | 'back';
     onPhotoTaken: (uri: string, side: 'front' | 'back') => void;
   };
+  //Coi những claims bảo hiểm của mình:
+  InsuranceClaims: undefined;
+  InsuranceClaimDetail: {
+    claimId: string;
+  };
   Auth: NavigatorScreenParams<AuthStackParamList>;
 };
 
