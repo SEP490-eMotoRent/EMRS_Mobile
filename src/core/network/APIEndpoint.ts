@@ -102,4 +102,11 @@ export const ApiEndpoints = {
     getAll: "/InsurancePackage",
     detail: (id: string) => `/InsurancePackage/${id}`,
   },
+
+  // Charging Station endpoints
+  charging: {
+    getByLicensePlate: "/Charging/search-by-license-plate",
+    getChargingRate: "/Charging/get-charging-rate",
+    create: "/Charging/create",
+  },
 };

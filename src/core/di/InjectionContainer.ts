@@ -89,6 +89,11 @@ import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/G
 import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 import { AxiosClient } from "../network/AxiosClient";
 
+// Charging imports
+import { ChargingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/charging/ChargingRemoteDataSourceImpl';
+import { ChargingRepositoryImpl } from '../../data/repositories/charging/ChargingRepositoryImpl';
+import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
+import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -230,6 +235,14 @@ class ServiceLocator {
     this.services.set("RentalReturnRepository", rentalReturnRepository);
     const analyzeReturnUseCase = new AiAnalyzeUseCase(rentalReturnRepository);
     this.services.set("AiAnalyzeUseCase", analyzeReturnUseCase);
+
+    // Charging services
+    const chargingRemoteDataSource = new ChargingRemoteDataSourceImpl(axiosClient);
+    this.services.set("ChargingRemoteDataSource", chargingRemoteDataSource);
+    const chargingRepository = new ChargingRepositoryImpl(chargingRemoteDataSource);
+    this.services.set("ChargingRepository", chargingRepository);
+    const getChargingByLicensePlateUseCase = new GetChargingByLicensePlateUseCase(chargingRepository);
+    this.services.set("GetChargingByLicensePlateUseCase", getChargingByLicensePlateUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -394,6 +407,14 @@ class ServiceLocator {
 
   getCreateVNPayBookingUseCase(): CreateVNPayBookingUseCase {
     return this.get<CreateVNPayBookingUseCase>('CreateVNPayBookingUseCase');
+  }
+
+  getChargingRepository(): ChargingRepository {
+    return this.get<ChargingRepository>('ChargingRepository');
+  }
+
+  getGetChargingByLicensePlateUseCase(): GetChargingByLicensePlateUseCase {
+    return this.get<GetChargingByLicensePlateUseCase>('GetChargingByLicensePlateUseCase');
   }
 }
 
