@@ -1,5 +1,7 @@
 import { Booking } from "../../entities/booking/Booking";
-import { BookingRepository, VNPayBookingResult } from "../../repositories/booking/BookingRepository";
+import { BookingRepository } from "../../repositories/booking/BookingRepository";
+import { Renter } from "../../entities/account/Renter";
+import { VehicleModel } from "../../entities/vehicle/VehicleModel";
 
 export interface CreateVNPayBookingInput {
     startDatetime: Date;
@@ -17,37 +19,46 @@ export interface CreateVNPayBookingInput {
     renterId: string;
 }
 
-/**
- * Enhanced result with payment expiry time
- */
-export interface VNPayBookingResultWithExpiry extends VNPayBookingResult {
-    expiresAt: Date;
+export interface VNPayBookingResultWithExpiry {
+    booking: Booking;
+    vnpayUrl: string;
+    expiresAt: string; // ISO string - 15 minutes from creation
 }
 
-/**
- * Creates VNPay booking with duplicate check and expiry tracking
- */
 export class CreateVNPayBookingUseCase {
     constructor(private bookingRepository: BookingRepository) {}
 
-    /**
-     * Creates a VNPay booking with minimal data
-     * Returns booking entity (IDs only) + VNPay payment URL + expiry time
-     * 
-     * ⚠️ Important: The returned booking entity will have undefined navigation properties
-     * Frontend should fetch full details after payment using getById()
-     */
     async execute(input: CreateVNPayBookingInput): Promise<VNPayBookingResultWithExpiry> {
-        // ✅ Validate input
-        this.validateInput(input);
+        // Create mock renter
+        const mockRenter = new Renter(
+            input.renterId,
+            "unknown@email.com",
+            "",
+            "",
+            input.renterId,
+            "mock-membership",
+            false,
+            ""
+        );
 
-        // ✅ Check for duplicate pending bookings
-        await this.checkForDuplicateBooking(input.renterId, input.vehicleModelId);
+        // Create mock vehicle model
+        const mockVehicleModel = new VehicleModel(
+            input.vehicleModelId,
+            "Unknown Model",
+            "Unknown",
+            0,
+            0,
+            0,
+            "",
+            "",
+            undefined,
+            new Date()
+        );
 
-        // ✅ Create booking entity WITHOUT navigation objects
+        // Construct Booking entity
         const booking = new Booking(
-            "", // id - assigned by backend
-            "", // bookingCode - assigned by backend
+            "", // id - will be set by backend
+            "", // bookingCode - will be set by backend
             input.baseRentalFee,
             input.depositAmount,
             input.rentalDays,
@@ -63,12 +74,12 @@ export class CreateVNPayBookingUseCase {
             input.totalRentalFee,
             input.totalRentalFee, // totalAmount
             0, // refundAmount
-            "Pending", // bookingStatus
+            "Pending", // bookingStatus - VNPay creates as Pending
             input.vehicleModelId,
             input.renterId,
-            undefined, // renter - Backend will populate
-            undefined, // vehicleModel - Backend will populate
-            undefined, // vehicleId - Assigned after payment
+            mockRenter,
+            mockVehicleModel,
+            undefined, // vehicleId
             undefined, // vehicle
             input.startDatetime,
             input.endDatetime,
@@ -76,80 +87,36 @@ export class CreateVNPayBookingUseCase {
             input.insurancePackageId,
             undefined, // insurancePackage
             undefined, // rentalContract
-            undefined, // rentalReceipts (collection)
+            undefined, // rentalReceipts
             input.handoverBranchId,
             undefined, // handoverBranch
             undefined, // returnBranchId
             undefined, // returnBranch
             undefined, // feedback
-            undefined, // insuranceClaims (collection)
-            undefined, // additionalFees (collection)
-            undefined, // chargingRecords (collection)
+            undefined, // insuranceClaims
+            undefined, // additionalFees
+            undefined, // chargingRecords
             new Date(), // createdAt
             null,
             null,
             false
         );
 
-        // ✅ Create booking via repository
+        console.log("🎫 Creating VNPay booking...");
+        
+        // Call repository to create VNPay booking
         const result = await this.bookingRepository.createVNPay(booking);
+        
+        console.log("✅ VNPay booking created:", result.booking.id);
+        console.log("🔗 Payment URL:", result.vnpayUrl);
 
-        console.log("✅ VNPay booking created:", {
-            bookingId: result.booking.id,
-            status: result.booking.bookingStatus,
-            vnpayUrl: result.vnpayUrl
-        });
+        // Calculate expiry time (15 minutes from now)
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-        // ✅ Add expiry time (15 minutes from now)
         return {
-            ...result,
-            expiresAt: new Date(Date.now() + 15 * 60 * 1000)
+            booking: result.booking,
+            vnpayUrl: result.vnpayUrl,
+            expiresAt,
         };
-    }
-
-    /**
-     * Check if user already has a pending VNPay booking for the same vehicle model
-     */
-    private async checkForDuplicateBooking(renterId: string, vehicleModelId: string): Promise<void> {
-        const existingBookings = await this.bookingRepository.getCurrentRenterBookings();
-        
-        const hasPendingBooking = existingBookings.some(booking => 
-            booking.isPending() && 
-            booking.vehicleModelId === vehicleModelId &&
-            !booking.isExpired()
-        );
-        
-        if (hasPendingBooking) {
-            throw new Error(
-                "You already have a pending booking for this vehicle model. " +
-                "Please complete the payment or wait for it to expire."
-            );
-        }
-    }
-
-    /**
-     * Validates booking input
-     * @throws Error if validation fails
-     */
-    private validateInput(input: CreateVNPayBookingInput): void {
-        if (!input.startDatetime || !input.endDatetime) {
-            throw new Error("Start and end datetime are required");
-        }
-
-        if (input.startDatetime >= input.endDatetime) {
-            throw new Error("End datetime must be after start datetime");
-        }
-
-        if (input.depositAmount <= 0) {
-            throw new Error("Deposit amount must be greater than 0");
-        }
-
-        if (input.totalRentalFee <= 0) {
-            throw new Error("Total rental fee must be greater than 0");
-        }
-
-        if (!input.vehicleModelId || !input.renterId || !input.handoverBranchId) {
-            throw new Error("Vehicle model, renter, and handover branch are required");
-        }
     }
 }

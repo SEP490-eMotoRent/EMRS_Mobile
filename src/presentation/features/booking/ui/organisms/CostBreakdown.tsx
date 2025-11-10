@@ -6,7 +6,6 @@ interface CostBreakdownProps {
     rentalFee: string;
     insuranceFee: string;
     securityDeposit: string;
-    serviceFee: string;
     total: string;
 }
 
@@ -14,7 +13,6 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({
     rentalFee,
     insuranceFee,
     securityDeposit,
-    serviceFee,
     total,
 }) => {
     return (
@@ -24,7 +22,6 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({
                 <CostRow label="Phí Thuê Xe" value={rentalFee} />
                 <CostRow label="Bảo Hiểm" value={insuranceFee} />
                 <CostRow label="Đặt Cọc" value={securityDeposit} />
-                <CostRow label="Phí Dịch Vụ" value={serviceFee} />
                 <CostRow label="Tổng giá tiền" value={total} isTotal />
             </View>
         </View>
