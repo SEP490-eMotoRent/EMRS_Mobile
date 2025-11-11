@@ -29,6 +29,8 @@ export const ApiEndpoints = {
     list: "/Booking",
     assignVehicle: (vehicleId: string, bookingId: string) =>
       `/Booking/vehicle/assign/${bookingId}/${vehicleId}`,
+
+    vnpayCallback: "/Booking/vnpay/callback",
   },
 
   // Auth endpoints
@@ -57,6 +59,12 @@ export const ApiEndpoints = {
     updateCitizen: "/Document/citizen",
     updateDriving: "/Document/driving",
     delete: (documentId: string) => `/Document/${documentId}`,
+  },
+  
+  // Wallet endpoints
+  wallet: {
+    create: "/Wallet/model/create",
+    myBalance: "/Wallet/my-balance",
   },
 
   // Receipt endpoints

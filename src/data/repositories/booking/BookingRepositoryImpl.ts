@@ -5,7 +5,6 @@ import { RentalContract } from "../../../domain/entities/booking/RentalContract"
 import { RentalReceipt } from "../../../domain/entities/booking/RentalReceipt";
 import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
 import { InsurancePackage } from "../../../domain/entities/insurance/InsurancePackage";
-import { Branch } from "../../../domain/entities/operations/Branch";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
 import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
 import { BookingRepository, VNPayBookingResult } from "../../../domain/repositories/booking/BookingRepository";
@@ -26,6 +25,7 @@ import {
   VehicleBookingResponse,
   VehicleModelBookingResponse,
 } from "../../models/booking/staffResponse/BookingResponseForStaff";
+import { VNPayCallback } from "../../models/booking/vnpay/VNPayCallback";
 
 export class BookingRepositoryImpl implements BookingRepository {
   constructor(private remote: BookingRemoteDataSource) {}
@@ -57,32 +57,37 @@ export class BookingRepositoryImpl implements BookingRepository {
   // CREATE VNPAY - Returns minimal entity
   // =========================================================================
   async createVNPay(booking: Booking): Promise<VNPayBookingResult> {
-    const request: CreateBookingRequest = {
-      startDatetime: booking.startDatetime?.toISOString(),
-      endDatetime: booking.endDatetime?.toISOString(),
-      handoverBranchId: booking.handoverBranchId!,
-      baseRentalFee: booking.baseRentalFee,
-      depositAmount: booking.depositAmount,
-      rentalDays: booking.rentalDays,
-      rentalHours: booking.rentalHours,
-      rentingRate: booking.rentingRate,
-      vehicleModelId: booking.vehicleModelId,
-      averageRentalPrice: booking.averageRentalPrice,
-      insurancePackageId: booking.insurancePackageId,
-      totalRentalFee: booking.totalRentalFee,
-    };
+      const request: CreateBookingRequest = {
+          startDatetime: booking.startDatetime?.toISOString(),
+          endDatetime: booking.endDatetime?.toISOString(),
+          handoverBranchId: booking.handoverBranchId!,
+          baseRentalFee: booking.baseRentalFee,
+          depositAmount: booking.depositAmount,
+          rentalDays: booking.rentalDays,
+          rentalHours: booking.rentalHours,
+          rentingRate: booking.rentingRate,
+          vehicleModelId: booking.vehicleModelId,
+          averageRentalPrice: booking.averageRentalPrice,
+          insurancePackageId: booking.insurancePackageId,
+          totalRentalFee: booking.totalRentalFee,
+      };
 
-    const response = await this.remote.createVNPay(request);
-    
-    // ✅ Validate response has required fields
-    if (!response.id || !response.vnpayUrl) {
-        throw new Error("Invalid VNPay booking response from server");
-    }
-    
-    return {
-      booking: this.mapVNPayResponseToEntity(response),
-      vnpayUrl: response.vnpayUrl,
-    };
+      const response = await this.remote.createVNPay(request);
+      
+      console.log("📥 VNPay Response from backend:", JSON.stringify(response, null, 2));
+      
+      // ✅ Validate response has required fields
+      if (!response.id || !response.vnpayUrl) {
+          console.error("❌ Invalid VNPay response:", response);
+          throw new Error("Invalid VNPay booking response from server - missing id or vnpayUrl");
+      }
+      
+      console.log("✅ VNPay URL extracted:", response.vnpayUrl);
+      
+      return {
+          booking: this.mapVNPayResponseToEntity(response),
+          vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backend
+      };
   }
 
   // =========================================================================
@@ -107,6 +112,10 @@ export class BookingRepositoryImpl implements BookingRepository {
     const responses = await this.remote.getCurrentRenterBookings();
     console.log("📦 Repository received responses:", responses.length);
     return responses.map((r) => this.mapListResponseToEntity(r));
+  }
+
+  async confirmVNPayPayment(request: VNPayCallback): Promise<void> {
+    return this.remote.confirmVNPayPayment(request);
   }
 
   async getBookings(
@@ -156,53 +165,55 @@ export class BookingRepositoryImpl implements BookingRepository {
   // ✅ VNPAY MAPPER - NO MOCK DATA
   // =========================================================================
   private mapVNPayResponseToEntity(dto: BookingWithoutWalletResponse): Booking {
-    console.log("🔄 Mapping VNPay booking response (minimal):", dto.id);
+      console.log("🔄 Mapping VNPay booking response (minimal):", dto.id);
+      console.log("📍 VNPay URL from backend:", dto.vnpayUrl); // Should be "VNPAYURL" in backend response
 
-    return new Booking(
-      dto.id,
-      "", // bookingCode - Backend generates but doesn't include in response
-      dto.baseRentalFee,
-      dto.depositAmount,
-      dto.rentalDays,
-      dto.rentalHours,
-      dto.rentingRate,
-      dto.lateReturnFee || 0,
-      dto.averageRentalPrice,
-      0, // excessKmFee
-      0, // cleaningFee
-      0, // crossBranchFee
-      0, // totalChargingFee
-      0, // totalAdditionalFee
-      dto.totalRentalFee,
-      dto.totalAmount,
-      0, // refundAmount
-      dto.bookingStatus, // "Pending"
-      dto.vehicleModelId,
-      dto.renterId,
-      undefined, // renter - Not in response
-      undefined, // vehicleModel - Not in response
-      dto.vehicleId,
-      undefined, // vehicle - Not in response
-      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
-      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
-      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-      undefined, // insurancePackageId
-      undefined, // insurancePackage
-      undefined, // rentalContract
-      undefined, // rentalReceipts (collection)
-      undefined, // handoverBranchId
-      undefined, // handoverBranch
-      undefined, // returnBranchId
-      undefined, // returnBranch
-      undefined, // feedback
-      undefined, // insuranceClaims (collection)
-      undefined, // additionalFees (collection)
-      undefined, // chargingRecords (collection)
-      new Date(),
-      null,
-      null,
-      false
-    );
+      // ✅ IMPORTANT: Backend returns "VNPAYURL" but we map it to "vnpayUrl" in TypeScript
+      return new Booking(
+          dto.id,
+          "",
+          dto.baseRentalFee,
+          dto.depositAmount,
+          dto.rentalDays,
+          dto.rentalHours,
+          dto.rentingRate,
+          dto.lateReturnFee || 0,
+          dto.averageRentalPrice,
+          0, // excessKmFee
+          0, // cleaningFee
+          0, // crossBranchFee
+          0, // totalChargingFee
+          0, // totalAdditionalFee
+          dto.totalRentalFee,
+          dto.totalAmount,
+          0, // refundAmount
+          dto.bookingStatus, // Should be "Pending" from backend
+          dto.vehicleModelId,
+          dto.renterId,
+          undefined, // renter - Not in response
+          undefined, // vehicleModel - Not in response
+          dto.vehicleId,
+          undefined, // vehicle - Not in response
+          dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+          dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+          dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+          undefined, // insurancePackageId - Not in VNPay response
+          undefined, // insurancePackage
+          undefined, // rentalContract
+          undefined, // rentalReceipts
+          undefined, // handoverBranchId - Not in VNPay response
+          undefined, // handoverBranch
+          undefined, // returnBranchId
+          undefined, // returnBranch
+          undefined, // feedback
+          undefined, // insuranceClaims
+          undefined, // additionalFees
+          undefined, // chargingRecords
+          new Date(),
+          null,
+          null,
+          false
+      );
   }
 
   // =========================================================================

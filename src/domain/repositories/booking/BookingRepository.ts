@@ -1,4 +1,5 @@
 import { PaginatedBooking } from "../../../data/models/booking/PaginatedBooking";
+import { VNPayCallback } from "../../../data/models/booking/vnpay/VNPayCallback";
 import { Booking } from "../../entities/booking/Booking";
 
 export interface VNPayBookingResult {
@@ -21,5 +22,5 @@ export interface BookingRepository {
   ): Promise<PaginatedBooking>;
   assignVehicle(vehicleId: string, bookingId: string): Promise<void>;
   createVNPay(booking: Booking): Promise<VNPayBookingResult>;
-
+  confirmVNPayPayment(request: VNPayCallback): Promise<void>;
 }

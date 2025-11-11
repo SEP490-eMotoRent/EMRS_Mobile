@@ -9,6 +9,7 @@ import { BookingWithoutWalletResponse } from "../../../../models/booking/Booking
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
+import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/BookingRemoteDataSource";
 
 export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
@@ -62,33 +63,68 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   // ✅ NEW: VNPay booking creation
   async createVNPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse> {
     console.log(
-      "📤 VNPay booking request:",
-      JSON.stringify(request, null, 2)
+        "📤 VNPay booking request:",
+        JSON.stringify(request, null, 2)
     );
 
     const cleanedRequest: Record<string, any> = {
-      startDatetime: request.startDatetime,
-      endDatetime: request.endDatetime,
-      handoverBranchId: request.handoverBranchId,
-      baseRentalFee: request.baseRentalFee,
-      depositAmount: request.depositAmount,
-      rentalDays: request.rentalDays,
-      rentalHours: request.rentalHours,
-      rentingRate: request.rentingRate,
-      vehicleModelId: request.vehicleModelId,
-      averageRentalPrice: request.averageRentalPrice,
-      totalRentalFee: request.totalRentalFee,
-      insurancePackageId: request.insurancePackageId || null,
+        startDatetime: request.startDatetime,
+        endDatetime: request.endDatetime,
+        handoverBranchId: request.handoverBranchId,
+        baseRentalFee: request.baseRentalFee,
+        depositAmount: request.depositAmount,
+        rentalDays: request.rentalDays,
+        rentalHours: request.rentalHours,
+        rentingRate: request.rentingRate,
+        vehicleModelId: request.vehicleModelId,
+        averageRentalPrice: request.averageRentalPrice,
+        totalRentalFee: request.totalRentalFee,
+        insurancePackageId: request.insurancePackageId || null,
     };
 
     try {
-        const response = await this.axiosClient.post<ApiResponse<BookingWithoutWalletResponse>>(
+        const response = await this.axiosClient.post<ApiResponse<any>>( // Use 'any' temporarily
             ApiEndpoints.booking.createVNPay,
             cleanedRequest
         );
-        return unwrapResponse(response.data);
+        
+        const rawData = unwrapResponse(response.data);
+        console.log("📥 Raw VNPay response from backend:", rawData);
+        
+        // ✅ Transform backend response field names to match TypeScript interface
+        const transformedData: BookingWithoutWalletResponse = {
+            id: rawData.id,
+            vehicleModelId: rawData.vehicleModelId,
+            renterId: rawData.renterId,
+            vehicleId: rawData.vehicleId,
+            startDatetime: rawData.startDatetime,
+            endDatetime: rawData.endDatetime,
+            actualReturnDatetime: rawData.actualReturnDatetime,
+            baseRentalFee: rawData.baseRentalFee,
+            depositAmount: rawData.depositAmount,
+            rentalDays: rawData.rentalDays,
+            rentalHours: rawData.rentalHours,
+            rentingRate: rawData.rentingRate,
+            lateReturnFee: rawData.lateReturnFee,
+            averageRentalPrice: rawData.averageRentalPrice,
+            totalRentalFee: rawData.totalRentalFee,
+            totalAmount: rawData.totalAmount,
+            bookingStatus: rawData.bookingStatus,
+            vnpayUrl: rawData.vnpayurl || rawData.VNPAYURL || rawData.vnpayUrl,
+        };
+        
+        console.log("✅ Transformed response:", transformedData);
+        
+        // Validate required fields
+        if (!transformedData.vnpayUrl) {
+            console.error("❌ Missing VNPay URL in response!");
+            throw new Error("VNPay URL not found in backend response");
+        }
+        
+        return transformedData;
     } catch (error: any) {
         console.error("❌ [CREATE VNPAY BOOKING] API Error:", error);
+        console.error("❌ Error Response:", JSON.stringify(error.response?.data, null, 2));
         
         // Extract meaningful error message
         const errorMessage = error.response?.data?.message 
@@ -111,6 +147,23 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       if (error.response?.status === 404) return null;
       console.error("Failed to fetch booking:", error);
       return null;
+    }
+  }
+
+  async confirmVNPayPayment(request: VNPayCallback): Promise<void> {
+    console.log("Calling VNPay callback API:", request);
+
+    try {
+      const response = await this.axiosClient.put<ApiResponse<boolean>>(
+        ApiEndpoints.booking.vnpayCallback,
+        request
+      );
+      unwrapResponse(response.data);
+
+      console.log("VNPay callback confirmed");
+    } catch (error: any) {
+      console.error("VNPay callback failed:", error);
+      throw error;
     }
   }
 

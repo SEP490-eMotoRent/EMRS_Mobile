@@ -1,17 +1,17 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
-import { ListHeader } from "../orgamism/ListHeader";
-import { ListControls } from "../orgamism/ListControls";
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
-import { MapViewButton } from "../atoms/buttons/MapViewButtons";
+import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { useVehicleModels } from "../../hooks/useVehicleModels";
 import { VehicleModelMapper } from "../../mappers/VehicleModelMapper";
+import { MapViewButton } from "../atoms/buttons/MapViewButtons";
 import { EmptyState } from "../molecules/state/EmptyState";
 import { ErrorState } from "../molecules/state/ErrorState";
 import { LoadingState } from "../molecules/state/LoadingState";
+import { ListControls } from "../orgamism/ListControls";
+import { ListHeader } from "../orgamism/ListHeader";
 import { MotorcycleCard } from "../orgamism/MotorcycleCard";
 
 // Support both route types
@@ -31,9 +31,9 @@ export const ListView: React.FC = () => {
     const [bookingModalVisible, setBookingModalVisible] = useState(false);
 
     const { location, dateRange, address } = route.params || {
-        location: "Ho Chi Minh City, Vietnam",
-        dateRange: "Oct 20 | 10:00 AM - Oct 23 | 10:00 AM",
-        address: "Ho Chi Minh City, Vietnam",
+        location: "Thành phố Hồ Chí Minh, Việt Nam",
+        dateRange: "20 Thg 10 | 10:00 SA - 23 Thg 10 | 10:00 SA",
+        address: "Thành phố Hồ Chí Minh, Việt Nam",
     };
 
     // Pass both domain models and raw DTOs to mapper
@@ -56,11 +56,11 @@ export const ListView: React.FC = () => {
         else if (sortBy === "price-low") setSortBy("price-high");
         else setSortBy("closest");
     };
-
+    
     const getSortLabel = () => {
-        if (sortBy === "closest") return "Closest To Address";
-        if (sortBy === "price-low") return "Price: Low to High";
-        return "Price: High to Low";
+        if (sortBy === "closest") return "Gần Địa Chỉ Nhất";
+        if (sortBy === "price-low") return "Giá: Thấp Đến Cao";
+        return "Giá: Cao Đến Thấp";
     };
 
     const handleMapViewPress = () => {

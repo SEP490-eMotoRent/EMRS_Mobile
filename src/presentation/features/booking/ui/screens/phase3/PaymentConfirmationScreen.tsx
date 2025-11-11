@@ -1,7 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useMemo, useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { CreateBookingUseCase } from "../../../../../../domain/usecases/booking/CreateBookingUseCase";
 import { CreateVNPayBookingUseCase, VNPayBookingResultWithExpiry } from "../../../../../../domain/usecases/booking/CreateVNPayBookingUseCase";
@@ -19,10 +20,25 @@ import { PaymentNotices } from "../../organisms/payment/PaymentNotices";
 type RoutePropType = RouteProp<BookingStackParamList, 'PaymentConfirmation'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'PaymentConfirmation'>;
 
+interface BookingContext {
+    bookingId?: string;
+    vehicleId: string;
+    vehicleName: string;
+    vehicleImageUrl?: string;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+    branchName: string;
+    insurancePlan: string;
+    totalAmount: string;
+    securityDeposit: string;
+}
+
 export const PaymentConfirmationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
-    
+
     const {
         vehicleId,
         vehicleName,
@@ -38,106 +54,71 @@ export const PaymentConfirmationScreen: React.FC = () => {
         rentalFee,
         insuranceFee,
         securityDeposit,
-        serviceFee,
         total,
     } = route.params;
 
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("wallet");
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"wallet" | "vnpay">("wallet");
 
     const user = useAppSelector((state) => state.auth.user);
     const userId = user?.id;
 
-    const createBookingUseCase = useMemo(() => 
-        sl.get<CreateBookingUseCase>("CreateBookingUseCase"), 
+    const createBookingUseCase = useMemo(() =>
+        sl.get<CreateBookingUseCase>("CreateBookingUseCase"),
         []
     );
 
-    const createVNPayBookingUseCase = useMemo(() => 
-        sl.get<CreateVNPayBookingUseCase>("CreateVNPayBookingUseCase"), 
+    const createVNPayBookingUseCase = useMemo(() =>
+        sl.get<CreateVNPayBookingUseCase>("CreateVNPayBookingUseCase"),
         []
     );
 
-    
-    const { createBooking, loading: bookingLoading, error: bookingError } = useCreateBooking(createBookingUseCase);
-
-    console.log("Payment Confirmation - Vehicle:", vehicleName);
-    console.log("Branch ID:", branchId);
-    console.log("Branch Name:", branchName);
-
-    const handleBack = () => {
-        navigation.goBack();
-    };
+    const { createBooking, loading: bookingLoading } = useCreateBooking(createBookingUseCase);
 
     const parseDateString = (dateStr: string): Date => {
-        // Vietnamese month names
         const monthNames: { [key: string]: number } = {
             "Tháng 1": 0, "Tháng 2": 1, "Tháng 3": 2, "Tháng 4": 3,
             "Tháng 5": 4, "Tháng 6": 5, "Tháng 7": 6, "Tháng 8": 7,
             "Tháng 9": 8, "Tháng 10": 9, "Tháng 11": 10, "Tháng 12": 11
         };
-        
-        // Match Vietnamese format: "Tháng 11 09 10:00 AM"
+
         const match = dateStr.match(/(Tháng \d+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM)/);
-        
-        if (!match) {
-            console.error("❌ Failed to parse date:", dateStr);
-            throw new Error(`Invalid date format: ${dateStr}`);
-        }
-        
+        if (!match) throw new Error(`Invalid date: ${dateStr}`);
+
         const [, monthStr, day, hours, minutes, period] = match;
-        
         const monthIndex = monthNames[monthStr];
-        if (monthIndex === undefined) {
-            console.error("❌ Unknown month:", monthStr);
-            throw new Error(`Unknown month: ${monthStr}`);
-        }
-        
         let hour = parseInt(hours);
         if (period === 'PM' && hour !== 12) hour += 12;
         if (period === 'AM' && hour === 12) hour = 0;
-        
+
         const year = new Date().getFullYear();
-        const date = new Date(year, monthIndex, parseInt(day), hour, parseInt(minutes), 0, 0);
-        
-        console.log("✅ Parsed date:", {
-            input: dateStr,
-            output: date.toISOString(),
-            year, month: monthIndex, day, hour, minutes
-        });
-        
-        return date;
+        return new Date(year, monthIndex, parseInt(day), hour, parseInt(minutes), 0, 0);
     };
+
     const parsePrice = (price: string): number => {
         return parseInt(price.replace(/[^0-9]/g, "")) || 0;
     };
 
-    const handlePayment = async () => {
-        console.log("Processing payment for vehicle:", vehicleName);
-        console.log("Payment method:", selectedPaymentMethod);
-        console.log("Total amount:", total);
+    const vnpayAmount = parsePrice(securityDeposit) + parsePrice(insuranceFee);
+    const vnpayAmountFormatted = vnpayAmount.toLocaleString('vi-VN') + 'đ';
 
+    const totalAmount = parsePrice(total);
+    const currentBalance = 5_000_000;
+    const afterBalance = currentBalance - totalAmount;
+    const isSufficient = afterBalance >= 0;
+
+    const handlePayment = async () => {
         if (!userId) {
-            Alert.alert("Lỗi", "Vui lòng đăng nhập để tiếp tục đặt xe");
+            Alert.alert("Lỗi", "Vui lòng đăng nhập");
             return;
         }
 
         try {
             const startDateTime = parseDateString(startDate);
             const endDateTime = parseDateString(endDate);
-            
-            console.log("Start:", startDate, "→", startDateTime.toISOString());
-            console.log("End:", endDate, "→", endDateTime.toISOString());
-            console.log("Using branch ID:", branchId);
 
-            const isValidGuid = (str: string) => {
-                const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-                return guidRegex.test(str);
-            };
-
-            const insurancePackageId =
-                insurancePlanId && isValidGuid(insurancePlanId)
-                    ? insurancePlanId
-                    : undefined;
+            const insurancePackageId = insurancePlanId && /^[0-9a-f-]{36}$/i.test(insurancePlanId)
+                ? insurancePlanId
+                : undefined;
 
             const bookingInput = {
                 vehicleModelId: vehicleId,
@@ -155,21 +136,12 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 renterId: userId,
             };
 
-            console.log("Booking Data:", JSON.stringify(bookingInput, null, 2));
-
-            // ✅ WALLET PAYMENT (existing)
             if (selectedPaymentMethod === "wallet") {
                 const booking = await createBooking(bookingInput);
-
-                console.log("Booking created successfully with wallet!");
-                console.log("Booking ID:", booking.id);
-                console.log("Booking Code:", booking.bookingCode);
-                console.log("Booking Status:", booking.bookingStatus);
-
-                navigation.navigate('DigitalContract', {
+                navigation.replace('DigitalContract', {
                     vehicleId,
                     vehicleName,
-                    vehicleImageUrl,
+                    vehicleImageUrl: vehicleImageUrl || "",
                     startDate,
                     endDate,
                     duration,
@@ -181,61 +153,58 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     contractNumber: booking.bookingCode || booking.id,
                 });
             }
-            // ✅ VNPAY PAYMENT (new)
-            // else if (selectedPaymentMethod === "vnpay") {
-            //     const result: VNPayBookingResultWithExpiry = await createVNPayBookingUseCase.execute(bookingInput);
+            else if (selectedPaymentMethod === "vnpay") {
+                const result: VNPayBookingResultWithExpiry = await createVNPayBookingUseCase.execute({
+                    ...bookingInput,
+                    depositAmount: vnpayAmount,
+                });
 
-            //     console.log("VNPay booking created successfully!");
-            //     console.log("Booking ID:", result.booking.id);
-            //     console.log("VNPay URL:", result.vnpayUrl);
-            //     console.log("Expires at:", result.expiresAt);
+                const context: BookingContext = {
+                    vehicleId,
+                    vehicleName,
+                    vehicleImageUrl,
+                    startDate,
+                    endDate,
+                    duration,
+                    rentalDays,
+                    branchName,
+                    insurancePlan,
+                    totalAmount: vnpayAmountFormatted,
+                    securityDeposit,
+                };
 
-            //     // Navigate to VNPay WebView
-            //     navigation.navigate('VNPayWebView', {
-            //         vnpayUrl: result.vnpayUrl,
-            //         bookingId: result.booking.id,
-            //         expiresAt: result.expiresAt,
-            //         vehicleName,
-            //         totalAmount: total,
-            //     });
-            // }
+                const STORAGE_KEY = `vnpay_payment_context_${result.booking.id}`;
+                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(context));
 
-        } catch (err: any) {
-            console.error("Booking creation failed:", err);
-            console.error("Error details:", err.response?.data || err.message);
-            
-            let errorMessage = "Không thể tạo đặt xe. Vui lòng thử lại.";
-            
-            if (err.response?.data?.message) {
-                errorMessage = err.response.data.message;
-            } else if (err.message) {
-                errorMessage = err.message;
+                navigation.navigate('VNPayWebView', {
+                    vnpayUrl: result.vnpayUrl,
+                    bookingId: result.booking.id,
+                    expiresAt: result.expiresAt,
+                    vehicleName,
+                    totalAmount: vnpayAmountFormatted,
+                    vehicleId,
+                    vehicleImageUrl: vehicleImageUrl || "",
+                    startDate,
+                    endDate,
+                    duration,
+                    rentalDays,
+                    branchName,
+                    insurancePlan,
+                    securityDeposit,
+                });
             }
-            
-            Alert.alert(
-                "Đặt xe thất bại",
-                errorMessage,
-                [{ text: "OK" }]
-            );
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message || "Lỗi không xác định";
+            Alert.alert("Đặt xe thất bại", msg, [{ text: "OK" }]);
         }
     };
-    
-    const totalAmount = parsePrice(total);
-    // TODO: Get actual balance from wallet API when implemented
-    const currentBalance = 5000000;
-    const afterBalance = currentBalance - totalAmount;
-    const isSufficient = afterBalance >= 0;
 
     return (
         <View style={styles.container}>
-            <PageHeader title="Xác nhận thanh toán" onBack={handleBack} />
+            <PageHeader title="Xác nhận thanh toán" onBack={() => navigation.goBack()} />
             <ProgressIndicator currentStep={3} totalSteps={4} />
 
-            <ScrollView 
-                style={styles.scrollView}
-                contentContainerStyle={styles.content}
-                showsVerticalScrollIndicator={false}
-            >
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
                 <BookingSummaryCard
                     vehicleName={vehicleName}
                     rentalPeriod={`${startDate} - ${endDate}`}
@@ -245,15 +214,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 />
 
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <View style={styles.sectionDivider} />
-                        <View style={styles.sectionTitleContainer}>
-                            <View style={styles.titleBackground}>
-                                <View style={styles.sectionTitle} />
-                            </View>
-                        </View>
-                    </View>
-                    
                     <PaymentMethodCard
                         isSelected={selectedPaymentMethod === "wallet"}
                         onSelect={() => setSelectedPaymentMethod("wallet")}
@@ -261,13 +221,31 @@ export const PaymentConfirmationScreen: React.FC = () => {
                         afterBalance={`${afterBalance.toLocaleString()}đ`}
                         isSufficient={isSufficient}
                     />
+
+                    <TouchableOpacity
+                        style={[styles.paymentOption, selectedPaymentMethod === "vnpay" && styles.paymentOptionSelected]}
+                        onPress={() => setSelectedPaymentMethod("vnpay")}
+                    >
+                        <View style={styles.paymentOptionRow}>
+                            <View style={styles.radioButton}>
+                                {selectedPaymentMethod === "vnpay" && <View style={styles.radioButtonInner} />}
+                            </View>
+                            <View style={styles.paymentOptionContent}>
+                                <View style={styles.paymentOptionHeader}>
+                                    <Text style={styles.paymentOptionTitle}>VNPay</Text>
+                                    <View style={styles.vnpayBadge}><Text style={styles.vnpayBadgeText}>Phổ biến</Text></View>
+                                </View>
+                                <Text style={styles.paymentOptionDesc}>Thanh toán qua cổng VNPay</Text>
+                                <Text style={styles.paymentMethodsText}>ATM • Visa • MasterCard • JCB • QR Code</Text>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
                 </View>
 
                 <CostBreakdown
                     rentalFee={rentalFee}
                     insuranceFee={insuranceFee}
                     securityDeposit={securityDeposit}
-                    serviceFee={serviceFee}
                     total={total}
                 />
 
@@ -276,9 +254,14 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
             <View style={styles.footer}>
                 <PrimaryButton
-                    title={bookingLoading ? "Đang xử lý..." : `Thanh toán ${total} bằng Ví`}
+                    title={bookingLoading
+                        ? "Đang xử lý..."
+                        : selectedPaymentMethod === "wallet"
+                            ? `Thanh toán ${total} bằng Ví`
+                            : `Thanh toán ${vnpayAmountFormatted} bằng VNPay`
+                    }
                     onPress={handlePayment}
-                    disabled={bookingLoading || !isSufficient}
+                    disabled={bookingLoading || (selectedPaymentMethod === "wallet" && !isSufficient)}
                 />
             </View>
         </View>
@@ -290,16 +273,17 @@ const styles = StyleSheet.create({
     scrollView: { flex: 1 },
     content: { padding: 16, paddingBottom: 100 },
     section: { marginBottom: 20 },
-    sectionHeader: { position: "relative", height: 1, marginBottom: 16 },
-    sectionDivider: { position: "absolute", left: 0, right: 0, height: 1, backgroundColor: "#333" },
-    sectionTitleContainer: { position: "absolute", left: 0, right: 0, top: -10, alignItems: "flex-start", paddingLeft: 16 },
-    titleBackground: { backgroundColor: "#000", paddingHorizontal: 8 },
-    sectionTitle: { height: 20 },
-    footer: {
-        padding: 16,
-        paddingBottom: 32,
-        backgroundColor: "#000",
-        borderTopWidth: 1,
-        borderTopColor: "#1a1a1a",
-    },
+    footer: { padding: 16, paddingBottom: 32, backgroundColor: "#000", borderTopWidth: 1, borderTopColor: "#1a1a1a" },
+    paymentOption: { backgroundColor: "#1a1a1a", borderRadius: 12, padding: 16, marginTop: 12, borderWidth: 2, borderColor: "#333" },
+    paymentOptionSelected: { borderColor: "#4169E1", backgroundColor: "#0f1729" },
+    paymentOptionRow: { flexDirection: "row", alignItems: "flex-start" },
+    radioButton: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: "#666", justifyContent: "center", alignItems: "center", marginRight: 12, marginTop: 2 },
+    radioButtonInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#4169E1" },
+    paymentOptionContent: { flex: 1 },
+    paymentOptionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+    paymentOptionTitle: { color: "#fff", fontSize: 16, fontWeight: "600", marginRight: 8 },
+    vnpayBadge: { backgroundColor: "#4169E1", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+    vnpayBadgeText: { color: "#fff", fontSize: 11, fontWeight: "600" },
+    paymentOptionDesc: { color: "#999", fontSize: 14, marginBottom: 8 },
+    paymentMethodsText: { color: "#666", fontSize: 12 },
 });

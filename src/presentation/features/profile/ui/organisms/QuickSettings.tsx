@@ -6,41 +6,49 @@ import { SettingToggle } from '../molecules/settings/SettingToggle';
 
 interface QuickSettingsProps {
     onSignOut: () => void;
+    onInsuranceClaims?: () => void;
 }
 
-export const QuickSettings: React.FC<QuickSettingsProps> = ({ onSignOut }) => {
-    const [notifications, setNotifications] = useState<boolean>(true);
-    
+export const QuickSettings: React.FC<QuickSettingsProps> = ({ 
+        onSignOut,
+        onInsuranceClaims 
+    }) => {
+        const [notifications, setNotifications] = useState<boolean>(true);
     return (
         <View style={styles.quickSettings}>
         <Text style={styles.sectionTitle}>Cài Đặt</Text>
         
         <View style={styles.settingsGroup}>
             <SettingToggle
-            icon="bell"
-            label="Notifications"
-            value={notifications}
-            onToggle={setNotifications}
+                icon="bell"
+                label="Notifications"
+                value={notifications}
+                onToggle={setNotifications}
             />
-            <SettingItem icon="card" label="Payment Methods" showArrow />
-            <SettingItem icon="location" label="Recent Pickup Location" value="District 2" />
-            <SettingItem icon="language" label="Language" value="English" />
+            <SettingItem icon="card" label="Phương Thức Thanh Toán" showArrow />
+            <SettingItem icon="language" label="Ngôn Ngữ" value="Tiếng Việt" />
         </View>
         
-        <TouchableOpacity style={styles.referCard}>
+        {/* <TouchableOpacity style={styles.referCard}>
             <Icon name="gift" color="#a78bfa" />
             <View style={styles.referInfo}>
             <Text style={styles.referTitle}>Refer & Earn 100,000đ</Text>
             <Text style={styles.referSubtitle}>Share with friends and earn rewards</Text>
             </View>
             <Icon name="arrow" color="#666" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         
         <View style={styles.settingsGroup}>
-            <SettingItem icon="document" label="Rental History" />
-            <SettingItem icon="location" label="Branch Locations" />
-            <SettingItem icon="help" label="Help & Support Center" />
-            <SettingItem icon="terms" label="Terms & Privacy Policy" />
+            <SettingItem icon="document" label="Lịch Sử Thuê" />
+            <SettingItem 
+                    icon="shield" 
+                    label="Yêu Cầu Bảo Hiểm" 
+                    showArrow 
+                    onPress={onInsuranceClaims}
+                />
+            <SettingItem icon="location" label="Địa Điểm Các Chi Nhánh" />
+            <SettingItem icon="help" label="Chăm Sóc Khách Hàng" />
+            <SettingItem icon="terms" label="Điều Khoản và Chính Sách" />
         </View>
         
         <TouchableOpacity style={styles.signOutButton} onPress={onSignOut}>

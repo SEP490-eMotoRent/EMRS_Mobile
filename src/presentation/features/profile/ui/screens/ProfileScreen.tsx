@@ -1,4 +1,3 @@
-// src/features/profile/screens/ProfileScreen.tsx
 import { StackNavigationProp } from "@react-navigation/stack";
 import React from "react";
 import {
@@ -22,6 +21,7 @@ import { removeAuth } from "../../../authentication/store/slices/authSlice";
 import { useAppDispatch } from "../../../authentication/store/hooks";
 import { DocumentVerificationHelper } from "../../../../../domain/helpers/DocumentVerificationHelper";
 import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
+import { useWallet } from "../../hooks/wallet/useWallet";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -34,7 +34,8 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const { renter, renterResponse, loading, error, refresh } = useRenterProfile();
+  const { renter, renterResponse, loading: profileLoading, error: profileError, refresh: refreshProfile } = useRenterProfile();
+  const { balance, loading: walletLoading, error: walletError, refresh: refreshWallet, createWallet } = useWallet();
 
   // Mock transactions
   const transactions: Transaction[] = [
@@ -45,12 +46,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   ];
 
   const handleEdit = () => navigation.navigate("EditProfile");
-  const handleAddFunds = () => console.log("Add funds");
-  const handleWithdraw = () => console.log("Withdraw money");
-  const handleManage = () => console.log("Manage wallet");
-  const handleViewAllTransactions = () => console.log("View all transactions");
+  
+  const handleAddFunds = () => {
+    // TODO: Navigate to add funds screen
+    console.log("Add funds");
+  };
+  
+  const handleWithdraw = () => {
+    // TODO: Navigate to withdraw screen
+    console.log("Withdraw money");
+  };
+  
+  const handleManage = () => {
+    // TODO: Navigate to wallet management screen
+    console.log("Manage wallet");
+  };
+  
+  const handleViewAllTransactions = () => {
+    // TODO: Navigate to transactions screen
+    console.log("View all transactions");
+  };
+  
   const handleVerify = () => console.log("Start verification");
   const handleViewDetails = () => console.log("View verification details");
+  const handleInsuranceClaims = () => navigation.navigate("InsuranceClaims");
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -63,8 +82,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     ]);
   };
 
-  // === LOADING & ERROR STATES ===
-  if (loading) {
+  // Handle wallet retry (for error state)
+  const handleWalletRetry = async () => {
+    await refreshWallet();
+  };
+
+  // Handle refresh (pull-to-refresh)
+  const handleRefresh = async () => {
+    await Promise.all([refreshProfile(), refreshWallet()]);
+  };
+
+  // === LOADING & ERROR STATES (Profile) ===
+  if (profileLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color="#00ff00" />
@@ -72,10 +101,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     );
   }
 
-  if (error || !renter || !renterResponse) {
+  if (profileError || !renter || !renterResponse) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>Error: {error || "Profile not found"}</Text>
+        <Text style={styles.errorText}>Error: {profileError || "Profile not found"}</Text>
         <ActivityIndicator size="large" color="#ff0000" />
       </View>
     );
@@ -119,8 +148,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={loading}
-            onRefresh={refresh}
+            refreshing={profileLoading || walletLoading}
+            onRefresh={handleRefresh}
             tintColor="#00ff00"
             colors={["#00ff00"]}
           />
@@ -134,10 +163,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onEdit={handleEdit}
         />
         <WalletCard
-          balance={5000000}
+          balance={balance}
+          loading={walletLoading}
+          error={walletError}
           onAddFunds={handleAddFunds}
           onWithdraw={handleWithdraw}
           onManage={handleManage}
+          onRetry={handleWalletRetry}
         />
         <TransactionList
           transactions={transactions}
@@ -148,7 +180,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onVerify={handleVerify}
           onViewDetails={handleViewDetails}
         />
-        <QuickSettings onSignOut={handleSignOut} />
+        <QuickSettings 
+          onSignOut={handleSignOut}
+          onInsuranceClaims={handleInsuranceClaims}
+        />
       </ScrollView>
     </View>
   );
