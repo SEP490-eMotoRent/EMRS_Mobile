@@ -2,20 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import { ActivityIndicator, Alert, Linking, StyleSheet, Text, View } from 'react-native';
+import { WebView, WebViewNavigation } from 'react-native-webview';
 import sl from '../../../../../../core/di/InjectionContainer';
 import { ConfirmVNPayPaymentUseCase } from '../../../../../../domain/usecases/booking/ConfirmVNPayPaymentUseCase';
 import { BookingStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { useBookingStatus } from '../../../hooks/useBookingStatus';
 import { PageHeader } from '../../molecules/PageHeader';
-import { VNPayCallback } from '../../../../../../data/models/booking/vnpay/VNPayCallback';
 
 type RoutePropType = any;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'VNPayWebView'>;
@@ -43,6 +36,7 @@ export const VNPayWebViewScreen: React.FC = () => {
     const {
         vnpayUrl,
         bookingId,
+        bookingCode,
         expiresAt,
         vehicleName,
         totalAmount,
@@ -58,7 +52,6 @@ export const VNPayWebViewScreen: React.FC = () => {
     } = route.params;
 
     const [loading, setLoading] = useState(true);
-    const [apiLoading, setApiLoading] = useState(false);
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const expiryTimer = useRef<NodeJS.Timeout | null>(null);
     const hasHandled = useRef(false);
@@ -70,6 +63,7 @@ export const VNPayWebViewScreen: React.FC = () => {
 
     const STORAGE_KEY = `vnpay_payment_context_${bookingId}`;
 
+    // Store context
     useEffect(() => {
         const ctx: BookingContext = {
             bookingId,
@@ -85,7 +79,6 @@ export const VNPayWebViewScreen: React.FC = () => {
             totalAmount,
             securityDeposit,
         };
-
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ctx)).catch(console.error);
 
         return () => {
@@ -93,38 +86,15 @@ export const VNPayWebViewScreen: React.FC = () => {
                 AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
             }
         };
-    }, [
-        bookingId,
-        vehicleId,
-        vehicleName,
-        vehicleImageUrl,
-        startDate,
-        endDate,
-        duration,
-        rentalDays,
-        branchName,
-        insurancePlan,
-        totalAmount,
-        securityDeposit,
-    ]);
+    }, [bookingId, vehicleId, vehicleName, vehicleImageUrl, startDate, endDate, duration, rentalDays, branchName, insurancePlan, totalAmount, securityDeposit]);
 
     const { stopPolling } = useBookingStatus({
         bookingId,
         pollingInterval: 3000,
         onStatusChange: (status) => {
-            if (hasHandled.current) return;
-            if (status === 'Booked') {
-                hasHandled.current = true;
-                stopPolling();
-                navigateToContract();
-            }
-            if (status === 'Cancelled') {
-                hasHandled.current = true;
-                stopPolling();
-                showFailure('Đơn hàng đã bị hủy');
-            }
+            console.log(`📊 Polling detected status: ${status}`);
         },
-        enabled: !hasHandled.current,
+        enabled: false,
     });
 
     useFocusEffect(
@@ -138,66 +108,7 @@ export const VNPayWebViewScreen: React.FC = () => {
         }, [stopPolling])
     );
 
-    useEffect(() => {
-        const tick = () => {
-            const diff = Math.max(
-                0,
-                Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)
-            );
-            setTimeLeft(diff);
-            if (diff <= 0 && !hasHandled.current) {
-                hasHandled.current = true;
-                stopPolling();
-                showExpiry();
-            }
-        };
-        tick();
-        expiryTimer.current = setInterval(tick, 1000);
-
-        return () => {
-            if (expiryTimer.current) clearInterval(expiryTimer.current);
-            stopPolling();
-        };
-    }, [expiresAt, stopPolling]);
-
-    const buildDtoFromUrl = (url: string): VNPayCallback | null => {
-        try {
-            const u = new URL(url);
-            const p = u.searchParams;
-
-            const vnp_Amount = p.get("vnp_Amount");
-            const vnp_BankCode = p.get("vnp_BankCode");
-            const vnp_BankTranNo = p.get("vnp_BankTranNo");
-            const vnp_CardType = p.get("vnp_CardType");
-            const vnp_PayDate = p.get("vnp_PayDate");
-            const vnp_ResponseCode = p.get("vnp_ResponseCode");
-            const vnp_TransactionNo = p.get("vnp_TransactionNo");
-            const vnp_TxnRef = p.get("vnp_TxnRef");
-
-            if (!vnp_ResponseCode || !vnp_TxnRef) return null;
-
-            const amount = vnp_Amount ? parseInt(vnp_Amount) / 100 : 0;
-
-            const formatDate = (d: string) =>
-                `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${d.slice(8,10)}:${d.slice(10,12)}:${d.slice(12,14)}+07:00`;
-
-            return {
-                isSuccess: vnp_ResponseCode === "00",
-                orderId: vnp_TxnRef,
-                transactionId: vnp_TransactionNo || "",
-                amount,
-                responseCode: vnp_ResponseCode,
-                message: vnp_ResponseCode === "00" ? "Payment success" : "Payment failed",
-                bankCode: vnp_BankCode || "",
-                bankTransactionNo: vnp_BankTranNo || "",
-                cardType: vnp_CardType || "",
-                transactionDate: vnp_PayDate ? formatDate(vnp_PayDate) : new Date().toISOString(),
-            };
-        } catch {
-            return null;
-        }
-    };
-
+        // Navigate to contract screen
     const navigateToContract = useCallback(async () => {
         const ctxStr = await AsyncStorage.getItem(STORAGE_KEY);
         const ctx: BookingContext | null = ctxStr ? JSON.parse(ctxStr) : null;
@@ -217,141 +128,369 @@ export const VNPayWebViewScreen: React.FC = () => {
             contractNumber: bookingId,
         });
 
-        // Clean up
         await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
-    }, [
-        navigation,
-        STORAGE_KEY,
-        vehicleId,
-        vehicleName,
-        vehicleImageUrl,
-        startDate,
-        endDate,
-        duration,
-        rentalDays,
-        branchName,
-        insurancePlan,
-        totalAmount,
-        securityDeposit,
-        bookingId,
-    ]);
+    }, [navigation, STORAGE_KEY, vehicleId, vehicleName, vehicleImageUrl, startDate, endDate, duration, rentalDays, branchName, insurancePlan, totalAmount, securityDeposit, bookingId]);
 
+
+    // Handle deep link callback
     const handleDeepLink = useCallback(
         async (url: string) => {
-            if (hasHandled.current) return;
-            hasHandled.current = true;
-            stopPolling();
-            webviewRef.current?.stopLoading();
-
-            // Clear WebView
-            webviewRef.current?.injectJavaScript(`
-                document.body.innerHTML = '<div style="background:#000;color:#fff;text-align:center;padding:50px;font-size:18px;">Đang chuyển về ứng dụng...</div>';
-            `);
-
-            const dto = buildDtoFromUrl(url);
-            if (!dto || dto.responseCode !== '00') {
-                showFailure("Thanh toán thất bại");
+            if (hasHandled.current) {
+                console.log('⚠️ Deep link already handled, ignoring:', url);
                 return;
             }
 
-            // NO CONFIRM API
-            // IPN already did it
-            await navigateToContract();
-        },
-        [stopPolling, navigateToContract]
-    );
-    const INJECTED_JS = `
-      (function() {
-        const origHref = Object.getOwnPropertyDescriptor(window.location, 'href');
-        const origAssign = window.location.assign;
-        const origReplace = window.location.replace;
-        const origOpen = window.open;
+            console.log('🔗 Processing deep link:', url);
 
-        const postDeepLink = (url) => {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'DEEP_LINK', url }));
-        };
+            hasHandled.current = true;
+            stopPolling();
 
-        Object.defineProperty(window.location, 'href', {
-          set: function(url) {
-            if (url && url.startsWith('emrs://')) {
-              postDeepLink(url);
-              return;
+            // Stop WebView from showing error page
+            webviewRef.current?.stopLoading();
+            setLoading(true);
+
+            const dto = buildDtoFromUrl(url);
+
+            if (!dto) {
+                console.error('❌ Invalid deep link format');
+                showFailure("Lỗi xử lý thanh toán");
+                return;
             }
-            if (origHref) origHref.set.call(this, url);
-          },
-          get: origHref ? origHref.get : () => window.location.href
-        });
 
-        window.location.assign = function(url) {
-          if (url && typeof url === 'string' && url.startsWith('emrs://')) {
-            postDeepLink(url);
-            return;
-          }
-          origAssign.call(this, url);
-        };
+            console.log('📦 VNPay callback data:', dto);
 
-        window.location.replace = function(url) {
-          if (url && typeof url === 'string' && url.startsWith('emrs://')) {
-            postDeepLink(url);
-            return;
-          }
-          origReplace.call(this, url);
-        };
-
-        window.open = function(url) {
-          if (url && typeof url === 'string' && url.startsWith('emrs://')) {
-            postDeepLink(url);
-            return null;
-          }
-          return origOpen.apply(this, arguments);
-        };
-
-        document.addEventListener('click', function(e) {
-          const a = e.target.closest('a');
-          if (a && a.href && a.href.startsWith('emrs://')) {
-            e.preventDefault();
-            postDeepLink(a.href);
-          }
-        }, true);
-
-        document.addEventListener('submit', function(e) {
-          const form = e.target;
-          if (form && form.action && form.action.startsWith('emrs://')) {
-            e.preventDefault();
-            postDeepLink(form.action);
-          }
-        }, true);
-
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach(mutation => {
-            mutation.addedNodes.forEach(node => {
-              if (node.nodeType === 1) {
-                const links = (node as Element).querySelectorAll ? 
-                  (node as Element).querySelectorAll('a[href^="emrs://"]') : [];
-                links.forEach(a => {
-                  a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    postDeepLink(a.href);
-                  });
+            // Validate booking code matches
+            if (bookingCode && dto.orderId !== bookingCode) {
+                console.error('❌ Booking code mismatch:', {
+                    expected: bookingCode,
+                    received: dto.orderId
                 });
-              }
-            });
-          });
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
+                showFailure("Mã đơn hàng không khớp");
+                return;
+            }
 
+            // Payment failed
+            if (dto.responseCode !== '00') {
+                console.error('❌ Payment failed:', dto.message);
+                showFailure(dto.message || "Thanh toán thất bại");
+                return;
+            }
+
+            // ✅ Payment successful
+            console.log('✅ Payment successful, confirming with backend...');
+            console.log('📤 Sending callback data:', JSON.stringify(dto, null, 2));
+
+            try {
+                // Call callback API to confirm payment
+                await confirmVNPayPayment.execute(dto);
+                console.log('✅ Backend confirmed payment successfully');
+
+                // Wait a bit for backend to process
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Navigate to contract
+                await navigateToContract();
+
+            } catch (error: any) {
+                console.error('❌ Callback API failed:', error);
+                console.error('❌ Error details:', JSON.stringify(error.response?.data, null, 2));
+
+                // Show error with retry option
+                Alert.alert(
+                    'Lỗi xác nhận',
+                    'Thanh toán thành công nhưng không thể xác nhận với hệ thống. Vui lòng kiểm tra mục "Chuyến đi" sau vài phút.',
+                    [
+                        {
+                            text: 'Thử lại',
+                            onPress: () => {
+                                hasHandled.current = false;
+                                handleDeepLink(url);
+                            }
+                        },
+                        {
+                            text: 'Đóng',
+                            onPress: () => navigation.goBack()
+                        }
+                    ]
+                );
+            }
+        },
+        [stopPolling, confirmVNPayPayment, navigateToContract, navigation, bookingCode]
+    );
+    // ✅ CRITICAL: Listen for deep links globally
+    useEffect(() => {
+        const handleDeepLinkEvent = (event: { url: string }) => {
+            console.log('🔗 Deep link event received:', event.url);
+            if (event.url.startsWith('emrs://payment/callback')) {
+                console.log('🎯 VNPay callback detected!');
+                handleDeepLink(event.url);
+            }
+        };
+
+        // Listen for deep link events
+        const subscription = Linking.addEventListener('url', handleDeepLinkEvent);
+
+        // Check if app was opened with a deep link
+        Linking.getInitialURL().then(url => {
+            if (url && url.startsWith('emrs://payment/callback')) {
+                console.log('🎯 App opened with VNPay callback:', url);
+                handleDeepLink(url);
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [handleDeepLink]);
+
+    // Timer
+    useEffect(() => {
+        const tick = () => {
+            const diff = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+            setTimeLeft(diff);
+            if (diff <= 0 && !hasHandled.current) {
+                hasHandled.current = true;
+                stopPolling();
+                showExpiry();
+            }
+        };
+        tick();
+        expiryTimer.current = setInterval(tick, 1000);
+
+        return () => {
+            if (expiryTimer.current) clearInterval(expiryTimer.current);
+            stopPolling();
+        };
+    }, [expiresAt, stopPolling]);
+
+    // Parse VNPay callback from URL
+    const buildDtoFromUrl = (url: string) => {
+        try {
+            const u = new URL(url);
+            const p = u.searchParams;
+
+            const vnp_ResponseCode = p.get("vnp_ResponseCode");
+            const vnp_TxnRef = p.get("vnp_TxnRef");
+            const vnp_Amount = p.get("vnp_Amount");
+            const vnp_BankCode = p.get("vnp_BankCode");
+            const vnp_BankTranNo = p.get("vnp_BankTranNo");
+            const vnp_CardType = p.get("vnp_CardType");
+            const vnp_PayDate = p.get("vnp_PayDate");
+            const vnp_TransactionNo = p.get("vnp_TransactionNo");
+
+            if (!vnp_ResponseCode || !vnp_TxnRef) return null;
+
+            const amount = vnp_Amount ? parseInt(vnp_Amount) / 100 : 0;
+            const formatDate = (d: string) =>
+                `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${d.slice(8,10)}:${d.slice(10,12)}:${d.slice(12,14)}+07:00`;
+
+            return {
+                isSuccess: vnp_ResponseCode === "00",
+                orderId: vnp_TxnRef,
+                transactionId: vnp_TransactionNo || "",
+                amount,
+                responseCode: vnp_ResponseCode,
+                message: vnp_ResponseCode === "00" ? "Payment success" : "Payment failed",
+                bankCode: vnp_BankCode || "",
+                bankTransactionNo: vnp_BankTranNo || "",
+                cardType: vnp_CardType || "",
+                transactionDate: vnp_PayDate ? formatDate(vnp_PayDate) : new Date().toISOString(),
+            };
+        } catch (e) {
+            console.error("❌ Failed to parse VNPay URL:", e);
+            return null;
+        }
+    };
+
+    // ✅ JavaScript injection to intercept deep link redirect
+    const injectedJavaScript = `
+        (function() {
+            console.log('🔧 VNPay interceptor loaded');
+            
+            // NUCLEAR OPTION: Override ALL navigation methods
+            const blockAndExtract = function(url) {
+                console.log('🔗 Navigation attempt to:', url);
+                if (url && url.startsWith('emrs://')) {
+                    console.log('🎯 BLOCKING deep link redirect and extracting data!');
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'deeplink',
+                        url: url
+                    }));
+                    // Return false/null to prevent actual navigation
+                    return false;
+                }
+                return true;
+            };
+            
+            // Intercept window.location.href setter
+            let currentHref = window.location.href;
+            Object.defineProperty(window.location, 'href', {
+                get: function() { return currentHref; },
+                set: function(url) {
+                    console.log('🔗 Setting location.href to:', url);
+                    if (!blockAndExtract(url)) return;
+                    currentHref = url;
+                    window.location.replace(url);
+                }
+            });
+            
+            // Intercept window.location.replace
+            const originalReplace = window.location.replace;
+            window.location.replace = function(url) {
+                console.log('🔗 Location.replace:', url);
+                if (!blockAndExtract(url)) return;
+                return originalReplace.call(window.location, url);
+            };
+            
+            // Intercept window.location.assign
+            const originalAssign = window.location.assign;
+            window.location.assign = function(url) {
+                console.log('🔗 Location.assign:', url);
+                if (!blockAndExtract(url)) return;
+                return originalAssign.call(window.location, url);
+            };
+            
+            // Intercept window.open
+            const originalOpen = window.open;
+            window.open = function(url) {
+                console.log('🔗 Window.open:', url);
+                if (!blockAndExtract(url)) return null;
+                return originalOpen.apply(this, arguments);
+            };
+            
+            // Intercept anchor clicks
+            document.addEventListener('click', function(e) {
+                var target = e.target;
+                while (target && target.tagName !== 'A') {
+                    target = target.parentElement;
+                }
+                if (target && target.href) {
+                    console.log('🔗 Link clicked:', target.href);
+                    if (target.href.startsWith('emrs://')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        blockAndExtract(target.href);
+                    }
+                }
+            }, true);
+            
+            // Intercept form submissions that might redirect
+            document.addEventListener('submit', function(e) {
+                console.log('📝 Form submitted');
+                const form = e.target;
+                if (form && form.action && form.action.startsWith('emrs://')) {
+                    e.preventDefault();
+                    blockAndExtract(form.action);
+                }
+            }, true);
+            
+            // Poll the DOM for the deep link URL
+            let pollCount = 0;
+            const maxPolls = 60; // 30 seconds
+            const pollInterval = setInterval(function() {
+                pollCount++;
+                
+                // Check all links
+                const links = document.getElementsByTagName('a');
+                for (let i = 0; i < links.length; i++) {
+                    if (links[i].href && links[i].href.startsWith('emrs://')) {
+                        console.log('🎯 Found deep link in DOM!');
+                        blockAndExtract(links[i].href);
+                        clearInterval(pollInterval);
+                        return;
+                    }
+                }
+                
+                // Check meta refresh
+                const metas = document.getElementsByTagName('meta');
+                for (let i = 0; i < metas.length; i++) {
+                    const content = metas[i].getAttribute('content');
+                    const httpEquiv = metas[i].getAttribute('http-equiv');
+                    if (httpEquiv && httpEquiv.toLowerCase() === 'refresh' && content) {
+                        const urlMatch = content.match(/url=(.+)/i);
+                        if (urlMatch && urlMatch[1] && urlMatch[1].startsWith('emrs://')) {
+                            console.log('🎯 Found deep link in meta refresh!');
+                            // Remove the meta tag to prevent auto-redirect
+                            metas[i].parentNode.removeChild(metas[i]);
+                            blockAndExtract(urlMatch[1]);
+                            clearInterval(pollInterval);
+                            return;
+                        }
+                    }
+                }
+                
+                // Check page content for deep link
+                const bodyText = document.body.innerHTML;
+                const match = bodyText.match(/(emrs:\/\/payment\/callback\?[^"'<>\\s]+)/);
+                if (match) {
+                    console.log('🎯 Found deep link in page content!');
+                    blockAndExtract(match[1]);
+                    clearInterval(pollInterval);
+                    return;
+                }
+                
+                if (pollCount >= maxPolls) {
+                    console.log('⏱️ Polling timeout');
+                    clearInterval(pollInterval);
+                }
+            }, 500);
+            
+            console.log('✅ All interceptors installed');
+        })();
         true;
-      })();
     `;
 
-    const onMessage = useCallback(
-        (event: WebViewMessageEvent) => {
-            try {
-                const data = JSON.parse(event.nativeEvent.data);
-                if (data.type === 'DEEP_LINK' && data.url) {
-                    handleDeepLink(data.url);
-                }
-            } catch (e) {}
+    // Handle messages from WebView
+    const onMessage = useCallback((event: any) => {
+        try {
+            const data = JSON.parse(event.nativeEvent.data);
+            console.log('📨 Message from WebView:', data);
+            
+            if (data.type === 'deeplink') {
+                console.log('🎯 Deep link received from JavaScript:', data.url);
+                handleDeepLink(data.url);
+            }
+        } catch (e) {
+            console.error('❌ Failed to parse WebView message:', e);
+        }
+    }, [handleDeepLink]);
+
+    // Backup: Handle navigation state changes
+    const onNavigationStateChange = useCallback(
+        (navState: WebViewNavigation) => {
+            const url = navState.url || '';
+            console.log('🔍 Navigation request:', url);
+            console.log('🔍 Navigation state:', {
+                canGoBack: navState.canGoBack,
+                canGoForward: navState.canGoForward,
+                loading: navState.loading,
+                navigationType: navState.navigationType,
+            });
+            
+            if (url.startsWith('emrs://')) {
+                console.log('🎯 Deep link in navigation state:', url);
+                handleDeepLink(url);
+            }
+        },
+        [handleDeepLink]
+    );
+
+    // Final backup: onShouldStartLoadWithRequest
+    const onShouldStartLoadWithRequest = useCallback(
+        (request: any): boolean => {
+            const url = request.url || '';
+            console.log('🚦 onShouldStartLoadWithRequest:', url);
+            
+            // Intercept deep link
+            if (url.startsWith('emrs://')) {
+                console.log('🎯 Deep link detected in onShouldStartLoadWithRequest:', url);
+                // Process it asynchronously but return false immediately
+                setTimeout(() => handleDeepLink(url), 0);
+                return false; // Block WebView from loading it
+            }
+
+            // Allow normal navigation
+            return true;
         },
         [handleDeepLink]
     );
@@ -372,7 +511,7 @@ export const VNPayWebViewScreen: React.FC = () => {
     };
 
     const handleBack = () => {
-        if (hasHandled.current || apiLoading) {
+        if (hasHandled.current) {
             navigation.goBack();
             return;
         }
@@ -417,12 +556,10 @@ export const VNPayWebViewScreen: React.FC = () => {
                 </View>
             </View>
 
-            {(loading || apiLoading) && (
+            {loading && (
                 <View style={styles.overlay}>
                     <ActivityIndicator size="large" color="#fff" />
-                    <Text style={styles.overlayTxt}>
-                        {apiLoading ? 'Đang xác nhận thanh toán...' : 'Đang tải trang thanh toán...'}
-                    </Text>
+                    <Text style={styles.overlayTxt}>Đang tải trang thanh toán...</Text>
                 </View>
             )}
 
@@ -431,9 +568,16 @@ export const VNPayWebViewScreen: React.FC = () => {
                 source={{ uri: vnpayUrl }}
                 style={styles.webview}
                 onLoadStart={() => setLoading(true)}
-                onLoadEnd={() => setLoading(false)}
+                onLoadEnd={() => {
+                    setLoading(false);
+                    // Re-inject on every page load
+                    webviewRef.current?.injectJavaScript(injectedJavaScript);
+                }}
+                injectedJavaScript={injectedJavaScript}
+                injectedJavaScriptBeforeContentLoaded={injectedJavaScript}
                 onMessage={onMessage}
-                injectedJavaScript={INJECTED_JS}
+                onNavigationStateChange={onNavigationStateChange}
+                onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
                 javaScriptEnabled
                 domStorageEnabled
                 cacheEnabled={false}
@@ -441,6 +585,8 @@ export const VNPayWebViewScreen: React.FC = () => {
                 sharedCookiesEnabled
                 allowsInlineMediaPlayback
                 mediaPlaybackRequiresUserAction={false}
+                setSupportMultipleWindows={false}
+                allowsBackForwardNavigationGestures={false}
             />
 
             <View style={styles.footer}>

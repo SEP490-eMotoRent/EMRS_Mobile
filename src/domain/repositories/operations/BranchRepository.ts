@@ -7,4 +7,9 @@ export interface BranchRepository {
     getById(id: string): Promise<Branch | null>;
     getByVehicleModelId(vehicleModelId: string): Promise<Branch[]>;
     update(branch: Branch): Promise<void>;
+    searchChargingStations(
+        latitude: number,
+        longitude: number,
+        radius: number
+    ): Promise<Branch[]>;
 }

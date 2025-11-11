@@ -3,6 +3,7 @@ import { ApiResponse } from '../../../../../core/network/APIResponse';
 import { AxiosClient } from '../../../../../core/network/AxiosClient';
 import { BranchResponse } from '../../../../models/branch/BranchResponse';
 import { CreateBranchRequest } from '../../../../models/branch/CreateBranchRequest';
+import { SearchChargingStationsRequest } from '../../../../models/branch/SearchChargingStationsRequest';
 import { UpdateBranchRequest } from '../../../../models/branch/UpdateBranchRequest';
 import { BranchRemoteDataSource } from '../../../interfaces/remote/branch/BranchRemoteDataSource';
 
@@ -50,5 +51,19 @@ export class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
         await this.axiosClient.delete<ApiResponse<void>>(
             ApiEndpoints.branch.delete(id)
         );
+    }
+
+    /**
+     * Search for nearby charging stations
+     */
+    async searchChargingStations(request: SearchChargingStationsRequest): Promise<BranchResponse[]> {
+        const response = await this.axiosClient.get<ApiResponse<BranchResponse[]>>(
+            ApiEndpoints.branch.searchCharging(
+                request.latitude,
+                request.longitude,
+                request.radius
+            )
+        );
+        return response.data.data;
     }
 }

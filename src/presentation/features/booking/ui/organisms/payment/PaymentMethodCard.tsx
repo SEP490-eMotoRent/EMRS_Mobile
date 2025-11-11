@@ -29,7 +29,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
                     <View style={styles.icon}>
                         <Text style={styles.iconText}>💳</Text>
                     </View>
-                    <Text style={styles.title}>eMotoRent Wallet</Text>
+                    <Text style={styles.title}>Ví eMotoRent</Text>
                 </View>
                 <RadioButton selected={isSelected} />
             </View>

@@ -89,7 +89,6 @@ export type BookingStackParamList = {
     rentalFee: string;
     insuranceFee: string;
     securityDeposit: string;
-    serviceFee: string;
     total: string;
   };
   // ✅ NEW: VNPay payment flow

@@ -84,16 +84,17 @@ import { GetInsurancePackageByIdUseCase } from "../../domain/usecases/insurance/
 import { MapboxGeocodingDataSourceImpl } from '../../data/datasources/implementations/remote/maps/MapboxGeocodingDataSourceImpl';
 
 import { RentalReturnRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl";
-import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
-import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
-import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
-import { AxiosClient } from "../network/AxiosClient";
-import { ConfirmVNPayPaymentUseCase } from "../../domain/usecases/booking/ConfirmVNPayPaymentUseCase";
 import { WalletRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/wallet/WalletRemoteDataSourceImpl";
+import { RentalReturnRepositoryImpl } from "../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
 import { WalletRepositoryImpl } from "../../data/repositories/wallet/WalletRepositoryImpl";
 import { WalletRepository } from "../../domain/repositories/wallet/WalletRepository";
+import { ConfirmVNPayPaymentUseCase } from "../../domain/usecases/booking/ConfirmVNPayPaymentUseCase";
+import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
+import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 import { CreateWalletUseCase } from "../../domain/usecases/wallet/CreateWalletUseCase";
 import { GetWalletBalanceUseCase } from "../../domain/usecases/wallet/GetWalletBalanceUseCase";
+import { AxiosClient } from "../network/AxiosClient";
+import { SearchChargingStationsUseCase } from "../../domain/usecases/maps/SearchChargingStationsUseCase";
 
 
 /**
@@ -230,6 +231,8 @@ class ServiceLocator {
     this.services.set("SearchPlacesUseCase", searchPlacesUseCase);
     const getPlaceDetailsUseCase = new GetPlaceDetailsUseCase(geocodingRepository);
     this.services.set("GetPlaceDetailsUseCase", getPlaceDetailsUseCase);
+    const searchChargingStationsUseCase = new SearchChargingStationsUseCase(branchRepository);
+    this.services.set("SearchChargingStationsUseCase", searchChargingStationsUseCase);
   
     // Rental Return services
     const rentalReturnRemoteDataSource = new RentalReturnRemoteDataSourceImpl(axiosClient);
@@ -433,6 +436,10 @@ class ServiceLocator {
 
   getGetWalletBalanceUseCase(): GetWalletBalanceUseCase {
     return this.get<GetWalletBalanceUseCase>('GetWalletBalanceUseCase');
+  }
+
+  getSearchChargingStationsUseCase(): SearchChargingStationsUseCase {
+    return this.get<SearchChargingStationsUseCase>('SearchChargingStationsUseCase');
   }
 }
 

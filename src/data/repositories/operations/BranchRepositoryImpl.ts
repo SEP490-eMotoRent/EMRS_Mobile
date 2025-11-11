@@ -3,6 +3,7 @@ import { BranchRepository } from "../../../domain/repositories/operations/Branch
 import { BranchRemoteDataSource } from "../../datasources/interfaces/remote/branch/BranchRemoteDataSource";
 import { BranchResponse } from "../../models/branch/BranchResponse";
 import { CreateBranchRequest } from "../../models/branch/CreateBranchRequest";
+import { SearchChargingStationsRequest } from "../../models/branch/SearchChargingStationsRequest";
 import { UpdateBranchRequest } from "../../models/branch/UpdateBranchRequest";
 
 export class BranchRepositoryImpl implements BranchRepository {
@@ -59,6 +60,24 @@ export class BranchRepositoryImpl implements BranchRepository {
             closingTime: branch.closingTime
         };
         await this.remoteDataSource.update(branch.id, request);
+    }
+
+        /**
+     * Search for nearby charging stations
+     */
+    async searchChargingStations(
+        latitude: number,
+        longitude: number,
+        radius: number
+    ): Promise<Branch[]> {
+        const request: SearchChargingStationsRequest = {
+            latitude,
+            longitude,
+            radius
+        };
+        
+        const responses = await this.remoteDataSource.searchChargingStations(request);
+        return responses.map(response => this.mapToEntity(response));
     }
 
     private mapToEntity(response: BranchResponse): Branch {
