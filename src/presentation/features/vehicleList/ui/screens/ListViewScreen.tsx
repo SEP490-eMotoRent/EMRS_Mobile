@@ -3,7 +3,10 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
-import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import {
+  BrowseStackParamList,
+  HomeStackParamList,
+} from "../../../../shared/navigation/StackParameters/types";
 import { useVehicleModels } from "../../hooks/useVehicleModels";
 import { VehicleModelMapper } from "../../mappers/VehicleModelMapper";
 import { MapViewButton } from "../atoms/buttons/MapViewButtons";
@@ -13,134 +16,135 @@ import { LoadingState } from "../molecules/state/LoadingState";
 import { ListControls } from "../orgamism/ListControls";
 import { ListHeader } from "../orgamism/ListHeader";
 import { MotorcycleCard } from "../orgamism/MotorcycleCard";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Support both route types
-type ListViewRouteProp = RouteProp<BrowseStackParamList, "ListView"> | RouteProp<HomeStackParamList, "ListView">;
-type ListViewNavigationProp = StackNavigationProp<BrowseStackParamList, "ListView"> | StackNavigationProp<HomeStackParamList, "ListView">;
+type ListViewRouteProp =
+  | RouteProp<BrowseStackParamList, "ListView">
+  | RouteProp<HomeStackParamList, "ListView">;
+type ListViewNavigationProp =
+  | StackNavigationProp<BrowseStackParamList, "ListView">
+  | StackNavigationProp<HomeStackParamList, "ListView">;
 
 type SortType = "closest" | "price-low" | "price-high";
 
 export const ListView: React.FC = () => {
-    const route = useRoute<ListViewRouteProp>();
-    const navigation = useNavigation<ListViewNavigationProp>();
+  const route = useRoute<ListViewRouteProp>();
+  const navigation = useNavigation<ListViewNavigationProp>();
 
-    // Updated hook returns both domain models + raw DTOs
-    const { vehicleModels, rawDtos, loading, error, refetch } = useVehicleModels();
+  // Updated hook returns both domain models + raw DTOs
+  const { vehicleModels, rawDtos, loading, error, refetch } =
+    useVehicleModels();
 
-    const [sortBy, setSortBy] = useState<SortType>("closest");
-    const [bookingModalVisible, setBookingModalVisible] = useState(false);
+  const [sortBy, setSortBy] = useState<SortType>("closest");
+  const [bookingModalVisible, setBookingModalVisible] = useState(false);
 
-    const { location, dateRange, address } = route.params || {
-        location: "Thành phố Hồ Chí Minh, Việt Nam",
-        dateRange: "20 Thg 10 | 10:00 SA - 23 Thg 10 | 10:00 SA",
-        address: "Thành phố Hồ Chí Minh, Việt Nam",
-    };
+  const { location, dateRange, address } = route.params || {
+    location: "Thành phố Hồ Chí Minh, Việt Nam",
+    dateRange: "20 Thg 10 | 10:00 SA - 23 Thg 10 | 10:00 SA",
+    address: "Thành phố Hồ Chí Minh, Việt Nam",
+  };
 
-    // Pass both domain models and raw DTOs to mapper
-    const motorcycles = useMemo(() => {
-        return VehicleModelMapper.toMotorcycles(vehicleModels, rawDtos);
-    }, [vehicleModels, rawDtos]);
+  // Pass both domain models and raw DTOs to mapper
+  const motorcycles = useMemo(() => {
+    return VehicleModelMapper.toMotorcycles(vehicleModels, rawDtos);
+  }, [vehicleModels, rawDtos]);
 
-    const sortedMotorcycles = useMemo(() => {
-        const sorted = [...motorcycles].sort((a, b) => {
-        if (sortBy === "closest") return a.distance - b.distance;
-        if (sortBy === "price-low") return a.price - b.price;
-        if (sortBy === "price-high") return b.price - a.price;
-        return 0;
-        });
-        return sorted;
-    }, [motorcycles, sortBy]);
+  const sortedMotorcycles = useMemo(() => {
+    const sorted = [...motorcycles].sort((a, b) => {
+      if (sortBy === "closest") return a.distance - b.distance;
+      if (sortBy === "price-low") return a.price - b.price;
+      if (sortBy === "price-high") return b.price - a.price;
+      return 0;
+    });
+    return sorted;
+  }, [motorcycles, sortBy]);
 
-    const handleSortPress = () => {
-        if (sortBy === "closest") setSortBy("price-low");
-        else if (sortBy === "price-low") setSortBy("price-high");
-        else setSortBy("closest");
-    };
-    
-    const getSortLabel = () => {
-        if (sortBy === "closest") return "Gần Địa Chỉ Nhất";
-        if (sortBy === "price-low") return "Giá: Thấp Đến Cao";
-        return "Giá: Cao Đến Thấp";
-    };
+  const handleSortPress = () => {
+    if (sortBy === "closest") setSortBy("price-low");
+    else if (sortBy === "price-low") setSortBy("price-high");
+    else setSortBy("closest");
+  };
 
-    const handleMapViewPress = () => {
-        // @ts-ignore - navigation will work from both stacks
-        navigation.navigate("Map", { location, dateRange, address });
-    };
+  const getSortLabel = () => {
+    if (sortBy === "closest") return "Gần Địa Chỉ Nhất";
+    if (sortBy === "price-low") return "Giá: Thấp Đến Cao";
+    return "Giá: Cao Đến Thấp";
+  };
 
-    const handleSearchPress = () => {
-        setBookingModalVisible(true);
-    };
+  const handleMapViewPress = () => {
+    // @ts-ignore - navigation will work from both stacks
+    navigation.navigate("Map", { location, dateRange, address });
+  };
 
-    const renderEmptyComponent = () => {
-        if (loading) return <LoadingState />;
-        if (error) return <ErrorState message={error} onRetry={refetch} />;
-        return <EmptyState onAction={refetch} />;
-    };
+  const handleSearchPress = () => {
+    setBookingModalVisible(true);
+  };
 
-    return (
-        <View style={styles.container}>
-        <FlatList
-            data={sortedMotorcycles}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <MotorcycleCard motorcycle={item} />}
-            ListHeaderComponent={
-            <>
-                <ListHeader
-                location={address}
-                dateRange={dateRange}
-                onSearchPress={handleSearchPress}
-                onPricePress={() => console.log("Price filter")}
-                onModelPress={() => console.log("Model filter")}
-                onRangePress={() => console.log("Range filter")}
-                />
-                <ListControls
-                totalResults={motorcycles.length}
-                sortLabel={getSortLabel()}
-                onSortPress={handleSortPress}
-                />
-            </>
-            }
-            ListEmptyComponent={renderEmptyComponent}
-            contentContainerStyle={
-            sortedMotorcycles.length === 0 ? styles.emptyListContent : styles.listContent
-            }
-            stickyHeaderIndices={[0]}
-            refreshing={loading}
-            onRefresh={refetch}
-        />
+  const renderEmptyComponent = () => {
+    if (loading) return <LoadingState />;
+    if (error) return <ErrorState message={error} onRetry={refetch} />;
+    return <EmptyState onAction={refetch} />;
+  };
 
-        <View style={styles.mapButtonContainer}>
-            <MapViewButton onPress={handleMapViewPress} />
-        </View>
+  return (
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={sortedMotorcycles}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <MotorcycleCard motorcycle={item} />}
+        ListHeaderComponent={
+          <>
+            <ListHeader
+              location={address}
+              dateRange={dateRange}
+              onSearchPress={handleSearchPress}
+              onPricePress={() => console.log("Price filter")}
+              onModelPress={() => console.log("Model filter")}
+              onRangePress={() => console.log("Range filter")}
+            />
+            <ListControls
+              totalResults={motorcycles.length}
+              sortLabel={getSortLabel()}
+              onSortPress={handleSortPress}
+            />
+          </>
+        }
+        ListEmptyComponent={renderEmptyComponent}
+        contentContainerStyle={
+          sortedMotorcycles.length === 0
+            ? styles.emptyListContent
+            : styles.listContent
+        }
+        stickyHeaderIndices={[0]}
+        refreshing={loading}
+        onRefresh={refetch}
+      />
 
-        <BookingModal
-            visible={bookingModalVisible}
-            onClose={() => setBookingModalVisible(false)}
-        />
-        </View>
-    );
+      <View style={styles.mapButtonContainer}>
+        <MapViewButton onPress={handleMapViewPress} />
+      </View>
+
+      <BookingModal
+        visible={bookingModalVisible}
+        onClose={() => setBookingModalVisible(false)}
+      />
+    </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#000",
-    },
-    listContent: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 100,
-    },
-    emptyListContent: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 100,
-        flexGrow: 1,
-    },
-    mapButtonContainer: {
-        position: "absolute",
-        bottom: 25,
-        alignSelf: "center",
-    },
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  listContent: {},
+  emptyListContent: {
+    flexGrow: 1,
+  },
+  mapButtonContainer: {
+    position: "absolute",
+    bottom: 25,
+    alignSelf: "center",
+  },
 });
