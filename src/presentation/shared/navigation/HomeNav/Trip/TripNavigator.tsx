@@ -1,6 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { BookingDetailsScreen } from '../../../../features/staff/handover/ui/screens';
+import { BookingDetailsScreen, HandoverReceiptReportScreen } from '../../../../features/staff/handover/ui/screens';
 import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
 import { TripStackParamList } from '../../StackParameters/types';
 import { SignContractScreen } from '../../../../features/contract/ui/screens/SignContractScreen';
@@ -144,6 +144,14 @@ export const TripNavigator: React.FC = () => {
       <Stack.Screen
         name="ReturnReport"
         component={ReturnReportScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="HandoverReceiptReport"
+        component={HandoverReceiptReportScreen}
         options={{
           headerShown: false,
           gestureEnabled: true,

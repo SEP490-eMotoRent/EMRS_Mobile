@@ -691,6 +691,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.8)",
     borderBottomWidth: 1,
     borderBottomColor: "#2A2A2A",
+    marginTop: 40,
   },
   modalHeaderContent: {
     flexDirection: "row",

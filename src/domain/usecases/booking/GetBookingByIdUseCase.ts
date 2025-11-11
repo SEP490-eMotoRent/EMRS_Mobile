@@ -5,8 +5,6 @@ export class GetBookingByIdUseCase {
     constructor(private bookingRepository: BookingRepository) {}
 
     async execute(bookingId: string): Promise<Booking | null> {
-        console.log("🔍 Fetching booking by ID:", bookingId);
-        
         try {
             const booking = await this.bookingRepository.getById(bookingId);
             

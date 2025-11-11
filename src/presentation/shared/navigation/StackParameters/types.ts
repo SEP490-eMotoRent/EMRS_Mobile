@@ -162,6 +162,10 @@ export type TripStackParamList = {
   BookingDetails: {
     bookingId: string;
   };
+  HandoverReceiptReport: {
+    bookingId: string;
+    rentalReceiptId?: string;
+  };
   ReturnReport: {
     bookingId: string;
     rentalReceiptId: string;
@@ -261,6 +265,10 @@ export type StaffStackParamList = {
     bookingId: string;
     vehicleFiles: string[];
     checkListFile: string;
+  };
+  HandoverReceiptReport: {
+    bookingId: string;
+    rentalReceiptId?: string;
   };
   AwaitingApproval: { status?: "pending" | "approved" | "denied" } | undefined;
   HandoverDocument: undefined;

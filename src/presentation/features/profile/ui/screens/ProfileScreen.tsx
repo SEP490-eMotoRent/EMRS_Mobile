@@ -22,6 +22,7 @@ import { useAppDispatch } from "../../../authentication/store/hooks";
 import { DocumentVerificationHelper } from "../../../../../domain/helpers/DocumentVerificationHelper";
 import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
 import { useWallet } from "../../hooks/wallet/useWallet";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -141,7 +142,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
   // === RENDER ===
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -187,7 +188,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onInsuranceClaims={handleInsuranceClaims}
         />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -195,7 +196,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   scrollView: {
     flex: 1,

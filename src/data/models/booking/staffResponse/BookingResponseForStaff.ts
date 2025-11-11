@@ -18,6 +18,7 @@ export interface BookingForStaffResponse {
     vehicleModel: VehicleModelBookingResponse; // ✅ Nested
     rentalContract: RentalContractBookingResponse; // ✅ Nested
     rentalReceipt: RentalReceiptBookingResponse; // ✅ Nested
+    insurancePackage: InsurancePackageBookingResponse; // ✅ Nested
 }
 
 export interface RenterBookingResponse {
@@ -86,4 +87,16 @@ export interface RentalReceiptBookingResponse {
     handOverVehicleImageFiles: string[];
     returnVehicleImageFiles: string[];
     checkListFile: string[];
+}
+
+export interface InsurancePackageBookingResponse {
+    id: string;
+    packageName: string;
+    packageFee: number;
+    coveragePersonLimit: number;
+    coveragePropertyLimit: number;
+    coverageVehiclePercentage: number;
+    coverageTheft: number;
+    deductibleAmount: number;
+    description: string;
 }

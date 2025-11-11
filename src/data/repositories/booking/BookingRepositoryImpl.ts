@@ -7,10 +7,18 @@ import { RentalPricing } from "../../../domain/entities/financial/RentalPricing"
 import { InsurancePackage } from "../../../domain/entities/insurance/InsurancePackage";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
 import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
-import { BookingRepository, VNPayBookingResult } from "../../../domain/repositories/booking/BookingRepository";
+import {
+  BookingRepository,
+  VNPayBookingResult,
+} from "../../../domain/repositories/booking/BookingRepository";
 import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/booking/BookingRemoteDataSource";
 import { BookingResponse } from "../../models/booking/BookingResponse";
-import { BookingResponseForRenter, InsurancePackageResponse, RenterDetailResponse, VehicleModelResponse } from "../../models/booking/BookingResponseForRenter";
+import {
+  BookingResponseForRenter,
+  InsurancePackageResponse,
+  RenterDetailResponse,
+  VehicleModelResponse,
+} from "../../models/booking/BookingResponseForRenter";
 import { BookingWithoutWalletResponse } from "../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../models/booking/CreateBookingRequest";
 import { PaginatedBooking } from "../../models/booking/PaginatedBooking";
@@ -18,6 +26,7 @@ import { PaginatedBookingResponse } from "../../models/booking/PaginatedBookingR
 import {
   AccountBookingResponse,
   BookingForStaffResponse,
+  InsurancePackageBookingResponse,
   RentalContractBookingResponse,
   RentalPricingBookingResponse,
   RentalReceiptBookingResponse,
@@ -57,37 +66,42 @@ export class BookingRepositoryImpl implements BookingRepository {
   // CREATE VNPAY - Returns minimal entity
   // =========================================================================
   async createVNPay(booking: Booking): Promise<VNPayBookingResult> {
-      const request: CreateBookingRequest = {
-          startDatetime: booking.startDatetime?.toISOString(),
-          endDatetime: booking.endDatetime?.toISOString(),
-          handoverBranchId: booking.handoverBranchId!,
-          baseRentalFee: booking.baseRentalFee,
-          depositAmount: booking.depositAmount,
-          rentalDays: booking.rentalDays,
-          rentalHours: booking.rentalHours,
-          rentingRate: booking.rentingRate,
-          vehicleModelId: booking.vehicleModelId,
-          averageRentalPrice: booking.averageRentalPrice,
-          insurancePackageId: booking.insurancePackageId,
-          totalRentalFee: booking.totalRentalFee,
-      };
+    const request: CreateBookingRequest = {
+      startDatetime: booking.startDatetime?.toISOString(),
+      endDatetime: booking.endDatetime?.toISOString(),
+      handoverBranchId: booking.handoverBranchId!,
+      baseRentalFee: booking.baseRentalFee,
+      depositAmount: booking.depositAmount,
+      rentalDays: booking.rentalDays,
+      rentalHours: booking.rentalHours,
+      rentingRate: booking.rentingRate,
+      vehicleModelId: booking.vehicleModelId,
+      averageRentalPrice: booking.averageRentalPrice,
+      insurancePackageId: booking.insurancePackageId,
+      totalRentalFee: booking.totalRentalFee,
+    };
 
-      const response = await this.remote.createVNPay(request);
-      
-      console.log("📥 VNPay Response from backend:", JSON.stringify(response, null, 2));
-      
-      // ✅ Validate response has required fields
-      if (!response.id || !response.vnpayUrl) {
-          console.error("❌ Invalid VNPay response:", response);
-          throw new Error("Invalid VNPay booking response from server - missing id or vnpayUrl");
-      }
-      
-      console.log("✅ VNPay URL extracted:", response.vnpayUrl);
-      
-      return {
-          booking: this.mapVNPayResponseToEntity(response),
-          vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backend
-      };
+    const response = await this.remote.createVNPay(request);
+
+    console.log(
+      "📥 VNPay Response from backend:",
+      JSON.stringify(response, null, 2)
+    );
+
+    // ✅ Validate response has required fields
+    if (!response.id || !response.vnpayUrl) {
+      console.error("❌ Invalid VNPay response:", response);
+      throw new Error(
+        "Invalid VNPay booking response from server - missing id or vnpayUrl"
+      );
+    }
+
+    console.log("✅ VNPay URL extracted:", response.vnpayUrl);
+
+    return {
+      booking: this.mapVNPayResponseToEntity(response),
+      vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backend
+    };
   }
 
   // =========================================================================
@@ -169,49 +183,49 @@ export class BookingRepositoryImpl implements BookingRepository {
     // console.log("📝 Booking code:", dto.bookingCode); // ← Should print actual code
 
     return new Booking(
-        dto.id,
-        "", // ← USE ACTUAL BOOKING CODE
-        dto.baseRentalFee,
-        dto.depositAmount,
-        dto.rentalDays,
-        dto.rentalHours,
-        dto.rentingRate,
-        dto.lateReturnFee || 0,
-        dto.averageRentalPrice,
-        0, // excessKmFee
-        0, // cleaningFee
-        0, // crossBranchFee
-        0, // totalChargingFee
-        0, // totalAdditionalFee
-        dto.totalRentalFee,
-        dto.totalAmount,
-        0, // refundAmount
-        dto.bookingStatus,
-        dto.vehicleModelId,
-        dto.renterId,
-        undefined, // renter
-        undefined, // vehicleModel
-        dto.vehicleId,
-        undefined, // vehicle
-        dto.startDatetime ? new Date(dto.startDatetime) : undefined,
-        dto.endDatetime ? new Date(dto.endDatetime) : undefined,
-        dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-        undefined, // insurancePackageId
-        undefined, // insurancePackage
-        undefined, // rentalContract
-        undefined, // rentalReceipts
-        undefined, // handoverBranchId
-        undefined, // handoverBranch
-        undefined, // returnBranchId
-        undefined, // returnBranch
-        undefined, // feedback
-        undefined, // insuranceClaims
-        undefined, // additionalFees
-        undefined, // chargingRecords
-        new Date(),
-        null,
-        null,
-        false
+      dto.id,
+      "", // ← USE ACTUAL BOOKING CODE
+      dto.baseRentalFee,
+      dto.depositAmount,
+      dto.rentalDays,
+      dto.rentalHours,
+      dto.rentingRate,
+      dto.lateReturnFee || 0,
+      dto.averageRentalPrice,
+      0, // excessKmFee
+      0, // cleaningFee
+      0, // crossBranchFee
+      0, // totalChargingFee
+      0, // totalAdditionalFee
+      dto.totalRentalFee,
+      dto.totalAmount,
+      0, // refundAmount
+      dto.bookingStatus,
+      dto.vehicleModelId,
+      dto.renterId,
+      undefined, // renter
+      undefined, // vehicleModel
+      dto.vehicleId,
+      undefined, // vehicle
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      undefined, // insurancePackageId
+      undefined, // insurancePackage
+      undefined, // rentalContract
+      undefined, // rentalReceipts
+      undefined, // handoverBranchId
+      undefined, // handoverBranch
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims
+      undefined, // additionalFees
+      undefined, // chargingRecords
+      new Date(),
+      null,
+      null,
+      false
     );
   }
 
@@ -336,7 +350,9 @@ export class BookingRepositoryImpl implements BookingRepository {
   // =========================================================================
   // NESTED OBJECT MAPPERS
   // =========================================================================
-  private mapVehicleModelFromListResponse(dto: VehicleModelResponse): VehicleModel {
+  private mapVehicleModelFromListResponse(
+    dto: VehicleModelResponse
+  ): VehicleModel {
     return new VehicleModel(
       dto.id,
       dto.modelName,
@@ -382,7 +398,9 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapInsurancePackageFromResponse(dto: InsurancePackageResponse): InsurancePackage {
+  private mapInsurancePackageFromResponse(
+    dto: InsurancePackageResponse
+  ): InsurancePackage {
     return new InsurancePackage(
       dto.id,
       dto.packageName,
@@ -422,6 +440,10 @@ export class BookingRepositoryImpl implements BookingRepository {
       ? this.mapRentalReceiptFromStaffResponse(dto.rentalReceipt)
       : undefined;
 
+    const insurancePackage = dto.insurancePackage
+      ? this.mapInsurancePackageFromStaffResponse(dto.insurancePackage)
+      : undefined;
+
     return new Booking(
       dto?.id,
       "",
@@ -450,8 +472,8 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.startDatetime ? new Date(dto.startDatetime) : undefined,
       dto.endDatetime ? new Date(dto.endDatetime) : undefined,
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-      undefined,
-      undefined,
+      insurancePackage?.id ?? "unknown-insurance-package",
+      insurancePackage,
       rentalContract,
       rentalReceipt ? [rentalReceipt] : undefined, // ✅ Convert to array
       undefined,
@@ -479,7 +501,30 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapVehicleModelFromStaffResponse(dto: VehicleModelBookingResponse): VehicleModel {
+  private mapInsurancePackageFromStaffResponse(
+    dto: InsurancePackageBookingResponse
+  ): InsurancePackage {
+    return new InsurancePackage(
+      dto.id,
+      dto.packageName,
+      dto.packageFee,
+      dto.coveragePersonLimit,
+      dto.coveragePropertyLimit,
+      dto.coverageVehiclePercentage,
+      dto.coverageTheft,
+      dto.deductibleAmount,
+      dto.description,
+      true,
+      new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  private mapVehicleModelFromStaffResponse(
+    dto: VehicleModelBookingResponse
+  ): VehicleModel {
     return new VehicleModel(
       dto.id,
       dto.modelName,
@@ -497,7 +542,9 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapRentalContractFromStaffResponse(dto: RentalContractBookingResponse): RentalContract {
+  private mapRentalContractFromStaffResponse(
+    dto: RentalContractBookingResponse
+  ): RentalContract {
     return new RentalContract(
       dto.id,
       dto.contractNumber,
@@ -510,7 +557,9 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapRentalReceiptFromStaffResponse(dto: RentalReceiptBookingResponse): RentalReceipt {
+  private mapRentalReceiptFromStaffResponse(
+    dto: RentalReceiptBookingResponse
+  ): RentalReceipt {
     return new RentalReceipt(
       dto.id,
       dto.startOdometerKm,
@@ -589,7 +638,9 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
-  private mapRentalPricingFromStaffResponse(dto: RentalPricingBookingResponse): RentalPricing {
+  private mapRentalPricingFromStaffResponse(
+    dto: RentalPricingBookingResponse
+  ): RentalPricing {
     return new RentalPricing(
       dto.id,
       dto.rentalPrice,
