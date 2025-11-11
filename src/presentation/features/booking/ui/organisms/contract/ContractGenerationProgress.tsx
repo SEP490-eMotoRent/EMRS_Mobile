@@ -31,7 +31,10 @@ export const ContractGenerationProgress: React.FC<ContractGenerationProgressProp
             <View style={styles.header}>
                 <Text style={styles.title}>Vui lòng đợi...</Text>
                 <View style={styles.statusIcon}>
-                    <Text style={styles.statusIconText}>Hoàn tất</Text>
+                    <View style={styles.checkmark}>
+                        <View style={styles.checkmarkStem} />
+                        <View style={styles.checkmarkKick} />
+                    </View>
                 </View>
             </View>
             <Text style={styles.subtitle}>
@@ -69,16 +72,34 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: "rgba(34, 197, 94, 0.2)",
+        backgroundColor: "rgba(34, 197, 94, 0.15)",
         borderWidth: 2,
         borderColor: "#22c55e",
         justifyContent: "center",
         alignItems: "center",
     },
-    statusIconText: {
-        color: "#22c55e",
-        fontSize: 12,
-        fontWeight: "700",
+    checkmark: {
+        width: 12,
+        height: 12,
+        position: "relative",
+    },
+    checkmarkStem: {
+        position: "absolute",
+        width: 2,
+        height: 8,
+        backgroundColor: "#22c55e",
+        left: 7,
+        top: 2,
+        transform: [{ rotate: "45deg" }],
+    },
+    checkmarkKick: {
+        position: "absolute",
+        width: 2,
+        height: 4,
+        backgroundColor: "#22c55e",
+        left: 3,
+        top: 6,
+        transform: [{ rotate: "-45deg" }],
     },
     subtitle: {
         color: "#999",
