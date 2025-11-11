@@ -21,13 +21,14 @@ import { ContractDetailsCard } from "../../organisms/contract/ContractDetailsCar
 import { ContractGenerationProgress } from "../../organisms/contract/ContractGenerationProgress";
 import { NextStepsCard } from "../../organisms/NextStepsCard";
 import { PaymentSuccessHeader } from "../../organisms/payment/PaymentSuccessHeader";
-
+import { useRenterProfile } from "../../../../profile/hooks/profile/useRenterProfile";
 type RoutePropType = RouteProp<BookingStackParamList, "DigitalContract">;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, "DigitalContract">;
 
 export const DigitalContractScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
+    const { renter, loading: profileLoading } = useRenterProfile();
 
     const {
         vehicleId,
@@ -44,6 +45,10 @@ export const DigitalContractScreen: React.FC = () => {
     } = route.params;
 
     const displayContractNumber = contractNumber ?? "N/A";
+    
+    // Extract renter information
+    const renterName = renter?.account?.fullname || "___________________________";
+    const renterIdCard = renter?.documents?.[0]?.documentNumber || "___________________________";
 
     const [contractGenerated, setContractGenerated] = useState(false);
     const [showContractModal, setShowContractModal] = useState(false);
@@ -105,9 +110,9 @@ export const DigitalContractScreen: React.FC = () => {
 
             <div class="section">
                 <h2>2. BÊN NHẬN XE</h2>
-                <p>Người thuê: [Tên người thuê]</p>
-                <p>Số CCCD: [Số CCCD]</p>
-                <p class="italic">* Thông tin sẽ được cập nhật khi ký hợp đồng</p>
+                <p>Người thuê: ${renterName}</p>
+                <p>Số CCCD: ${renterIdCard}</p>
+                ${renter ? '' : '<p class="italic">* Thông tin sẽ được điền khi nhận xe tại chi nhánh</p>'}
             </div>
 
             <div class="section">
@@ -180,6 +185,7 @@ export const DigitalContractScreen: React.FC = () => {
                             pickupLocation={branchName}
                             totalAmount={totalAmount}
                             securityDeposit={`${securityDeposit} (có thể hoàn lại)`}
+                            imageUrl={vehicleImageUrl}
                         />
 
                         <View style={styles.contractPreviewCard}>
@@ -244,6 +250,7 @@ export const DigitalContractScreen: React.FC = () => {
                         title="Về trang chủ"
                         onPress={handleGoHome}
                         style={styles.secondaryButton}
+                        textStyle={styles.secondaryButtonText}
                     />
                 </View>
             )}
@@ -296,7 +303,15 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
     },
-    secondaryButton: { marginTop: 12, backgroundColor: "#1a1a1a" },
+    secondaryButton: { 
+        marginTop: 12, 
+        backgroundColor: "#1a1a1a", 
+        borderWidth: 1, 
+        borderColor: "#4169E1" 
+    },
+    secondaryButtonText: {
+        color: "#4169E1",
+    },
 
     contractPreviewCard: {
         backgroundColor: "#1a1a1a",

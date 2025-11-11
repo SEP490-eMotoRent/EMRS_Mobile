@@ -51,12 +51,15 @@ export const InsurancePlansScreen: React.FC = () => {
 
     const { packages, loading, error, refetch } = useInsurancePackages();
 
-    console.log("Insurance Plans - Vehicle ID:", vehicleId);
+    console.log("=== Insurance Plans Screen ===");
+    console.log("Vehicle ID:", vehicleId);
     console.log("Vehicle Name:", vehicleName);
     console.log("Branch:", branchName);
     console.log("Rental Duration:", duration);
-    console.log("Rental Price:", rentalPrice);
-    console.log("Fetched Packages:", packages.length);
+    console.log("Rental Days:", rentalDays);
+    console.log("Price Per Day:", pricePerDay);
+    console.log("Rental Price (from previous screen):", rentalPrice);
+    console.log("Security Deposit:", securityDeposit);
 
     const insurancePlans: InsurancePlan[] = useMemo(() => {
         const apiPlans = packages.map(pkg => transformToInsurancePlan(pkg));
@@ -79,16 +82,26 @@ export const InsurancePlansScreen: React.FC = () => {
         ? "MIỄN PHÍ" 
         : formatVND(insuranceFeeValue);
     
-    // Format rental fee from the calculated value
+    // Format all fees for display
     const rentalFee = `${rentalPrice.toLocaleString()}đ`;
+    const depositFee = `${securityDeposit.toLocaleString()}đ`;
     
-    // Calculate total
-    const totalAmount = rentalPrice + insuranceFeeValue;
-    const total = `${totalAmount.toLocaleString()}đ`;
+    // Calculate totals
+    const subtotalForDisplay = rentalPrice + insuranceFeeValue;
+    const fullTotalAmount = rentalPrice + insuranceFeeValue + securityDeposit;
+    const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
+
+    console.log("=== Calculation Breakdown ===");
+    console.log("Rental Price (fee only):", rentalPrice);
+    console.log("Insurance Fee:", insuranceFeeValue);
+    console.log("Security Deposit:", securityDeposit);
+    console.log("Subtotal (Rental + Insurance):", subtotalForDisplay);
+    console.log("FULL TOTAL (incl. deposit):", fullTotalAmount);
 
     const handleContinue = () => {
+        console.log("=== Navigating to PaymentConfirmation ===");
         console.log("Selected insurance plan:", selectedPlanId);
-        console.log("Selected package details:", selectedPackage);
+        console.log("Passing full total:", fullTotal);
         
         navigation.navigate('PaymentConfirmation', {
             vehicleId,
@@ -106,7 +119,7 @@ export const InsurancePlansScreen: React.FC = () => {
             rentalFee: `${rentalPrice.toLocaleString()}đ`,
             insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
-            total: total,
+            total: fullTotal,
         });
     };
 
@@ -180,11 +193,36 @@ export const InsurancePlansScreen: React.FC = () => {
                     />
                 ))}
 
-                <InsuranceBookingSummary
-                    rentalFee={rentalFee}
-                    insuranceFee={insuranceFee}
-                    total={total}
-                />
+                {/* Complete cost breakdown including deposit */}
+                <View style={styles.summaryCard}>
+                    <Text style={styles.summaryTitle}>Chi tiết chi phí</Text>
+                    
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Phí thuê xe</Text>
+                        <Text style={styles.summaryValue}>{rentalFee}</Text>
+                    </View>
+                    
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Phí bảo hiểm</Text>
+                        <Text style={styles.summaryValue}>{insuranceFee}</Text>
+                    </View>
+                    
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Tiền đặt cọc</Text>
+                        <Text style={styles.summaryValue}>{depositFee}</Text>
+                    </View>
+                    
+                    <View style={styles.divider} />
+                    
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.totalLabel}>Tổng cộng</Text>
+                        <Text style={styles.totalValue}>{fullTotal}</Text>
+                    </View>
+                    
+                    <Text style={styles.depositNote}>
+                        * Tiền đặt cọc sẽ được hoàn trả sau khi trả xe
+                    </Text>
+                </View>
             </ScrollView>
 
             <View style={styles.footer}>
@@ -258,5 +296,56 @@ const styles = StyleSheet.create({
         marginTop: 12,
         minWidth: 200,
         backgroundColor: "#374151",
+    },
+    // New styles for complete summary
+    summaryCard: {
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        padding: 16,
+        marginTop: 24,
+        borderWidth: 1,
+        borderColor: "#333",
+    },
+    summaryTitle: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "700",
+        marginBottom: 16,
+    },
+    summaryRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    summaryLabel: {
+        color: "#999",
+        fontSize: 14,
+    },
+    summaryValue: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    divider: {
+        height: 1,
+        backgroundColor: "#333",
+        marginVertical: 12,
+    },
+    totalLabel: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    totalValue: {
+        color: "#00ff00",
+        fontSize: 18,
+        fontWeight: "700",
+    },
+    depositNote: {
+        color: "#666",
+        fontSize: 12,
+        fontStyle: "italic",
+        marginTop: 8,
     },
 });

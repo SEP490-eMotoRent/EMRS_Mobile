@@ -10,9 +10,27 @@ export class InsuranceClaimRemoteDataSourceImpl implements InsuranceClaimRemoteD
     constructor(private axiosClient: AxiosClient) {}
 
     async createInsuranceClaim(request: CreateInsuranceClaimRequest): Promise<InsuranceClaimResponse> {
+        const formData = new FormData();
+        
+        formData.append('BookingId', request.bookingId);
+        formData.append('IncidentDate', request.incidentDate.toISOString());
+        formData.append('IncidentLocation', request.incidentLocation);
+        formData.append('Description', request.description);
+        
+        // Add the actual image files
+        if (request.incidentImageFiles && request.incidentImageFiles.length > 0) {
+            request.incidentImageFiles.forEach((file) => {
+                formData.append('IncidentImageFiles', {
+                    uri: file.uri,
+                    type: file.type,
+                    name: file.name,
+                } as any);
+            });
+        }
+
         const response = await this.axiosClient.post<ApiResponse<InsuranceClaimResponse>>(
             ApiEndpoints.insuranceClaim.create,
-            request
+            formData
         );
         return unwrapResponse(response.data);
     }
