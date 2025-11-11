@@ -33,7 +33,13 @@ export const ContractDetailsCard: React.FC<ContractDetailsCardProps> = ({
                     {imageUrl ? (
                         <Image source={{ uri: imageUrl }} style={styles.image} />
                     ) : (
-                        <Text style={styles.placeholder}>Xe máy điện</Text>
+                        <View style={styles.placeholderIcon}>
+                            <View style={styles.motorcycleIcon}>
+                                <View style={styles.wheel} />
+                                <View style={styles.body} />
+                                <View style={styles.wheel} />
+                            </View>
+                        </View>
                     )}
                 </View>
                 <View style={styles.vehicleInfo}>
@@ -79,8 +85,35 @@ const styles = StyleSheet.create({
         height: "100%",
         borderRadius: 12,
     },
-    placeholder: {
-        fontSize: 32,
+    placeholderIcon: {
+        width: "100%",
+        height: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    motorcycleIcon: {
+        width: 40,
+        height: 24,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+        position: "relative",
+    },
+    wheel: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        borderWidth: 2,
+        borderColor: "#4169E1",
+    },
+    body: {
+        position: "absolute",
+        top: 4,
+        left: 8,
+        right: 8,
+        height: 8,
+        backgroundColor: "#4169E1",
+        borderRadius: 4,
     },
     vehicleInfo: {
         flex: 1,

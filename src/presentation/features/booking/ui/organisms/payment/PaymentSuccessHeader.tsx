@@ -10,8 +10,8 @@ export const PaymentSuccessHeader: React.FC<PaymentSuccessHeaderProps> = ({ amou
     return (
         <View style={styles.container}>
             <SuccessIcon />
-            <Text style={styles.title}>Payment Successful!</Text>
-            <Text style={styles.subtitle}>Your payment of {amount} has been processed</Text>
+            <Text style={styles.title}>THANH TOÁN THÀNH CÔNG</Text>
+            <Text style={styles.subtitle}>Bạn đã thanh toán {amount}</Text>
         </View>
     );
 };
