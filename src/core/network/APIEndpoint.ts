@@ -32,7 +32,7 @@ export const ApiEndpoints = {
 
     vnpayCallback: "/Booking/vnpay/callback",
   },
-  
+
   // Auth endpoints
   auth: {
     register: "/auth/register",
@@ -49,7 +49,7 @@ export const ApiEndpoints = {
       upload: "/api/Document", // POST
       update: (documentId: string) => `/api/Document/${documentId}`, // PUT
       delete: (documentId: string) => `/api/Document/${documentId}`, // DELETE
-    }
+    },
   },
 
   //Document Endpoints
@@ -71,7 +71,8 @@ export const ApiEndpoints = {
   receipt: {
     create: "/rental/receipt",
     getDetails: (bookingId: string) => `/rental/receipt/${bookingId}`,
-    generateContract: (bookingId: string, receiptId: string) => `/rental/contract/${bookingId}/${receiptId}`,
+    generateContract: (bookingId: string, receiptId: string) =>
+      `/rental/contract/${bookingId}/${receiptId}`,
     getContract: (bookingId: string) => `/rental/contract/${bookingId}`,
     generateOtp: (contractId: string) =>
       `/rental/contract/${contractId}/send-otp-code`,
@@ -92,6 +93,8 @@ export const ApiEndpoints = {
     // NEW: Charging station search endpoint
     searchCharging: (lat: number, lon: number, radius: number) =>
       `/Branch/charging/search/${lat}/${lon}/${radius}`,
+    getByLocation: (latitude: number, longitude: number, radius: number) =>
+      `/Branch/charging/search/${latitude}/${longitude}/${radius}`,
   },
 
   // Insurance Claim endpoints
@@ -105,7 +108,8 @@ export const ApiEndpoints = {
   rentalReturn: {
     analyzeReturn: "/rental-return/return/upload-and-analyze",
     createReceipt: "/rental-return/return/create-receipt",
-    summary: (bookingId: string) => `/rental-return/return/${bookingId}/summary`,
+    summary: (bookingId: string) =>
+      `/rental-return/return/${bookingId}/summary`,
     finalizeReturn: `/rental-return/return/finalize`,
   },
 
@@ -113,5 +117,12 @@ export const ApiEndpoints = {
   insurancePackage: {
     getAll: "/InsurancePackage",
     detail: (id: string) => `/InsurancePackage/${id}`,
+  },
+
+  // Charging Station endpoints
+  charging: {
+    getByLicensePlate: "/Charging/search-by-license-plate",
+    getChargingRate: "/Charging/get-charging-rate",
+    create: "/Charging/create",
   },
 };

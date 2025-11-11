@@ -230,6 +230,10 @@ export type ProfileStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
 };
 
+export type BatteryStackParamList = {
+  BranchMap: undefined;
+};
+
 export type StaffStackParamList = {
   Home: undefined;
   MotorbikeDetail: { motorbikeId: string } | undefined;

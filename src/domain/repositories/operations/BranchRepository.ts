@@ -1,4 +1,6 @@
-import { Branch } from '../../entities/operations/Branch';
+import { ApiResponse } from "../../../core/network/APIResponse";
+import { BranchResponse } from "../../../data/models/branch/BranchResponse";
+import { Branch } from "../../entities/operations/Branch";
 
 export interface BranchRepository {
     create(branch: Branch): Promise<void>;
@@ -8,6 +10,11 @@ export interface BranchRepository {
     getByVehicleModelId(vehicleModelId: string): Promise<Branch[]>;
     update(branch: Branch): Promise<void>;
     searchChargingStations(
+        latitude: number,
+        longitude: number,
+        radius: number
+    ): Promise<Branch[]>;
+    getByLocation(
         latitude: number,
         longitude: number,
         radius: number

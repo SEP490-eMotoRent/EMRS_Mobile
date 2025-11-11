@@ -1,3 +1,4 @@
+import { ApiResponse } from '../../../../../core/network/APIResponse';
 import { BranchResponse } from '../../../../models/branch/BranchResponse';
 import { CreateBranchRequest } from '../../../../models/branch/CreateBranchRequest';
 import { SearchChargingStationsRequest } from '../../../../models/branch/SearchChargingStationsRequest';
@@ -11,4 +12,5 @@ export interface BranchRemoteDataSource {
     update(id: string, request: UpdateBranchRequest): Promise<BranchResponse>;
     delete(id: string): Promise<void>;
     searchChargingStations(request: SearchChargingStationsRequest): Promise<BranchResponse[]>;
+    getByLocation(latitude: number, longitude: number, radius: number): Promise<ApiResponse<BranchResponse[]>>;
 }
