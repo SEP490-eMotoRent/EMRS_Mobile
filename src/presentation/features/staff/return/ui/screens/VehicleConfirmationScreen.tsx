@@ -67,7 +67,6 @@ export const VehicleConfirmationScreen: React.FC = () => {
   }
 
   const handleStartReturnInspection = () => {
-    console.log("bookingId", bookingId);
     navigation.navigate("ReturnInspection", {
       bookingId,
     });
@@ -150,7 +149,7 @@ export const VehicleConfirmationScreen: React.FC = () => {
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Năm sản xuất</Text>
               <Text style={styles.detailValue}>
-                {booking?.vehicle.yearOfManufacture?.getFullYear()}
+                {booking?.vehicle.yearOfManufacture?.getFullYear() || "N/A"}
               </Text>
             </View>
           </View>
@@ -180,29 +179,6 @@ export const VehicleConfirmationScreen: React.FC = () => {
                 <Text style={styles.statusText}>On-time</Text>
               </View>
             </View>
-          </View>
-        </View>
-
-        {/* Rental Summary */}
-        <View style={styles.summarySection}>
-          <Text style={styles.summaryTitle}>Tổng quan thuê xe</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Thời gian thuê xe</Text>
-            <Text style={styles.summaryValue}>
-              {booking?.rentalDays} ngày {booking?.rentalHours} giờ
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Số km khi nhận xe</Text>
-            <Text style={styles.summaryValue}>
-              {booking?.rentalReceipt?.startOdometerKm} km
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Phần trăm pin khi nhận xe</Text>
-            <Text style={styles.summaryValue}>
-              {booking?.rentalReceipt?.startBatteryPercentage}%
-            </Text>
           </View>
         </View>
 
@@ -416,7 +392,7 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     color: colors.text.primary,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
   },
   detailValueLarge: {

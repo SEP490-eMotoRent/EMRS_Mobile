@@ -221,7 +221,7 @@ export const RentalScreen: React.FC = () => {
 
             <PrimaryButton
               title="Xem chi tiết Booking"
-              onPress={() => navigation.navigate("BookingDetails")}
+              onPress={() => navigation.navigate("BookingDetails", { bookingId: item.bookingId })}
               style={styles.viewDetailsButton}
             />
           </View>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Modal as RNModal,
   RefreshControl,
-  Image,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -65,7 +64,6 @@ export const BookingDetailsScreen: React.FC = () => {
   const [showModelList, setShowModelList] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<string>("");
   const [saving, setSaving] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   // useEffect(() => {
@@ -216,6 +214,8 @@ export const BookingDetailsScreen: React.FC = () => {
 
   const formatVnd = (n: number) =>
     new Intl.NumberFormat("vi-VN").format(n) + " VND";
+  const insurancePackage = booking?.insurancePackage || null;
+  const hasInsurancePackage = !!insurancePackage;
 
   const openReturnReport = () => {
     if (!booking) return;
@@ -241,15 +241,10 @@ export const BookingDetailsScreen: React.FC = () => {
     });
   };
 
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Global loading overlay */}
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#C9B6FF" />
-          <Text style={styles.loadingOverlayText}>Loading booking...</Text>
-        </View>
-      )}
       <ScreenHeader
         title="Booking Details"
         subtitle={booking?.renter?.fullName()}
@@ -272,7 +267,8 @@ export const BookingDetailsScreen: React.FC = () => {
               <Text style={styles.infoText}>
                 Tên tài khoản: {booking?.renter?.account?.username}
               </Text>
-              <Text style={styles.bullet}>•</Text>
+            </View>
+            <View style={styles.infoRow}>
               <Text style={styles.infoText}>
                 Số điện thoại: {booking?.renter?.phone}
               </Text>
@@ -375,14 +371,78 @@ export const BookingDetailsScreen: React.FC = () => {
           </InfoCard>
         </View>
 
-        {/* Insurance Information */}
-        <View style={styles.section}>
-          <SectionHeader title="Thông tin Bảo hiểm" icon="safety-certificate" />
-          <InfoCard>
-            <InfoItem label="Gói bảo hiểm:" value="Premium" />
-            <InfoItem label="Mức bồi thường:" value="50,000,000 VND" />
-          </InfoCard>
-        </View>
+        {hasInsurancePackage && insurancePackage && (
+          <View style={styles.section}>
+            <SectionHeader title="Thông tin Bảo hiểm" icon="safety-certificate" />
+            <InfoCard style={styles.insuranceCard}>
+              <View style={styles.insuranceHeaderRow}>
+                <View style={styles.insuranceTitleWrap}>
+                  <Text style={styles.insuranceLabel}>Gói bảo hiểm</Text>
+                  <Text style={styles.insuranceTitle}>
+                    {insurancePackage.packageName}
+                  </Text>
+                </View>
+                {insurancePackage.packageName && (
+                  <View style={styles.insuranceBadge}>
+                    <AntDesign name="safety" size={16} color="#000" />
+                    <Text style={styles.insuranceBadgeText}>
+                      {insurancePackage.packageName.toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.insuranceMetaRow}>
+                <View style={styles.insuranceMetaPill}>
+                  <AntDesign name="wallet" size={12} color="#fff" />
+                  <Text style={styles.insuranceMetaText}>
+                    Phí gói {formatVnd(insurancePackage.packageFee)}
+                  </Text>
+                </View>
+                <View style={styles.insuranceMetaPill}>
+                  <AntDesign name="warning" size={12} color="#fff" />
+                  <Text style={styles.insuranceMetaText}>
+                    Khấu trừ {formatVnd(insurancePackage.deductibleAmount)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.insuranceGrid}>
+                <InfoItem
+                  label="Bồi thường cho người"
+                  value={`${formatVnd(
+                    insurancePackage.coveragePersonLimit
+                  )} / người`}
+                />
+                <InfoItem
+                  label="Bồi thường tài sản"
+                  value={`${formatVnd(insurancePackage.coveragePropertyLimit)}`}
+                />
+                <InfoItem
+                  label="Bảo hiểm vật chất xe"
+                  value={`${insurancePackage.coverageVehiclePercentage}% giá trị xe`}
+                />
+                <InfoItem
+                  label="Bảo hiểm trộm cắp"
+                  value={
+                    insurancePackage.coverageTheft
+                      ? "Bao gồm toàn diện"
+                      : "Không bao gồm"
+                  }
+                />
+              </View>
+
+              {!!insurancePackage.description && (
+                <View style={styles.insuranceDescription}>
+                  <Text style={styles.insuranceDescriptionLabel}>Quyền lợi</Text>
+                  <Text style={styles.insuranceDescriptionText}>
+                    {insurancePackage.description}
+                  </Text>
+                </View>
+              )}
+            </InfoCard>
+          </View>
+        )}
 
         {/* Return Summary */}
         <View style={styles.section}>
@@ -401,14 +461,6 @@ export const BookingDetailsScreen: React.FC = () => {
                 {formatVnd(summary?.baseRentalFee || 0)}
               </Text>
             </View>
-            {summary?.feesBreakdown?.excessKmFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí quãng đường</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
-                </Text>
-              </View>
-            )}
             {summary?.totalChargingFee !== 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryKey}>Phí sạc pin</Text>
@@ -505,21 +557,27 @@ export const BookingDetailsScreen: React.FC = () => {
             <InfoCard>
               <TouchableOpacity
                 style={[styles.actionBtn, styles.receiptBtn]}
-                onPress={() => setShowReceipt(true)}
+                onPress={() =>
+                  navigation.navigate("HandoverReceiptReport", {
+                    bookingId,
+                    rentalReceiptId: rentalReceipt?.id || "",
+                  })
+                }
               >
                 <AntDesign name="file" size={16} color="#000" />
                 <Text style={styles.actionBtnText}>Xem biên bản bàn giao</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.returnReportBtn]}
-                onPress={openReturnReport}
-              >
-                <AntDesign name="file-text" size={18} color="#000" />
-                <Text style={styles.returnReportBtnText}>
-                  Xem biên bản trả xe
-                </Text>
-              </TouchableOpacity>
+              {rentalReceipt?.returnVehicleImageFiles?.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.returnReportBtn]}
+                  onPress={openReturnReport}
+                >
+                  <AntDesign name="file-text" size={18} color="#000" />
+                  <Text style={styles.returnReportBtnText}>
+                    Xem biên bản trả xe
+                  </Text>
+                </TouchableOpacity>
+              )}
             </InfoCard>
           </View>
         )}
@@ -655,83 +713,6 @@ export const BookingDetailsScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
-
-      {/* Rental Receipt Modal */}
-      <RNModal
-        visible={showReceipt}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowReceipt(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeaderDark}>
-              <Text style={styles.modalTitleDark}>Biên bản bàn giao</Text>
-              <TouchableOpacity onPress={() => setShowReceipt(false)}>
-                <AntDesign name="close" size={18} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView>
-              <InfoCard>
-                <View style={[styles.infoItem]}>
-                  <Text style={styles.infoLabel}>Ghi chú:</Text>
-                  <Text style={styles.infoValue}>
-                    {rentalReceipt?.notes || "-"}
-                  </Text>
-                </View>
-                <View style={[styles.infoItem]}>
-                  <Text style={styles.infoLabel}>Số km bắt đầu:</Text>
-                  <Text style={styles.infoValue}>
-                    {rentalReceipt?.startOdometerKm} km
-                  </Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Pin bắt đầu:</Text>
-                  <Text style={styles.infoValue}>
-                    {rentalReceipt?.startBatteryPercentage}%
-                  </Text>
-                </View>
-              </InfoCard>
-
-              {/* Vehicle photos grid */}
-              {!!rentalReceipt?.handOverVehicleImageFiles?.length && (
-                <View style={styles.section}>
-                  <SectionHeader title="Ảnh xe bàn giao" icon="picture" />
-                  <View style={styles.photoGrid}>
-                    {rentalReceipt?.handOverVehicleImageFiles.map(
-                      (uri: string, idx: number) => (
-                        <View key={idx} style={styles.photoItem}>
-                          <Image
-                            source={{ uri }}
-                            style={styles.photoImage}
-                            resizeMode="cover"
-                          />
-                        </View>
-                      )
-                    )}
-                  </View>
-                </View>
-              )}
-
-              {!!rentalReceipt?.checkListFile && (
-                <View style={styles.section}>
-                  <SectionHeader title="Checklist" icon="profile" />
-                  <View style={styles.checklistWrapImg}>
-                    <Image
-                      source={{
-                        uri: rentalReceipt?.checkListFile as string,
-                      }}
-                      style={styles.checklistImg}
-                      resizeMode="cover"
-                    />
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </RNModal>
 
       {/* Contract WebView Modal */}
       <Modal
@@ -947,6 +928,7 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 4,
   },
   infoText: {
     fontSize: 14,
@@ -1157,6 +1139,87 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
+  insuranceCard: {
+    gap: 12,
+    padding: 18,
+  },
+  insuranceHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  insuranceTitleWrap: {
+    flex: 1,
+    gap: 4,
+  },
+  insuranceLabel: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  insuranceTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+  insuranceBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FFD666",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  insuranceBadgeText: {
+    color: "#000",
+    fontWeight: "700",
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+  insuranceMetaRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  insuranceMetaPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(201,182,255,0.2)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  insuranceMetaText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  insuranceGrid: {
+    gap: 10,
+  },
+  insuranceDescription: {
+    backgroundColor: "rgba(255,214,102,0.12)",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,214,102,0.25)",
+    gap: 6,
+  },
+  insuranceDescriptionLabel: {
+    color: "#FFD666",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  insuranceDescriptionText: {
+    color: colors.text.primary,
+    fontSize: 12,
+    lineHeight: 18,
+  },
   // Return summary styles
   summaryCard: {
     backgroundColor: "#1E1E1E",
@@ -1269,41 +1332,6 @@ const styles = StyleSheet.create({
     padding: 16,
     overflow: "visible",
     maxHeight: "90%",
-  },
-  photoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    paddingHorizontal: 0,
-  },
-  photoItem: {
-    width: "48%",
-    aspectRatio: 1,
-    borderRadius: 10,
-    overflow: "hidden",
-    backgroundColor: "#0F0A18",
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  photoImage: { width: "100%", height: "100%" },
-  checklistWrapImg: {
-    width: "100%",
-    borderRadius: 10,
-    overflow: "hidden",
-    backgroundColor: "#0F0A18",
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-  },
-  checklistContent: { alignItems: "center", justifyContent: "center" },
-  checklistImg: {
-    width: "100%",
-    height: 1300,
-    resizeMode: "cover",
-    borderRadius: 8,
   },
   modalHeaderDark: {
     flexDirection: "row",

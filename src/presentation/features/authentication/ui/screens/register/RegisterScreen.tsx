@@ -5,7 +5,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
 } from 'react-native';
@@ -20,6 +19,7 @@ import { PrivacyNotice } from '../../atoms/PrivacyNotice';
 import { GoogleAuthButton } from '../../molecules/GoogleAuthButton';
 import { SignInPrompt } from '../../molecules/SignInPrompt';
 import { RegisterForm } from '../../organism/register/RegisterForm';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
 
@@ -101,8 +101,6 @@ export const RegisterScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           
-          <BackButton onPress={() => navigation.goBack()} />
-
           <BrandTitle subtitle="Hãy tạo tài khoản eMotoRent của bạn" />
 
           <RegisterForm onContinue={handleContinue} loading={loading} />

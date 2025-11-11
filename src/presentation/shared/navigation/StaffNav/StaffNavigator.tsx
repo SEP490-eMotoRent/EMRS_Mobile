@@ -12,6 +12,7 @@ import {
   SelectVehicleScreen,
   VehicleInspectionScreen,
   HandoverReportScreen,
+  HandoverReceiptReportScreen,
   AwaitingApprovalScreen,
   HandoverDocumentScreen,
   HandoverCompleteScreen,
@@ -82,6 +83,10 @@ export const StaffNavigator: React.FC = () => {
           component={VehicleInspectionScreen}
         />
         <Stack.Screen name="HandoverReport" component={HandoverReportScreen} />
+        <Stack.Screen
+          name="HandoverReceiptReport"
+          component={HandoverReceiptReportScreen}
+        />
         <Stack.Screen
           name="AwaitingApproval"
           component={AwaitingApprovalScreen}

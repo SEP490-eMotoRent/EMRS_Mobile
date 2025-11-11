@@ -106,9 +106,7 @@ export const ScanFaceScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Verify Customer Identity</Text>
-          <Text style={styles.bookingId}>#EMR240915001</Text>
-          <Text style={styles.customerName}>John Nguyen</Text>
+          <Text style={styles.headerTitle}>Xác minh danh tính khách hàng</Text>
         </View>
 
         {/* Facial Scan Interface */}
@@ -330,7 +328,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   manualVerificationSection: {
-    marginBottom: 32,
   },
   optionButton: {
     flexDirection: "row",

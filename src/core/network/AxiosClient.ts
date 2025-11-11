@@ -79,15 +79,9 @@ export class AxiosClient {
         return response;
       },
       (error) => {
-        console.error("AXIOS ERROR DETAILS:");
-        console.error("Error Message:", error.message);
         if (error.response) {
-          console.error("Status:", error.response.status);
-          console.error("Data:", JSON.stringify(error.response.data, null, 2));
         } else if (error.request) {
-          console.error("No response received");
         }
-        AppLogger.getInstance().error(`Response Error: ${error.message}`);
         return Promise.reject(error);
       }
     );
