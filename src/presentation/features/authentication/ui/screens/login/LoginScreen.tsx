@@ -5,7 +5,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
 } from "react-native";
@@ -24,6 +23,7 @@ import { SignUpPrompt } from "../../atoms/register/SignUpPrompt";
 import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
 import { LoginForm } from "../../organism/login/LoginForm";
 import Toast from "react-native-toast-message";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -128,7 +128,6 @@ export const LoginScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <BackButton onPress={() => navigation.goBack()} />
 
           <BrandTitle subtitle="Đăng nhập vào tài khoản eMotoRent của bạn" />
 

@@ -157,6 +157,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       >
         <ProfileHeader
           name={renter.account?.fullname || renter.email}
+          avatar={renter.avatarUrl}
+          documents={renterResponse.documents}
           memberSince={memberSince}
           trips="0"
           distance="0km"
