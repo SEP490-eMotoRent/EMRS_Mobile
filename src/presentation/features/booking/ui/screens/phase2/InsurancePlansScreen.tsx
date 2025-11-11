@@ -56,6 +56,7 @@ export const InsurancePlansScreen: React.FC = () => {
     console.log("Branch:", branchName);
     console.log("Rental Duration:", duration);
     console.log("Rental Price:", rentalPrice);
+    console.log("Security Deposit:", securityDeposit);
     console.log("Fetched Packages:", packages.length);
 
     const insurancePlans: InsurancePlan[] = useMemo(() => {
@@ -82,13 +83,20 @@ export const InsurancePlansScreen: React.FC = () => {
     // Format rental fee from the calculated value
     const rentalFee = `${rentalPrice.toLocaleString()}đ`;
     
-    // Calculate total
-    const totalAmount = rentalPrice + insuranceFeeValue;
+    // ✅ FIX: Calculate total including deposit
+    const totalAmount = rentalPrice + insuranceFeeValue + securityDeposit;
     const total = `${totalAmount.toLocaleString()}đ`;
+
+    console.log("Calculation breakdown:");
+    console.log("- Rental Price:", rentalPrice);
+    console.log("- Insurance Fee:", insuranceFeeValue);
+    console.log("- Security Deposit:", securityDeposit);
+    console.log("- TOTAL:", totalAmount);
 
     const handleContinue = () => {
         console.log("Selected insurance plan:", selectedPlanId);
         console.log("Selected package details:", selectedPackage);
+        console.log("Passing to PaymentConfirmation - Total:", total);
         
         navigation.navigate('PaymentConfirmation', {
             vehicleId,
@@ -106,7 +114,7 @@ export const InsurancePlansScreen: React.FC = () => {
             rentalFee: `${rentalPrice.toLocaleString()}đ`,
             insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
-            total: total,
+            total: total, // ✅ Now includes deposit
         });
     };
 

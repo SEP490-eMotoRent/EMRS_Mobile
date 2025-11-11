@@ -17,11 +17,8 @@ export const useVehicleDetail = (id: string, remote: VehicleModelRemoteDataSourc
                 setLoading(true);
                 setError(null);
                 
-                // Call both APIs in parallel
-                const [detailDto, listResponse] = await Promise.all([
-                    remote.getDetail(id),
-                    remote.getAll()
-                ]);
+                // Just call the detail API - it now has everything we need
+                const detailDto = await remote.getDetail(id);
                 
                 if (!mounted) return;
 
@@ -29,29 +26,10 @@ export const useVehicleDetail = (id: string, remote: VehicleModelRemoteDataSourc
                     throw new Error("Vehicle not found");
                 }
 
-                // Find matching vehicle from list API
-                const listItem = listResponse.find(
-                    (item) => item.vehicleModelId === id
-                );
-
-                // Create base data from detail API
-                const baseData = VehicleDetailMapper.toUI(detailDto);
-
-                // Merge with list API data if found
-                if (listItem) {
-                    const enhancedData: VehicleDetailUI = {
-                        ...baseData,
-                        imageUrl: listItem.imageUrl || baseData.imageUrl,
-                        pricePerDay: listItem.rentalPrice ?? baseData.pricePerDay,
-                        colors: (listItem.availableColors || []).map(c => 
-                            VehicleDetailMapper.nameToHex(c.colorName)
-                        ),
-                    };
-                    setData(enhancedData);
-                } else {
-                    // If not found in list, just use detail data
-                    setData(baseData);
-                }
+                // Map detail response to UI format
+                const uiData = VehicleDetailMapper.toUI(detailDto);
+                setData(uiData);
+                
             } catch (err: any) {
                 if (mounted) {
                     setError(err.message || 'Failed to load vehicle details');
@@ -69,7 +47,7 @@ export const useVehicleDetail = (id: string, remote: VehicleModelRemoteDataSourc
             mounted = false;
             abortController.current?.abort();
         };
-    }, [id]);
+    }, [id, remote]);
 
     return { data, loading, error };
 };
