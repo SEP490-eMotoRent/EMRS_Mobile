@@ -107,23 +107,25 @@ export const PaymentConfirmationScreen: React.FC = () => {
         return parseInt(price.replace(/[^0-9]/g, ""), 10) || 0;
     };
 
-    // ✅ FIX: Use the passed total directly (now correct from InsurancePlansScreen)
-    // But also verify it matches our calculation
+    // Parse individual amounts
     const rental = parsePrice(rentalFee);
     const insurance = parsePrice(insuranceFee);
     const deposit = parsePrice(securityDeposit);
-    const calculatedTotal = rental + insurance + deposit;
+    
+    // ✅ ALWAYS calculate the total ourselves to ensure accuracy
+    // Don't trust the passed total - recalculate it
+    const totalAmount = rental + insurance + deposit;
     const passedTotal = parsePrice(total);
 
     // Verify totals match (for debugging)
-    if (calculatedTotal !== passedTotal) {
-        console.warn("Total mismatch detected!");
-        console.warn("Calculated:", calculatedTotal);
-        console.warn("Passed:", passedTotal);
+    if (totalAmount !== passedTotal) {
+        console.warn("⚠️ Total mismatch detected!");
+        console.warn("Our calculation:", totalAmount);
+        console.warn("Passed from prev screen:", passedTotal);
+        console.warn("Difference:", Math.abs(totalAmount - passedTotal));
+    } else {
+        console.log("✅ Total verification passed:", totalAmount);
     }
-
-    // Use the calculated total to ensure accuracy
-    const totalAmount = calculatedTotal;
     const afterBalance = safeBalance - totalAmount;
     const isSufficient = afterBalance >= 0;
 
@@ -180,16 +182,17 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 handoverBranchId: branchId,
                 rentalDays,
                 rentalHours: 0,
-                baseRentalFee: rental,
-                depositAmount: deposit,
+                baseRentalFee: rental,              // 1,260,000
+                depositAmount: deposit,              // 2,000,000
                 rentingRate: 1.0,
                 averageRentalPrice: rental / rentalDays,
-                insurancePackageId,
-                totalRentalFee: totalAmount, // ✅ Now uses correct total
+                insurancePackageId,                  // Backend fetches 800,000 fee
+                totalRentalFee: rental,              // ✅ FIXED: Only send rental fee
                 renterId: userId,
             };
 
             console.log("Creating booking with:", bookingInput);
+            console.log("Expected total charge:", totalAmount); // For debugging
 
             if (selectedPaymentMethod === "wallet") {
                 const booking = await createBooking(bookingInput);
@@ -212,7 +215,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
             } else if (selectedPaymentMethod === "vnpay") {
                 const result: VNPayBookingResultWithExpiry = await createVNPayBookingUseCase.execute({
                     ...bookingInput,
-                    depositAmount: deposit,
                 });
 
                 console.log("VNPay booking created:", {

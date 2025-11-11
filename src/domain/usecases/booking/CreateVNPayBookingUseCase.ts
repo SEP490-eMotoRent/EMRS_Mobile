@@ -1,7 +1,7 @@
-import { Booking } from "../../entities/booking/Booking";
-import { BookingRepository } from "../../repositories/booking/BookingRepository";
 import { Renter } from "../../entities/account/Renter";
+import { Booking } from "../../entities/booking/Booking";
 import { VehicleModel } from "../../entities/vehicle/VehicleModel";
+import { BookingRepository } from "../../repositories/booking/BookingRepository";
 
 export interface CreateVNPayBookingInput {
     startDatetime: Date;
@@ -15,7 +15,7 @@ export interface CreateVNPayBookingInput {
     vehicleModelId: string;
     averageRentalPrice: number;
     insurancePackageId?: string;
-    totalRentalFee: number;
+    totalRentalFee?: number;  // ← Make optional
     renterId: string;
 }
 
