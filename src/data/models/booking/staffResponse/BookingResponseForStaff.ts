@@ -83,6 +83,7 @@ export interface RentalReceiptBookingResponse {
     endBatteryPercentage: number;
     bookingId: string;
     staffId: string;
-    vehicleFiles: string[];
-    checkListFile: string;
+    handOverVehicleImageFiles: string[];
+    returnVehicleImageFiles: string[];
+    checkListFile: string[];
 }
