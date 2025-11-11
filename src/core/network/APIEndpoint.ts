@@ -30,7 +30,7 @@ export const ApiEndpoints = {
     assignVehicle: (vehicleId: string, bookingId: string) =>
       `/Booking/vehicle/assign/${bookingId}/${vehicleId}`,
   },
-  
+
   // Auth endpoints
   auth: {
     register: "/auth/register",
@@ -47,7 +47,7 @@ export const ApiEndpoints = {
       upload: "/api/Document", // POST
       update: (documentId: string) => `/api/Document/${documentId}`, // PUT
       delete: (documentId: string) => `/api/Document/${documentId}`, // DELETE
-    }
+    },
   },
 
   //Document Endpoints
@@ -58,12 +58,13 @@ export const ApiEndpoints = {
     updateDriving: "/Document/driving",
     delete: (documentId: string) => `/Document/${documentId}`,
   },
-  
+
   // Receipt endpoints
   receipt: {
     create: "/rental/receipt",
     getDetails: (bookingId: string) => `/rental/receipt/${bookingId}`,
-    generateContract: (bookingId: string, receiptId: string) => `/rental/contract/${bookingId}/${receiptId}`,
+    generateContract: (bookingId: string, receiptId: string) =>
+      `/rental/contract/${bookingId}/${receiptId}`,
     getContract: (bookingId: string) => `/rental/contract/${bookingId}`,
     generateOtp: (contractId: string) =>
       `/rental/contract/${contractId}/send-otp-code`,
@@ -80,6 +81,8 @@ export const ApiEndpoints = {
     create: "/Branch/create",
     update: (id: string) => `/Branch/${id}`,
     delete: (id: string) => `/Branch/${id}`,
+    getByLocation: (latitude: number, longitude: number, radius: number) =>
+      `/Branch/charging/search/${latitude}/${longitude}/${radius}`,
   },
 
   // Insurance Claim endpoints
@@ -93,7 +96,8 @@ export const ApiEndpoints = {
   rentalReturn: {
     analyzeReturn: "/rental-return/return/upload-and-analyze",
     createReceipt: "/rental-return/return/create-receipt",
-    summary: (bookingId: string) => `/rental-return/return/${bookingId}/summary`,
+    summary: (bookingId: string) =>
+      `/rental-return/return/${bookingId}/summary`,
     finalizeReturn: `/rental-return/return/finalize`,
   },
 

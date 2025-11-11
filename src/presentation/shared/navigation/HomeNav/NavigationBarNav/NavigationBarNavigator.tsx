@@ -4,6 +4,7 @@ import { BottomNavigationBar } from '../../../../common/components/organisms/Bot
 import { HomeNavigator } from '../HomeNav/HomeNavigator';
 import { ProfileNavigator } from '../Profile/ProfileNavigator';
 import { TripNavigator } from '../Trip/TripNavigator';
+import { BatteryNavigator } from '../Battery/BatteryNavigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -16,7 +17,7 @@ export const NavigationBarNavigator: React.FC = () => {
         >
             <Tab.Screen name="HomeTab" component={HomeNavigator} />
             <Tab.Screen name="TripTab" component={TripNavigator} />
-            <Tab.Screen name="BatteryTab" component={HomeNavigator} />
+            <Tab.Screen name="BatteryTab" component={BatteryNavigator} />
             <Tab.Screen name="ProfileTab" component={ProfileNavigator} />
         </Tab.Navigator>
     );
