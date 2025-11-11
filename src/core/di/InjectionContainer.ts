@@ -95,6 +95,11 @@ import { WalletRepository } from "../../domain/repositories/wallet/WalletReposit
 import { CreateWalletUseCase } from "../../domain/usecases/wallet/CreateWalletUseCase";
 import { GetWalletBalanceUseCase } from "../../domain/usecases/wallet/GetWalletBalanceUseCase";
 
+// Charging imports
+import { ChargingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/charging/ChargingRemoteDataSourceImpl';
+import { ChargingRepositoryImpl } from '../../data/repositories/charging/ChargingRepositoryImpl';
+import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
+import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -239,6 +244,13 @@ class ServiceLocator {
     const analyzeReturnUseCase = new AiAnalyzeUseCase(rentalReturnRepository);
     this.services.set("AiAnalyzeUseCase", analyzeReturnUseCase);
 
+    // Charging services
+    const chargingRemoteDataSource = new ChargingRemoteDataSourceImpl(axiosClient);
+    this.services.set("ChargingRemoteDataSource", chargingRemoteDataSource);
+    const chargingRepository = new ChargingRepositoryImpl(chargingRemoteDataSource);
+    this.services.set("ChargingRepository", chargingRepository);
+    const getChargingByLicensePlateUseCase = new GetChargingByLicensePlateUseCase(chargingRepository);
+    this.services.set("GetChargingByLicensePlateUseCase", getChargingByLicensePlateUseCase);
 
     // Wallet services
     const walletRemoteDataSource = new WalletRemoteDataSourceImpl(axiosClient);
@@ -415,6 +427,12 @@ class ServiceLocator {
     return this.get<CreateVNPayBookingUseCase>('CreateVNPayBookingUseCase');
   }
 
+  getChargingRepository(): ChargingRepository {
+    return this.get<ChargingRepository>('ChargingRepository');
+  }
+
+  getGetChargingByLicensePlateUseCase(): GetChargingByLicensePlateUseCase {
+    return this.get<GetChargingByLicensePlateUseCase>('GetChargingByLicensePlateUseCase');
   getGetBookingByIdUseCase(): GetBookingByIdUseCase {
     return this.get<GetBookingByIdUseCase>('GetBookingByIdUseCase');
   }
