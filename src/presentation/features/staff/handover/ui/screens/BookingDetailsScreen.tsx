@@ -244,12 +244,6 @@ export const BookingDetailsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Global loading overlay */}
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#C9B6FF" />
-          <Text style={styles.loadingOverlayText}>Loading booking...</Text>
-        </View>
-      )}
       <ScreenHeader
         title="Booking Details"
         subtitle={booking?.renter?.fullName()}
@@ -401,14 +395,6 @@ export const BookingDetailsScreen: React.FC = () => {
                 {formatVnd(summary?.baseRentalFee || 0)}
               </Text>
             </View>
-            {summary?.feesBreakdown?.excessKmFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí quãng đường</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
-                </Text>
-              </View>
-            )}
             {summary?.totalChargingFee !== 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryKey}>Phí sạc pin</Text>
@@ -510,16 +496,17 @@ export const BookingDetailsScreen: React.FC = () => {
                 <AntDesign name="file" size={16} color="#000" />
                 <Text style={styles.actionBtnText}>Xem biên bản bàn giao</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.returnReportBtn]}
-                onPress={openReturnReport}
-              >
-                <AntDesign name="file-text" size={18} color="#000" />
-                <Text style={styles.returnReportBtnText}>
-                  Xem biên bản trả xe
-                </Text>
-              </TouchableOpacity>
+              {rentalReceipt?.returnVehicleImageFiles?.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.returnReportBtn]}
+                  onPress={openReturnReport}
+                >
+                  <AntDesign name="file-text" size={18} color="#000" />
+                  <Text style={styles.returnReportBtnText}>
+                    Xem biên bản trả xe
+                  </Text>
+                </TouchableOpacity>
+              )}
             </InfoCard>
           </View>
         )}
@@ -695,7 +682,7 @@ export const BookingDetailsScreen: React.FC = () => {
               </InfoCard>
 
               {/* Vehicle photos grid */}
-              {!!rentalReceipt?.handOverVehicleImageFiles?.length && (
+              {rentalReceipt?.handOverVehicleImageFiles?.length && (
                 <View style={styles.section}>
                   <SectionHeader title="Ảnh xe bàn giao" icon="picture" />
                   <View style={styles.photoGrid}>
@@ -714,13 +701,13 @@ export const BookingDetailsScreen: React.FC = () => {
                 </View>
               )}
 
-              {!!rentalReceipt?.checkListFile && (
+              {!!rentalReceipt?.checkListFile?.[0] && (
                 <View style={styles.section}>
                   <SectionHeader title="Checklist" icon="profile" />
                   <View style={styles.checklistWrapImg}>
                     <Image
                       source={{
-                        uri: rentalReceipt?.checkListFile as string,
+                        uri: rentalReceipt?.checkListFile?.[0] as string,
                       }}
                       style={styles.checklistImg}
                       resizeMode="cover"
