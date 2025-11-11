@@ -436,6 +436,7 @@ class ServiceLocator {
 
   getGetChargingByLicensePlateUseCase(): GetChargingByLicensePlateUseCase {
     return this.get<GetChargingByLicensePlateUseCase>('GetChargingByLicensePlateUseCase');
+  }  
   getGetBookingByIdUseCase(): GetBookingByIdUseCase {
     return this.get<GetBookingByIdUseCase>('GetBookingByIdUseCase');
   }
