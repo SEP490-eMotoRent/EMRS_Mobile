@@ -89,6 +89,10 @@ export const ApiEndpoints = {
     create: "/Branch/create",
     update: (id: string) => `/Branch/${id}`,
     delete: (id: string) => `/Branch/${id}`,
+
+    // NEW: Charging station search endpoint
+    searchCharging: (lat: number, lon: number, radius: number) =>
+      `/Branch/charging/search/${lat}/${lon}/${radius}`,
     getByLocation: (latitude: number, longitude: number, radius: number) =>
       `/Branch/charging/search/${latitude}/${longitude}/${radius}`,
   },

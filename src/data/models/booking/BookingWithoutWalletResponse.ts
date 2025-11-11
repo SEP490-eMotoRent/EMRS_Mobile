@@ -1,5 +1,6 @@
 export interface BookingWithoutWalletResponse {
     id: string;
+    // bookingCode: string;
     startDatetime?: string;
     endDatetime?: string;
     actualReturnDatetime?: string;
@@ -16,5 +17,5 @@ export interface BookingWithoutWalletResponse {
     vehicleModelId: string;
     renterId: string;
     vehicleId?: string;
-    vnpayUrl: string;  // ✅ VNPay payment URL
+    vnpayUrl: string;
 }

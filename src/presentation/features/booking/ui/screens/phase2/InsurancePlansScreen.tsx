@@ -28,9 +28,6 @@ const noProtectionPlan: InsurancePlan = {
     ],
 };
 
-// Service fee - could be moved to config if needed
-const SERVICE_FEE = 35000;
-
 export const InsurancePlansScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
@@ -86,7 +83,7 @@ export const InsurancePlansScreen: React.FC = () => {
     const rentalFee = `${rentalPrice.toLocaleString()}đ`;
     
     // Calculate total
-    const totalAmount = rentalPrice + insuranceFeeValue + SERVICE_FEE;
+    const totalAmount = rentalPrice + insuranceFeeValue;
     const total = `${totalAmount.toLocaleString()}đ`;
 
     const handleContinue = () => {
@@ -109,7 +106,6 @@ export const InsurancePlansScreen: React.FC = () => {
             rentalFee: `${rentalPrice.toLocaleString()}đ`,
             insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
-            serviceFee: `${SERVICE_FEE.toLocaleString()}đ`,
             total: total,
         });
     };

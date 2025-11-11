@@ -4,6 +4,7 @@ import { BranchRepository } from "../../../domain/repositories/operations/Branch
 import { BranchRemoteDataSource } from "../../datasources/interfaces/remote/branch/BranchRemoteDataSource";
 import { BranchResponse } from "../../models/branch/BranchResponse";
 import { CreateBranchRequest } from "../../models/branch/CreateBranchRequest";
+import { SearchChargingStationsRequest } from "../../models/branch/SearchChargingStationsRequest";
 import { UpdateBranchRequest } from "../../models/branch/UpdateBranchRequest";
 
 export class BranchRepositoryImpl implements BranchRepository {
@@ -64,44 +65,87 @@ export class BranchRepositoryImpl implements BranchRepository {
     await this.remoteDataSource.update(branch.id, request);
   }
 
-  async getByLocation(
-    latitude: number,
-    longitude: number,
-    radius: number
-  ): Promise<Branch[]> {
-    const response = await this.remoteDataSource.getByLocation(
-      latitude,
-      longitude,
-      radius
-    );
-    return response.data.map((response: BranchResponse) =>
-      this.mapToEntity(response)
-    );
-  }
+        /**
+     * Search for nearby charging stations
+     */
+    async searchChargingStations(
+        latitude: number,
+        longitude: number,
+        radius: number
+    ): Promise<Branch[]> {
+        const request: SearchChargingStationsRequest = {
+            latitude,
+            longitude,
+            radius
+        };
+        
+        const responses = await this.remoteDataSource.searchChargingStations(request);
+        return responses.map(response => this.mapToEntity(response));
+    }
 
-  private mapToEntity(response: BranchResponse): Branch {
-    return new Branch(
-      response.id,
-      response.branchName,
-      response.address,
-      response.city,
-      response.phone,
-      response.email,
-      response.latitude,
-      response.longitude,
-      response.openingTime,
-      response.closingTime,
-      [], // staffs - empty for now
-      [], // vehicles - empty for now
-      [], // chargingRecords
-      [], // sentTransferOrders
-      [], // receivedTransferOrders
-      [], // handoverBookings
-      [], // returnBookings
-      new Date(), // createdAt
-      null, // updatedAt
-      null, // deletedAt
-      false // isDeleted
-    );
-  }
+    private mapToEntity(response: BranchResponse): Branch {
+        return new Branch(
+            response.id,
+            response.branchName,
+            response.address,
+            response.city,
+            response.phone,
+            response.email,
+            response.latitude,
+            response.longitude,
+            response.openingTime,
+            response.closingTime,
+            [], // staffs - empty for now
+            [], // vehicles - empty for now
+            [], // chargingRecords
+            [], // sentTransferOrders
+            [], // receivedTransferOrders
+            [], // handoverBookings
+            [], // returnBookings
+            new Date(), // createdAt
+            null, // updatedAt
+            null, // deletedAt
+            false // isDeleted
+        );
+    }
+    async getByLocation(
+        latitude: number,
+        longitude: number,
+        radius: number
+    ): Promise<Branch[]> {
+        const response = await this.remoteDataSource.getByLocation(
+        latitude,
+        longitude,
+        radius
+        );
+        return response.data.map((response: BranchResponse) =>
+        this.mapToEntity(response)
+        );
+    }
+
+//   private mapToEntity(response: BranchResponse): Branch {
+//     return new Branch(
+//       response.id,
+//       response.branchName,
+//       response.address,
+//       response.city,
+//       response.phone,
+//       response.email,
+//       response.latitude,
+//       response.longitude,
+//       response.openingTime,
+//       response.closingTime,
+//       [], // staffs - empty for now
+//       [], // vehicles - empty for now
+//       [], // chargingRecords
+//       [], // sentTransferOrders
+//       [], // receivedTransferOrders
+//       [], // handoverBookings
+//       [], // returnBookings
+//       new Date(), // createdAt
+//       null, // updatedAt
+//       null, // deletedAt
+//       false // isDeleted
+//     );
+//   }
 }

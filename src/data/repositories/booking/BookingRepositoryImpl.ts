@@ -165,55 +165,54 @@ export class BookingRepositoryImpl implements BookingRepository {
   // ✅ VNPAY MAPPER - NO MOCK DATA
   // =========================================================================
   private mapVNPayResponseToEntity(dto: BookingWithoutWalletResponse): Booking {
-      console.log("🔄 Mapping VNPay booking response (minimal):", dto.id);
-      console.log("📍 VNPay URL from backend:", dto.vnpayUrl); // Should be "VNPAYURL" in backend response
+    console.log("🔄 Mapping VNPay booking response:", dto.id);
+    // console.log("📝 Booking code:", dto.bookingCode); // ← Should print actual code
 
-      // ✅ IMPORTANT: Backend returns "VNPAYURL" but we map it to "vnpayUrl" in TypeScript
-      return new Booking(
-          dto.id,
-          "",
-          dto.baseRentalFee,
-          dto.depositAmount,
-          dto.rentalDays,
-          dto.rentalHours,
-          dto.rentingRate,
-          dto.lateReturnFee || 0,
-          dto.averageRentalPrice,
-          0, // excessKmFee
-          0, // cleaningFee
-          0, // crossBranchFee
-          0, // totalChargingFee
-          0, // totalAdditionalFee
-          dto.totalRentalFee,
-          dto.totalAmount,
-          0, // refundAmount
-          dto.bookingStatus, // Should be "Pending" from backend
-          dto.vehicleModelId,
-          dto.renterId,
-          undefined, // renter - Not in response
-          undefined, // vehicleModel - Not in response
-          dto.vehicleId,
-          undefined, // vehicle - Not in response
-          dto.startDatetime ? new Date(dto.startDatetime) : undefined,
-          dto.endDatetime ? new Date(dto.endDatetime) : undefined,
-          dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-          undefined, // insurancePackageId - Not in VNPay response
-          undefined, // insurancePackage
-          undefined, // rentalContract
-          undefined, // rentalReceipts
-          undefined, // handoverBranchId - Not in VNPay response
-          undefined, // handoverBranch
-          undefined, // returnBranchId
-          undefined, // returnBranch
-          undefined, // feedback
-          undefined, // insuranceClaims
-          undefined, // additionalFees
-          undefined, // chargingRecords
-          new Date(),
-          null,
-          null,
-          false
-      );
+    return new Booking(
+        dto.id,
+        "", // ← USE ACTUAL BOOKING CODE
+        dto.baseRentalFee,
+        dto.depositAmount,
+        dto.rentalDays,
+        dto.rentalHours,
+        dto.rentingRate,
+        dto.lateReturnFee || 0,
+        dto.averageRentalPrice,
+        0, // excessKmFee
+        0, // cleaningFee
+        0, // crossBranchFee
+        0, // totalChargingFee
+        0, // totalAdditionalFee
+        dto.totalRentalFee,
+        dto.totalAmount,
+        0, // refundAmount
+        dto.bookingStatus,
+        dto.vehicleModelId,
+        dto.renterId,
+        undefined, // renter
+        undefined, // vehicleModel
+        dto.vehicleId,
+        undefined, // vehicle
+        dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+        dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+        dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+        undefined, // insurancePackageId
+        undefined, // insurancePackage
+        undefined, // rentalContract
+        undefined, // rentalReceipts
+        undefined, // handoverBranchId
+        undefined, // handoverBranch
+        undefined, // returnBranchId
+        undefined, // returnBranch
+        undefined, // feedback
+        undefined, // insuranceClaims
+        undefined, // additionalFees
+        undefined, // chargingRecords
+        new Date(),
+        null,
+        null,
+        false
+    );
   }
 
   // =========================================================================
@@ -224,7 +223,7 @@ export class BookingRepositoryImpl implements BookingRepository {
 
     return new Booking(
       dto.id,
-      dto.bookingCode,
+      "",
       dto.baseRentalFee,
       dto.depositAmount,
       dto.rentalDays,

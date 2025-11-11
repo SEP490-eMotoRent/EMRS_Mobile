@@ -11,6 +11,13 @@ import {
 } from "./src/presentation/features/authentication/store";
 import { PersistGate } from "redux-persist/integration/react";
 import Toast from "react-native-toast-message";
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs([
+  'ServerException',
+  'An error occurred while retrieving vehicles',
+  'column v0.vehicle_price does not exist',
+  'POSITION:',
+]);
 import { LocationProvider } from "./src/presentation/features/battery/context/LocationContext";
 
 export default function App() {

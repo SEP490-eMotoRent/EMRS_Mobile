@@ -62,10 +62,7 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
   // ✅ NEW: VNPay booking creation
   async createVNPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse> {
-    console.log(
-        "📤 VNPay booking request:",
-        JSON.stringify(request, null, 2)
-    );
+    console.log("📤 VNPay booking request:", JSON.stringify(request, null, 2));
 
     const cleanedRequest: Record<string, any> = {
         startDatetime: request.startDatetime,
@@ -83,37 +80,38 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     };
 
     try {
-        const response = await this.axiosClient.post<ApiResponse<any>>( // Use 'any' temporarily
+        const response = await this.axiosClient.post<ApiResponse<any>>(
             ApiEndpoints.booking.createVNPay,
             cleanedRequest
         );
         
         const rawData = unwrapResponse(response.data);
-        console.log("📥 Raw VNPay response from backend:", rawData);
+        console.log("📥 Raw VNPay response from backend:", JSON.stringify(rawData, null, 2));
         
-        // ✅ Transform backend response field names to match TypeScript interface
+        // ✅ Transform backend response (handle both PascalCase and camelCase)
         const transformedData: BookingWithoutWalletResponse = {
-            id: rawData.id,
-            vehicleModelId: rawData.vehicleModelId,
-            renterId: rawData.renterId,
-            vehicleId: rawData.vehicleId,
-            startDatetime: rawData.startDatetime,
-            endDatetime: rawData.endDatetime,
-            actualReturnDatetime: rawData.actualReturnDatetime,
-            baseRentalFee: rawData.baseRentalFee,
-            depositAmount: rawData.depositAmount,
-            rentalDays: rawData.rentalDays,
-            rentalHours: rawData.rentalHours,
-            rentingRate: rawData.rentingRate,
-            lateReturnFee: rawData.lateReturnFee,
-            averageRentalPrice: rawData.averageRentalPrice,
-            totalRentalFee: rawData.totalRentalFee,
-            totalAmount: rawData.totalAmount,
-            bookingStatus: rawData.bookingStatus,
-            vnpayUrl: rawData.vnpayurl || rawData.VNPAYURL || rawData.vnpayUrl,
+            id: rawData.id || rawData.Id,
+            // bookingCode: rawData.bookingCode || rawData.BookingCode, // ← ADDED
+            vehicleModelId: rawData.vehicleModelId || rawData.VehicleModelId,
+            renterId: rawData.renterId || rawData.RenterId,
+            vehicleId: rawData.vehicleId || rawData.VehicleId,
+            startDatetime: rawData.startDatetime || rawData.StartDatetime,
+            endDatetime: rawData.endDatetime || rawData.EndDatetime,
+            actualReturnDatetime: rawData.actualReturnDatetime || rawData.ActualReturnDatetime,
+            baseRentalFee: rawData.baseRentalFee ?? rawData.BaseRentalFee,
+            depositAmount: rawData.depositAmount ?? rawData.DepositAmount,
+            rentalDays: rawData.rentalDays ?? rawData.RentalDays,
+            rentalHours: rawData.rentalHours ?? rawData.RentalHours,
+            rentingRate: rawData.rentingRate ?? rawData.RentingRate,
+            lateReturnFee: rawData.lateReturnFee ?? rawData.LateReturnFee ?? 0,
+            averageRentalPrice: rawData.averageRentalPrice ?? rawData.AverageRentalPrice,
+            totalRentalFee: rawData.totalRentalFee ?? rawData.TotalRentalFee,
+            totalAmount: rawData.totalAmount ?? rawData.TotalAmount,
+            bookingStatus: rawData.bookingStatus || rawData.BookingStatus,
+            vnpayUrl: rawData.vnpayurl || rawData.VNPAYURL || rawData.vnpayUrl || rawData.VnpayUrl,
         };
         
-        console.log("✅ Transformed response:", transformedData);
+        console.log("✅ Transformed response:", JSON.stringify(transformedData, null, 2));
         
         // Validate required fields
         if (!transformedData.vnpayUrl) {
@@ -121,12 +119,16 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
             throw new Error("VNPay URL not found in backend response");
         }
         
+        // if (!transformedData.bookingCode) {
+        //     console.error("❌ Missing BookingCode in response!");
+        //     throw new Error("BookingCode not found in backend response");
+        // }
+        
         return transformedData;
     } catch (error: any) {
         console.error("❌ [CREATE VNPAY BOOKING] API Error:", error);
         console.error("❌ Error Response:", JSON.stringify(error.response?.data, null, 2));
         
-        // Extract meaningful error message
         const errorMessage = error.response?.data?.message 
             || error.response?.data?.error
             || error.message 

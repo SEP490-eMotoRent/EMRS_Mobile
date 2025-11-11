@@ -99,14 +99,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                 <TouchableWithoutFeedback>
                 <View style={styles.sheet}>
                     <ScrollView showsVerticalScrollIndicator={false}>
-                    <Text style={styles.sectionTitle}>Where & When</Text>
+                    <Text style={styles.sectionTitle}>Ở ĐÂU VÀ KHI NÀO</Text>
 
                     {/* Address Input */}
                     <InputField 
                         icon={<BuildingIcon />}
                         value={address}
                         onChangeText={setAddress}
-                        placeholder="Enter address"
+                        placeholder="Điền Địa Chỉ của bạn hoặc chi nhánh"
                     />
 
                     {/* Date Range */}
@@ -118,24 +118,24 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         <View style={styles.dateContent}>
                             {formattedDates ? (
                                 <>
-                                    <Text style={styles.dateFromLabel}>From</Text>
+                                    <Text style={styles.dateFromLabel}>Từ</Text>
                                     <Text style={styles.dateText}>
                                         {formattedDates.start} | {formattedDates.startTime} - {formattedDates.end} | {formattedDates.endTime}
                                     </Text>
                                 </>
                             ) : (
-                                <Text style={styles.inputLabel}>Select Dates</Text>
+                                <Text style={styles.inputLabel}>Chọn Ngày</Text>
                             )}
                         </View>
                     </TouchableOpacity>
 
-                    <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Available Branches</Text>
+                    <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Chi Nhánh</Text>
                     
                     {/* Loading State */}
                     {loading && (
                         <View style={styles.loadingContainer}>
                             <ActivityIndicator size="small" color="#A78BFA" />
-                            <Text style={styles.loadingText}>Loading branches...</Text>
+                            <Text style={styles.loadingText}>Đang tải...</Text>
                         </View>
                     )}
 
