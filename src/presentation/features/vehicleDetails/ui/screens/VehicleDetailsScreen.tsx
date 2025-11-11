@@ -1,4 +1,3 @@
-// presentation/features/vehicleDetails/ui/VehicleDetailsScreen.tsx
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useMemo, useState } from "react";
@@ -14,10 +13,9 @@ import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/nav
 
 import sl from "../../../../../core/di/InjectionContainer";
 import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
-import { GetBranchesByVehicleModelUseCase } from "../../../../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
 import { BackButton } from "../../../../common/components/atoms/buttons/BackButton";
-import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
 import { useVehicleBranches } from "../../hooks/useVehicleBranches";
+import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
 import { BookingButton } from "../atoms/buttons/BookingButton";
 import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
@@ -71,7 +69,8 @@ export const VehicleDetailsScreen: React.FC = () => {
         );
     }
 
-    const images = [data.imageUrl];
+    // Use all images from the API
+    const images = data.images;
 
     const dailyPrice = data.pricePerDay;
     const pricingOptions = [
@@ -80,6 +79,9 @@ export const VehicleDetailsScreen: React.FC = () => {
     ];
 
     const selectedBranch = branches.find(b => b.id === selectedBranchId);
+
+    // Use depositAmount from API
+    const securityDeposit = data.depositAmount > 0 ? data.depositAmount : 2000000;
 
     const handleBooking = () => {
         if (!selectedBranchId || !selectedBranch) {
@@ -96,7 +98,7 @@ export const VehicleDetailsScreen: React.FC = () => {
                 branchId: selectedBranchId,
                 branchName: selectedBranch.name,
                 pricePerDay: data.pricePerDay,
-                securityDeposit: 2000000,
+                securityDeposit: securityDeposit,
             }
         });
     };
@@ -169,7 +171,7 @@ export const VehicleDetailsScreen: React.FC = () => {
 
                 <PricingSection 
                     pricingOptions={pricingOptions} 
-                    securityDeposit="2,000,000đ" 
+                    securityDeposit={`${securityDeposit.toLocaleString()}đ`}
                 />
 
                 <ConditionSection 

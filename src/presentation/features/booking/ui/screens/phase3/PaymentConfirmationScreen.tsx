@@ -100,23 +100,44 @@ export const PaymentConfirmationScreen: React.FC = () => {
         rentalFee,
         insuranceFee,
         securityDeposit,
-        total,
+        total, // This is now correct from InsurancePlansScreen
     } = route.params;
 
     const parsePrice = (price: string): number => {
         return parseInt(price.replace(/[^0-9]/g, ""), 10) || 0;
     };
 
-    // Tính toàn bộ số tiền cần thanh toán ngay (Thuê + Bảo hiểm + Cọc)
+    // Parse individual amounts
     const rental = parsePrice(rentalFee);
     const insurance = parsePrice(insuranceFee);
     const deposit = parsePrice(securityDeposit);
-    const totalAmount = rental + insurance + deposit; // Toàn bộ
+    
+    // ✅ ALWAYS calculate the total ourselves to ensure accuracy
+    // Don't trust the passed total - recalculate it
+    const totalAmount = rental + insurance + deposit;
+    const passedTotal = parsePrice(total);
+
+    // Verify totals match (for debugging)
+    if (totalAmount !== passedTotal) {
+        console.warn("⚠️ Total mismatch detected!");
+        console.warn("Our calculation:", totalAmount);
+        console.warn("Passed from prev screen:", passedTotal);
+        console.warn("Difference:", Math.abs(totalAmount - passedTotal));
+    } else {
+        console.log("✅ Total verification passed:", totalAmount);
+    }
     const afterBalance = safeBalance - totalAmount;
     const isSufficient = afterBalance >= 0;
 
-    const vnpayAmount = totalAmount;
-    const vnpayAmountFormatted = `${vnpayAmount.toLocaleString('vi-VN')}đ`;
+    const totalAmountFormatted = `${totalAmount.toLocaleString('vi-VN')}đ`;
+
+    console.log("Payment Confirmation - Amounts:");
+    console.log("- Rental Fee:", rental);
+    console.log("- Insurance Fee:", insurance);
+    console.log("- Security Deposit:", deposit);
+    console.log("- Total Amount:", totalAmount);
+    console.log("- Wallet Balance:", safeBalance);
+    console.log("- After Payment:", afterBalance);
 
     const parseDateString = (dateStr: string): Date => {
         const monthNames: { [key: string]: number } = {
@@ -161,14 +182,17 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 handoverBranchId: branchId,
                 rentalDays,
                 rentalHours: 0,
-                baseRentalFee: rental,
-                depositAmount: deposit,
+                baseRentalFee: rental,              // 1,260,000
+                depositAmount: deposit,              // 2,000,000
                 rentingRate: 1.0,
                 averageRentalPrice: rental / rentalDays,
-                insurancePackageId,
-                totalRentalFee: totalAmount,
+                insurancePackageId,                  // Backend fetches 800,000 fee
+                totalRentalFee: rental,              // ✅ FIXED: Only send rental fee
                 renterId: userId,
             };
+
+            console.log("Creating booking with:", bookingInput);
+            console.log("Expected total charge:", totalAmount); // For debugging
 
             if (selectedPaymentMethod === "wallet") {
                 const booking = await createBooking(bookingInput);
@@ -184,14 +208,13 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     rentalDays,
                     branchName,
                     insurancePlan,
-                    totalAmount: vnpayAmountFormatted,
+                    totalAmount: totalAmountFormatted,
                     securityDeposit,
                     contractNumber: booking.bookingCode || booking.id,
                 });
             } else if (selectedPaymentMethod === "vnpay") {
                 const result: VNPayBookingResultWithExpiry = await createVNPayBookingUseCase.execute({
                     ...bookingInput,
-                    depositAmount: deposit, // Backend vẫn cần biết tiền cọc riêng
                 });
 
                 console.log("VNPay booking created:", {
@@ -211,7 +234,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     rentalDays,
                     branchName,
                     insurancePlan,
-                    totalAmount: vnpayAmountFormatted,
+                    totalAmount: totalAmountFormatted,
                     securityDeposit,
                 };
 
@@ -223,7 +246,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     bookingId: result.booking.id,
                     expiresAt: result.expiresAt,
                     vehicleName,
-                    totalAmount: vnpayAmountFormatted,
+                    totalAmount: totalAmountFormatted,
                     vehicleId,
                     vehicleImageUrl: vehicleImageUrl || "",
                     startDate,
@@ -298,7 +321,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     rentalFee={rentalFee}
                     insuranceFee={insuranceFee}
                     securityDeposit={securityDeposit}
-                    total={total}
+                    total={totalAmountFormatted} // ✅ Use formatted calculated total
                 />
 
                 <PaymentNotices />
@@ -310,8 +333,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
                         bookingLoading
                             ? "Đang xử lý..."
                             : selectedPaymentMethod === "wallet"
-                                ? `Thanh toán ${vnpayAmountFormatted} bằng Ví`
-                                : `Thanh toán ${vnpayAmountFormatted} bằng VNPay`
+                                ? `Thanh toán ${totalAmountFormatted} bằng Ví`
+                                : `Thanh toán ${totalAmountFormatted} bằng VNPay`
                     }
                     onPress={handlePayment}
                     disabled={
