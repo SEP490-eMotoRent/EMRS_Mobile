@@ -35,9 +35,8 @@ export interface Motorcycle {
     countTotal?: number;
     countAvailable?: number;
     isAvailable?: boolean;
-    // ✅ NEW: For correct price calculation
-    rentalDays?: number;        // Number of days in rental period
-    totalPrice?: number;        // Calculated total (price × rentalDays)
+    rentalDays?: number;
+    totalPrice?: number;
 }
 
 interface Props {
@@ -62,8 +61,15 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
     const isAvailable = (motorcycle.countAvailable ?? 0) > 0;
     const availabilityColor = isAvailable ? "#22c55e" : "#ef4444";
     const availabilityText = isAvailable 
-        ? `${motorcycle.countAvailable} available`
-        : "Not available";
+        ? `${motorcycle.countAvailable} có sẵn`
+        : "Không có sẵn";
+
+    // ✅ Clean up the name - remove redundant brand prefix
+    const cleanName = motorcycle.name
+        .replace(/^VinFast\s+VinFast\s+/i, '') // Remove double VinFast
+        .replace(/^VinFast\s+/i, '')           // Remove single VinFast
+        .replace(/\s+2023$/, '')               // Remove year (optional)
+        .trim();
 
     return (
         <TouchableOpacity 
@@ -78,7 +84,7 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
             {/* Availability banner */}
             {!isAvailable && (
                 <View style={styles.unavailableBanner}>
-                    <Text style={styles.unavailableBannerText}>NOT AVAILABLE</Text>
+                    <Text style={styles.unavailableBannerText}>KHÔNG CÓ SẴN</Text>
                 </View>
             )}
 
@@ -109,7 +115,7 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
                 ) : (
                     <ImageBackground style={styles.image} source={{ uri: motorcycle.image }}>
                         <View style={styles.placeholderOverlay}>
-                            <Text style={styles.placeholderText}>{motorcycle.name}</Text>
+                            <Text style={styles.placeholderText}>{cleanName}</Text>
                         </View>
                     </ImageBackground>
                 )}
@@ -121,32 +127,45 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
             {/* Info */}
             <View style={styles.infoSection}>
                 <View style={styles.headerRow}>
-                    <MotorcycleHeader
-                        brand={motorcycle.brand}
-                        name={motorcycle.name}
-                        variant={motorcycle.variant}
-                        branchName={motorcycle.branchName}
-                    />
-                    {/* ✅ FIXED: Use calculated totalPrice instead of price * 3 */}
+                    {/* ✅ NEW: Cleaner header with brand and category inline */}
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.modelName} numberOfLines={1}>
+                            {cleanName}
+                        </Text>
+                        <View style={styles.metaRow}>
+                            <Text style={styles.brandText}>{motorcycle.brand}</Text>
+                            <Text style={styles.separator}>•</Text>
+                            <Text style={styles.categoryText}>{motorcycle.variant}</Text>
+                        </View>
+                    </View>
+                    
+                    {/* Price */}
                     <PriceText 
                         price={motorcycle.price} 
                         total={motorcycle.totalPrice ?? motorcycle.price} 
                     />
                 </View>
 
-                {/* Specs Row */}
+                {/* ✅ NEW: Specs Row - Availability FIRST, then battery */}
                 <View style={styles.specsRow}>
-                    {/* ✅ FIXED: Commented out N/A range until we have real data */}
-                    {/* <SpecItem icon="⚡" label={motorcycle.range} iconColor="#10b981" /> */}
-                    
-                    <SpecItem icon="🔋" label={motorcycle.battery} iconColor="#3b82f6" />
-                    
-                    {/* Show total count */}
-                    {motorcycle.countTotal !== undefined && (
+                    {/* Available count - PRIORITY #1 */}
+                    {motorcycle.countAvailable !== undefined && (
                         <SpecItem 
                             icon="🏍️" 
-                            label={`${motorcycle.countTotal} total`} 
-                            iconColor="#f59e0b" 
+                            label={`${motorcycle.countAvailable} có sẵn`}
+                            iconColor={availabilityColor}
+                        />
+                    )}
+                    
+                    {/* Battery */}
+                    <SpecItem icon="🔋" label={motorcycle.battery} iconColor="#3b82f6" />
+                    
+                    {/* Total count - Less important, shown last */}
+                    {motorcycle.countTotal !== undefined && (
+                        <SpecItem 
+                            icon="📦" 
+                            label={`${motorcycle.countTotal} tổng`} 
+                            iconColor="#6b7280" 
                         />
                     )}
                 </View>
@@ -269,6 +288,37 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "flex-start",
         marginBottom: 12,
+    },
+    // ✅ NEW: Cleaner title layout
+    titleContainer: {
+        flex: 1,
+        marginRight: 12,
+    },
+    modelName: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 4,
+    },
+    metaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    brandText: {
+        color: "#d4c5f9",
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    separator: {
+        color: "#666",
+        fontSize: 13,
+    },
+    categoryText: {
+        color: "#9ca3af",
+        fontSize: 13,
+        fontWeight: "500",
+        textTransform: "uppercase",
     },
     specsRow: {
         flexDirection: "row",

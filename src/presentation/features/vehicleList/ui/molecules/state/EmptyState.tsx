@@ -12,9 +12,9 @@ interface EmptyStateProps {
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ 
     icon = '🏍️',
-    title = 'No Vehicles Available',
-    message = 'There are currently no vehicles matching your search criteria.',
-    actionButtonText = 'Refresh',
+    title = 'Không có xe nào',
+    message = 'Hiện không tìm thấy xe nào phù hợp với tiêu chí của bạn. Vui lòng thử lại sau hoặc thay đổi bộ lọc tìm kiếm.',
+    actionButtonText = 'Tải Lại',
     onAction
 }) => {
     return (

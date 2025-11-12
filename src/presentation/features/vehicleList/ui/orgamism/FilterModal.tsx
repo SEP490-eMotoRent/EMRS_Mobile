@@ -1,13 +1,13 @@
+import Slider from '@react-native-community/slider';
 import React, { useState } from 'react';
 import {
     Modal,
+    ScrollView,
     StyleSheet,
     Text,
-    View,
     TouchableOpacity,
-    ScrollView,
+    View,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 
 export interface FilterState {
     priceRange: [number, number];      // [min, max]

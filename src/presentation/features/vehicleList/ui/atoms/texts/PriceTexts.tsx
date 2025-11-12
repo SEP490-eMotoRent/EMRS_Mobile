@@ -2,18 +2,22 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 interface PriceTextProps {
-    price: number;
-    total: number;
+    price: number;      // Daily rate
+    total: number;      // Total price
 }
 
 export const PriceText: React.FC<PriceTextProps> = ({ price, total }) => {
     return (
         <View style={styles.container}>
-            <View style={styles.priceRow}>
-                <Text style={styles.price}>{price}đ</Text>
-                <Text style={styles.period}>/ngày</Text>
-            </View>
-            <Text style={styles.total}>Tổng: {total}</Text>
+            {/* Daily Rate */}
+            <Text style={styles.dailyPrice}>
+                {price.toLocaleString('vi-VN')}₫/ngày
+            </Text>
+            
+            {/* Total Price - BIG and CLEAR */}
+            <Text style={styles.totalPrice}>
+                {total.toLocaleString('vi-VN')}₫
+            </Text>
         </View>
     );
 };
@@ -21,24 +25,17 @@ export const PriceText: React.FC<PriceTextProps> = ({ price, total }) => {
 const styles = StyleSheet.create({
     container: {
         alignItems: "flex-end",
+        gap: 2,
     },
-    priceRow: {
-        flexDirection: "row",
-        alignItems: "baseline",
+    dailyPrice: {
+        color: "#9ca3af",
+        fontSize: 12,
+        fontWeight: "500",
     },
-    price: {
+    totalPrice: {
         color: "#fff",
-        fontSize: 20,
-        fontWeight: "700",
-    },
-    period: {
-        color: "#999",
-        fontSize: 13,
-        marginLeft: 2,
-    },
-    total: {
-        color: "#999",
-        fontSize: 13,
-        marginTop: 2,
+        fontSize: 24,
+        fontWeight: "800",
+        letterSpacing: -0.5,
     },
 });

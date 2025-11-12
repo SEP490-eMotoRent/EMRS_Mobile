@@ -14,10 +14,10 @@ import { MapViewButton } from "../atoms/buttons/MapViewButtons";
 import { EmptyState } from "../molecules/state/EmptyState";
 import { ErrorState } from "../molecules/state/ErrorState";
 import { LoadingState } from "../molecules/state/LoadingState";
-import { FilterModal, FilterState } from "../orgamism/FilterModal";
 import { ListControls } from "../orgamism/ListControls";
 import { ListHeader } from "../orgamism/ListHeader";
 import { MotorcycleCard } from "../orgamism/MotorcycleCard";
+import { FilterState, FilterModal } from "../orgamism/FilterModal";
 
 // ✅ Vietnamese date formatter utility
 function formatDateRangeVietnamese(dateRange: string): string {
@@ -115,6 +115,9 @@ export const ListView: React.FC = () => {
   // ✅ Apply client-side filters
   const filteredMotorcycles = useMemo(() => {
     let filtered = [...motorcycles];
+
+    // ✅ ALWAYS hide unavailable bikes (no toggle needed)
+    filtered = filtered.filter(m => (m.countAvailable ?? 0) > 0);
 
     // Price filter
     if (filters.priceRange[1] < 500000) {
