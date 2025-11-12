@@ -10,11 +10,9 @@ import {
     View,
 } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
-
 import { ColorBadge } from "../atoms/badges/ColorBadge";
 import { FeatureBadge } from "../atoms/badges/FeatureBadge";
-import { PriceText } from "../atoms/texts/PriceTexts";
-import { MotorcycleHeader } from "../molecules/MotorcycleHeader";
+// import { PriceText } from "../atoms/texts/PriceTexts"; // ✅ COMMENTED: Using simpler price display
 import { SpecItem } from "../molecules/SpecItem";
 
 type NavProp = StackNavigationProp<BrowseStackParamList>;
@@ -33,6 +31,11 @@ export interface Motorcycle {
     features: string[];
     branchName: string;
     color: string;
+    countTotal?: number;
+    countAvailable?: number;
+    isAvailable?: boolean;
+    rentalDays?: number;
+    totalPrice?: number;
 }
 
 interface Props {
@@ -53,23 +56,51 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
         f === "Support Charging" || f === "GPS Tracking"
     );
 
+    // ✅ Determine availability status
+    const isAvailable = (motorcycle.countAvailable ?? 0) > 0;
+    const availabilityColor = isAvailable ? "#22c55e" : "#ef4444";
+    const availabilityText = isAvailable 
+        ? `${motorcycle.countAvailable} có sẵn`
+        : "Không có sẵn";
+
+    // ✅ Clean up the name - remove redundant brand prefix
+    const cleanName = motorcycle.name
+        .replace(/^VinFast\s+VinFast\s+/i, '') // Remove double VinFast
+        .replace(/^VinFast\s+/i, '')           // Remove single VinFast
+        .replace(/\s+2023$/, '')               // Remove year (optional)
+        .trim();
+
     return (
-        <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.85}>
+        <TouchableOpacity 
+            style={styles.card} 
+            onPress={handlePress} 
+            activeOpacity={0.85}
+        >
             {/* Distance Badge */}
             <View style={styles.topRow}>
                 <Text style={styles.distance}>
                     Cách Xa {motorcycle.distance.toFixed(2)} Km
                 </Text>
+                {/* Availability badge */}
+                <View style={[styles.availabilityBadge, { backgroundColor: availabilityColor + '20' }]}>
+                    <View style={[styles.availabilityDot, { backgroundColor: availabilityColor }]} />
+                    <Text style={[styles.availabilityText, { color: availabilityColor }]}>
+                        {availabilityText}
+                    </Text>
+                </View>
             </View>
 
             {/* Image */}
             <View style={styles.imageContainer}>
                 {hasImage ? (
-                    <Image source={{ uri: motorcycle.image }} style={styles.image} />
+                    <Image 
+                        source={{ uri: motorcycle.image }} 
+                        style={styles.image} 
+                    />
                 ) : (
                     <ImageBackground style={styles.image} source={{ uri: motorcycle.image }}>
                         <View style={styles.placeholderOverlay}>
-                            <Text style={styles.placeholderText}>{motorcycle.name}</Text>
+                            <Text style={styles.placeholderText}>{cleanName}</Text>
                         </View>
                     </ImageBackground>
                 )}
@@ -81,19 +112,56 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
             {/* Info */}
             <View style={styles.infoSection}>
                 <View style={styles.headerRow}>
-                    <MotorcycleHeader
-                        brand={motorcycle.brand}
-                        name={motorcycle.name}
-                        variant={motorcycle.variant}
-                        branchName={motorcycle.branchName}
-                    />
-                    <PriceText price={motorcycle.price} total={motorcycle.price * 3} />
+                    {/* Model name and category */}
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.modelName} numberOfLines={1}>
+                            {cleanName}
+                        </Text>
+                        <View style={styles.metaRow}>
+                            <Text style={styles.brandText}>{motorcycle.brand}</Text>
+                            <Text style={styles.separator}>•</Text>
+                            <Text style={styles.categoryText}>{motorcycle.variant}</Text>
+                        </View>
+                    </View>
+                    
+                    {/* ✅ NEW: Simplified Price - Just daily rate, BIG */}
+                    <View style={styles.priceContainer}>
+                        <Text style={styles.dailyPrice}>
+                            {motorcycle.price.toLocaleString('vi-VN')}₫
+                        </Text>
+                        <Text style={styles.perDay}>/ngày</Text>
+                        
+                        {/* ✅ OPTIONAL: Subtle total price (commented out by default) */}
+                        {/* {motorcycle.totalPrice && motorcycle.totalPrice !== motorcycle.price && (
+                            <Text style={styles.totalPriceSubtle}>
+                                Tổng: {motorcycle.totalPrice.toLocaleString('vi-VN')}₫
+                            </Text>
+                        )} */}
+                    </View>
                 </View>
 
-                {/* Specs Row */}
+                {/* ✅ Specs Row - Just battery (counts commented out) */}
                 <View style={styles.specsRow}>
-                    <SpecItem icon="⚡" label={motorcycle.range} iconColor="#10b981" />
+                    {/* ✅ COMMENTED: Available count */}
+                    {/* {motorcycle.countAvailable !== undefined && (
+                        <SpecItem 
+                            icon="🏍️" 
+                            label={`${motorcycle.countAvailable} có sẵn`}
+                            iconColor={availabilityColor}
+                        />
+                    )} */}
+                    
+                    {/* Battery - Keep this */}
                     <SpecItem icon="🔋" label={motorcycle.battery} iconColor="#3b82f6" />
+                    
+                    {/* ✅ COMMENTED: Total count */}
+                    {/* {motorcycle.countTotal !== undefined && (
+                        <SpecItem 
+                            icon="📦" 
+                            label={`${motorcycle.countTotal} tổng`} 
+                            iconColor="#6b7280" 
+                        />
+                    )} */}
                 </View>
 
                 {/* Features */}
@@ -123,6 +191,9 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
     },
     topRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
         paddingHorizontal: 16,
         paddingTop: 12,
         paddingBottom: 6,
@@ -131,6 +202,23 @@ const styles = StyleSheet.create({
         color: "#9ca3af",
         fontSize: 12,
         fontWeight: "500",
+    },
+    availabilityBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        gap: 4,
+    },
+    availabilityDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    availabilityText: {
+        fontSize: 11,
+        fontWeight: "600",
     },
     imageContainer: {
         margin: 16,
@@ -170,6 +258,60 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "flex-start",
         marginBottom: 12,
+    },
+    titleContainer: {
+        flex: 1,
+        marginRight: 12,
+    },
+    modelName: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 4,
+    },
+    metaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    brandText: {
+        color: "#d4c5f9",
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    separator: {
+        color: "#666",
+        fontSize: 13,
+    },
+    categoryText: {
+        color: "#9ca3af",
+        fontSize: 13,
+        fontWeight: "500",
+        textTransform: "uppercase",
+    },
+    // ✅ NEW: Simplified price display
+    priceContainer: {
+        alignItems: "flex-end",
+    },
+    dailyPrice: {
+        color: "#fff",
+        fontSize: 28, // ✅ BIGGER! Was 24px
+        fontWeight: "800",
+        letterSpacing: -0.5,
+        lineHeight: 28,
+    },
+    perDay: {
+        color: "#6b7280",
+        fontSize: 11,
+        fontWeight: "500",
+        marginTop: 2,
+    },
+    // ✅ OPTIONAL: Subtle total price (commented out in JSX)
+    totalPriceSubtle: {
+        color: "#6b7280",
+        fontSize: 10,
+        fontWeight: "500",
+        marginTop: 4,
     },
     specsRow: {
         flexDirection: "row",

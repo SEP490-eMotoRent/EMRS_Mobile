@@ -1,4 +1,3 @@
-// src/data/repositories/vehicle/VehicleModelRepositoryImpl.ts
 import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
 import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
 import { VehicleModelRepository } from "../../../domain/repositories/vehicle/VehicleModelRepository";
@@ -7,6 +6,7 @@ import { CreateVehicleModelRequest } from "../../models/vehicle_model/CreateVehi
 import { VehicleModelResponse } from "../../models/vehicle_model/VehicleModelResponse";
 import { VehicleModelDetailResponse } from "../../models/vehicle_model/VehicleModelDetailResponse";
 import { VehicleModelSearchResponse } from "../../models/vehicle_model/VehicleModelSearchResponse";
+import { VehicleModelPaginatedSearchResponse } from "../../models/vehicle_model/VehicleModelPaginatedSearchResponse";
 
 export class VehicleModelRepositoryImpl implements VehicleModelRepository {
     constructor(private remote: VehicleModelRemoteDataSource) {}
@@ -48,6 +48,17 @@ export class VehicleModelRepositoryImpl implements VehicleModelRepository {
 
     async search(startTime?: string, endTime?: string, branchId?: string): Promise<VehicleModelSearchResponse[]> {
         return this.remote.search(startTime, endTime, branchId);
+    }
+
+    // Paginated search method - passes through to remote data source
+    async searchPaginated(
+        pageNum: number,
+        pageSize: number,
+        startTime?: string,
+        endTime?: string,
+        branchId?: string
+    ): Promise<VehicleModelPaginatedSearchResponse> {
+        return this.remote.searchPaginated(pageNum, pageSize, startTime, endTime, branchId);
     }
 
     // Map LIST API response (VehicleModelResponse) to entity

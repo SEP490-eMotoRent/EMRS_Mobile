@@ -90,17 +90,18 @@ import { WalletRepositoryImpl } from "../../data/repositories/wallet/WalletRepos
 import { WalletRepository } from "../../domain/repositories/wallet/WalletRepository";
 import { ConfirmVNPayPaymentUseCase } from "../../domain/usecases/booking/ConfirmVNPayPaymentUseCase";
 import { GetBranchesByVehicleModelUseCase } from "../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
+import { SearchChargingStationsUseCase } from "../../domain/usecases/maps/SearchChargingStationsUseCase";
 import { AiAnalyzeUseCase } from "../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 import { CreateWalletUseCase } from "../../domain/usecases/wallet/CreateWalletUseCase";
 import { GetWalletBalanceUseCase } from "../../domain/usecases/wallet/GetWalletBalanceUseCase";
 import { AxiosClient } from "../network/AxiosClient";
-import { SearchChargingStationsUseCase } from "../../domain/usecases/maps/SearchChargingStationsUseCase";
 
 // Charging imports
 import { ChargingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/charging/ChargingRemoteDataSourceImpl';
 import { ChargingRepositoryImpl } from '../../data/repositories/charging/ChargingRepositoryImpl';
 import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
 import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
+import { CancelBookingUseCase } from "../../domain/usecases/booking/CancelBookingUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -179,6 +180,8 @@ class ServiceLocator {
     this.services.set("CreateVNPayBookingUseCase", createVNPayBookingUseCase);
     const getBookingByIdUseCase = new GetBookingByIdUseCase(bookingRepository);
     this.services.set("GetBookingByIdUseCase", getBookingByIdUseCase);
+    const cancelBookingUseCase = new CancelBookingUseCase(bookingRepository);
+    this.services.set("CancelBookingUseCase", cancelBookingUseCase);
     // Receipt services
     const receiptRemoteDataSource = new ReceiptRemoteDataSourceImpl(axiosClient);
     this.services.set("ReceiptRemoteDataSource", receiptRemoteDataSource);
@@ -459,6 +462,10 @@ class ServiceLocator {
 
   getSearchChargingStationsUseCase(): SearchChargingStationsUseCase {
     return this.get<SearchChargingStationsUseCase>('SearchChargingStationsUseCase');
+  }
+
+  getCancelBookingUseCase(): CancelBookingUseCase {
+    return this.get<CancelBookingUseCase>('CancelBookingUseCase');
   }
 }
 

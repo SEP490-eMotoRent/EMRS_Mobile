@@ -7,33 +7,41 @@ interface SpecItemProps {
     iconColor?: string;
 }
 
-export const SpecItem: React.FC<SpecItemProps> = ({ icon, label, iconColor = "#fff" }) => {
+export const SpecItem: React.FC<SpecItemProps> = ({
+    icon,
+    label,
+    iconColor = "#999"
+}) => {
     return (
         <View style={styles.container}>
-            <Text style={[styles.icon, { color: iconColor }]}>{icon}</Text>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.icon, { color: iconColor }]}>
+                {icon}
+            </Text>
+            <Text style={styles.label}>
+                {label}
+            </Text>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "#2a2a2a",
         paddingHorizontal: 12,
         paddingVertical: 8,
-        borderRadius: 8,
+        borderRadius: 12,
         gap: 6,
     },
     icon: {
         fontSize: 16,
+        lineHeight: 16,
     },
     label: {
-        color: "#d1d5db",
-        fontSize: 12,
+        color: "#e5e7eb",
+        fontSize: 13,
         fontWeight: "500",
-        flex: 1,
+        lineHeight: 16,
     },
 });
