@@ -29,7 +29,7 @@ export const ApiEndpoints = {
     list: "/Booking",
     assignVehicle: (vehicleId: string, bookingId: string) =>
       `/Booking/vehicle/assign/${bookingId}/${vehicleId}`,
-
+    cancel: (bookingId: string) => `/Booking/cancel/${bookingId}`, // ✅ NEW
     vnpayCallback: "/Booking/vnpay/callback",
   },
 
@@ -42,13 +42,13 @@ export const ApiEndpoints = {
   renter: {
     list: "/renters",
     update: "/account/renter",
-    current: "/account/renter", // FIXED: NO ID for current (JWT-based)
-    detail: (renterId: string) => `/account/renter/${renterId}`, // FIXED: WITH ID
+    current: "/account/renter",
+    detail: (renterId: string) => `/account/renter/${renterId}`,
     scanFace: "/account/renter/scan",
     document: {
-      upload: "/api/Document", // POST
-      update: (documentId: string) => `/api/Document/${documentId}`, // PUT
-      delete: (documentId: string) => `/api/Document/${documentId}`, // DELETE
+      upload: "/api/Document",
+      update: (documentId: string) => `/api/Document/${documentId}`,
+      delete: (documentId: string) => `/api/Document/${documentId}`,
     },
   },
 
@@ -89,8 +89,6 @@ export const ApiEndpoints = {
     create: "/Branch/create",
     update: (id: string) => `/Branch/${id}`,
     delete: (id: string) => `/Branch/${id}`,
-
-    // NEW: Charging station search endpoint
     searchCharging: (lat: number, lon: number, radius: number) =>
       `/Branch/charging/search/${lat}/${lon}/${radius}`,
     getByLocation: (latitude: number, longitude: number, radius: number) =>

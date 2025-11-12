@@ -282,8 +282,65 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
   }
 
+  // ✅ NEW: Cancel booking
+  async cancelBooking(bookingId: string): Promise<Booking> {
+    console.log("🔄 [REPOSITORY] Cancelling booking:", bookingId);
+    
+    const response = await this.remote.cancelBooking(bookingId);
+    
+    // Map the BookingResponse to Booking entity
+    const cancelledBooking = new Booking(
+      response.id,
+      response.bookingCode,
+      response.baseRentalFee,
+      response.depositAmount,
+      response.rentalDays,
+      response.rentalHours,
+      response.rentingRate,
+      response.lateReturnFee || 0,
+      response.averageRentalPrice,
+      0, // excessKmFee
+      0, // cleaningFee
+      0, // crossBranchFee
+      0, // totalChargingFee
+      0, // totalAdditionalFee
+      response.totalRentalFee,
+      response.totalAmount,
+      0, // refundAmount
+      response.bookingStatus, // Should be "Cancelled"
+      response.vehicleModelId,
+      response.renterId,
+      undefined, // renter
+      undefined, // vehicleModel
+      response.vehicleId,
+      undefined, // vehicle
+      response.startDatetime ? new Date(response.startDatetime) : undefined,
+      response.endDatetime ? new Date(response.endDatetime) : undefined,
+      response.actualReturnDatetime ? new Date(response.actualReturnDatetime) : undefined,
+      undefined, // insurancePackageId
+      undefined, // insurancePackage
+      undefined, // rentalContract
+      undefined, // rentalReceipts
+      undefined, // handoverBranchId
+      undefined, // handoverBranch
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims
+      undefined, // additionalFees
+      undefined, // chargingRecords
+      new Date(),
+      null,
+      null,
+      false
+    );
+
+    console.log("✅ [REPOSITORY] Booking cancelled and mapped:", cancelledBooking.bookingStatus);
+    return cancelledBooking;
+  }
+
   // =========================================================================
-  // ✅ LIST MAPPER - WITH NESTED OBJECTS
+  //  LIST MAPPER - WITH NESTED OBJECTS
   // =========================================================================
   private mapListResponseToEntity(dto: BookingResponseForRenter): Booking {
     console.log("🔄 Mapping list booking response:", dto.id);

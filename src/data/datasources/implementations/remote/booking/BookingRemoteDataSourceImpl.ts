@@ -11,6 +11,7 @@ import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBo
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
 import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/BookingRemoteDataSource";
+import { BookingResponse } from "../../../../models/booking/BookingResponse";
 
 export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
@@ -60,7 +61,6 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  // ✅ NEW: VNPay booking creation
   async createVNPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse> {
     console.log("📤 VNPay booking request:", JSON.stringify(request, null, 2));
 
@@ -88,10 +88,8 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         const rawData = unwrapResponse(response.data);
         console.log("📥 Raw VNPay response from backend:", JSON.stringify(rawData, null, 2));
         
-        // ✅ Transform backend response (handle both PascalCase and camelCase)
         const transformedData: BookingWithoutWalletResponse = {
             id: rawData.id || rawData.Id,
-            // bookingCode: rawData.bookingCode || rawData.BookingCode, // ← ADDED
             vehicleModelId: rawData.vehicleModelId || rawData.VehicleModelId,
             renterId: rawData.renterId || rawData.RenterId,
             vehicleId: rawData.vehicleId || rawData.VehicleId,
@@ -113,16 +111,10 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         
         console.log("✅ Transformed response:", JSON.stringify(transformedData, null, 2));
         
-        // Validate required fields
         if (!transformedData.vnpayUrl) {
             console.error("❌ Missing VNPay URL in response!");
             throw new Error("VNPay URL not found in backend response");
         }
-        
-        // if (!transformedData.bookingCode) {
-        //     console.error("❌ Missing BookingCode in response!");
-        //     throw new Error("BookingCode not found in backend response");
-        // }
         
         return transformedData;
     } catch (error: any) {
@@ -237,6 +229,31 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     } catch (error: any) {
       console.error("Failed to assign vehicle to booking:", error);
       throw error;
+    }
+  }
+
+  // ✅ NEW: Cancel booking method
+  async cancelBooking(bookingId: string): Promise<BookingResponse> {
+    try {
+      console.log("📤 [CANCEL BOOKING] Calling API for booking:", bookingId);
+      const endpoint = ApiEndpoints.booking.cancel(bookingId);
+      const response = await this.axiosClient.put<ApiResponse<BookingResponse>>(endpoint);
+      
+      const cancelledBooking = unwrapResponse(response.data);
+      console.log("✅ [CANCEL BOOKING] Booking cancelled successfully:", cancelledBooking.id);
+      console.log("   Status:", cancelledBooking.bookingStatus);
+      
+      return cancelledBooking;
+    } catch (error: any) {
+      console.error("❌ [CANCEL BOOKING] API Error:", error);
+      console.error("❌ Error Response:", JSON.stringify(error.response?.data, null, 2));
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error
+        || error.message 
+        || "Failed to cancel booking";
+      
+      throw new Error(errorMessage);
     }
   }
 }

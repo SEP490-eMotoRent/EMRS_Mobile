@@ -5,8 +5,10 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-nativ
 import sl from "../../../../../core/di/InjectionContainer";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
 import { GetCurrentRenterBookingsUseCase } from "../../../../../domain/usecases/booking/GetCurrentRenterBookingsUseCase";
+import { CancelBookingUseCase } from "../../../../../domain/usecases/booking/CancelBookingUseCase"; // ✅ NEW
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { useGetCurrentRenterBookings } from "../../hooks/useGetCurrentRenterBookings";
+import { useCancelBooking } from "../../hooks/useCancelBooking"; // ✅ NEW
 import { FilterTags } from "../molecules/FilterTags";
 import { SearchBar } from "../molecules/SearchBar";
 import { TabButton } from "../molecules/TabButton";
@@ -26,12 +28,20 @@ export const TripsScreen: React.FC = () => {
     const [sortBy, setSortBy] = useState("Mới nhất");
     const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
 
+    // ✅ Get use cases from DI container
     const getCurrentRenterBookingsUseCase = useMemo(
         () => sl.get<GetCurrentRenterBookingsUseCase>("GetCurrentRenterBookingsUseCase"),
         []
     );
     
+    const cancelBookingUseCase = useMemo(
+        () => sl.get<CancelBookingUseCase>("CancelBookingUseCase"), // ✅ NEW
+        []
+    );
+    
+    // ✅ Initialize hooks
     const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(getCurrentRenterBookingsUseCase);
+    const { cancelBooking, cancelling } = useCancelBooking(cancelBookingUseCase); // ✅ NEW
 
     // Helper: Format VND
     const formatVnd = (amount?: number) => amount ? `${amount.toLocaleString('vi-VN')}đ` : undefined;
@@ -184,8 +194,12 @@ export const TripsScreen: React.FC = () => {
         });
     };
 
-    const handleCancelBooking = (tripId: string) => {
-        console.log("Hủy đặt xe", tripId);
+    // ✅ UPDATED: Cancel booking handler with confirmation and refresh
+    const handleCancelBooking = async (tripId: string) => {
+        await cancelBooking(tripId, () => {
+            // Refresh the bookings list after successful cancellation
+            refetch();
+        });
     };
 
     const handleRentAgain = (tripId: string) => {
@@ -343,6 +357,16 @@ export const TripsScreen: React.FC = () => {
             <View style={styles.contentContainer}>
                 {activeTab === "current" ? renderCurrentTrips() : renderPastTrips()}
             </View>
+
+            {/* ✅ NEW: Show loading overlay when cancelling */}
+            {cancelling && (
+                <View style={styles.loadingOverlay}>
+                    <View style={styles.loadingBox}>
+                        <ActivityIndicator size="large" color="#d4c5f9" />
+                        <Text style={styles.loadingOverlayText}>Đang hủy đặt xe...</Text>
+                    </View>
+                </View>
+            )}
         </View>
     );
 };
@@ -394,5 +418,29 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: "center",
         marginTop: 12,
+    },
+    // ✅ NEW: Loading overlay styles
+    loadingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 999,
+    },
+    loadingBox: {
+        backgroundColor: '#1a1a1a',
+        padding: 24,
+        borderRadius: 16,
+        alignItems: 'center',
+        gap: 12,
+    },
+    loadingOverlayText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
