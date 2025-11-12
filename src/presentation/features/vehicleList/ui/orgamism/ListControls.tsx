@@ -3,12 +3,14 @@ import { StyleSheet, Text, View } from "react-native";
 import { SortButton } from "../atoms/buttons/SortButtons";
 
 interface ListControlsProps {
+    currentCount: number;
     totalResults: number;
     sortLabel: string;
     onSortPress: () => void;
 }
 
 export const ListControls: React.FC<ListControlsProps> = ({
+    currentCount,
     totalResults,
     sortLabel,
     onSortPress,
@@ -16,7 +18,7 @@ export const ListControls: React.FC<ListControlsProps> = ({
     return (
         <View style={styles.container}>
             <Text style={styles.resultsText}>
-                {totalResults} of {totalResults}
+                {currentCount} của {totalResults}
             </Text>
             <SortButton label={sortLabel} onPress={onSortPress} />
         </View>

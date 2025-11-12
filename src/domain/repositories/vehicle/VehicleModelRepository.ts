@@ -1,3 +1,4 @@
+import { VehicleModelPaginatedSearchResponse } from "../../../data/models/vehicle_model/VehicleModelPaginatedSearchResponse";
 import { VehicleModelResponse } from "../../../data/models/vehicle_model/VehicleModelResponse";
 import { VehicleModelSearchResponse } from "../../../data/models/vehicle_model/VehicleModelSearchResponse";
 import { VehicleModel } from "../../entities/vehicle/VehicleModel";
@@ -10,4 +11,11 @@ export interface VehicleModelRepository {
     update(model: VehicleModel): Promise<void>;
     getAllRaw(): Promise<VehicleModelResponse[]>;
     search(startTime?: string, endTime?: string, branchId?: string): Promise<VehicleModelSearchResponse[]>;
+    searchPaginated(
+        pageNum: number,
+        pageSize: number,
+        startTime?: string,
+        endTime?: string,
+        branchId?: string
+    ): Promise<VehicleModelPaginatedSearchResponse>;
 }

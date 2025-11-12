@@ -7,18 +7,14 @@ interface ListHeaderProps {
   location: string;
   dateRange: string;
   onSearchPress: () => void;
-  onPricePress: () => void;
-  onModelPress: () => void;
-  onRangePress: () => void;
+  onFilterPress: () => void; // ✅ NEW: Single filter button handler
 }
 
 export const ListHeader: React.FC<ListHeaderProps> = ({
   location,
   dateRange,
   onSearchPress,
-  onPricePress,
-  onModelPress,
-  onRangePress,
+  onFilterPress,
 }) => {
   return (
     <View style={styles.container}>
@@ -34,13 +30,15 @@ export const ListHeader: React.FC<ListHeaderProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersContent}
       >
-        <FilterButton label="Price" onPress={onPricePress} />
-        <FilterButton label="Model" onPress={onModelPress} />
-        <FilterButton label="Range" onPress={onRangePress} />
+        <FilterButton label="Giá" onPress={onFilterPress} />
+        <FilterButton label="Dòng Xe" onPress={onFilterPress} />
+        <FilterButton label="Quãng Đường" onPress={onFilterPress} />
+        <FilterButton label="Tính Năng" onPress={onFilterPress} />
       </ScrollView>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

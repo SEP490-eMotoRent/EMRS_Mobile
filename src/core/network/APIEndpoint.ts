@@ -11,6 +11,7 @@ export const ApiEndpoints = {
       create: "/Vehicle/model/create",
       list: "/Vehicle/model/list",
       search: "/Vehicle/model/search",
+      searchPagination: "/Vehicle/model/search/pagination",
       detail: (id: string) => `/Vehicle/model/detail/${id}`,
     },
     pricing: {
@@ -29,7 +30,7 @@ export const ApiEndpoints = {
     list: "/Booking",
     assignVehicle: (vehicleId: string, bookingId: string) =>
       `/Booking/vehicle/assign/${bookingId}/${vehicleId}`,
-    cancel: (bookingId: string) => `/Booking/cancel/${bookingId}`, // ✅ NEW
+    cancel: (bookingId: string) => `/Booking/cancel/${bookingId}`,
     vnpayCallback: "/Booking/vnpay/callback",
   },
 

@@ -6,6 +6,7 @@ import { VehicleModelResponse } from "../../../../models/vehicle_model/VehicleMo
 import { VehicleModelRemoteDataSource } from "../../../interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { VehicleModelDetailResponse } from '../../../../models/vehicle_model/VehicleModelDetailResponse';
 import { VehicleModelSearchResponse } from '../../../../models/vehicle_model/VehicleModelSearchResponse';
+import { VehicleModelPaginatedSearchResponse } from '../../../../models/vehicle_model/VehicleModelPaginatedSearchResponse';
 
 export class VehicleModelRemoteDataSourceImpl implements VehicleModelRemoteDataSource {
     constructor(private axiosClient: AxiosClient) {}
@@ -53,6 +54,42 @@ export class VehicleModelRemoteDataSourceImpl implements VehicleModelRemoteDataS
             return unwrapResponse(response.data);
         } catch (error: any) {
             console.error("Failed to search vehicles:", error);
+            throw error;
+        }
+    }
+
+    // ✅ NEW: Paginated search for infinite scroll
+    async searchPaginated(
+        pageNum: number,
+        pageSize: number,
+        startTime?: string,
+        endTime?: string,
+        branchId?: string
+    ): Promise<VehicleModelPaginatedSearchResponse> {
+        try {
+            console.log(`📤 [SEARCH PAGINATED] Page ${pageNum}, Size ${pageSize}`);
+            
+            const params: Record<string, any> = {
+                PageNum: pageNum,
+                PageSize: pageSize,
+            };
+            
+            if (startTime) params.startTime = startTime;
+            if (endTime) params.endTime = endTime;
+            if (branchId) params.branchId = branchId;
+
+            const response = await this.axiosClient.get<ApiResponse<VehicleModelPaginatedSearchResponse>>(
+                ApiEndpoints.vehicle.model.searchPagination,
+                { params }
+            );
+            
+            const result = unwrapResponse(response.data);
+            
+            console.log(`✅ [SEARCH PAGINATED] Page ${result.currentPage}/${result.totalPages}, Items: ${result.items.length}`);
+            
+            return result;
+        } catch (error: any) {
+            console.error("❌ [SEARCH PAGINATED] Failed:", error);
             throw error;
         }
     }
