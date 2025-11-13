@@ -74,12 +74,21 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                                 }}
                                 activeOpacity={0.7}
                             >
-                                <Text style={[
-                                    styles.dropdownItemText,
-                                    branch.id === selectedBranchId && styles.dropdownItemTextSelected
-                                ]}>
-                                    {branch.name}
-                                </Text>
+                                <View style={styles.dropdownItemHeader}>
+                                    <Text style={[
+                                        styles.dropdownItemText,
+                                        branch.id === selectedBranchId && styles.dropdownItemTextSelected
+                                    ]}>
+                                        {branch.name}
+                                    </Text>
+                                    {branch.vehicleCount !== undefined && (
+                                        <View style={styles.dropdownVehicleCount}>
+                                            <Text style={styles.dropdownVehicleCountText}>
+                                                {branch.vehicleCount} xe
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
                                 <Text style={styles.dropdownItemAddress}>{branch.address}</Text>
                             </TouchableOpacity>
                         ))}
@@ -126,12 +135,16 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                 </MapView>
             </View>
 
-            {/* Branch Info Card */}
+            {/* ✅ UPDATED: Branch Info Card - Better styling */}
             <View style={styles.branchCard}>
                 <View style={styles.branchHeader}>
                     <Text style={styles.branchName}>{selectedBranch.name}</Text>
                     {selectedBranch.vehicleCount !== undefined && (
-                        <Text style={styles.distance}>{selectedBranch.vehicleCount} xe có sẵn</Text>
+                        <View style={styles.vehicleCountBadge}>
+                            <Text style={styles.vehicleCountText}>
+                                {selectedBranch.vehicleCount} xe
+                            </Text>
+                        </View>
                     )}
                 </View>
                 
@@ -143,7 +156,10 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                 <BranchInfoItem icon="📞" text={selectedBranch.phone} />
                 
                 <View style={styles.badgeContainer}>
-                    <AvailableBadge />
+                    <AvailableBadge 
+                        openingTime={selectedBranch.openingTime}
+                        closingTime={selectedBranch.closingTime}
+                    />
                 </View>
             </View>
         </View>
@@ -193,14 +209,31 @@ const styles = StyleSheet.create({
     dropdownItemSelected: {
         backgroundColor: "#1a1a1a",
     },
+    dropdownItemHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 4,
+    },
     dropdownItemText: {
         color: "#fff",
         fontSize: 14,
         fontWeight: "600",
-        marginBottom: 4,
+        flex: 1,
     },
     dropdownItemTextSelected: {
         color: "#a78bfa",
+    },
+    dropdownVehicleCount: {
+        backgroundColor: "#333",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    dropdownVehicleCountText: {
+        color: "#22c55e",
+        fontSize: 11,
+        fontWeight: "600",
     },
     dropdownItemAddress: {
         color: "#999",
@@ -247,26 +280,39 @@ const styles = StyleSheet.create({
     },
     branchCard: {
         backgroundColor: "#000",
-        padding: 16,
+        padding: 20, // ✅ Increased from 16
         borderRadius: 16,
+        borderWidth: 1, // ✅ Added border
+        borderColor: "#222", // ✅ Subtle border
     },
     branchHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 12,
+        marginBottom: 16, // ✅ Increased spacing
     },
     branchName: {
         color: "#fff",
-        fontSize: 16,
+        fontSize: 18, // ✅ Larger font
+        fontWeight: "700",
+        flex: 1,
+    },
+    // ✅ NEW: Styled vehicle count badge
+    vehicleCountBadge: {
+        backgroundColor: "rgba(34, 197, 94, 0.15)", // Green tint
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "rgba(34, 197, 94, 0.3)",
+    },
+    vehicleCountText: {
+        color: "#22c55e", // Green
+        fontSize: 13,
         fontWeight: "700",
     },
-    distance: {
-        color: "#999",
-        fontSize: 12,
-    },
     badgeContainer: {
-        marginTop: 8,
+        marginTop: 12, // ✅ Increased from 8
         alignSelf: "flex-start",
     },
     errorText: {
