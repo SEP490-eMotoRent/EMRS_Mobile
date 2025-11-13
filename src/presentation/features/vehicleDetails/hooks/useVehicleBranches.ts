@@ -38,25 +38,34 @@ export const useVehicleBranches = (
 
                 if (!mounted) return;
 
+                console.log('🔍 [useVehicleBranches] Raw branch entities from API:', JSON.stringify(branchEntities, null, 2));
+
                 // Map Branch entities to UI-friendly format
-                const uiBranches: BranchUI[] = branchEntities.map((branch) => ({
-                    id: branch.id,
-                    name: branch.branchName,
-                    address: branch.address,
-                    city: branch.city,
-                    phone: branch.phone,
-                    email: branch.email,
-                    latitude: branch.latitude,
-                    longitude: branch.longitude,
-                    openingTime: branch.openingTime,
-                    closingTime: branch.closingTime,
-                    vehicleCount: 0, // This would come from the API if available
-                }));
+                const uiBranches: BranchUI[] = branchEntities.map((branch: any) => {
+                    console.log(`🔍 [useVehicleBranches] Processing branch: ${branch.branchName}, vehicleCount: ${branch.vehicleCount}`);
+                    
+                    return {
+                        id: branch.id,
+                        name: branch.branchName,
+                        address: branch.address,
+                        city: branch.city,
+                        phone: branch.phone,
+                        email: branch.email,
+                        latitude: branch.latitude,
+                        longitude: branch.longitude,
+                        openingTime: branch.openingTime,
+                        closingTime: branch.closingTime,
+                        vehicleCount: branch.vehicleCount ?? 0, // ✅ Direct access to vehicleCount
+                    };
+                });
+
+                console.log('🏢 [useVehicleBranches] Loaded branches:', JSON.stringify(uiBranches, null, 2));
 
                 setBranches(uiBranches);
             } catch (err: any) {
                 if (mounted) {
                     setError(err.message || "Failed to load branches");
+                    console.error('❌ [useVehicleBranches] Error:', err);
                 }
             } finally {
                 if (mounted) {

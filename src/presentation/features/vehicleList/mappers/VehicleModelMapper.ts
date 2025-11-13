@@ -38,9 +38,9 @@ export class VehicleModelMapper {
         const range = maxRangeKm > 0 ? `${maxRangeKm} Km` : "N/A";
         const battery = batteryCapacityKwh > 0 ? `${batteryCapacityKwh} kWh` : "N/A";
 
+        // ✅ Pass the raw Vietnamese color string (ColorBadge will parse it)
         const availableColors = dto.availableColors || [];
-        const firstColor = availableColors.length > 0 ? availableColors[0].colorName : "Blue";
-        const colorHex = this.getColorHex(firstColor);
+        const colorString = availableColors.length > 0 ? availableColors[0].colorName : "Đen";
 
         // Only include Support Charging and GPS Tracking
         const features: string[] = [];
@@ -62,7 +62,7 @@ export class VehicleModelMapper {
             seats: 2,
             features,
             branchName: "Available at multiple locations",
-            color: colorHex,
+            color: colorString, // ✅ Vietnamese color string, not hex
             // ✅ NEW: Include rental duration and total
             rentalDays,
             totalPrice,
@@ -114,8 +114,8 @@ export class VehicleModelMapper {
         const range = maxRangeKm > 0 ? `${maxRangeKm} Km` : "N/A";
         const battery = batteryCapacityKwh > 0 ? `${batteryCapacityKwh} kWh` : "N/A";
 
-        const firstColor = availableColors.length > 0 ? availableColors[0].colorName : "Blue";
-        const colorHex = this.getColorHex(firstColor);
+        // ✅ Pass Vietnamese color string directly (ColorWheel will parse it)
+        const colorString = availableColors.length > 0 ? availableColors[0].colorName : "Đen";
 
         // Only include Support Charging and GPS Tracking
         const features: string[] = [];
@@ -142,7 +142,7 @@ export class VehicleModelMapper {
             seats: 2,
             features,
             branchName: availabilityStatus,
-            color: colorHex,
+            color: colorString, // ✅ Vietnamese color string, not hex!
             countTotal,
             countAvailable,
             isAvailable: countAvailable > 0,

@@ -7,7 +7,7 @@ interface ListHeaderProps {
   location: string;
   dateRange: string;
   onSearchPress: () => void;
-  onFilterPress: () => void; // ✅ NEW: Single filter button handler
+  onFilterPress: () => void;
 }
 
 export const ListHeader: React.FC<ListHeaderProps> = ({
@@ -33,12 +33,11 @@ export const ListHeader: React.FC<ListHeaderProps> = ({
         <FilterButton label="Giá" onPress={onFilterPress} />
         <FilterButton label="Dòng Xe" onPress={onFilterPress} />
         <FilterButton label="Quãng Đường" onPress={onFilterPress} />
-        <FilterButton label="Tính Năng" onPress={onFilterPress} />
+        {/* ✅ REMOVED: "Tính Năng" button - not needed anymore */}
       </ScrollView>
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {

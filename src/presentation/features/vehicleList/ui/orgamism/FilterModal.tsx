@@ -1,13 +1,13 @@
-import Slider from '@react-native-community/slider';
 import React, { useState } from 'react';
 import {
     Modal,
-    ScrollView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
+    TouchableOpacity,
+    ScrollView,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 
 export interface FilterState {
     priceRange: [number, number];      // [min, max]
@@ -221,8 +221,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                             </View>
                         </View>
 
-                        {/* Features */}
-                        <View style={styles.section}>
+                        {/* ✅ COMMENTED: Features section - not needed anymore */}
+                        {/* <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Tính Năng</Text>
                             <View style={styles.chipContainer}>
                                 <FilterChip
@@ -236,7 +236,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                                     onPress={() => toggleFeature('gps')}
                                 />
                             </View>
-                        </View>
+                        </View> */}
                     </ScrollView>
 
                     {/* Footer with Apply Button */}
