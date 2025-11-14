@@ -14,18 +14,16 @@ import {
   HomeStackParamList,
 } from "../../../../shared/navigation/StackParameters/types";
 
+import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../core/di/InjectionContainer";
 import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
-import { BackButton } from "../../../../common/components/atoms/buttons/BackButton";
+import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 import { useVehicleBranches } from "../../hooks/useVehicleBranches";
 import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
-import { BookingButton } from "../atoms/buttons/BookingButton";
+import { BookingButtonWithPrice } from "../atoms/buttons/BookingButtonWithPrice";
 import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
 import { PickupLocationSection } from "../organisms/PickupLocationSection";
-import { PricingSection } from "../organisms/PricingSection";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 
 type RoutePropType = RouteProp<BrowseStackParamList, "VehicleDetails">;
 type NavProp = StackNavigationProp<HomeStackParamList>;
@@ -33,7 +31,9 @@ type NavProp = StackNavigationProp<HomeStackParamList>;
 export const VehicleDetailsScreen: React.FC = () => {
   const route = useRoute<RoutePropType>();
   const navigation = useNavigation<NavProp>();
-  const { vehicleId } = route.params;
+  
+  // ✅ UPDATED: Extract dateRange and location from route params
+  const { vehicleId, dateRange, location } = route.params;
 
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
@@ -78,32 +78,12 @@ export const VehicleDetailsScreen: React.FC = () => {
     );
   }
 
-  // Use all images from the API
   const images = data.images;
-
-  const dailyPrice = data.pricePerDay;
-  const pricingOptions = [
-    {
-      duration: "24 Hours",
-      price: dailyPrice > 0 ? `${dailyPrice.toLocaleString()}đ` : "N/A",
-    },
-    {
-      duration: "3+ Days",
-      price:
-        dailyPrice > 0
-          ? `${Math.round(dailyPrice * 0.85).toLocaleString()}đ/day`
-          : "N/A",
-    },
-  ];
-
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
-
-  // Use depositAmount from API
   const securityDeposit = data.depositAmount > 0 ? data.depositAmount : 2000000;
 
   const handleBooking = () => {
     if (!selectedBranchId || !selectedBranch) {
-      // Show alert or toast that branch must be selected
       return;
     }
 
@@ -125,6 +105,7 @@ export const VehicleDetailsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
         <ScreenHeader
@@ -140,29 +121,67 @@ export const VehicleDetailsScreen: React.FC = () => {
           <Text style={styles.vehicleName}>{data.name}</Text>
         </View>
 
-        {/* Specs Row */}
-        <View style={styles.specsContainer}>
+        {/* ✅ Specs as vertical list - "Đặc Điểm" */}
+        <View style={styles.specsSection}>
+          <Text style={styles.sectionTitle}>Đặc Điểm</Text>
+          
           {data.battery && (
-            <View style={styles.specItem}>
-              <Text style={styles.specIcon}>🔋</Text>
-              <Text style={styles.specText}>{data.battery}</Text>
+            <View style={styles.specRow}>
+              <View style={styles.specIconContainer}>
+                <Text style={styles.specIcon}>🔋</Text>
+              </View>
+              <View style={styles.specContent}>
+                <Text style={styles.specLabel}>Pin</Text>
+                <Text style={styles.specValue}>{data.battery}</Text>
+              </View>
             </View>
           )}
+          
           {data.topSpeed && (
-            <View style={styles.specItem}>
-              <Text style={styles.specIcon}>⚡</Text>
-              <Text style={styles.specText}>{data.topSpeed}</Text>
+            <View style={styles.specRow}>
+              <View style={styles.specIconContainer}>
+                <Text style={styles.specIcon}>⚡</Text>
+              </View>
+              <View style={styles.specContent}>
+                <Text style={styles.specLabel}>Tốc Độ Tối Đa</Text>
+                <Text style={styles.specValue}>{data.topSpeed}</Text>
+              </View>
             </View>
           )}
-          {data.range && (
-            <View style={styles.specItem}>
+          
+          <View style={styles.specRow}>
+            <View style={styles.specIconContainer}>
               <Text style={styles.specIcon}>📍</Text>
-              <Text style={styles.specText}>{data.range}</Text>
             </View>
-          )}
+            <View style={styles.specContent}>
+              <Text style={styles.specLabel}>Quãng Đường Tối Đa</Text>
+              <Text style={styles.specValue}>{data.range || "N/A"}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.specRow}>
+            <View style={styles.specIconContainer}>
+              <Text style={styles.specIcon}>🏍️</Text>
+            </View>
+            <View style={styles.specContent}>
+              <Text style={styles.specLabel}>Loại Xe</Text>
+              <Text style={styles.specValue}>{data.category || "ECONOMY"}</Text>
+            </View>
+          </View>
         </View>
 
-        {/* Description with Show More */}
+        {/* ✅ Security Deposit Card */}
+        <View style={styles.depositCard}>
+          <View style={styles.depositHeader}>
+            <Text style={styles.depositIcon}>💰</Text>
+            <Text style={styles.depositLabel}>Đặt Cọc</Text>
+          </View>
+          <Text style={styles.depositAmount}>
+            {securityDeposit.toLocaleString('vi-VN')}₫
+          </Text>
+        </View>
+
+        {/* ✅ Description with Vietnamese buttons */}
         {data.description && data.description !== "No description." && (
           <View style={styles.descriptionContainer}>
             <View style={styles.descriptionHeader}>
@@ -173,7 +192,7 @@ export const VehicleDetailsScreen: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <Text style={styles.showMoreText}>
-                  {isDescriptionExpanded ? "Show less" : "Show more"}
+                  {isDescriptionExpanded ? "Ẩn Đi" : "Hiển Thị Thêm"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -186,28 +205,30 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         )}
 
-        <PricingSection
-          pricingOptions={pricingOptions}
-          securityDeposit={`${securityDeposit.toLocaleString()}đ`}
-        />
-
-        <ConditionSection
-          requirements={[
-            "Require Identification Card",
-            "Require Driving License",
-            "Customer must pay Security Deposit",
-          ]}
-        />
-
+        {/* ✅ Pickup Location */}
         <PickupLocationSection
           branches={branches}
           branchesError={branchesError}
           selectedBranchId={selectedBranchId}
           onBranchSelect={setSelectedBranchId}
         />
+
+        {/* ✅ Conditions at the bottom */}
+        <ConditionSection
+          requirements={[
+            "Yêu cầu CMND/CCCD",
+            "Yêu cầu Giấy phép lái xe",
+            "Khách hàng phải đặt cọc",
+          ]}
+        />
       </ScrollView>
 
-      <BookingButton onPress={handleBooking} disabled={!selectedBranchId} />
+      <BookingButtonWithPrice
+        pricePerDay={data.pricePerDay}
+        dateRange={dateRange}
+        onPress={handleBooking}
+        disabled={!selectedBranchId}
+      />
     </SafeAreaView>
   );
 };
@@ -219,6 +240,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // ✅ Space for booking button + safe area
   },
   center: {
     flex: 1,
@@ -244,29 +268,81 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
   },
-  specsContainer: {
-    flexDirection: "row",
-    gap: 8,
+  // ✅ Vertical specs list
+  specsSection: {
+    backgroundColor: "#1a1a1a",
+    padding: 20,
+    borderRadius: 16,
     marginBottom: 16,
   },
-  specItem: {
-    flex: 1,
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+  specRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1a1a1a",
     paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  specIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2a2a2a",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
   },
   specIcon: {
-    fontSize: 16,
+    fontSize: 20,
   },
-  specText: {
-    color: "#d1d5db",
-    fontSize: 12,
+  specContent: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  specLabel: {
+    color: "#999",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  specValue: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  depositCard: {
+    backgroundColor: "#1a1a1a",
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  depositHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  depositIcon: {
+    fontSize: 20,
+  },
+  depositLabel: {
+    color: "#999",
+    fontSize: 14,
     fontWeight: "600",
+  },
+  depositAmount: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "700",
+    textAlign: "left",
   },
   descriptionContainer: {
     backgroundColor: "#1a1a1a",

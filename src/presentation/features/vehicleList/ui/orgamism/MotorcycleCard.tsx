@@ -3,17 +3,13 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import React from "react";
 import {
     Image,
-    ImageBackground,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
-import { ColorBadge } from "../atoms/badges/ColorBadge";
-import { FeatureBadge } from "../atoms/badges/FeatureBadge";
-// import { PriceText } from "../atoms/texts/PriceTexts"; // ✅ COMMENTED: Using simpler price display
-import { SpecItem } from "../molecules/SpecItem";
+import { ColorWheel } from "../molecules/ColorWheel";
 
 type NavProp = StackNavigationProp<BrowseStackParamList>;
 
@@ -40,21 +36,22 @@ export interface Motorcycle {
 
 interface Props {
     motorcycle: Motorcycle;
+    dateRange: string;
+    location?: string;
 }
 
-export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
+export const MotorcycleCard: React.FC<Props> = ({ motorcycle, dateRange, location }) => {
     const navigation = useNavigation<NavProp>();
 
     const handlePress = () => {
-        navigation.navigate("VehicleDetails", { vehicleId: motorcycle.id });
+        navigation.navigate("VehicleDetails", { 
+            vehicleId: motorcycle.id,
+            dateRange: dateRange,
+            location: location,
+        });
     };
 
     const hasImage = motorcycle.image && motorcycle.image.trim() !== "";
-
-    // Filter features to only show Support Charging and GPS Tracking
-    const validFeatures = motorcycle.features.filter(f => 
-        f === "Support Charging" || f === "GPS Tracking"
-    );
 
     // ✅ Determine availability status
     const isAvailable = (motorcycle.countAvailable ?? 0) > 0;
@@ -63,11 +60,11 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
         ? `${motorcycle.countAvailable} có sẵn`
         : "Không có sẵn";
 
-    // ✅ Clean up the name - remove redundant brand prefix
+    // ✅ Clean up the name
     const cleanName = motorcycle.name
-        .replace(/^VinFast\s+VinFast\s+/i, '') // Remove double VinFast
-        .replace(/^VinFast\s+/i, '')           // Remove single VinFast
-        .replace(/\s+2023$/, '')               // Remove year (optional)
+        .replace(/^VinFast\s+VinFast\s+/i, '')
+        .replace(/^VinFast\s+/i, '')
+        .replace(/\s+2023$/, '')
         .trim();
 
     return (
@@ -76,12 +73,10 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
             onPress={handlePress} 
             activeOpacity={0.85}
         >
-            {/* Distance Badge */}
-            <View style={styles.topRow}>
-                <Text style={styles.distance}>
-                    Cách Xa {motorcycle.distance.toFixed(2)} Km
-                </Text>
-                {/* Availability badge */}
+            {/* Top Bar - Just availability */}
+            <View style={styles.topBar}>
+                <View style={styles.spacer} />
+                
                 <View style={[styles.availabilityBadge, { backgroundColor: availabilityColor + '20' }]}>
                     <View style={[styles.availabilityDot, { backgroundColor: availabilityColor }]} />
                     <Text style={[styles.availabilityText, { color: availabilityColor }]}>
@@ -90,7 +85,7 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
                 </View>
             </View>
 
-            {/* Image */}
+            {/* ✅ BIGGER Image - Full width, more height */}
             <View style={styles.imageContainer}>
                 {hasImage ? (
                     <Image 
@@ -98,80 +93,37 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
                         style={styles.image} 
                     />
                 ) : (
-                    <ImageBackground style={styles.image} source={{ uri: motorcycle.image }}>
-                        <View style={styles.placeholderOverlay}>
-                            <Text style={styles.placeholderText}>{cleanName}</Text>
-                        </View>
-                    </ImageBackground>
+                    <View style={styles.imagePlaceholder}>
+                        <Text style={styles.placeholderText}>{cleanName}</Text>
+                    </View>
                 )}
+                {/* Color wheel on image */}
                 <View style={styles.colorBadgeContainer}>
-                    <ColorBadge color={motorcycle.color} />
+                    <ColorWheel color={motorcycle.color} />
                 </View>
             </View>
 
-            {/* Info */}
+            {/* ✅ Clean Info Section - Just essentials */}
             <View style={styles.infoSection}>
-                <View style={styles.headerRow}>
-                    {/* Model name and category */}
-                    <View style={styles.titleContainer}>
+                {/* Name and Category */}
+                <View style={styles.nameRow}>
+                    <View style={styles.nameContainer}>
                         <Text style={styles.modelName} numberOfLines={1}>
                             {cleanName}
                         </Text>
-                        <View style={styles.metaRow}>
-                            <Text style={styles.brandText}>{motorcycle.brand}</Text>
-                            <Text style={styles.separator}>•</Text>
-                            <Text style={styles.categoryText}>{motorcycle.variant}</Text>
-                        </View>
+                        <Text style={styles.categoryText}>
+                            {motorcycle.brand} • {motorcycle.variant}
+                        </Text>
                     </View>
                     
-                    {/* ✅ NEW: Simplified Price - Just daily rate, BIG */}
+                    {/* ✅ Price - BIG and clear */}
                     <View style={styles.priceContainer}>
-                        <Text style={styles.dailyPrice}>
+                        <Text style={styles.price}>
                             {motorcycle.price.toLocaleString('vi-VN')}₫
                         </Text>
                         <Text style={styles.perDay}>/ngày</Text>
-                        
-                        {/* ✅ OPTIONAL: Subtle total price (commented out by default) */}
-                        {/* {motorcycle.totalPrice && motorcycle.totalPrice !== motorcycle.price && (
-                            <Text style={styles.totalPriceSubtle}>
-                                Tổng: {motorcycle.totalPrice.toLocaleString('vi-VN')}₫
-                            </Text>
-                        )} */}
                     </View>
                 </View>
-
-                {/* ✅ Specs Row - Just battery (counts commented out) */}
-                <View style={styles.specsRow}>
-                    {/* ✅ COMMENTED: Available count */}
-                    {/* {motorcycle.countAvailable !== undefined && (
-                        <SpecItem 
-                            icon="🏍️" 
-                            label={`${motorcycle.countAvailable} có sẵn`}
-                            iconColor={availabilityColor}
-                        />
-                    )} */}
-                    
-                    {/* Battery - Keep this */}
-                    <SpecItem icon="🔋" label={motorcycle.battery} iconColor="#3b82f6" />
-                    
-                    {/* ✅ COMMENTED: Total count */}
-                    {/* {motorcycle.countTotal !== undefined && (
-                        <SpecItem 
-                            icon="📦" 
-                            label={`${motorcycle.countTotal} tổng`} 
-                            iconColor="#6b7280" 
-                        />
-                    )} */}
-                </View>
-
-                {/* Features */}
-                {validFeatures.length > 0 && (
-                    <View style={styles.featuresRow}>
-                        {validFeatures.map((f, i) => (
-                            <FeatureBadge key={i} label={f} />
-                        ))}
-                    </View>
-                )}
             </View>
         </TouchableOpacity>
     );
@@ -190,18 +142,16 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 6,
     },
-    topRow: {
+    topBar: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "flex-end",
         alignItems: "center",
         paddingHorizontal: 16,
         paddingTop: 12,
-        paddingBottom: 6,
+        paddingBottom: 8,
     },
-    distance: {
-        color: "#9ca3af",
-        fontSize: 12,
-        fontWeight: "500",
+    spacer: {
+        flex: 1,
     },
     availabilityBadge: {
         flexDirection: "row",
@@ -221,106 +171,75 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     imageContainer: {
-        margin: 16,
-        marginTop: 8,
-        height: 140,
+        height: 220,
+        backgroundColor: "#2a2a2a",
+        position: "relative",
         borderRadius: 16,
         overflow: "hidden",
-        backgroundColor: "#2a2a2a",
+        marginHorizontal: 12,
+        marginTop: 8,
     },
     image: {
         width: "100%",
         height: "100%",
         resizeMode: "cover",
     },
-    placeholderOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.5)",
+    imagePlaceholder: {
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#2a2a2a",
         justifyContent: "center",
         alignItems: "center",
     },
     placeholderText: {
-        color: "#fff",
+        color: "#666",
         fontSize: 18,
         fontWeight: "600",
     },
     colorBadgeContainer: {
         position: "absolute",
-        top: 10,
-        left: 10,
+        top: 12,
+        left: 12,
     },
     infoSection: {
-        paddingHorizontal: 16,
-        paddingBottom: 16,
+        padding: 16,
+        paddingTop: 14,
     },
-    headerRow: {
+    nameRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: 12,
+        alignItems: "center",
     },
-    titleContainer: {
+    nameContainer: {
         flex: 1,
         marginRight: 12,
     },
     modelName: {
         color: "#fff",
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: "700",
         marginBottom: 4,
-    },
-    metaRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-    },
-    brandText: {
-        color: "#d4c5f9",
-        fontSize: 13,
-        fontWeight: "600",
-    },
-    separator: {
-        color: "#666",
-        fontSize: 13,
+        letterSpacing: -0.3,
     },
     categoryText: {
         color: "#9ca3af",
         fontSize: 13,
         fontWeight: "500",
-        textTransform: "uppercase",
     },
-    // ✅ NEW: Simplified price display
     priceContainer: {
-        alignItems: "flex-end",
+        flexDirection: "row",
+        alignItems: "baseline",
+        gap: 3,
     },
-    dailyPrice: {
+    price: {
         color: "#fff",
-        fontSize: 28, // ✅ BIGGER! Was 24px
+        fontSize: 22,
         fontWeight: "800",
         letterSpacing: -0.5,
-        lineHeight: 28,
     },
     perDay: {
         color: "#6b7280",
-        fontSize: 11,
+        fontSize: 16,
         fontWeight: "500",
-        marginTop: 2,
-    },
-    // ✅ OPTIONAL: Subtle total price (commented out in JSX)
-    totalPriceSubtle: {
-        color: "#6b7280",
-        fontSize: 10,
-        fontWeight: "500",
-        marginTop: 4,
-    },
-    specsRow: {
-        flexDirection: "row",
-        gap: 8,
-        marginBottom: 12,
-    },
-    featuresRow: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
     },
 });
