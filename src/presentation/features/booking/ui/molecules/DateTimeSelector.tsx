@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { DateTimeModal } from "../../../../common/components/organisms/bookingSearchBar/DateTimeModal";
+import { DateTimeBookingModal } from "../organisms/DateTimeModals/DateTimeBookingModal";
 
 interface DateTimeSelectorProps {
     startDate: string;
     endDate: string;
     onDateRangeChange: (dateRange: string) => void;
-    duration?: string; // Optional: pass duration to display between cards
+    duration?: string;
+    // ✅ NEW: Branch info for booking modal
+    branchName?: string;
+    branchOpenTime?: string;
+    branchCloseTime?: string;
 }
 
 // Helper to parse Vietnamese date format and get day of week
@@ -45,7 +49,7 @@ const formatDateDisplay = (dateStr: string): { dayOfWeek: string; date: string; 
     
     return {
         dayOfWeek,
-        date: `${day} tháng ${month}`, // ✅ Vietnamese format: "14 tháng 11"
+        date: `${day} tháng ${month}`,
         time,
     };
 };
@@ -55,6 +59,9 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
     endDate,
     onDateRangeChange,
     duration,
+    branchName,
+    branchOpenTime,
+    branchCloseTime,
 }) => {
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -69,7 +76,7 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
     return (
         <>
             <View style={styles.container}>
-                {/* Pickup Date Card - Compact */}
+                {/* Pickup Date Card */}
                 <TouchableOpacity 
                     style={styles.dateCard} 
                     onPress={() => setModalVisible(true)}
@@ -93,11 +100,10 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                     </View>
                 </TouchableOpacity>
 
-                {/* Duration Badge - MOVED: Now below return card */}
                 {/* Spacer between cards */}
                 <View style={styles.cardSpacer} />
 
-                {/* Return Date Card - Compact */}
+                {/* Return Date Card */}
                 <TouchableOpacity 
                     style={styles.dateCard} 
                     onPress={() => setModalVisible(true)}
@@ -121,7 +127,7 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                     </View>
                 </TouchableOpacity>
 
-                {/* Duration Badge - NOW BELOW with bigger styling */}
+                {/* Duration Badge */}
                 {duration && (
                     <View style={styles.durationBadgeBottom}>
                         <View style={styles.badgeLarge}>
@@ -132,10 +138,13 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                 )}
             </View>
 
-            <DateTimeModal
+            <DateTimeBookingModal
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onConfirm={handleConfirm}
+                branchName={branchName}
+                branchOpenTime={branchOpenTime}
+                branchCloseTime={branchCloseTime}
             />
         </>
     );
@@ -158,7 +167,7 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     cardSpacer: {
-        height: 12, // Space between pickup and return cards
+        height: 12,
     },
     cardHeader: {
         flexDirection: "row",
@@ -183,7 +192,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
     },
-    // Compact horizontal layout
     cardContentCompact: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -217,8 +225,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: "600",
     },
-    
-    // ✅ NEW: Duration badge at bottom (bigger!)
     durationBadgeBottom: {
         alignItems: "center",
         marginTop: 16,
@@ -227,12 +233,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#2a2a2a",
-        paddingHorizontal: 24, // ✅ Bigger padding
-        paddingVertical: 12,   // ✅ Bigger padding
-        borderRadius: 24,      // ✅ Bigger radius
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 24,
         borderWidth: 2,
         borderColor: "#d4c5f9",
-        gap: 10,               // ✅ More space between icon and text
+        gap: 10,
         shadowColor: "#d4c5f9",
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.4,
@@ -240,12 +246,12 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     badgeIconLarge: {
-        fontSize: 18,          // ✅ Bigger icon
+        fontSize: 18,
         color: "#d4c5f9",
     },
     badgeTextLarge: {
         color: "#d4c5f9",
-        fontSize: 16,          // ✅ Bigger text
+        fontSize: 16,
         fontWeight: "700",
     },
 });

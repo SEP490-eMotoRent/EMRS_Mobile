@@ -14,17 +14,38 @@ type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRen
 
 export const ConfirmRentalDurationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
-    const { 
-        vehicleId, 
-        vehicleName, 
-        vehicleImageUrl, 
-        branchId, 
-        branchName, 
-        pricePerDay, 
-        securityDeposit 
+    const {
+        vehicleId,
+        vehicleName,
+        vehicleImageUrl,
+        branchId,
+        branchName,
+        pricePerDay,
+        securityDeposit,
+        branchOpenTime,  // ✅ NEW: From navigation params
+        branchCloseTime, // ✅ NEW: From navigation params
     } = route.params;
     const navigation = useNavigation<NavigationPropType>();
     
+    // ✅ Convert 24-hour format (e.g., "06:00", "22:00") to SA/CH format (e.g., "6:00 SA", "10:00 CH")
+    const convertTo12HourFormat = (time24: string): string => {
+        const [hourStr, minute] = time24.split(':');
+        let hour = parseInt(hourStr);
+        const period = hour >= 12 ? 'CH' : 'SA';
+        
+        if (hour > 12) {
+            hour -= 12;
+        } else if (hour === 0) {
+            hour = 12;
+        }
+        
+        return `${hour}:${minute} ${period}`;
+    };
+
+    // ✅ Use branch operating hours or defaults
+    const branchOpenTimeSACH = branchOpenTime ? convertTo12HourFormat(branchOpenTime) : "6:00 SA";
+    const branchCloseTimeSACH = branchCloseTime ? convertTo12HourFormat(branchCloseTime) : "10:00 CH";
+
     // Initialize with current date/time
     const now = new Date();
     const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -34,7 +55,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                         "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
         const hours = date.getHours();
         const minutes = date.getMinutes();
-        const period = hours >= 12 ? 'PM' : 'AM';
+        const period = hours >= 12 ? 'CH' : 'SA';
         const displayHours = hours % 12 || 12;
         const timeStr = `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`;
         return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')} ${timeStr}`;
@@ -52,6 +73,8 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     console.log("Booking vehicle ID:", vehicleId);
     console.log("Vehicle name:", vehicleName);
     console.log("Branch:", branchName);
+    console.log("Branch hours:", branchOpenTime, "-", branchCloseTime);
+    console.log("Branch hours (SA/CH):", branchOpenTimeSACH, "-", branchCloseTimeSACH);
     console.log("Price per day:", pricePerDay);
     console.log("Rental days:", rentalDays);
     console.log("Calculated rental price:", rentalPrice);
@@ -61,16 +84,16 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     };
 
     const parseTime = (timeStr: string) => {
-        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
         if (!match) return { hours: 0, minutes: 0 };
         
         let hours = parseInt(match[1]);
         const minutes = parseInt(match[2]);
         const period = match[3].toUpperCase();
         
-        if (period === 'PM' && hours !== 12) {
+        if ((period === 'PM' || period === 'CH') && hours !== 12) {
             hours += 12;
-        } else if (period === 'AM' && hours === 12) {
+        } else if ((period === 'AM' || period === 'SA') && hours === 12) {
             hours = 0;
         }
         
@@ -151,15 +174,17 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* ✅ New DateTimeSelector with integrated duration badge */}
+                {/* ✅ DateTimeSelector with REAL branch operating hours */}
                 <DateTimeSelector
                     startDate={startDate}
                     endDate={endDate}
                     duration={duration}
                     onDateRangeChange={handleDateRangeChange}
+                    branchName={branchName}
+                    branchOpenTime={branchOpenTimeSACH}   // ✅ Real data: "6:00 SA"
+                    branchCloseTime={branchCloseTimeSACH} // ✅ Real data: "10:00 CH"
                 />
                 
-                {/* ✅ Redesigned BookingSummary with better hierarchy */}
                 <BookingSummary
                     rentalDays={rentalDays}
                     rentalPrice={`${rentalPrice.toLocaleString()}đ`}
