@@ -8,7 +8,7 @@ interface ListViewButtonProps {
 export const ListViewButton: React.FC<ListViewButtonProps> = ({ onPress }) => {
     return (
         <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.text}>☰ List View</Text>
+        <Text style={styles.text}>☰ Danh Sách Mẫu Xe</Text>
         </TouchableOpacity>
     );
 };
