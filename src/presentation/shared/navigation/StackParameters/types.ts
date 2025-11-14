@@ -32,7 +32,11 @@ export type HomeStackParamList = {
     dateRange: string;
     address: string;
   };
-  VehicleDetails: { vehicleId: string };
+  VehicleDetails: {
+    vehicleId: string;
+    dateRange: string;
+    location?: string;
+  };
 };
 
 export type BrowseStackParamList = {
@@ -46,7 +50,11 @@ export type BrowseStackParamList = {
     dateRange: string;
     address: string;
   };
-  VehicleDetails: { vehicleId: string };
+  VehicleDetails: {
+    vehicleId: string;
+    dateRange: string;
+    location?: string;
+  };
 };
 
 export type BookingStackParamList = {

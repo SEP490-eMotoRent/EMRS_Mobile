@@ -14,16 +14,16 @@ import {
   HomeStackParamList,
 } from "../../../../shared/navigation/StackParameters/types";
 
+import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../core/di/InjectionContainer";
 import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
+import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 import { useVehicleBranches } from "../../hooks/useVehicleBranches";
 import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
-import { BookingButton } from "../atoms/buttons/BookingButton";
+import { BookingButtonWithPrice } from "../atoms/buttons/BookingButtonWithPrice";
 import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
 import { PickupLocationSection } from "../organisms/PickupLocationSection";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 
 type RoutePropType = RouteProp<BrowseStackParamList, "VehicleDetails">;
 type NavProp = StackNavigationProp<HomeStackParamList>;
@@ -31,7 +31,9 @@ type NavProp = StackNavigationProp<HomeStackParamList>;
 export const VehicleDetailsScreen: React.FC = () => {
   const route = useRoute<RoutePropType>();
   const navigation = useNavigation<NavProp>();
-  const { vehicleId } = route.params;
+  
+  // ✅ UPDATED: Extract dateRange and location from route params
+  const { vehicleId, dateRange, location } = route.params;
 
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
@@ -119,7 +121,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           <Text style={styles.vehicleName}>{data.name}</Text>
         </View>
 
-        {/* ✅ NEW: Specs as vertical list - "Đặc Điểm" */}
+        {/* ✅ Specs as vertical list - "Đặc Điểm" */}
         <View style={styles.specsSection}>
           <Text style={styles.sectionTitle}>Đặc Điểm</Text>
           
@@ -168,7 +170,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ✅ NEW: Security Deposit Card */}
+        {/* ✅ Security Deposit Card */}
         <View style={styles.depositCard}>
           <View style={styles.depositHeader}>
             <Text style={styles.depositIcon}>💰</Text>
@@ -179,7 +181,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* ✅ UPDATED: Description with Vietnamese buttons */}
+        {/* ✅ Description with Vietnamese buttons */}
         {data.description && data.description !== "No description." && (
           <View style={styles.descriptionContainer}>
             <View style={styles.descriptionHeader}>
@@ -203,7 +205,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         )}
 
-        {/* ✅ Pickup Location - stays here */}
+        {/* ✅ Pickup Location */}
         <PickupLocationSection
           branches={branches}
           branchesError={branchesError}
@@ -211,7 +213,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           onBranchSelect={setSelectedBranchId}
         />
 
-        {/* ✅ MOVED: Conditions at the bottom, Vietnamese */}
+        {/* ✅ Conditions at the bottom */}
         <ConditionSection
           requirements={[
             "Yêu cầu CMND/CCCD",
@@ -221,7 +223,12 @@ export const VehicleDetailsScreen: React.FC = () => {
         />
       </ScrollView>
 
-      <BookingButton onPress={handleBooking} disabled={!selectedBranchId} />
+      <BookingButtonWithPrice
+        pricePerDay={data.pricePerDay}
+        dateRange={dateRange}
+        onPress={handleBooking}
+        disabled={!selectedBranchId}
+      />
     </SafeAreaView>
   );
 };
@@ -261,7 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
   },
-  // ✅ NEW: Vertical specs list
+  // ✅ Vertical specs list
   specsSection: {
     backgroundColor: "#1a1a1a",
     padding: 20,
@@ -309,7 +316,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
-  // ✅ NEW: Security Deposit Card
   depositCard: {
     backgroundColor: "#1a1a1a",
     padding: 20,

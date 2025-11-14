@@ -3,11 +3,10 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import React from "react";
 import {
     Image,
-    ImageBackground,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ColorWheel } from "../molecules/ColorWheel";
@@ -37,13 +36,19 @@ export interface Motorcycle {
 
 interface Props {
     motorcycle: Motorcycle;
+    dateRange: string;
+    location?: string;
 }
 
-export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
+export const MotorcycleCard: React.FC<Props> = ({ motorcycle, dateRange, location }) => {
     const navigation = useNavigation<NavProp>();
 
     const handlePress = () => {
-        navigation.navigate("VehicleDetails", { vehicleId: motorcycle.id });
+        navigation.navigate("VehicleDetails", { 
+            vehicleId: motorcycle.id,
+            dateRange: dateRange,
+            location: location,
+        });
     };
 
     const hasImage = motorcycle.image && motorcycle.image.trim() !== "";
@@ -70,11 +75,6 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
         >
             {/* Top Bar - Just availability */}
             <View style={styles.topBar}>
-                {/* ✅ REMOVED: Distance badge - only for map view */}
-                {/* <Text style={styles.distance}>
-                    Cách Xa {motorcycle.distance.toFixed(2)} Km
-                </Text> */}
-                
                 <View style={styles.spacer} />
                 
                 <View style={[styles.availabilityBadge, { backgroundColor: availabilityColor + '20' }]}>
@@ -125,17 +125,6 @@ export const MotorcycleCard: React.FC<Props> = ({ motorcycle }) => {
                     </View>
                 </View>
             </View>
-
-            {/* ✅ COMMENTED: Battery, Features - Moved to details page */}
-            {/* <View style={styles.specsRow}>
-                <SpecItem icon="🔋" label={motorcycle.battery} iconColor="#3b82f6" />
-            </View>
-            
-            <View style={styles.featuresRow}>
-                {validFeatures.map((f, i) => (
-                    <FeatureBadge key={i} label={f} />
-                ))}
-            </View> */}
         </TouchableOpacity>
     );
 };
@@ -155,7 +144,7 @@ const styles = StyleSheet.create({
     },
     topBar: {
         flexDirection: "row",
-        justifyContent: "flex-end", // ✅ Right-align availability badge
+        justifyContent: "flex-end",
         alignItems: "center",
         paddingHorizontal: 16,
         paddingTop: 12,
@@ -164,12 +153,6 @@ const styles = StyleSheet.create({
     spacer: {
         flex: 1,
     },
-    // ✅ COMMENTED: Distance style - only used in map view
-    // distance: {
-    //     color: "#9ca3af",
-    //     fontSize: 12,
-    //     fontWeight: "500",
-    // },
     availabilityBadge: {
         flexDirection: "row",
         alignItems: "center",
@@ -187,14 +170,13 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "600",
     },
-    // ✅ NEW: Bigger image container with rounded corners
     imageContainer: {
-        height: 220, // ✅ Taller to avoid cropping
+        height: 220,
         backgroundColor: "#2a2a2a",
         position: "relative",
-        borderRadius: 16, // ✅ Rounded corners like card
-        overflow: "hidden", // ✅ Clip to rounded shape
-        marginHorizontal: 12, // ✅ Add side padding
+        borderRadius: 16,
+        overflow: "hidden",
+        marginHorizontal: 12,
         marginTop: 8,
     },
     image: {
@@ -219,7 +201,6 @@ const styles = StyleSheet.create({
         top: 12,
         left: 12,
     },
-    // ✅ NEW: Cleaner info section
     infoSection: {
         padding: 16,
         paddingTop: 14,
@@ -235,7 +216,7 @@ const styles = StyleSheet.create({
     },
     modelName: {
         color: "#fff",
-        fontSize: 20, // ✅ Slightly bigger
+        fontSize: 20,
         fontWeight: "700",
         marginBottom: 4,
         letterSpacing: -0.3,
@@ -246,19 +227,19 @@ const styles = StyleSheet.create({
         fontWeight: "500",
     },
     priceContainer: {
-        flexDirection: "row", // ✅ Put price and /ngày on same line
-        alignItems: "baseline", // ✅ Align baselines
+        flexDirection: "row",
+        alignItems: "baseline",
         gap: 3,
     },
     price: {
         color: "#fff",
-        fontSize: 22, // ✅ Reduced from 26 to be closer to /ngày
+        fontSize: 22,
         fontWeight: "800",
         letterSpacing: -0.5,
     },
     perDay: {
         color: "#6b7280",
-        fontSize: 16, // ✅ Increased from 13 - narrower gap
+        fontSize: 16,
         fontWeight: "500",
     },
 });

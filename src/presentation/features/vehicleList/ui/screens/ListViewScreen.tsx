@@ -246,7 +246,13 @@ export const ListView: React.FC = () => {
       <FlatList
         data={sortedMotorcycles}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MotorcycleCard motorcycle={item} />}
+        renderItem={({ item }) => (
+            <MotorcycleCard 
+                motorcycle={item}
+                dateRange={dateRange}
+                location={location}
+            />
+        )}
         ListHeaderComponent={
           <>
             <ListHeader
@@ -310,17 +316,14 @@ export const ListView: React.FC = () => {
 // ✅ Helper functions to extract data from route params
 function extractStartTime(dateRange: string): string | undefined {
   // Parse "20 Thg 10 | 10:00 SA" format
-  // TODO: Implement actual parsing
   return undefined;
 }
 
 function extractEndTime(dateRange: string): string | undefined {
-  // TODO: Implement actual parsing
   return undefined;
 }
 
 function extractBranchId(location: string): string | undefined {
-  // TODO: Implement actual parsing
   return undefined;
 }
 

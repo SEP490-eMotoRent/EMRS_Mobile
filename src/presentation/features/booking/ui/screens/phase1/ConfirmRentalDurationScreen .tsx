@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { DurationText } from "../../atoms/text/DurationText";
 import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
@@ -152,12 +151,15 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
+                {/* ✅ New DateTimeSelector with integrated duration badge */}
                 <DateTimeSelector
                     startDate={startDate}
                     endDate={endDate}
+                    duration={duration}
                     onDateRangeChange={handleDateRangeChange}
                 />
-                <DurationText duration={duration} />
+                
+                {/* ✅ Redesigned BookingSummary with better hierarchy */}
                 <BookingSummary
                     rentalDays={rentalDays}
                     rentalPrice={`${rentalPrice.toLocaleString()}đ`}
@@ -174,9 +176,17 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#000" },
-    scrollView: { flex: 1 },
-    content: { padding: 16, paddingBottom: 100 },
+    container: { 
+        flex: 1, 
+        backgroundColor: "#000" 
+    },
+    scrollView: { 
+        flex: 1 
+    },
+    content: { 
+        padding: 16, 
+        paddingBottom: 100 
+    },
     footer: {
         padding: 16,
         paddingBottom: 32,
