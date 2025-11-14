@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
 import {
+    ActivityIndicator,
     Modal,
     ScrollView,
     StyleSheet,
@@ -9,16 +10,15 @@ import {
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
-    ActivityIndicator,
 } from "react-native";
-import { BrowseStackParamList, HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { useBranches } from "../../../../features/map/hooks/useBranches";
+import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
 import { BuildingIcon } from "../../atoms/icons/searchBarIcons/BuildingIcon";
 import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { CityCard } from "../../molecules/cards/CityCard";
 import { InputField } from "../../molecules/InputField";
 import { DateTimeSearchModal } from "./DateTimeSearchModal"; // ✅ UPDATED
-import { useBranches } from "../../../../features/map/hooks/useBranches";
 
 type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 
@@ -40,8 +40,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
         setDateModalVisible(false);
     };
 
-    const handleBranchSelect = (branchName: string, branchAddress: string) => {
-        setAddress(`${branchName}, ${branchAddress}`);
+    const handleBranchSelect = (branchName, branchAddress) => {
+        setAddress(branchAddress);
     };
 
     // ✅ UPDATED: Handle both old format (PM/AM) and new format (SA/CH)

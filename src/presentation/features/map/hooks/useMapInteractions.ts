@@ -4,7 +4,7 @@ import { parseDateRange } from '../utils/dateParser';
 import { useVehicleSearch } from './useVehicleSearch';
 
 interface UseMapInteractionsParams {
-    dateRange?: string; // Make optional
+    dateRange?: string;
 }
 
 export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInteractionsParams = {}) => {
@@ -15,36 +15,83 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInterac
     const { vehicles, loading, error, searchVehicles } = useVehicleSearch();
 
     const handleBranchMarkerPress = async (branch: Branch) => {
-        setSelectedBranchId(branch.id);
-        setBottomSheetVisible(true);
+        try {
+            // ✅ Validate branch data
+            if (!branch || !branch.id) {
+                console.warn('Invalid branch data:', branch);
+                return;
+            }
 
-        // Parse date range to ISO 8601
-        const { startTime, endTime } = parseDateRange(dateRange);
+            // ✅ Set UI state first (immediate feedback)
+            setSelectedBranchId(branch.id);
+            setBottomSheetVisible(true);
 
-        // Search for vehicle models at this branch (pass dateRange for duration calculation)
-        await searchVehicles(branch.id, dateRange, startTime, endTime);
+            // ✅ Parse date range safely with try-catch
+            let startTime: string | undefined;
+            let endTime: string | undefined;
+            
+            try {
+                const parsed = parseDateRange(dateRange);
+                startTime = parsed.startTime;
+                endTime = parsed.endTime;
+            } catch (parseError) {
+                console.error('Date parsing error:', parseError);
+                // Continue without dates rather than crashing
+            }
+
+            // ✅ Search for vehicles with error handling
+            await searchVehicles(branch.id, dateRange, startTime, endTime);
+            
+        } catch (error) {
+            // ✅ Catch ANY error and log it instead of crashing
+            console.error('Error in handleBranchMarkerPress:', error);
+            
+            // ✅ Keep bottom sheet open but show empty state
+            // User will see "No vehicles available" instead of crash
+        }
     };
 
     const handleMapPress = () => {
-        setSelectedBranchId(null);
-        setBottomSheetVisible(false);
+        try {
+            setSelectedBranchId(null);
+            setBottomSheetVisible(false);
+        } catch (error) {
+            console.error('Error in handleMapPress:', error);
+        }
     };
 
     const handleBottomSheetClose = () => {
-        setBottomSheetVisible(false);
-        setSelectedBranchId(null);
+        try {
+            setBottomSheetVisible(false);
+            setSelectedBranchId(null);
+        } catch (error) {
+            console.error('Error in handleBottomSheetClose:', error);
+        }
     };
 
     const handleSearchBarPress = () => {
-        setBookingModalVisible(true);
+        try {
+            setBookingModalVisible(true);
+        } catch (error) {
+            console.error('Error in handleSearchBarPress:', error);
+        }
     };
 
     const handleBookingModalClose = () => {
-        setBookingModalVisible(false);
+        try {
+            setBookingModalVisible(false);
+        } catch (error) {
+            console.error('Error in handleBookingModalClose:', error);
+        }
     };
 
     const handleBookVehicle = (vehicleId: string) => {
-        console.log("Booking vehicle model:", vehicleId);
+        try {
+            console.log("Booking vehicle model:", vehicleId);
+            // Add your booking logic here
+        } catch (error) {
+            console.error('Error in handleBookVehicle:', error);
+        }
     };
 
     return {
