@@ -66,6 +66,8 @@ export type BookingStackParamList = {
       branchName: string;
       pricePerDay: number;
       securityDeposit: number;
+      branchOpenTime?: string;
+      branchCloseTime?: string;
   };
   InsurancePlans: {
       vehicleId: string;

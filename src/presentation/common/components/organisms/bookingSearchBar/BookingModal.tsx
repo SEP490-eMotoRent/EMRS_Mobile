@@ -17,7 +17,7 @@ import { BuildingIcon } from "../../atoms/icons/searchBarIcons/BuildingIcon";
 import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { CityCard } from "../../molecules/cards/CityCard";
 import { InputField } from "../../molecules/InputField";
-import { DateTimeModal } from "./DateTimeModal";
+import { DateTimeSearchModal } from "./DateTimeSearchModal"; // ✅ UPDATED
 import { useBranches } from "../../../../features/map/hooks/useBranches";
 
 type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
@@ -44,34 +44,45 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
         setAddress(`${branchName}, ${branchAddress}`);
     };
 
+    // ✅ UPDATED: Handle both old format (PM/AM) and new format (SA/CH)
     const formatDateRange = (range: string | null) => {
         if (!range) return null;
         
-        // Parse the range format: "2025-10-21 - 2025-10-31 (6:00 PM - 10:00 AM)"
-        const parts = range.match(/(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2}) \((.+) - (.+)\)/);
+        // Parse the range format: "2025-10-21 - 2025-10-31 (6:00 PM - 10:00 AM)" or "2025-10-21 - 2025-10-31 (6:00 CH - 10:00 SA)"
+        const parts = range.match(/(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2}) \((.+?) - (.+?)\)/);
         if (!parts) return null;
 
         const [_, startDate, endDate, startTime, endTime] = parts;
         
         const formatDate = (dateStr: string) => {
             const date = new Date(dateStr);
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            return `${months[date.getMonth()]} ${date.getDate()}`;
+            const months = ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"];
+            return `${date.getDate()} ${months[date.getMonth()]}`;
+        };
+
+        // ✅ Convert Vietnamese time format to display format
+        const convertTime = (time: string) => {
+            // If already in SA/CH format, keep it
+            if (time.includes("SA") || time.includes("CH")) {
+                return time;
+            }
+            // Convert PM/AM to CH/SA for consistency
+            return time.replace("PM", "CH").replace("AM", "SA");
         };
 
         return {
             start: formatDate(startDate),
             end: formatDate(endDate),
-            startTime,
-            endTime
+            startTime: convertTime(startTime),
+            endTime: convertTime(endTime)
         };
     };
 
     const formatDateRangeForDisplay = (range: string | null) => {
-        if (!range) return "Select dates";
+        if (!range) return "Chọn Ngày";
         
         const formatted = formatDateRange(range);
-        if (!formatted) return "Select dates";
+        if (!formatted) return "Chọn Ngày";
         
         return `${formatted.start} | ${formatted.startTime} - ${formatted.end} | ${formatted.endTime}`;
     };
@@ -164,7 +175,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                     )}
 
                     <View style={{ marginVertical: 20 }}>
-                        <PrimaryButton title="Search" onPress={handleSearch} />
+                        <PrimaryButton title="Tìm Kiếm" onPress={handleSearch} />
                     </View>
                     </ScrollView>
                 </View>
@@ -173,8 +184,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
             </TouchableWithoutFeedback>
         </Modal>
 
-        {/* Date/Time modal */}
-        <DateTimeModal
+        {/* ✅ UPDATED: New DateTimeSearchModal */}
+        <DateTimeSearchModal
             visible={dateModalVisible}
             onClose={() => setDateModalVisible(false)}
             onConfirm={handleConfirmDates}

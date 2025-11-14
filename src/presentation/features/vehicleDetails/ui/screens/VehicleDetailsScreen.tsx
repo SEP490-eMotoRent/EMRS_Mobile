@@ -97,6 +97,8 @@ export const VehicleDetailsScreen: React.FC = () => {
         branchName: selectedBranch.name,
         pricePerDay: data.pricePerDay,
         securityDeposit: securityDeposit,
+        branchOpenTime: selectedBranch.openingTime,
+        branchCloseTime: selectedBranch.closingTime,
       },
     });
   };
