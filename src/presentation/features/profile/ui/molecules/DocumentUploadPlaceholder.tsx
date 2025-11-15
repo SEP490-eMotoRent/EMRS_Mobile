@@ -10,15 +10,15 @@ export const DocumentUploadPlaceholder: React.FC<DocumentUploadPlaceholderProps>
     onUpload 
     }) => {
     const showOptions = () => {
-        Alert.alert(
-        'Upload Document',
-        'Choose an option',
+    Alert.alert(
+        'Tải Lên Giấy Tờ',
+        'Chọn một tùy chọn',
         [
-            { text: 'Take Photo', onPress: () => onUpload('camera') },
-            { text: 'Choose from Gallery', onPress: () => onUpload('gallery') },
-            { text: 'Cancel', style: 'cancel' },
+            { text: 'Chụp Ảnh', onPress: () => onUpload('camera') },
+            { text: 'Chọn Từ Thư Viện', onPress: () => onUpload('gallery') },
+            { text: 'Hủy', style: 'cancel' },
         ]
-        );
+    );
     };
 
     return (

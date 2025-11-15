@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { FlashMode } from 'expo-camera';
-import { Icon } from '../../atoms/Icons/Icons';
 import { CameraButton } from '../../atoms/Documents/CameraButton';
 import { FlashToggle } from '../../atoms/Documents/FlashToggle';
+import { Icon } from '../../atoms/Icons/Icons';
 import { Text } from '../../atoms/Text';
 
 interface CaptureControlsProps {
@@ -32,7 +32,7 @@ export const CaptureControls: React.FC<CaptureControlsProps> = ({
             {/* Center: Capture button */}
             <View style={styles.centerContainer}>
                 <CameraButton onPress={onCapture} disabled={disabled} />
-                <Text style={styles.captureHint}>Tap to capture</Text>
+                <Text style={styles.captureHint}>Nhấn để chụp</Text>
             </View>
             
             {/* Right: Flash toggle */}
