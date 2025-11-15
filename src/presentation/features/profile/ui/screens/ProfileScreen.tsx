@@ -68,7 +68,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     console.log("View all transactions");
   };
   
-  const handleVerify = () => console.log("Start verification");
+  const handleVerify = () => navigation.navigate("EditProfile");
   const handleViewDetails = () => console.log("View verification details");
   const handleInsuranceClaims = () => navigation.navigate("InsuranceClaims");
 
@@ -181,7 +181,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <VerificationCard
           verifications={verifications}
           onVerify={handleVerify}
-          onViewDetails={handleViewDetails}
         />
         <QuickSettings 
           onSignOut={handleSignOut}
