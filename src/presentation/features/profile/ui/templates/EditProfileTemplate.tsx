@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     ActivityIndicator,
     SafeAreaView,
     ScrollView,
     StyleSheet,
     View,
+    Modal,
+    Image,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    Dimensions,
 } from 'react-native';
 import { DocumentResponse } from '../../../../../data/models/account/renter/RenterResponse';
 import { Button } from '../atoms/Button';
@@ -71,7 +76,6 @@ interface EditProfileTemplateProps {
     onCitizenIdAutoFillChange: (value: boolean) => void;
     onCitizenIdUpload: (method: 'camera' | 'gallery') => void;
     onCitizenIdUpdate: () => void;
-    onViewCitizenDoc?: () => void;
     onDeleteCitizenDoc?: () => void;
     onCitizenIssueDatePress?: () => void;
     onCitizenExpiryDatePress?: () => void;
@@ -82,7 +86,6 @@ interface EditProfileTemplateProps {
     onLicenseAutoFillChange: (value: boolean) => void;
     onLicenseUpload: (method: 'camera' | 'gallery') => void;
     onLicenseUpdate: () => void;
-    onViewLicenseDoc?: () => void;
     onDeleteLicenseDoc?: () => void;
     onLicenseIssueDatePress?: () => void;
     onLicenseAuthorityChange?: (text: string) => void;
@@ -90,7 +93,12 @@ interface EditProfileTemplateProps {
     saving?: boolean;
 }
 
+const { width, height } = Dimensions.get('window');
+
 export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) => {
+    // ✅ Add state for image viewer modal
+    const [viewingImage, setViewingImage] = useState<string | null>(null);
+
     // Normalize image URI safely for ProfilePhoto
     const safeImageUri = normalizeImageUri(props.profileImageUri);
 
@@ -139,10 +147,10 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onAddressChange={props.onAddressChange}
                     />
 
-                    {/* Identity Documents Section */}
-                    <Text variant="title" style={styles.sectionTitle}>
+                    {/* ❌ REMOVED: Duplicate section title */}
+                    {/* <Text variant="title" style={styles.sectionTitle}>
                         Căn Cước Công Dân
-                    </Text>
+                    </Text> */}
 
                     {/* Citizen ID */}
                     <DocumentSection
@@ -155,7 +163,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onUpload={props.onCitizenIdUpload}
                         onUpdate={props.onCitizenIdUpdate}
                         existingDocument={props.existingCitizenDoc}
-                        onViewDocument={props.onViewCitizenDoc}
+                        onViewDocument={(imageUrl) => setViewingImage(imageUrl)}
                         onDeleteDocument={props.onDeleteCitizenDoc}
                         frontImage={props.citizenFrontImage}
                         backImage={props.citizenBackImage}
@@ -179,7 +187,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onUpload={props.onLicenseUpload}
                         onUpdate={props.onLicenseUpdate}
                         existingDocument={props.existingLicenseDoc}
-                        onViewDocument={props.onViewLicenseDoc}
+                        onViewDocument={(imageUrl) => setViewingImage(imageUrl)}
                         onDeleteDocument={props.onDeleteLicenseDoc}
                         frontImage={props.licenseFrontImage}
                         backImage={props.licenseBackImage}
@@ -193,10 +201,10 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         additionalFields={
                             <>
                                 <TextInput
-                                    label="License Class*"
+                                    label="Hạng Bằng*"
                                     value={props.licenseClass}
                                     onChangeText={props.onLicenseClassChange}
-                                    placeholder="Enter license class"
+                                    placeholder="Nhập hạng bằng"
                                 />
                             </>
                         }
@@ -204,7 +212,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
 
                     {/* Security Section */}
                     <Text variant="title" style={styles.sectionTitle}>
-                        Security
+                        Bảo Mật
                     </Text>
                     <Button
                         onPress={props.onChangePassword}
@@ -240,6 +248,37 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                     <View style={styles.bottomPadding} />
                 </ScrollView>
             </View>
+
+            {/* ✅ Image Viewer Modal */}
+            <Modal
+                visible={!!viewingImage}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setViewingImage(null)}
+                statusBarTranslucent
+            >
+                <TouchableWithoutFeedback onPress={() => setViewingImage(null)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                            <View style={styles.imageContainer}>
+                                <Image
+                                    source={{ uri: viewingImage || '' }}
+                                    style={styles.modalImage}
+                                    resizeMode="contain"
+                                />
+                            </View>
+                        </TouchableWithoutFeedback>
+
+                        {/* Close button */}
+                        <TouchableOpacity 
+                            style={styles.closeButton} 
+                            onPress={() => setViewingImage(null)}
+                        >
+                            <Icon name="close" size={28} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -312,5 +351,33 @@ const styles = StyleSheet.create({
     },
     bottomPadding: {
         height: 40,
+    },
+    // ✅ Image Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageContainer: {
+        width: width,
+        height: height,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalImage: {
+        width: '100%',
+        height: '100%',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

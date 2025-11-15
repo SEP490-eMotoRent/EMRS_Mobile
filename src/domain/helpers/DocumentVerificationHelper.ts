@@ -17,7 +17,7 @@ export class DocumentVerificationHelper {
         
         if (!citizenDoc) {
         return {
-            label: 'ID verification',
+            label: 'Xác thực CCCD',
             status: 'needed'
         };
         }
@@ -27,13 +27,13 @@ export class DocumentVerificationHelper {
 
         if (expiryDate < now) {
         return {
-            label: 'ID verification',
+            label: 'Xác thực CCCD',
             status: 'expired'
         };
         }
 
         return {
-        label: 'ID verification',
+        label: 'Xác thực CCCD',
         status: 'verified',
         validUntil: expiryDate.getFullYear().toString()
         };
@@ -51,7 +51,7 @@ export class DocumentVerificationHelper {
         
         if (!licenseDoc) {
             return {
-                label: "Driver's license",
+                label: 'Giấy phép lái xe',
                 status: 'needed'
             };
         }
@@ -61,13 +61,13 @@ export class DocumentVerificationHelper {
 
         if (expiryDate < now) {
             return {
-                label: "Driver's license",
+                label: 'Giấy phép lái xe',
                 status: 'expired'
             };
         }
 
         return {
-            label: "Driver's license",
+            label: 'Giấy phép lái xe',
             status: 'valid',
             validUntil: expiryDate.getFullYear().toString()
         };
@@ -81,7 +81,7 @@ export class DocumentVerificationHelper {
         const isVerified = phone && phone.trim().length > 0;
         
         return {
-        label: 'Phone Number',
+        label: 'Số điện thoại',
         status: isVerified ? 'verified' : 'needed'
         };
     }

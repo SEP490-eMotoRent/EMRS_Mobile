@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
+    ScrollView,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { PrimaryButton } from "../../../../common/components/atoms/buttons/PrimaryButton";
@@ -26,6 +27,13 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
     title = "Chọn Ngày Sinh",
 }) => {
     const [selectedDate, setSelectedDate] = useState<string | null>(initialDate || null);
+    const [showYearPicker, setShowYearPicker] = useState(false);
+    const [currentMonth, setCurrentMonth] = useState<string>(() => {
+        if (initialDate) return initialDate;
+        const today = new Date();
+        const defaultDate = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate());
+        return defaultDate.toISOString().split("T")[0];
+    });
 
     const onDayPress = (day: any) => {
         setSelectedDate(day.dateString);
@@ -49,18 +57,16 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
         return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}, ${date.getFullYear()}`;
     };
 
-    // Calculate max date (today) and min date (100 years ago)
+    // ✅ Age restrictions: 18-75 years old
     const today = new Date();
-    const maxDate = today.toISOString().split("T")[0];
-    const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate())
-        .toISOString()
-        .split("T")[0];
-
-    // Initial date for calendar (selected date or 18 years ago)
-    const initialCalendarDate = selectedDate || 
-        new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
-            .toISOString()
-            .split("T")[0];
+    const minAgeYear = today.getFullYear() - 18; // Must be at least 18
+    const maxAgeYear = 1950; // Oldest allowed: born in 1950 (~75 years old)
+    
+    // Max date: 18 years ago from today
+    const maxDate = new Date(minAgeYear, today.getMonth(), today.getDate()).toISOString().split("T")[0];
+    
+    // Min date: 1950-01-01
+    const minDate = new Date(maxAgeYear, 0, 1).toISOString().split("T")[0];
 
     const markedDates = selectedDate
         ? {
@@ -71,6 +77,19 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               },
           }
         : {};
+
+    // ✅ Generate years array: from minAgeYear (2007) down to 1950
+    const yearRange = minAgeYear - maxAgeYear + 1; // 2007 - 1950 + 1 = 58 years
+    const years = Array.from({ length: yearRange }, (_, i) => minAgeYear - i);
+
+    const handleYearSelect = (year: number) => {
+        // Jump to January of that year
+        const newDate = new Date(year, 0, 15);
+        const newDateStr = newDate.toISOString().split("T")[0];
+        setCurrentMonth(newDateStr);
+        setSelectedDate(newDateStr);
+        setShowYearPicker(false);
+    };
 
     return (
         <Modal
@@ -92,40 +111,104 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                             </View>
 
                             {/* Selected Date Display */}
-                            {selectedDate && (
-                                <View style={styles.selectedDateContainer}>
-                                    <Text style={styles.selectedDateLabel}>Ngày đã chọn:</Text>
-                                    <Text style={styles.selectedDateText}>
-                                        {formatDateDisplay(selectedDate)}
-                                    </Text>
+                            <View style={styles.selectedDateContainer}>
+                                <Text style={styles.selectedDateLabel}>
+                                    {selectedDate ? "Ngày đã chọn:" : "Chọn ngày sinh của bạn"}
+                                </Text>
+                                <Text style={styles.selectedDateText}>
+                                    {formatDateDisplay(selectedDate)}
+                                </Text>
+                            </View>
+
+                            {/* Quick Year Selector Button */}
+                            <TouchableOpacity 
+                                style={styles.yearSelectorButton}
+                                onPress={() => setShowYearPicker(!showYearPicker)}
+                            >
+                                <Text style={styles.yearSelectorText}>
+                                    {showYearPicker ? "Đóng chọn năm" : "Chọn năm nhanh"}
+                                </Text>
+                                <Text style={styles.yearSelectorIcon}>
+                                    {showYearPicker ? "▲" : "▼"}
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* Year Picker Grid */}
+                            {showYearPicker && (
+                                <View style={styles.yearPickerContainer}>
+                                    <ScrollView 
+                                        style={styles.yearPickerScroll}
+                                        showsVerticalScrollIndicator={true}
+                                    >
+                                        <View style={styles.yearGrid}>
+                                            {years.map((year) => {
+                                                const isSelected = selectedDate?.startsWith(year.toString());
+                                                return (
+                                                    <TouchableOpacity
+                                                        key={year}
+                                                        style={[
+                                                            styles.yearItem,
+                                                            isSelected && styles.yearItemSelected
+                                                        ]}
+                                                        onPress={() => handleYearSelect(year)}
+                                                    >
+                                                        <Text style={[
+                                                            styles.yearItemText,
+                                                            isSelected && styles.yearItemTextSelected
+                                                        ]}>
+                                                            {year}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                );
+                                            })}
+                                        </View>
+                                    </ScrollView>
                                 </View>
                             )}
 
                             {/* Calendar */}
-                            <View style={styles.calendarContainer}>
-                                <Calendar
-                                    markedDates={markedDates}
-                                    onDayPress={onDayPress}
-                                    maxDate={maxDate}
-                                    minDate={minDate}
-                                    current={initialCalendarDate}
-                                    enableSwipeMonths={true}
-                                    theme={{
-                                        calendarBackground: "#000",
-                                        dayTextColor: "#fff",
-                                        monthTextColor: "#fff",
-                                        arrowColor: "#b8a4ff",
-                                        textDisabledColor: "#555",
-                                        todayTextColor: "#b8a4ff",
-                                        selectedDayBackgroundColor: "#b8a4ff",
-                                        selectedDayTextColor: "#000",
-                                        textMonthFontWeight: "600",
-                                        textDayFontSize: 16,
-                                        textMonthFontSize: 18,
-                                    }}
-                                    style={styles.calendar}
-                                />
-                            </View>
+                            {!showYearPicker && (
+                                <View style={styles.calendarContainer}>
+                                    <Calendar
+                                        markedDates={markedDates}
+                                        onDayPress={onDayPress}
+                                        maxDate={maxDate}
+                                        minDate={minDate}
+                                        current={currentMonth}
+                                        onMonthChange={(month) => {
+                                            setCurrentMonth(month.dateString);
+                                        }}
+                                        enableSwipeMonths={true}
+                                        renderHeader={(date) => {
+                                            const monthNames = [
+                                                "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4",
+                                                "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8",
+                                                "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+                                            ];
+                                            const month = date?.getMonth() ?? 0;
+                                            const year = date?.getFullYear() ?? 2025;
+                                            return (
+                                                <Text style={styles.calendarHeader}>
+                                                    {monthNames[month]} {year}
+                                                </Text>
+                                            );
+                                        }}
+                                        theme={{
+                                            calendarBackground: "#000",
+                                            dayTextColor: "#fff",
+                                            monthTextColor: "#fff",
+                                            arrowColor: "#b8a4ff",
+                                            textDisabledColor: "#444",
+                                            todayTextColor: "#b8a4ff",
+                                            selectedDayBackgroundColor: "#b8a4ff",
+                                            selectedDayTextColor: "#000",
+                                            textDayFontSize: 16,
+                                            textMonthFontSize: 18,
+                                        }}
+                                        style={styles.calendar}
+                                    />
+                                </View>
+                            )}
 
                             {/* Action Buttons */}
                             <View style={styles.buttonContainer}>
@@ -150,7 +233,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
     },
     sheet: {
-        height: "75%",
+        height: "90%",
         backgroundColor: "#000",
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -160,7 +243,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 20,
+        marginBottom: 16,
     },
     headerTitle: {
         color: "#fff",
@@ -176,9 +259,9 @@ const styles = StyleSheet.create({
     },
     selectedDateContainer: {
         backgroundColor: "#1a1a1a",
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 20,
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
         alignItems: "center",
     },
     selectedDateLabel: {
@@ -191,15 +274,81 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "600",
     },
+    yearSelectorButton: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "#333",
+    },
+    yearSelectorText: {
+        color: "#b8a4ff",
+        fontSize: 16,
+        fontWeight: "500",
+    },
+    yearSelectorIcon: {
+        color: "#b8a4ff",
+        fontSize: 16,
+    },
+    yearPickerContainer: {
+        backgroundColor: "#111",
+        borderRadius: 12,
+        marginBottom: 12,
+        maxHeight: 400,
+        borderWidth: 1,
+        borderColor: "#333",
+    },
+    yearPickerScroll: {
+        padding: 12,
+    },
+    yearGrid: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 10,
+    },
+    yearItem: {
+        width: "30%",
+        aspectRatio: 1.8, // ✅ Taller buttons
+        backgroundColor: "#1a1a1a",
+        borderRadius: 10,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#333",
+    },
+    yearItemSelected: {
+        backgroundColor: "#b8a4ff",
+        borderColor: "#b8a4ff",
+    },
+    yearItemText: {
+        color: "#fff",
+        fontSize: 18, // ✅ Bigger text: 16 → 18
+        fontWeight: "600", // ✅ Bolder: 500 → 600
+    },
+    yearItemTextSelected: {
+        color: "#000",
+        fontWeight: "700",
+    },
     calendarContainer: {
         flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 20,
+        marginBottom: 12,
+        paddingHorizontal: 4,
+    },
+    calendarHeader: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "600",
+        textAlign: "center",
+        paddingVertical: 10,
     },
     calendar: {
         width: "100%",
         backgroundColor: "#000",
+        paddingHorizontal: 8,
     },
     buttonContainer: {
         paddingBottom: 10,

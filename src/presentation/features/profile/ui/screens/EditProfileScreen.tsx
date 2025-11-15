@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { DocumentResponse } from '../../../../../data/models/account/renter/RenterResponse';
 import { useCreateDocument } from '../../hooks/documents/useCreateDocument';
 import { useDeleteDocument } from '../../hooks/documents/useDeleteDocument';
@@ -293,7 +293,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 setCitizenBackImage(backUri);
             }
         } catch (error: any) {
-            Alert.alert('Error', 'Failed to pick images');
+            Alert.alert('Lỗi', 'Không thể chọn ảnh');
         }
     };
 
@@ -349,52 +349,44 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 setLicenseBackImage(backUri);
             }
         } catch (error: any) {
-            Alert.alert('Error', 'Failed to pick images');
+            Alert.alert('Lỗi', 'Không thể chọn ảnh');
         }
     };
 
     const handleCitizenIssueDatePress = () => {
-        Alert.alert('Date Picker', 'Implement date picker for citizen issue date');
+        Alert.alert('Chọn Ngày', 'Chức năng chọn ngày cấp CCCD sẽ được bổ sung');
     };
 
     const handleCitizenExpiryDatePress = () => {
-        Alert.alert('Date Picker', 'Implement date picker for citizen expiry date');
+        Alert.alert('Chọn Ngày', 'Chức năng chọn ngày hết hạn CCCD sẽ được bổ sung');
     };
 
     const handleLicenseIssueDatePress = () => {
-        Alert.alert('Date Picker', 'Implement date picker for license issue date');
+        Alert.alert('Chọn Ngày', 'Chức năng chọn ngày cấp bằng lái sẽ được bổ sung');
     };
 
     const handleLicenseExpiryDatePress = () => {
-        Alert.alert('Date Picker', 'Implement date picker for license expiry date');
-    };
-
-    const handleViewDocument = (documentUrl: string) => {
-        Linking.openURL(documentUrl).catch(() => {
-            Alert.alert('Error', 'Cannot open document image');
-        });
+        Alert.alert('Chọn Ngày', 'Chức năng chọn ngày hết hạn bằng lái sẽ được bổ sung');
     };
 
     // Handle citizen document submit
     const handleCitizenDocumentSubmit = async () => {
         try {
             if (!citizenIdNumber) {
-                Alert.alert('Validation Error', 'Citizen ID number is required');
+                Alert.alert('Lỗi Xác Thực', 'Vui lòng nhập số CCCD');
                 return;
             }
 
             if (!citizenDoc) {
                 // CREATE new document
                 if (!citizenFrontImage || !citizenBackImage) {
-                    Alert.alert('Validation Error', 'Both front and back images are required');
+                    Alert.alert('Lỗi Xác Thực', 'Vui lòng tải lên cả ảnh mặt trước và mặt sau');
                     return;
                 }
 
-                // ✅ Ensure dates are properly converted or omitted
                 const issueDate = convertDisplayToISO(citizenIssueDate);
                 const expiryDate = convertDisplayToISO(citizenExpiryDate);
 
-                // ✅ Build request with conditional fields
                 const createRequest: any = {
                     documentNumber: citizenIdNumber,
                     verificationStatus: 'Pending',
@@ -410,40 +402,21 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     },
                 };
 
-                // Only add optional fields if they have values
                 if (issueDate) createRequest.issueDate = issueDate;
                 if (expiryDate) createRequest.expiryDate = expiryDate;
                 if (citizenAuthority && citizenAuthority.trim()) {
                     createRequest.issuingAuthority = citizenAuthority;
                 }
 
-                console.log('📤 CREATE CITIZEN REQUEST:');
-                console.log('  documentNumber:', createRequest.documentNumber);
-                console.log('  issueDate:', createRequest.issueDate);
-                console.log('  expiryDate:', createRequest.expiryDate);
-                console.log('  issuingAuthority:', createRequest.issuingAuthority);
-                console.log('  verificationStatus:', createRequest.verificationStatus);
-                console.log('  frontFile uri:', createRequest.frontDocumentFile.uri);
-                console.log('  backFile uri:', createRequest.backDocumentFile.uri);
-                console.log('\n📋 FULL REQUEST OBJECT:');
-                console.log(JSON.stringify(createRequest, null, 2));
-                
-                console.log('\n🔍 OCR EXTRACTED VALUES (before conversion):');
-                console.log('  Raw citizenIssueDate:', citizenIssueDate);
-                console.log('  Raw citizenExpiryDate:', citizenExpiryDate);
-                console.log('  Raw citizenAuthority:', citizenAuthority);
-                console.log('  Raw citizenIdNumber:', citizenIdNumber);
-
                 await createCitizen(createRequest);
-
-                Alert.alert('Success', 'Citizen ID uploaded successfully!');
+                Alert.alert('Thành Công', 'Đã tải lên CCCD thành công!');
                 await refresh();
             } else {
                 // UPDATE existing document
                 if (!citizenDoc.images || citizenDoc.images.length < 2) {
                     Alert.alert(
-                        'Invalid Document', 
-                        'Existing document is missing images. Please upload both front and back images.'
+                        'Giấy Tờ Không Hợp Lệ', 
+                        'Giấy tờ hiện tại thiếu ảnh. Vui lòng tải lên cả ảnh mặt trước và mặt sau.'
                     );
                     return;
                 }
@@ -459,7 +432,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     idFileBack: citizenDoc.images[1].id,
                 };
 
-                // Only add new files if user uploaded them
                 if (citizenFrontImage && !citizenFrontImage.startsWith('http')) {
                     updateRequest.frontDocumentFile = {
                         uri: citizenFrontImage,
@@ -477,7 +449,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 }
 
                 await updateCitizen(updateRequest);
-                Alert.alert('Success', 'Citizen ID updated successfully!');
+                Alert.alert('Thành Công', 'Đã cập nhật CCCD thành công!');
                 await refresh();
             }
 
@@ -485,7 +457,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
             setCitizenBackImage(undefined);
         } catch (error: any) {
             console.error('❌ Citizen document error:', error);
-            Alert.alert('Error', error.message || 'Failed to submit citizen document');
+            Alert.alert('Lỗi', error.message || 'Không thể gửi CCCD');
         }
     };
 
@@ -493,14 +465,14 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const handleLicenseDocumentSubmit = async () => {
         try {
             if (!licenseNumber) {
-                Alert.alert('Validation Error', 'License number is required');
+                Alert.alert('Lỗi Xác Thực', 'Vui lòng nhập số bằng lái');
                 return;
             }
 
             if (!licenseDoc) {
                 // CREATE new document
                 if (!licenseFrontImage || !licenseBackImage) {
-                    Alert.alert('Validation Error', 'Both front and back images are required');
+                    Alert.alert('Lỗi Xác Thực', 'Vui lòng tải lên cả ảnh mặt trước và mặt sau');
                     return;
                 }
 
@@ -522,14 +494,14 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     },
                 });
 
-                Alert.alert('Success', 'Driver\'s License uploaded successfully!');
+                Alert.alert('Thành Công', 'Đã tải lên bằng lái xe thành công!');
                 await refresh();
             } else {
                 // UPDATE existing document
                 if (!licenseDoc.images || licenseDoc.images.length < 2) {
                     Alert.alert(
-                        'Invalid Document', 
-                        'Existing document is missing images. Please upload both front and back images.'
+                        'Giấy Tờ Không Hợp Lệ', 
+                        'Giấy tờ hiện tại thiếu ảnh. Vui lòng tải lên cả ảnh mặt trước và mặt sau.'
                     );
                     return;
                 }
@@ -545,7 +517,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                     idFileBack: licenseDoc.images[1].id,
                 };
 
-                // Only add new files if user uploaded them
                 if (licenseFrontImage && !licenseFrontImage.startsWith('http')) {
                     updateRequest.frontDocumentFile = {
                         uri: licenseFrontImage,
@@ -563,7 +534,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 }
 
                 await updateDriving(updateRequest);
-                Alert.alert('Success', 'Driver\'s License updated successfully!');
+                Alert.alert('Thành Công', 'Đã cập nhật bằng lái xe thành công!');
                 await refresh();
             }
 
@@ -571,7 +542,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
             setLicenseBackImage(undefined);
         } catch (error: any) {
             console.error('❌ License document error:', error);
-            Alert.alert('Error', error.message || 'Failed to submit license document');
+            Alert.alert('Lỗi', error.message || 'Không thể gửi bằng lái');
         }
     };
 
@@ -579,17 +550,17 @@ export const EditProfileScreen = ({ navigation }: any) => {
         if (!citizenDoc?.id) return;
         
         Alert.alert(
-            'Delete Document',
-            'Are you sure you want to delete this Citizen ID? This action cannot be undone.',
+            'Xóa Giấy Tờ',
+            'Bạn có chắc chắn muốn xóa CCCD này? Hành động này không thể hoàn tác.',
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: 'Hủy', style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: 'Xóa',
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             await deleteDocument(citizenDoc.id);
-                            Alert.alert('Success', 'Citizen ID deleted successfully');
+                            Alert.alert('Thành Công', 'Đã xóa CCCD thành công');
                             
                             setCitizenDoc(undefined);
                             setCitizenIdNumber('');
@@ -601,7 +572,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                             
                             await refresh();
                         } catch (error: any) {
-                            Alert.alert('Error', error.message || 'Failed to delete document');
+                            Alert.alert('Lỗi', error.message || 'Không thể xóa giấy tờ');
                         }
                     },
                 },
@@ -613,17 +584,17 @@ export const EditProfileScreen = ({ navigation }: any) => {
         if (!licenseDoc?.id) return;
         
         Alert.alert(
-            'Delete Document',
-            'Are you sure you want to delete this Driver\'s License? This action cannot be undone.',
+            'Xóa Giấy Tờ',
+            'Bạn có chắc chắn muốn xóa bằng lái xe này? Hành động này không thể hoàn tác.',
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: 'Hủy', style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: 'Xóa',
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             await deleteDocument(licenseDoc.id);
-                            Alert.alert('Success', 'Driver\'s License deleted successfully');
+                            Alert.alert('Thành Công', 'Đã xóa bằng lái xe thành công');
                             
                             setLicenseDoc(undefined);
                             setLicenseNumber('');
@@ -636,7 +607,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                             
                             await refresh();
                         } catch (error: any) {
-                            Alert.alert('Error', error.message || 'Failed to delete document');
+                            Alert.alert('Lỗi', error.message || 'Không thể xóa giấy tờ');
                         }
                     },
                 },
@@ -647,7 +618,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const handleSave = async () => {
         try {
             if (!email || !phoneNumber || !address) {
-                Alert.alert('Validation Error', 'Email, phone number, and address are required');
+                Alert.alert('Lỗi Xác Thực', 'Email, số điện thoại và địa chỉ là bắt buộc');
                 return;
             }
 
@@ -682,11 +653,11 @@ export const EditProfileScreen = ({ navigation }: any) => {
 
             await refresh();
 
-            Alert.alert('Success', 'Profile updated successfully!');
+            Alert.alert('Thành Công', 'Đã cập nhật hồ sơ thành công!');
             navigation.goBack();
         } catch (error: any) {
             console.error('❌ Update error:', error);
-            Alert.alert('Error', error.message || 'Failed to update profile');
+            Alert.alert('Lỗi', error.message || 'Không thể cập nhật hồ sơ');
         }
     };
 
@@ -700,7 +671,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
 
     const isSaving = updateLoading || createDocLoading || updateDocLoading || deleteLoading;
     
-    // Convert dateOfBirth from DD/MM/YYYY to YYYY-MM-DD for DatePickerModal
     const getInitialDateForPicker = () => {
         if (!dateOfBirth) return undefined;
         if (dateOfBirth.includes('/')) {
@@ -753,9 +723,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 onCitizenIdAutoFillChange={setCitizenAutoFill}
                 onCitizenIdUpload={handleCitizenUpload}
                 onCitizenIdUpdate={handleCitizenDocumentSubmit}
-                onViewCitizenDoc={() => citizenDoc?.images?.[0]?.fileUrl && handleViewDocument(
-                    citizenDoc.images[0].fileUrl
-                )}
                 onDeleteCitizenDoc={citizenDoc ? handleDeleteCitizenDoc : undefined}
                 onCitizenIssueDatePress={handleCitizenIssueDatePress}
                 onCitizenExpiryDatePress={handleCitizenExpiryDatePress}
@@ -766,9 +733,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 onLicenseAutoFillChange={setLicenseAutoFill}
                 onLicenseUpload={handleLicenseUpload}
                 onLicenseUpdate={handleLicenseDocumentSubmit}
-                onViewLicenseDoc={() => licenseDoc?.images?.[0]?.fileUrl && handleViewDocument(
-                    licenseDoc.images[0].fileUrl
-                )}
                 onDeleteLicenseDoc={licenseDoc ? handleDeleteLicenseDoc : undefined}
                 onLicenseIssueDatePress={handleLicenseIssueDatePress}
                 onLicenseAuthorityChange={setLicenseAuthority}
@@ -781,7 +745,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 onClose={() => setShowDatePicker(false)}
                 onConfirm={handleDateOfBirthConfirm}
                 initialDate={getInitialDateForPicker()}
-                title="Select Date of Birth"
+                title="Chọn Ngày Sinh"
             />
         </>
     );

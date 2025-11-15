@@ -1,9 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { Avatar } from "../atoms/Avatar";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { DocumentResponse } from "../../../../../data/models/account/renter/RenterResponse";
 import { Badge } from "../atoms/Badge";
 import { Icon } from "../atoms/Icons/Icons";
-import { DocumentResponse } from "../../../../../data/models/account/renter/RenterResponse";
 
 interface ProfileHeaderProps {
   name: string;
@@ -43,7 +42,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <Icon name="edit" />
       </TouchableOpacity>
       {documents.length === 0 && (
-        <Badge type="error">Cần Kiếm Chứng Tài Khoản</Badge>
+        <Badge type="error">Cần Xác Thực Tài Khoản</Badge>
       )}
     </View>
   );

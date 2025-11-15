@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Text } from '../../atoms/Text';
-import { Icon } from '../../atoms/Icons/Icons';
+import { ActivityIndicator, Image, StyleSheet, Switch, TouchableOpacity, View, Text as RNText } from 'react-native';
 import { Button } from '../../atoms/Button';
-import { Switch } from 'react-native';
+import { Icon } from '../../atoms/Icons/Icons';
+import { Text } from '../../atoms/Text';
+import { DateInput } from '../../molecules/DateInput';
 import { DocumentUploadPlaceholder } from '../../molecules/DocumentUploadPlaceholder';
 import { TextInput } from '../../molecules/TextInput';
-import { DateInput } from '../../molecules/DateInput';
 
 interface DocumentData {
     id: string;
@@ -32,7 +31,7 @@ interface DocumentSectionProps {
     onUpdate: () => void;
     additionalFields?: React.ReactNode;
     existingDocument?: DocumentData;
-    onViewDocument?: () => void;
+    onViewDocument?: (imageUrl: string) => void;
     onDeleteDocument?: () => void;
     frontImage?: string;
     backImage?: string;
@@ -73,6 +72,10 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     
     const frontUrl = existingDocument?.images?.[0]?.fileUrl;
     const backUrl = existingDocument?.images?.[1]?.fileUrl;
+
+    // Determine label based on document type
+    const numberLabel = title === "Căn Cước Công Dân (CCCD)" ? "Số CCCD*" : "Số Bằng Lái*";
+    const uploadLabel = title === "Căn Cước Công Dân (CCCD)" ? "CCCD" : "Bằng Lái";
 
     return (
         <View style={styles.container}>
@@ -115,10 +118,10 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
 
             <View style={hasDocument ? styles.disabledInput : undefined}>
                 <TextInput
-                    label={`${title === "Căn Cước Công Dân" ? "Citizen ID" : "License"} Number*`}
+                    label={numberLabel}
                     value={documentNumber}
                     onChangeText={onDocumentNumberChange}
-                    placeholder="Enter number"
+                    placeholder="Nhập số"
                     editable={!hasDocument}
                 />
             </View>
@@ -127,46 +130,46 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             {hasDocument ? (
                 <View style={styles.documentInfo}>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Ngày Phát Hành:</Text>
-                        <Text style={styles.infoValue}>
-                            {new Date(existingDocument.issueDate).toLocaleDateString()}
-                        </Text>
+                        <RNText style={styles.infoLabel}>Ngày Phát Hành:</RNText>
+                        <RNText style={styles.infoValue}>
+                            {new Date(existingDocument.issueDate).toLocaleDateString('vi-VN')}
+                        </RNText>
                     </View>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Ngày Hết Hạn:</Text>
-                        <Text style={styles.infoValue}>
-                            {new Date(existingDocument.expiryDate).toLocaleDateString()}
-                        </Text>
+                        <RNText style={styles.infoLabel}>Ngày Hết Hạn:</RNText>
+                        <RNText style={styles.infoValue}>
+                            {new Date(existingDocument.expiryDate).toLocaleDateString('vi-VN')}
+                        </RNText>
                     </View>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Cơ Quan Cấp:</Text>
-                        <Text style={styles.infoValue}>
+                        <RNText style={styles.infoLabel}>Cơ Quan Cấp:</RNText>
+                        <RNText style={styles.infoValue} numberOfLines={2} ellipsizeMode="tail">
                             {existingDocument.issuingAuthority}
-                        </Text>
+                        </RNText>
                     </View>
                 </View>
             ) : (
                 <View style={styles.editableFields}>
                     {onIssueDatePress && (
                         <DateInput
-                            label="Issue Date"
+                            label="Ngày Phát Hành"
                             value={issueDate || ''}
                             onPress={onIssueDatePress}
                         />
                     )}
                     {onExpiryDatePress && (
                         <DateInput
-                            label="Expiry Date"
+                            label="Ngày Hết Hạn"
                             value={expiryDate || ''}
                             onPress={onExpiryDatePress}
                         />
                     )}
                     {onIssuingAuthorityChange && (
                         <TextInput
-                            label="Issuing Authority"
+                            label="Cơ Quan Cấp"
                             value={issuingAuthority || ''}
                             onChangeText={onIssuingAuthorityChange}
-                            placeholder="Enter issuing authority"
+                            placeholder="Nhập cơ quan cấp"
                         />
                     )}
                 </View>
@@ -176,8 +179,8 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
 
             <Text variant="label" style={styles.uploadLabel}>
                 {hasDocument || hasNewImages 
-                    ? 'Document Images' 
-                    : `Upload ${title === "Căn Cước Công Dân" ? "ID" : "License"} Images`}
+                    ? 'Hình Ảnh Giấy Tờ' 
+                    : `Tải Lên Ảnh ${uploadLabel}`}
             </Text>
 
             {/* Show images: either new uploaded ones or existing ones */}
@@ -185,11 +188,11 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 <View style={styles.imagesContainer}>
                     {/* Front Image */}
                     <View style={styles.imageWrapper}>
-                        <Text style={styles.imageLabel}>Mặt Trước</Text>
+                        <RNText style={styles.imageLabel}>Mặt Trước</RNText>
                         {(frontImage || frontUrl) ? (
                             <TouchableOpacity 
                                 style={styles.documentImageContainer}
-                                onPress={onViewDocument}
+                                onPress={() => onViewDocument?.(frontImage || frontUrl || '')}
                                 activeOpacity={0.7}
                             >
                                 <Image
@@ -199,24 +202,24 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                                 />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="document" size={20} color="#FFF" />
-                                    <Text style={styles.overlayText}>Trước</Text>
+                                    <RNText style={styles.overlayText}>Trước</RNText>
                                 </View>
                             </TouchableOpacity>
                         ) : (
                             <View style={styles.placeholderBox}>
                                 <Icon name="image" size={32} color="#666" />
-                                <Text style={styles.placeholderText}>Thiếu Ảnh Mặt Trước</Text>
+                                <RNText style={styles.placeholderText}>Thiếu Ảnh Mặt Trước</RNText>
                             </View>
                         )}
                     </View>
 
                     {/* Back Image */}
                     <View style={styles.imageWrapper}>
-                        <Text style={styles.imageLabel}>Mặt Sau</Text>
+                        <RNText style={styles.imageLabel}>Mặt Sau</RNText>
                         {(backImage || backUrl) ? (
                             <TouchableOpacity 
                                 style={styles.documentImageContainer}
-                                onPress={onViewDocument}
+                                onPress={() => onViewDocument?.(backImage || backUrl || '')}
                                 activeOpacity={0.7}
                             >
                                 <Image
@@ -226,13 +229,13 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                                 />
                                 <View style={styles.imageOverlay}>
                                     <Icon name="document" size={20} color="#FFF" />
-                                    <Text style={styles.overlayText}>Sau</Text>
+                                    <RNText style={styles.overlayText}>Sau</RNText>
                                 </View>
                             </TouchableOpacity>
                         ) : (
                             <View style={styles.placeholderBox}>
                                 <Icon name="image" size={32} color="#666" />
-                                <Text style={styles.placeholderText}>Thiếu Ảnh Mặt Sau</Text>
+                                <RNText style={styles.placeholderText}>Thiếu Ảnh Mặt Sau</RNText>
                             </View>
                         )}
                     </View>
@@ -342,7 +345,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 12,
         marginTop: 8,
-        gap: 6,
+        gap: 8,
     },
     editableFields: {
         gap: 12,
@@ -351,15 +354,19 @@ const styles = StyleSheet.create({
     infoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'flex-start',
     },
     infoLabel: {
         fontSize: 14,
         color: '#6B7280',
+        flex: 1,
     },
     infoValue: {
         fontSize: 14,
         color: '#111827',
         fontWeight: '500',
+        flex: 2,
+        textAlign: 'right',
     },
     uploadLabel: {
         marginTop: 8,

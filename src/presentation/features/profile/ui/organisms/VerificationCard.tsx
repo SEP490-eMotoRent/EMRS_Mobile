@@ -13,19 +13,17 @@ type IncomingVerification = {
 interface VerificationCardProps {
     verifications: IncomingVerification[];
     onVerify: () => void;
-    onViewDetails: () => void;
 }
 
 export const VerificationCard: React.FC<VerificationCardProps> = ({ 
     verifications, 
-    onVerify, 
-    onViewDetails 
+    onVerify
 }) => {
     // Convert 'expired' → 'needed' to satisfy VerificationItem
     const safeVerifications: Verification[] = verifications.map(v => ({
         label: v.title,
         status: v.status === 'expired' ? 'needed' : v.status, // ← CRITICAL
-        validUntil: v.status === 'valid' ? 'Dec 31, 2025' : undefined, // optional
+        validUntil: v.status === 'valid' ? '31 Thg 12, 2025' : undefined, // optional
     }));
 
     const allVerified = verifications.every(
@@ -36,9 +34,6 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
         <View style={styles.verificationCard}>
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Xác Thực Tài Khoản</Text>
-                <TouchableOpacity onPress={onViewDetails}>
-                    <Text style={styles.viewDetails}>Xem Chi Tiết</Text>
-                </TouchableOpacity>
             </View>
 
             {safeVerifications.map((v, i) => (
@@ -47,7 +42,7 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
 
             {!allVerified && (
                 <View style={styles.verificationWarning}>
-                    <Text style={styles.warningIcon}>Cảnh Báo</Text>
+                    <Text style={styles.warningIcon}>⚠️</Text>
                     <Text style={styles.warningText}>
                         Chưa xác thực hoàn toàn. Vui lòng hoàn tất xác thực để sử dụng đầy đủ tính năng.
                     </Text>
@@ -69,19 +64,12 @@ const styles = StyleSheet.create({
         borderRadius: 16,
     },
     sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         marginBottom: 16,
     },
     sectionTitle: {
         color: '#fff',
         fontSize: 18,
         fontWeight: '700',
-    },
-    viewDetails: {
-        color: '#999',
-        fontSize: 14,
     },
     verificationWarning: {
         flexDirection: 'row',

@@ -8,9 +8,9 @@ export const VerificationItem: React.FC<Verification> = ({ label, status, validU
     const isValid = status === 'valid';
     
     const getStatusText = (): string => {
-        if (isVerified) return 'Verified';
-        if (isValid && validUntil) return `Valid until ${validUntil}`;
-        return 'Verification needed';
+        if (isVerified) return 'Đã xác thực';
+        if (isValid && validUntil) return `Có hiệu lực đến ${validUntil}`;
+        return 'Cần xác thực';
     };
     
     return (

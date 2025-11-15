@@ -1,8 +1,10 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import * as Location from 'expo-location';
 import React, { useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Modal,
     ScrollView,
     StyleSheet,
@@ -18,7 +20,7 @@ import { BuildingIcon } from "../../atoms/icons/searchBarIcons/BuildingIcon";
 import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { CityCard } from "../../molecules/cards/CityCard";
 import { InputField } from "../../molecules/InputField";
-import { DateTimeSearchModal } from "./DateTimeSearchModal"; // ✅ UPDATED
+import { DateTimeSearchModal } from "./DateTimeSearchModal";
 
 type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 
@@ -31,8 +33,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
     const navigation = useNavigation<NavigationProp>();
     const { branches, loading, error } = useBranches();
     const [dateModalVisible, setDateModalVisible] = useState(false);
+    const [loadingLocation, setLoadingLocation] = useState(false);
 
-    const [address, setAddress] = useState("1 Phạm Văn Hai, Street, Tân Bình...");
+    const [address, setAddress] = useState("1 Phạm Văn Hai, Tân Bình");
     const [selectedDates, setSelectedDates] = useState<string | null>(null);
 
     const handleConfirmDates = (range: string) => {
@@ -40,15 +43,63 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
         setDateModalVisible(false);
     };
 
-    const handleBranchSelect = (branchName, branchAddress) => {
+    const handleBranchSelect = (branchName: string, branchAddress: string) => {
         setAddress(branchAddress);
     };
 
-    // ✅ UPDATED: Handle both old format (PM/AM) and new format (SA/CH)
+    const handleGetCurrentLocation = async () => {
+        setLoadingLocation(true);
+        try {
+            // Request location permissions
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            
+            if (status !== 'granted') {
+                Alert.alert(
+                    'Quyền truy cập bị từ chối',
+                    'Vui lòng cho phép truy cập vị trí để sử dụng tính năng này.',
+                    [{ text: 'OK' }]
+                );
+                setLoadingLocation(false);
+                return;
+            }
+
+            // Get current location
+            const location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+            });
+
+            // Reverse geocode to get address
+            const [geocode] = await Location.reverseGeocodeAsync({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            });
+
+            if (geocode) {
+                const formattedAddress = [
+                    geocode.street,
+                    geocode.district,
+                    geocode.city,
+                ].filter(Boolean).join(', ');
+
+                setAddress(formattedAddress || 'Vị trí hiện tại');
+            } else {
+                setAddress(`${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`);
+            }
+        } catch (error) {
+            Alert.alert(
+                'Lỗi',
+                'Không thể lấy vị trí hiện tại. Vui lòng thử lại.',
+                [{ text: 'OK' }]
+            );
+            console.error('Error getting location:', error);
+        } finally {
+            setLoadingLocation(false);
+        }
+    };
+
     const formatDateRange = (range: string | null) => {
         if (!range) return null;
         
-        // Parse the range format: "2025-10-21 - 2025-10-31 (6:00 PM - 10:00 AM)" or "2025-10-21 - 2025-10-31 (6:00 CH - 10:00 SA)"
         const parts = range.match(/(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2}) \((.+?) - (.+?)\)/);
         if (!parts) return null;
 
@@ -60,13 +111,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
             return `${date.getDate()} ${months[date.getMonth()]}`;
         };
 
-        // ✅ Convert Vietnamese time format to display format
         const convertTime = (time: string) => {
-            // If already in SA/CH format, keep it
             if (time.includes("SA") || time.includes("CH")) {
                 return time;
             }
-            // Convert PM/AM to CH/SA for consistency
             return time.replace("PM", "CH").replace("AM", "SA");
         };
 
@@ -109,6 +157,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
             <View style={styles.overlay}>
                 <TouchableWithoutFeedback>
                 <View style={styles.sheet}>
+                    {/* Header with close button */}
+                    <View style={styles.header}>
+                        <View style={styles.dragHandle} />
+                        <TouchableOpacity 
+                            style={styles.closeButton}
+                            onPress={onClose}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
+                            <Text style={styles.closeIcon}>✕</Text>
+                        </TouchableOpacity>
+                    </View>
+
                     <ScrollView showsVerticalScrollIndicator={false}>
                     <Text style={styles.sectionTitle}>Ở ĐÂU VÀ KHI NÀO</Text>
 
@@ -117,7 +177,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         icon={<BuildingIcon />}
                         value={address}
                         onChangeText={setAddress}
-                        placeholder="Điền Địa Chỉ của bạn hoặc chi nhánh"
+                        placeholder="Điền địa chỉ của bạn hoặc chi nhánh"
                     />
 
                     {/* Date Range */}
@@ -138,21 +198,47 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                                 <Text style={styles.inputLabel}>Chọn Ngày</Text>
                             )}
                         </View>
+                        <Text style={styles.chevronIcon}>›</Text>
                     </TouchableOpacity>
 
-                    <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Chi Nhánh</Text>
+                    {/* Divider */}
+                    <View style={styles.divider} />
+
+                    <View style={styles.branchHeader}>
+                        <Text style={styles.sectionTitle}>Chi Nhánh</Text>
+                        <Text style={styles.branchCount}>
+                            {branches.length > 0 ? `${branches.length} chi nhánh` : ''}
+                        </Text>
+                    </View>
+
+                    {/* GPS Location Button - Moved here */}
+                    <TouchableOpacity
+                        style={styles.gpsButton}
+                        onPress={handleGetCurrentLocation}
+                        disabled={loadingLocation}
+                    >
+                        {loadingLocation ? (
+                            <ActivityIndicator size="small" color="#A78BFA" />
+                        ) : (
+                            <Text style={styles.gpsIcon}>⌖</Text>
+                        )}
+                        <Text style={styles.gpsText}>
+                            {loadingLocation ? 'Đang lấy vị trí...' : 'Sử dụng vị trí hiện tại'}
+                        </Text>
+                    </TouchableOpacity>
                     
                     {/* Loading State */}
                     {loading && (
                         <View style={styles.loadingContainer}>
                             <ActivityIndicator size="small" color="#A78BFA" />
-                            <Text style={styles.loadingText}>Đang tải...</Text>
+                            <Text style={styles.loadingText}>Đang tải chi nhánh...</Text>
                         </View>
                     )}
 
                     {/* Error State */}
                     {error && (
                         <View style={styles.errorContainer}>
+                            <Text style={styles.errorIcon}>⚠</Text>
                             <Text style={styles.errorText}>{error}</Text>
                         </View>
                     )}
@@ -170,6 +256,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                     {/* Empty State */}
                     {!loading && !error && branches.length === 0 && (
                         <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyIcon}>○</Text>
                             <Text style={styles.emptyText}>Không có chi nhánh</Text>
                         </View>
                     )}
@@ -184,7 +271,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
             </TouchableWithoutFeedback>
         </Modal>
 
-        {/* ✅ UPDATED: New DateTimeSearchModal */}
+        {/* DateTimeSearchModal */}
         <DateTimeSearchModal
             visible={dateModalVisible}
             onClose={() => setDateModalVisible(false)}
@@ -205,7 +292,31 @@ const styles = StyleSheet.create({
         backgroundColor: "#000",
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    header: {
+        alignItems: 'center',
+        paddingTop: 12,
+        paddingBottom: 8,
+        position: 'relative',
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        backgroundColor: '#333',
+        borderRadius: 2,
+    },
+    closeButton: {
+        position: 'absolute',
+        right: 0,
+        top: 8,
+        padding: 8,
+    },
+    closeIcon: {
+        color: '#888',
+        fontSize: 24,
+        fontWeight: '300',
     },
     sectionTitle: {
         color: "#fff",
@@ -213,36 +324,82 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 12,
         marginBottom: 8,
+        letterSpacing: 0.5,
     },
-    dateBox: {
-        backgroundColor: '#111',
+    gpsButton: {
+        backgroundColor: '#0a0a0a',
         borderRadius: 10,
         padding: 14,
         marginVertical: 6,
         flexDirection: 'row',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#1a1a1a',
+    },
+    gpsIcon: {
+        fontSize: 20,
+        color: '#A78BFA',
+        marginRight: 12,
+    },
+    gpsText: {
+        color: '#A78BFA',
+        fontSize: 15,
+        fontWeight: '500',
+    },
+    dateBox: {
+        backgroundColor: '#0a0a0a',
+        borderRadius: 10,
+        padding: 14,
+        marginVertical: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#1a1a1a',
     },
     dateContent: {
         flex: 1,
+        marginLeft: 8,
     },
     inputLabel: {
-        color: "#fff",
+        color: "#aaa",
         fontSize: 15,
     },
     dateFromLabel: {
-        color: "#fff",
-        fontSize: 13,
+        color: "#888",
+        fontSize: 12,
         marginBottom: 2,
+        letterSpacing: 0.3,
     },
     dateText: {
         color: "#fff",
         fontSize: 15,
     },
+    chevronIcon: {
+        color: '#555',
+        fontSize: 28,
+        fontWeight: '300',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#1a1a1a',
+        marginVertical: 16,
+    },
+    branchHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    branchCount: {
+        color: '#666',
+        fontSize: 13,
+        fontWeight: '500',
+    },
     loadingContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 20,
+        paddingVertical: 24,
     },
     loadingText: {
         color: '#888',
@@ -251,21 +408,35 @@ const styles = StyleSheet.create({
     },
     errorContainer: {
         padding: 16,
-        backgroundColor: '#2a0a0a',
+        backgroundColor: '#1a0a0a',
         borderRadius: 10,
         marginVertical: 8,
+        borderWidth: 1,
+        borderColor: '#2a0a0a',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    errorIcon: {
+        fontSize: 18,
+        color: '#ff6b6b',
+        marginRight: 10,
     },
     errorText: {
         color: '#ff6b6b',
         fontSize: 14,
-        textAlign: 'center',
+        flex: 1,
     },
     emptyContainer: {
-        padding: 20,
+        padding: 24,
         alignItems: 'center',
     },
+    emptyIcon: {
+        fontSize: 32,
+        color: '#333',
+        marginBottom: 8,
+    },
     emptyText: {
-        color: '#888',
+        color: '#666',
         fontSize: 14,
     },
 });

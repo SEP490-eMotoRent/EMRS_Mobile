@@ -21,19 +21,19 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
         <View style={styles.settingsGroup}>
             <SettingToggle
                 icon="bell"
-                label="Notifications"
+                label="Thông Báo"
                 value={notifications}
                 onToggle={setNotifications}
             />
-            <SettingItem icon="card" label="Phương Thức Thanh Toán" showArrow />
+            {/* <SettingItem icon="card" label="Phương Thức Thanh Toán" showArrow /> */}
             <SettingItem icon="language" label="Ngôn Ngữ" value="Tiếng Việt" />
         </View>
         
         {/* <TouchableOpacity style={styles.referCard}>
             <Icon name="gift" color="#a78bfa" />
             <View style={styles.referInfo}>
-            <Text style={styles.referTitle}>Refer & Earn 100,000đ</Text>
-            <Text style={styles.referSubtitle}>Share with friends and earn rewards</Text>
+            <Text style={styles.referTitle}>Giới Thiệu & Nhận 100,000đ</Text>
+            <Text style={styles.referSubtitle}>Chia sẻ với bạn bè và nhận phần thưởng</Text>
             </View>
             <Icon name="arrow" color="#666" />
         </TouchableOpacity> */}
