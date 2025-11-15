@@ -15,12 +15,18 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.phuuthanh2003.eMotoRent-Mobile",
       "config": {
         "googleMapsApiKey": "YOUR_IOS_API_KEY_HERE"
       },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí của bạn để tìm chi nhánh gần nhất và hiển thị xe có sẵn xung quanh bạn.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí của bạn để tìm chi nhánh gần nhất và hiển thị xe có sẵn xung quanh bạn."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí của bạn để tìm chi nhánh gần nhất và hiển thị xe có sẵn xung quanh bạn.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["emrs"]
+          }
+        ]
       }
     },
     "android": {
@@ -38,6 +44,20 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "emrs",
+              "host": "payment",
+              "pathPrefix": "/callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {

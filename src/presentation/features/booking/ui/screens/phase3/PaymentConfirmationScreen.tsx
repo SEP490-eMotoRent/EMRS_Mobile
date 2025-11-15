@@ -146,19 +146,43 @@ export const PaymentConfirmationScreen: React.FC = () => {
             "Tháng 9": 8, "Tháng 10": 9, "Tháng 11": 10, "Tháng 12": 11
         };
 
-        const match = dateStr.match(/(Tháng \d+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM)/);
-        if (!match) throw new Error(`Invalid date: ${dateStr}`);
+        // ✅ Support both English (AM/PM) and Vietnamese (SA/CH)
+        const match = dateStr.match(/(Tháng \d+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
+        if (!match) {
+            console.error("❌ Failed to parse date:", dateStr);
+            throw new Error(`Invalid date format: ${dateStr}`);
+        }
 
         const [, monthStr, day, hours, minutes, period] = match;
         const monthIndex = monthNames[monthStr];
+        
+        if (monthIndex === undefined) {
+            throw new Error(`Invalid month: ${monthStr}`);
+        }
+
         let hour = parseInt(hours, 10);
-        if (period === 'PM' && hour !== 12) hour += 12;
-        if (period === 'AM' && hour === 12) hour = 0;
+        
+        // ✅ Handle both English and Vietnamese
+        const isPM = period.toUpperCase() === 'PM' || period.toUpperCase() === 'CH';
+        const isAM = period.toUpperCase() === 'AM' || period.toUpperCase() === 'SA';
+        
+        if (isPM && hour !== 12) {
+            hour += 12;
+        }
+        if (isAM && hour === 12) {
+            hour = 0;
+        }
 
         const year = new Date().getFullYear();
-        return new Date(year, monthIndex, parseInt(day, 10), hour, parseInt(minutes, 10), 0, 0);
+        const date = new Date(year, monthIndex, parseInt(day, 10), hour, parseInt(minutes, 10), 0, 0);
+        
+        console.log("✅ Parsed date:", {
+            input: dateStr,
+            output: date.toISOString(),
+        });
+        
+        return date;
     };
-
     // ==================== 4. PAYMENT HANDLER ====================
     const handlePayment = async () => {
         if (!userId) {
