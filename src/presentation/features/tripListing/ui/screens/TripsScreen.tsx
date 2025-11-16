@@ -4,11 +4,11 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import sl from "../../../../../core/di/InjectionContainer";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
+import { CancelBookingUseCase } from "../../../../../domain/usecases/booking/CancelBookingUseCase";
 import { GetCurrentRenterBookingsUseCase } from "../../../../../domain/usecases/booking/GetCurrentRenterBookingsUseCase";
-import { CancelBookingUseCase } from "../../../../../domain/usecases/booking/CancelBookingUseCase"; // ✅ NEW
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { useCancelBooking } from "../../hooks/useCancelBooking";
 import { useGetCurrentRenterBookings } from "../../hooks/useGetCurrentRenterBookings";
-import { useCancelBooking } from "../../hooks/useCancelBooking"; // ✅ NEW
 import { FilterTags } from "../molecules/FilterTags";
 import { SearchBar } from "../molecules/SearchBar";
 import { TabButton } from "../molecules/TabButton";
@@ -28,32 +28,27 @@ export const TripsScreen: React.FC = () => {
     const [sortBy, setSortBy] = useState("Mới nhất");
     const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
 
-    // ✅ Get use cases from DI container
     const getCurrentRenterBookingsUseCase = useMemo(
         () => sl.get<GetCurrentRenterBookingsUseCase>("GetCurrentRenterBookingsUseCase"),
         []
     );
     
     const cancelBookingUseCase = useMemo(
-        () => sl.get<CancelBookingUseCase>("CancelBookingUseCase"), // ✅ NEW
+        () => sl.get<CancelBookingUseCase>("CancelBookingUseCase"),
         []
     );
     
-    // ✅ Initialize hooks
     const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(getCurrentRenterBookingsUseCase);
-    const { cancelBooking, cancelling } = useCancelBooking(cancelBookingUseCase); // ✅ NEW
+    const { cancelBooking, cancelling } = useCancelBooking(cancelBookingUseCase);
 
-    // Helper: Format VND
     const formatVnd = (amount?: number) => amount ? `${amount.toLocaleString('vi-VN')}đ` : undefined;
 
-    // Helper: Format date (e.g., "24 Thg 9")
     const formatShortDate = (date: Date) => {
         const months = ["Thg 1", "Thg 2", "Thg 3", "Thg 4", "Thg 5", "Thg 6",
                         "Thg 7", "Thg 8", "Thg 9", "Thg 10", "Thg 11", "Thg 12"];
         return `${date.getDate()} ${months[date.getMonth()]}`;
     };
 
-    // Map to Current Trip
     const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
         const statusMap: Record<string, "renting" | "confirmed" | "returned"> = {
             "ACTIVE": "renting",
@@ -85,20 +80,20 @@ export const TripsScreen: React.FC = () => {
             return "";
         };
 
+        // ✅ UPDATED: Only show timeInfo for "renting" status, not "confirmed"
         const calculateTimeInfo = () => {
             if (!booking.startDatetime) return undefined;
             const now = new Date();
-            const start = new Date(booking.startDatetime);
             const end = booking.endDatetime ? new Date(booking.endDatetime) : null;
 
+            // Only calculate time remaining for active rentals
             if (status === "renting" && end) {
                 const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                 return daysLeft > 0 ? `${daysLeft} ngày còn lại` : "Sắp kết thúc";
             }
-            if (status === "confirmed") {
-                const daysUntil = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                return daysUntil > 0 ? `Bắt đầu sau ${daysUntil} ngày` : `Bắt đầu ${startDate}`;
-            }
+            
+            // ✅ REMOVED: Don't show "Bắt đầu..." for confirmed bookings
+            // The dates are already displayed, no need to repeat
             return undefined;
         };
 
@@ -120,7 +115,6 @@ export const TripsScreen: React.FC = () => {
         };
     };
 
-    // Map to Past Trip
     const mapBookingToPastTrip = (booking: Booking): PastTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         if (!["COMPLETED", "CANCELLED"].includes(bookingStatus)) return null;
@@ -194,10 +188,8 @@ export const TripsScreen: React.FC = () => {
         });
     };
 
-    // ✅ UPDATED: Cancel booking handler with confirmation and refresh
     const handleCancelBooking = async (tripId: string) => {
         await cancelBooking(tripId, () => {
-            // Refresh the bookings list after successful cancellation
             refetch();
         });
     };
@@ -269,7 +261,13 @@ export const TripsScreen: React.FC = () => {
                 contentContainerStyle={styles.listContentCurrent}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <Text style={styles.emptyText}>Bạn chưa có chuyến đi nào</Text>
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyIcon}>◐</Text>
+                        <Text style={styles.emptyTitle}>Chưa có chuyến đi nào được đặt...</Text>
+                        <Text style={styles.emptyMessage}>
+                            Đã đến lúc lên kế hoạch cho một chuyến đi thật thú vị rồi, chọn ngay một chiếc xe nhé!
+                        </Text>
+                    </View>
                 }
             />
         );
@@ -311,7 +309,13 @@ export const TripsScreen: React.FC = () => {
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <Text style={styles.emptyText}>Chưa có lịch sử chuyến đi</Text>
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyIcon}>◑</Text>
+                        <Text style={styles.emptyTitle}>Chưa có lịch sử chuyến đi</Text>
+                        <Text style={styles.emptyMessage}>
+                            Các chuyến đi đã hoàn thành hoặc đã hủy sẽ xuất hiện ở đây
+                        </Text>
+                    </View>
                 }
             />
         );
@@ -358,7 +362,6 @@ export const TripsScreen: React.FC = () => {
                 {activeTab === "current" ? renderCurrentTrips() : renderPastTrips()}
             </View>
 
-            {/* ✅ NEW: Show loading overlay when cancelling */}
             {cancelling && (
                 <View style={styles.loadingOverlay}>
                     <View style={styles.loadingBox}>
@@ -413,13 +416,30 @@ const styles = StyleSheet.create({
         textAlign: "center",
         paddingHorizontal: 20,
     },
-    emptyText: {
+    // ✅ Enhanced empty state
+    emptyState: {
+        alignItems: "center",
+        paddingTop: 60,
+        paddingHorizontal: 32,
+    },
+    emptyIcon: {
+        fontSize: 64,
+        marginBottom: 16,
         color: "#666",
+    },
+    emptyTitle: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 8,
+        textAlign: "center",
+    },
+    emptyMessage: {
+        color: "#999",
         fontSize: 14,
         textAlign: "center",
-        marginTop: 12,
+        lineHeight: 20,
     },
-    // ✅ NEW: Loading overlay styles
     loadingOverlay: {
         position: 'absolute',
         top: 0,

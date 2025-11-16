@@ -1,26 +1,22 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StatusBadge } from "../atoms/badges/StatusBadge";
-import { BookingReference } from "../atoms/text/BookingReference";
-import { TimeRemaining } from "../atoms/text/TimeRemaining";
-import { MapPreview } from "../molecules/MapPreview";
-import { VehicleInfo } from "../molecules/VehicleInfo";
 
 export interface CurrentTrip {
     id: string;
     vehicleName: string;
-    vehicleCategory?: string; // ✅ NEW
+    vehicleCategory?: string;
     dates: string;
-    duration?: string; // ✅ NEW: "5 days" or "8 hours"
+    duration?: string;
     status: "confirmed" | "returned" | "renting";
     timeInfo?: string;
     reference: string;
     location?: string;
     totalAmount?: string;
-    depositAmount?: string; // ✅ NEW
-    baseRentalFee?: string; // ✅ NEW
-    hasInsurance?: boolean; // ✅ NEW
-    vehicleAssigned?: boolean; // ✅ NEW
+    depositAmount?: string;
+    baseRentalFee?: string;
+    hasInsurance?: boolean;
+    vehicleAssigned?: boolean;
 }
 
 interface CurrentTripCardProps {
@@ -44,114 +40,69 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
             onPress={onViewDetails}
             activeOpacity={0.7}
         >
+            {/* Header with status and insurance indicator */}
             <View style={styles.header}>
                 <StatusBadge status={trip.status} />
-                {/* ✅ NEW: Show indicators */}
-                <View style={styles.indicators}>
-                    {trip.hasInsurance && (
-                        <View style={styles.indicator}>
-                            <Text style={styles.indicatorIcon}>🛡️</Text>
-                        </View>
-                    )}
-                    {trip.vehicleAssigned && (
-                        <View style={styles.indicator}>
-                            <Text style={styles.indicatorIcon}>✓</Text>
-                            <Text style={styles.indicatorText}>Xe đã sẵn sàng</Text>
+                {trip.hasInsurance && (
+                    <View style={styles.insuranceIcon}>
+                        <Text style={styles.shieldIcon}>◈</Text>
+                    </View>
+                )}
+            </View>
+            
+            {/* Vehicle info - cleaner layout */}
+            <View style={styles.vehicleSection}>
+                <View style={styles.vehicleIcon}>
+                    <Text style={styles.iconText}>🏍</Text>
+                </View>
+                <View style={styles.vehicleDetails}>
+                    <View style={styles.vehicleNameRow}>
+                        <Text style={styles.vehicleName}>{trip.vehicleName}</Text>
+                        {trip.vehicleCategory && (
+                            <View style={styles.categoryBadge}>
+                                <Text style={styles.categoryText}>{trip.vehicleCategory}</Text>
+                            </View>
+                        )}
+                    </View>
+                    <Text style={styles.dates}>{trip.dates}</Text>
+                    {trip.duration && (
+                        <View style={styles.durationRow}>
+                            <Text style={styles.durationIcon}>⏱</Text>
+                            <Text style={styles.duration}>{trip.duration}</Text>
                         </View>
                     )}
                 </View>
             </View>
+
+            {/* Time info only for renting status - removed redundant start date */}
+            {trip.status === "renting" && trip.timeInfo && (
+                <View style={styles.timeAlert}>
+                    <Text style={styles.timeAlertIcon}>⚠</Text>
+                    <Text style={styles.timeAlertText}>{trip.timeInfo}</Text>
+                </View>
+            )}
+
+            {/* Booking reference - subtle and minimal */}
+            <Text style={styles.reference}>Booking reference: {trip.reference}</Text>
             
-            <View style={styles.content}>
-                <VehicleInfo 
-                    name={trip.vehicleName} 
-                    dates={trip.dates}
-                    category={trip.vehicleCategory} // ✅ Pass category
-                    duration={trip.duration} // ✅ Pass duration
-                />
-                
-                {trip.timeInfo && trip.status === "renting" && (
-                    <TimeRemaining time={trip.timeInfo} />
-                )}
-                
-                {trip.timeInfo && trip.status === "confirmed" && (
-                    <View style={styles.info}>
-                        <Text style={styles.startsIcon}>📅</Text>
-                        <Text style={styles.startsText}>{trip.timeInfo}</Text>
+            {/* Amount section - only for confirmed */}
+            {trip.status === "confirmed" && (
+                <View style={styles.amountSection}>
+                    <View style={styles.amountRow}>
+                        <Text style={styles.amountLabel}>Chi phí thuê</Text>
+                        <Text style={styles.amountValue}>{trip.baseRentalFee}</Text>
                     </View>
-                )}
-                
-                <BookingReference reference={trip.reference} />
-                
-                {trip.status === "renting" && trip.location && (
-                    <MapPreview location={trip.location} />
-                )}
-                
-                {/* ✅ NEW: Enhanced amount display for confirmed bookings */}
+                    <View style={styles.amountRow}>
+                        <Text style={styles.amountLabel}>Deposit</Text>
+                        <Text style={styles.amountValue}>{trip.depositAmount}</Text>
+                    </View>
+                </View>
+            )}
+            
+            {/* Actions */}
+            <View style={styles.actions}>
                 {trip.status === "confirmed" && (
-                    <View style={styles.amountSection}>
-                        {trip.baseRentalFee && (
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Chi phí thuê</Text>
-                                <Text style={styles.value}>{trip.baseRentalFee}</Text>
-                            </View>
-                        )}
-                        {trip.depositAmount && (
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Deposit</Text>
-                                <Text style={styles.value}>{trip.depositAmount}</Text>
-                            </View>
-                        )}
-                        {trip.totalAmount && (
-                            <View style={[styles.row, styles.totalRow]}>
-                                <Text style={styles.totalLabel}>Thành Tiền</Text>
-                                <Text style={styles.totalAmount}>{trip.totalAmount}</Text>
-                            </View>
-                        )}
-                    </View>
-                )}
-                
-                {/* Actions based on status */}
-                {trip.status === "renting" && (
                     <>
-                        <View style={styles.actions}>
-                            <TouchableOpacity 
-                                style={styles.primaryButton} 
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    onViewDetails();
-                                }}
-                            >
-                                <Text style={styles.primaryButtonText}>Chi Tiết</Text>
-                            </TouchableOpacity>
-                            {onExtendRental && (
-                                <TouchableOpacity 
-                                    style={styles.primaryButton} 
-                                    onPress={(e) => {
-                                        e.stopPropagation();
-                                        onExtendRental();
-                                    }}
-                                >
-                                    <Text style={styles.primaryButtonText}>Tăng giờ thuê</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                        {onReportIssue && (
-                            <TouchableOpacity 
-                                style={styles.reportButton} 
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    onReportIssue();
-                                }}
-                            >
-                                <Text style={styles.reportButtonText}>Report Issue</Text>
-                            </TouchableOpacity>
-                        )}
-                    </>
-                )}
-                
-                {trip.status === "confirmed" && (
-                    <View style={styles.actions}>
                         <TouchableOpacity 
                             style={styles.primaryButton} 
                             onPress={(e) => {
@@ -172,9 +123,34 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                                 <Text style={styles.cancelButtonText}>Hủy</Text>
                             </TouchableOpacity>
                         )}
-                    </View>
+                    </>
                 )}
-                
+
+                {trip.status === "renting" && (
+                    <>
+                        <TouchableOpacity 
+                            style={styles.primaryButton} 
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                onViewDetails();
+                            }}
+                        >
+                            <Text style={styles.primaryButtonText}>Chi Tiết</Text>
+                        </TouchableOpacity>
+                        {onExtendRental && (
+                            <TouchableOpacity 
+                                style={styles.primaryButton} 
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    onExtendRental();
+                                }}
+                            >
+                                <Text style={styles.primaryButtonText}>Gia hạn</Text>
+                            </TouchableOpacity>
+                        )}
+                    </>
+                )}
+
                 {trip.status === "returned" && (
                     <TouchableOpacity 
                         style={styles.primaryButton} 
@@ -187,132 +163,203 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                     </TouchableOpacity>
                 )}
             </View>
+
+            {/* Report issue - only for renting */}
+            {trip.status === "renting" && onReportIssue && (
+                <TouchableOpacity 
+                    style={styles.reportButton} 
+                    onPress={(e) => {
+                        e.stopPropagation();
+                        onReportIssue();
+                    }}
+                >
+                    <Text style={styles.reportButtonText}>⚠ Báo cáo sự cố</Text>
+                </TouchableOpacity>
+            )}
         </TouchableOpacity>
     );
 };
 
 const styles = StyleSheet.create({
+    // ✅ Lighter visual weight - border instead of heavy background
     card: {
-        backgroundColor: "#1a1a1a",
+        backgroundColor: "#0a0a0a",
+        borderWidth: 1,
+        borderColor: "#2a2a2a",
         borderRadius: 16,
         padding: 16,
         marginBottom: 12,
-        marginTop: 4,
     },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        marginBottom: 16,
     },
-    indicators: {
-        flexDirection: "row",
-        gap: 8,
-    },
-    indicator: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#2a2a2a",
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+    // ✅ Simplified insurance indicator
+    insuranceIcon: {
+        backgroundColor: "rgba(34, 197, 94, 0.1)",
+        width: 32,
+        height: 32,
         borderRadius: 8,
-        gap: 4,
+        alignItems: "center",
+        justifyContent: "center",
     },
-    indicatorIcon: {
-        fontSize: 12,
-    },
-    indicatorText: {
+    shieldIcon: {
+        fontSize: 16,
         color: "#22c55e",
-        fontSize: 10,
-        fontWeight: "600",
     },
-    content: {
-        marginTop: 12,
+    // ✅ Better vehicle info hierarchy
+    vehicleSection: {
+        flexDirection: "row",
+        gap: 12,
+        marginBottom: 12,
     },
-    info: {
+    vehicleIcon: {
+        width: 56,
+        height: 56,
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    iconText: {
+        fontSize: 30,
+    },
+    vehicleDetails: {
+        flex: 1,
+        justifyContent: "center",
+    },
+    vehicleNameRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
-        marginTop: 8,
+        gap: 8,
+        marginBottom: 4,
     },
-    startsIcon: {
-        fontSize: 12,
-    },
-    startsText: {
-        color: "#999",
-        fontSize: 12,
-    },
-    amountSection: {
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: "#333",
-    },
-    row: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-    label: {
-        color: "#999",
-        fontSize: 13,
-    },
-    value: {
-        color: "#fff",
-        fontSize: 13,
-        fontWeight: "600",
-    },
-    totalRow: {
-        marginTop: 4,
-        paddingTop: 8,
-        borderTopWidth: 1,
-        borderTopColor: "#333",
-        marginBottom: 0,
-    },
-    totalLabel: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    totalAmount: {
+    vehicleName: {
         color: "#fff",
         fontSize: 16,
         fontWeight: "700",
     },
+    categoryBadge: {
+        backgroundColor: "#2a2a2a",
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+    },
+    categoryText: {
+        color: "#999",
+        fontSize: 10,
+        fontWeight: "600",
+        textTransform: "uppercase",
+    },
+    dates: {
+        color: "#999",
+        fontSize: 13,
+        marginBottom: 4,
+    },
+    durationRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+    },
+    durationIcon: {
+        fontSize: 14,
+        color: "#aaa",
+        fontWeight: "600",
+    },
+    duration: {
+        color: "#999",
+        fontSize: 12,
+    },
+    // ✅ Time alert for active rentals
+    timeAlert: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 8,
+        marginBottom: 12,
+    },
+    timeAlertIcon: {
+        fontSize: 16,
+        color: "#ef4444",
+    },
+    timeAlertText: {
+        color: "#ef4444",
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    // ✅ Subtle reference
+    reference: {
+        color: "#666",
+        fontSize: 11,
+        marginBottom: 12,
+    },
+    // ✅ Cleaner amount section
+    amountSection: {
+        paddingTop: 12,
+        marginBottom: 12,
+        borderTopWidth: 1,
+        borderTopColor: "#2a2a2a",
+        gap: 8,
+    },
+    amountRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    amountLabel: {
+        color: "#999",
+        fontSize: 14,
+    },
+    amountValue: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "700",
+    },
+    // ✅ Action buttons
     actions: {
         flexDirection: "row",
         gap: 12,
-        marginTop: 12,
     },
     primaryButton: {
         flex: 1,
         backgroundColor: "#d4c5f9",
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderRadius: 12,
         alignItems: "center",
     },
     primaryButtonText: {
         color: "#000",
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    reportButton: {
-        backgroundColor: "#ef4444",
-        paddingVertical: 12,
-        borderRadius: 12,
-        alignItems: "center",
-        marginTop: 12,
-    },
-    reportButtonText: {
-        color: "#fff",
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: "600",
     },
     cancelButton: {
         paddingHorizontal: 24,
-        paddingVertical: 12,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
     },
     cancelButtonText: {
+        color: "#ef4444",
+        fontSize: 15,
+        fontWeight: "600",
+    },
+    // ✅ Report button with subtle styling
+    reportButton: {
+        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: "center",
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: "rgba(239, 68, 68, 0.2)",
+    },
+    reportButtonText: {
         color: "#ef4444",
         fontSize: 14,
         fontWeight: "600",

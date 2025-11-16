@@ -25,13 +25,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 16,
-        paddingTop: 60,
-        paddingBottom: 12,
+        paddingTop: 48,
+        paddingBottom: 8,  // ✅ Reduced from 16 to bring search bar closer
         backgroundColor: "#000",
     },
     title: {
         color: "#fff",
         fontSize: 24,
         fontWeight: "700",
+        letterSpacing: -0.5,
     },
 });
