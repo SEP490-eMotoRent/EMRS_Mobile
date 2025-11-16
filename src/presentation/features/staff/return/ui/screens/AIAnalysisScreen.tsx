@@ -45,7 +45,7 @@ export const AIAnalysisScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="AI Analysis"
+          title="Phân tích AI"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
@@ -77,8 +77,8 @@ export const AIAnalysisScreen: React.FC = () => {
             <View style={styles.verificationHeader}>
               <Text style={styles.verificationTitle}>
                 {analyzeReturnData?.verificationResult?.isVerified
-                  ? "Vehicle Verified"
-                  : "Verification Failed"}
+                  ? "Xe đã được xác minh"
+                  : "Xác minh thất bại"}
               </Text>
               <AntDesign
                 name={
@@ -97,8 +97,8 @@ export const AIAnalysisScreen: React.FC = () => {
             <Text style={styles.verificationDescription}>
               {analyzeReturnData?.verificationResult?.reason ||
                 (analyzeReturnData?.verificationResult?.isVerified
-                  ? "Return Vehicle matched with handover photos"
-                  : "Return Vehicle does not match with handover photos")}
+                  ? "Xe trả khớp với ảnh bàn giao"
+                  : "Xe trả không khớp với ảnh bàn giao")}
             </Text>
             {/* {analyzeReturnData?.verificationResult?.confidence && (
               <View style={styles.confidenceBar}>
@@ -119,7 +119,7 @@ export const AIAnalysisScreen: React.FC = () => {
           <View style={styles.issuesSection}>
             <View style={styles.issuesHeader}>
               <AntDesign name="warning" size={20} color="#FF6B35" />
-              <Text style={styles.issuesTitle}>AI Detected Issues</Text>
+              <Text style={styles.issuesTitle}>Vấn đề AI phát hiện</Text>
             </View>
 
             <View style={styles.issuesCard}>
@@ -143,7 +143,7 @@ export const AIAnalysisScreen: React.FC = () => {
                   analyzeReturnData.damageResult.suggestions.length > 0 && (
                     <>
                       <Text style={styles.suggestionsTitle}>
-                        Damage Suggestions:
+                        Gợi ý hư hỏng:
                       </Text>
                       {analyzeReturnData.damageResult.suggestions.map(
                         (suggestion, index) => (
@@ -176,7 +176,7 @@ export const AIAnalysisScreen: React.FC = () => {
                       <AntDesign name="check" size={12} color="#FFFFFF" />
                     )}
                   </View>
-                  <Text style={styles.confirmText}>Confirm Issue</Text>
+                  <Text style={styles.confirmText}>Xác nhận vấn đề</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -186,10 +186,9 @@ export const AIAnalysisScreen: React.FC = () => {
             <View style={styles.noIssuesIcon}>
               <AntDesign name="check-circle" size={48} color="#4CAF50" />
             </View>
-            <Text style={styles.noIssuesTitle}>No New Damages Detected</Text>
+            <Text style={styles.noIssuesTitle}>Không phát hiện hư hỏng mới</Text>
             <Text style={styles.noIssuesText}>
-              The vehicle condition matches the handover inspection. No new
-              damages found.
+              Tình trạng xe khớp với kiểm tra bàn giao. Không tìm thấy hư hỏng mới.
             </Text>
           </View>
         )}
@@ -197,7 +196,7 @@ export const AIAnalysisScreen: React.FC = () => {
         {/* Disclaimer Bar */}
         <View style={styles.disclaimerBar}>
           <Text style={styles.disclaimerText}>
-            AI suggestions only - Staff must verify all damages
+            Chỉ là gợi ý AI - Nhân viên phải xác minh tất cả hư hỏng
           </Text>
         </View>
 
@@ -207,7 +206,7 @@ export const AIAnalysisScreen: React.FC = () => {
           onPress={handleContinue}
         >
           <Text style={styles.continueButtonText}>
-            Continue to Manual Check
+            Tiếp tục kiểm tra thủ công
           </Text>
         </TouchableOpacity>
       </ScrollView>

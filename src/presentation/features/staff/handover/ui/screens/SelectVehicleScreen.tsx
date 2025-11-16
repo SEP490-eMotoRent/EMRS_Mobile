@@ -50,7 +50,7 @@ export const SelectVehicleScreen: React.FC = () => {
   const [filterColor, setFilterColor] = useState<string>("");
   const [filterOdometerMin, setFilterOdometerMin] = useState<string>("");
   const [filterBatteryMin, setFilterBatteryMin] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("Available");
+  const [filterStatus, setFilterStatus] = useState<string>("Booked");
   const [filterVehicleModelId, setFilterVehicleModelId] = useState<string>("");
   const [showModelList, setShowModelList] = useState<boolean>(false);
   const [shouldRefetch, setShouldRefetch] = useState<boolean>(false);
@@ -144,7 +144,7 @@ export const SelectVehicleScreen: React.FC = () => {
   const mapVehicleToCard = (vehicle: Vehicle) => {
     return {
       id: vehicle.id,
-      plate: vehicle.licensePlate || "Unknown",
+      plate: vehicle.licensePlate || "Không xác định",
       badge:
         vehicle.status === "Available"
           ? "Available"
@@ -154,11 +154,11 @@ export const SelectVehicleScreen: React.FC = () => {
           ? "Unavailable"
           : vehicle.status === "Rented"
           ? "Rented"
-          : "Unknown",
+          : "Không xác định",
       batteryPct: vehicle.batteryHealthPercentage || 0,
       currentOdometerKm: vehicle?.currentOdometerKm || 0,
-      color: vehicle.color || "Unknown",
-      status: vehicle.status || "Unknown",
+      color: vehicle.color || "Không xác định",
+      status: vehicle.status || "Không xác định",
       fileUrl: vehicle.fileUrl || [],
       disabled: vehicle.status === "Unavailable" || vehicle.status === "Rented",
       nextMaintenanceDue: vehicle.nextMaintenanceDue,
@@ -169,18 +169,18 @@ export const SelectVehicleScreen: React.FC = () => {
   const renderBadge = (status: string) => {
     if (status === "Available")
       return (
-        <Text style={[styles.badge, styles.badgeAvailable]}>Available</Text>
+        <Text style={[styles.badge, styles.badgeAvailable]}>Có sẵn</Text>
       );
     if (status === "Booked")
       return (
-        <Text style={[styles.badge, styles.badgeBooked]}>Booked</Text>
+        <Text style={[styles.badge, styles.badgeBooked]}>Đã đặt</Text>
       );
     if (status === "Rented")
       return (
-        <Text style={[styles.badge, styles.badgeRented]}>Rented</Text>
+        <Text style={[styles.badge, styles.badgeRented]}>Đã thuê</Text>
       );
     return (
-      <Text style={[styles.badge, styles.badgeUnavailable]}>Unavailable</Text>
+      <Text style={[styles.badge, styles.badgeUnavailable]}>Không có sẵn</Text>
     );
   };
 
@@ -194,9 +194,9 @@ export const SelectVehicleScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.scrollContent}>
         <ScreenHeader
-          title="Select Vehicle"
+          title="Chọn xe"
           subtitle={renterName}
-          submeta={`Booked type: ${vehicleModel?.modelName}`}
+          submeta={`Loại đã đặt: ${vehicleModel?.modelName}`}
           showSearch={true}
           onSearchPress={() => {}}
           onBack={() => navigation.goBack()}
@@ -208,13 +208,13 @@ export const SelectVehicleScreen: React.FC = () => {
           }
         >
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeaderText}>Available Vehicles</Text>
+            <Text style={styles.sectionHeaderText}>Xe có sẵn</Text>
             <TouchableOpacity
               style={styles.filterRow}
               onPress={() => setShowFilter(true)}
             >
               <AntDesign name="filter" size={16} color={colors.text.primary} />
-              <Text style={styles.filterText}>Filter & Sort</Text>
+              <Text style={styles.filterText}>Lọc & Sắp xếp</Text>
             </TouchableOpacity>
           </View>
 
@@ -231,7 +231,7 @@ export const SelectVehicleScreen: React.FC = () => {
                   <AntDesign name="car" size={12} color="#000" />
                   <Text style={styles.filterChipText}>
                     {vehicleModels.find((m) => m.id === filterVehicleModelId)
-                      ?.modelName || "Model"}
+                      ?.modelName || "Mẫu xe"}
                   </Text>
                   <TouchableOpacity onPress={() => clearFilter("model")}>
                     <AntDesign name="close" size={12} color="#000" />
@@ -293,7 +293,7 @@ export const SelectVehicleScreen: React.FC = () => {
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading vehicles...</Text>
+              <Text style={styles.loadingText}>Đang tải xe...</Text>
             </View>
           ) : vehicles.length > 0 ? (
             vehicles.map((vehicle) => {
@@ -332,7 +332,7 @@ export const SelectVehicleScreen: React.FC = () => {
                       {vehicleCard.plate} • #{vehicleCard.id.slice(-10)}
                     </Text>
                     <TouchableOpacity disabled={vehicleCard.disabled}>
-                      <Text style={styles.link}>View details</Text>
+                      <Text style={styles.link}>Xem chi tiết</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -350,7 +350,7 @@ export const SelectVehicleScreen: React.FC = () => {
                     </View>
                     <View style={styles.rowRight}>
                       <Text style={styles.mutedText}>
-                        Next maintenance:{" "}
+                        Bảo dưỡng tiếp theo:{" "}
                         {vehicleCard.nextMaintenanceDue?.toLocaleDateString(
                           "en-GB"
                         )}
@@ -373,8 +373,8 @@ export const SelectVehicleScreen: React.FC = () => {
                     </View>
                     <Text style={styles.positiveText}>
                       {vehicleCard.batteryPct >= 80
-                        ? "Fully charged"
-                        : "Charging needed"}
+                        ? "Đã sạc đầy"
+                        : "Cần sạc"}
                     </Text>
                   </View>
                   <View style={styles.progressBar}>
@@ -386,7 +386,7 @@ export const SelectVehicleScreen: React.FC = () => {
                     />
                   </View>
                   <Text style={styles.rangeText}>
-                    Current odometer:{" "}
+                    Số km hiện tại:{" "}
                     <Text style={styles.rangeValue}>
                       {vehicleCard.currentOdometerKm}km
                     </Text>
@@ -396,7 +396,7 @@ export const SelectVehicleScreen: React.FC = () => {
                   <View style={styles.detailGrid}>
                     <View style={styles.detailCard}>
                       <View style={styles.detailHeaderRow}>
-                        <Text style={styles.detailLabel}>Status</Text>
+                        <Text style={styles.detailLabel}>Trạng thái</Text>
                         <View style={styles.valueRight}>
                           <Text
                             style={
@@ -426,7 +426,7 @@ export const SelectVehicleScreen: React.FC = () => {
                     </View>
                     <View style={styles.detailCard}>
                       <View style={styles.detailHeaderRow}>
-                        <Text style={styles.detailLabel}>Color</Text>
+                        <Text style={styles.detailLabel}>Màu sắc</Text>
                         <View style={styles.valueRight}>
                           <Text
                             style={[
@@ -441,7 +441,7 @@ export const SelectVehicleScreen: React.FC = () => {
                     </View>
                     <View style={styles.detailCard}>
                       <View style={styles.detailHeaderRow}>
-                        <Text style={styles.detailLabel}>Pricing</Text>
+                        <Text style={styles.detailLabel}>Giá thuê</Text>
                         <View style={styles.valueRight}>
                           <Text style={styles.okText}>
                             {vehicleCard.rentalPricing}.000 đ/h
@@ -455,7 +455,7 @@ export const SelectVehicleScreen: React.FC = () => {
                   <View style={styles.footerRow}>
                     <TouchableOpacity disabled={vehicleCard.disabled}>
                       <Text style={[styles.link, vehicleCard.disabled && styles.linkDisabled]}>
-                        View Details{" "}
+                        Xem chi tiết{" "}
                         <AntDesign
                           name="arrow-right"
                           size={12}
@@ -477,7 +477,7 @@ export const SelectVehicleScreen: React.FC = () => {
                       // disabled={vehicleCard.disabled}
                     >
                       <AntDesign name="camera" size={16} color={vehicleCard.disabled ? "#999" : "#000"} />
-                      <Text style={[styles.inspectionBtnText, vehicleCard.disabled && styles.inspectionBtnTextDisabled]}>Inspection</Text>
+                      <Text style={[styles.inspectionBtnText, vehicleCard.disabled && styles.inspectionBtnTextDisabled]}>Kiểm tra</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -485,7 +485,7 @@ export const SelectVehicleScreen: React.FC = () => {
             })
           ) : (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No vehicles available</Text>
+              <Text style={styles.emptyText}>Không có xe nào</Text>
             </View>
           )}
         </ScrollView>
@@ -501,7 +501,7 @@ export const SelectVehicleScreen: React.FC = () => {
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter Vehicles</Text>
+              <Text style={styles.modalTitle}>Lọc xe</Text>
               <TouchableOpacity onPress={handleCloseFilter}>
                 <AntDesign name="close" size={18} color={colors.text.primary} />
               </TouchableOpacity>
@@ -510,7 +510,7 @@ export const SelectVehicleScreen: React.FC = () => {
             <View style={styles.fieldRow}>
               <View style={styles.labelWithIcon}>
                 <AntDesign name="car" size={12} color="#C9B6FF" />
-                <Text style={styles.fieldLabel}>Vehicle Model</Text>
+                <Text style={styles.fieldLabel}>Mẫu xe</Text>
               </View>
               <View style={styles.selectContainer}>
                 <TouchableOpacity
@@ -521,7 +521,7 @@ export const SelectVehicleScreen: React.FC = () => {
                   <Text style={{ color: colors.text.primary }}>
                     {vehicleModels.find(
                       (m) => m.id === (filterVehicleModelId || vehicleModel?.id)
-                    )?.modelName || "All models"}
+                    )?.modelName || "Tất cả mẫu xe"}
                   </Text>
                   <AntDesign
                     name={showModelList ? "up" : "down"}
@@ -543,7 +543,7 @@ export const SelectVehicleScreen: React.FC = () => {
                           setShowModelList(false);
                         }}
                       >
-                        <Text style={styles.dropdownItemText}>All models</Text>
+                        <Text style={styles.dropdownItemText}>Tất cả mẫu xe</Text>
                       </TouchableOpacity>
                       {vehicleModels.map((m) => (
                         <TouchableOpacity
@@ -572,10 +572,10 @@ export const SelectVehicleScreen: React.FC = () => {
             <View style={styles.fieldRow}>
               <View style={styles.labelWithIcon}>
                 <AntDesign name="skin" size={12} color="#C9B6FF" />
-                <Text style={styles.fieldLabel}>Color</Text>
+                <Text style={styles.fieldLabel}>Màu sắc</Text>
               </View>
               <TextInput
-                placeholder="e.g. Red"
+                placeholder="VD: Đỏ"
                 placeholderTextColor={colors.text.secondary}
                 style={styles.input}
                 value={filterColor}
@@ -587,10 +587,10 @@ export const SelectVehicleScreen: React.FC = () => {
               <View style={{ flex: 1 }}>
                 <View style={styles.labelWithIcon}>
                   <AntDesign name="dashboard" size={12} color="#C9B6FF" />
-                  <Text style={styles.fieldLabel}>Min Odometer (km)</Text>
+                  <Text style={styles.fieldLabel}>Số km tối thiểu (km)</Text>
                 </View>
                 <TextInput
-                  placeholder="e.g. 1000"
+                  placeholder="VD: 1000"
                   placeholderTextColor={colors.text.secondary}
                   keyboardType="numeric"
                   style={styles.input}
@@ -602,10 +602,10 @@ export const SelectVehicleScreen: React.FC = () => {
               <View style={{ flex: 1 }}>
                 <View style={styles.labelWithIcon}>
                   <FontAwesome name="battery-4" size={12} color="#C9B6FF" />
-                  <Text style={styles.fieldLabel}>Min Battery (%)</Text>
+                  <Text style={styles.fieldLabel}>Pin tối thiểu (%)</Text>
                 </View>
                 <TextInput
-                  placeholder="e.g. 50"
+                  placeholder="VD: 50"
                   placeholderTextColor={colors.text.secondary}
                   keyboardType="numeric"
                   style={styles.input}
@@ -618,7 +618,7 @@ export const SelectVehicleScreen: React.FC = () => {
             <View style={styles.fieldRow}>
               <View style={styles.labelWithIcon}>
                 <AntDesign name="flag" size={12} color="#C9B6FF" />
-                <Text style={styles.fieldLabel}>Status</Text>
+                <Text style={styles.fieldLabel}>Trạng thái</Text>
               </View>
               <View style={styles.statusRow}>
                 {["Booked", "Unavailable", "Available"].map((s) => {
@@ -651,14 +651,14 @@ export const SelectVehicleScreen: React.FC = () => {
                 style={[styles.modalBtn, styles.resetBtn]}
                 onPress={resetFilters}
               >
-                <Text style={styles.modalBtnText}>Reset</Text>
+                <Text style={styles.modalBtnText}>Đặt lại</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.applyBtn]}
                 onPress={applyFilters}
               >
                 <Text style={[styles.modalBtnText, { color: "#000" }]}>
-                  Apply
+                  Áp dụng
                 </Text>
               </TouchableOpacity>
             </View>

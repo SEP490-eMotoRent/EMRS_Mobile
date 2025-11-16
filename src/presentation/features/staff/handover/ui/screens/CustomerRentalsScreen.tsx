@@ -22,6 +22,8 @@ import { GetBookingListUseCase } from "../../../../../../domain/usecases/booking
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { useAppSelector } from "../../../../authentication/store/hooks";
+import { RootState } from "../../../../authentication/store";
 
 type CustomerRentalsScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -34,6 +36,7 @@ type CustomerRentalsScreenRouteProp = RouteProp<
 >;
 
 export const CustomerRentalsScreen: React.FC = () => {
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const navigation = useNavigation<CustomerRentalsScreenNavigationProp>();
   const route = useRoute<CustomerRentalsScreenRouteProp>();
   const { renterId } = route.params;
@@ -42,7 +45,7 @@ export const CustomerRentalsScreen: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("Booked");
   const [filterVehicleModelId, setFilterVehicleModelId] = useState<string>("");
   const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
   const [showModelList, setShowModelList] = useState<boolean>(false);
@@ -81,7 +84,7 @@ export const CustomerRentalsScreen: React.FC = () => {
       const response = await getBookingListUseCase.execute(
         filterVehicleModelId || (undefined as any),
         renterId,
-        filterStatus || (undefined as any),
+        filterStatus,
         page,
         pageSize
       );
@@ -123,7 +126,7 @@ export const CustomerRentalsScreen: React.FC = () => {
     const end = new Date(endDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${diffDays} days rental`;
+    return `${diffDays} ngày thuê`;
   };
 
   const handleSelectVehicle = (booking: Booking) => {
@@ -152,7 +155,7 @@ export const CustomerRentalsScreen: React.FC = () => {
         {!hasVehicle && (
           <View style={styles.statusBadge}>
             <AntDesign name="clock-circle" size={12} color="#FFC107" />
-            <Text style={styles.statusText}>Awaiting Vehicle Selection</Text>
+            <Text style={styles.statusText}>Đang chờ chọn xe</Text>
           </View>
         )}
 
@@ -169,10 +172,10 @@ export const CustomerRentalsScreen: React.FC = () => {
           </Text>
           <View style={styles.dateInfo}>
             <Text style={styles.dateText}>
-              From: {booking.startDatetime?.toLocaleDateString("en-GB")}
+              Từ: {booking.startDatetime?.toLocaleDateString("en-GB")}
             </Text>
             <Text style={styles.dateText}>
-              To: {booking.endDatetime?.toLocaleDateString("en-GB")}
+              Đến: {booking.endDatetime?.toLocaleDateString("en-GB")}
             </Text>
           </View>
         </View>
@@ -181,7 +184,7 @@ export const CustomerRentalsScreen: React.FC = () => {
         <View style={styles.customerSection}>
           <AntDesign name="user" size={16} color={colors.text.primary} />
           <Text style={styles.customerName}>
-            {booking.renter?.account?.fullname || "Unknown Customer"}
+            {booking.renter?.account?.fullname || "Khách hàng không xác định"}
           </Text>
           <Text style={styles.bookingId}>#{booking.id.slice(-10)}</Text>
         </View>
@@ -197,7 +200,7 @@ export const CustomerRentalsScreen: React.FC = () => {
               <View style={styles.vehicleInfo}>
                 <Text style={styles.vehicleName}>
                   {booking.vehicle?.vehicleModel?.modelName ||
-                    "Unknown Vehicle"}
+                    "Xe không xác định"}
                 </Text>
                 <Text style={styles.rentalDuration}>
                   {calculateRentalDuration(
@@ -213,9 +216,9 @@ export const CustomerRentalsScreen: React.FC = () => {
                 <AntDesign name="car" size={24} color={colors.text.secondary} />
               </View>
               <View style={styles.noVehicleInfo}>
-                <Text style={styles.noVehicleTitle}>No Vehicle Assigned</Text>
+                <Text style={styles.noVehicleTitle}>Chưa gán xe</Text>
                 <Text style={styles.noVehicleSubtitle}>
-                  Staff needs to select a vehicle for this booking
+                  Nhân viên cần chọn xe cho đặt chỗ này
                 </Text>
               </View>
             </View>
@@ -228,7 +231,7 @@ export const CustomerRentalsScreen: React.FC = () => {
             <View style={styles.specsHeader}>
               <Text style={styles.specsTitle}>Thông số kỹ thuật xe</Text>
               <Text style={styles.branchText}>
-                {booking.vehicle?.branch?.branchName || "Unknown Branch"}
+                {booking.vehicle?.branch?.branchName || "Chi nhánh không xác định"}
               </Text>
             </View>
             <View style={styles.specsGrid}>
@@ -275,14 +278,14 @@ export const CustomerRentalsScreen: React.FC = () => {
                 !hasVehicle && styles.buttonTextPending,
               ]}
             >
-              {hasVehicle ? "Change Vehicle" : "Select Vehicle"}
+              {hasVehicle ? "Đổi xe" : "Chọn xe"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.viewButton}
             onPress={() => handleViewDetails(booking)}
           >
-            <Text style={styles.buttonText}>View Details</Text>
+            <Text style={styles.buttonText}>Xem chi tiết</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -293,16 +296,16 @@ export const CustomerRentalsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.scrollContent}>
         <ScreenHeader
-          title="Customer Rentals"
+          title="Thuê của khách hàng"
           subtitle={
             bookings?.[0]?.renter?.account?.fullname
-              ? `${bookings?.[0]?.renter?.account?.fullname} Bookings`
-              : "Customer Bookings"
+              ? `Đặt chỗ của ${bookings?.[0]?.renter?.account?.fullname}`
+              : "Đặt chỗ khách hàng"
           }
           submeta={
             bookings?.[0]
               ? bookings?.[0]?.startDatetime?.toLocaleDateString("en-GB") || ""
-              : "Loading..."
+              : "Đang tải..."
           }
           onBack={() => navigation.goBack()}
         />
@@ -319,17 +322,15 @@ export const CustomerRentalsScreen: React.FC = () => {
           <View style={styles.header}>
             <View style={styles.branchRow}>
               <Text style={styles.branchText}>
-                {bookings?.[0]?.vehicle?.branch?.branchName ||
-                  "Loading Branch..."}
+                {user?.branchName || "Đang tải chi nhánh..."}
               </Text>
-              <AntDesign name="down" size={12} color={colors.text.primary} />
             </View>
             <TouchableOpacity
               style={styles.filterRow}
               onPress={() => setShowFilter(true)}
             >
               <AntDesign name="filter" size={16} color={colors.text.primary} />
-              <Text style={styles.filterText}>Filter & Sort</Text>
+              <Text style={styles.filterText}>Lọc & Sắp xếp</Text>
             </TouchableOpacity>
           </View>
 
@@ -337,8 +338,8 @@ export const CustomerRentalsScreen: React.FC = () => {
           <View style={styles.rentalSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                List Rental of{" "}
-                {bookings?.[0]?.renter?.account?.fullname ?? "Customer"}
+                Danh sách thuê của{" "}
+                {bookings?.[0]?.renter?.account?.fullname ?? "Khách hàng"}
               </Text>
               <View style={styles.countBadge}>
                 <Text style={styles.countText}>{bookings?.length ?? 0}</Text>
@@ -347,13 +348,13 @@ export const CustomerRentalsScreen: React.FC = () => {
 
             {loading ? (
               <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Loading bookings...</Text>
+                <Text style={styles.loadingText}>Đang tải đặt chỗ...</Text>
               </View>
             ) : bookings && bookings.length > 0 ? (
               bookings.map(renderBookingCard)
             ) : (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No bookings found</Text>
+                <Text style={styles.emptyText}>Không tìm thấy đặt chỗ</Text>
               </View>
             )}
           </View>
@@ -369,14 +370,14 @@ export const CustomerRentalsScreen: React.FC = () => {
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter Rentals</Text>
+              <Text style={styles.modalTitle}>Lọc thuê</Text>
               <TouchableOpacity onPress={() => setShowFilter(false)}>
                 <AntDesign name="close" size={18} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Vehicle Model</Text>
+              <Text style={styles.fieldLabel}>Mẫu xe</Text>
               <View style={styles.selectContainer}>
                 <TouchableOpacity
                   activeOpacity={0.8}
@@ -385,7 +386,7 @@ export const CustomerRentalsScreen: React.FC = () => {
                 >
                   <Text style={{ color: colors.text.primary }}>
                     {vehicleModels.find((m) => m.id === filterVehicleModelId)
-                      ?.modelName || "All models"}
+                      ?.modelName || "Tất cả mẫu xe"}
                   </Text>
                   <AntDesign
                     name={showModelList ? "up" : "down"}
@@ -407,7 +408,7 @@ export const CustomerRentalsScreen: React.FC = () => {
                           setShowModelList(false);
                         }}
                       >
-                        <Text style={styles.dropdownItemText}>All models</Text>
+                        <Text style={styles.dropdownItemText}>Tất cả mẫu xe</Text>
                       </TouchableOpacity>
                       {vehicleModels.map((m) => (
                         <TouchableOpacity
@@ -434,7 +435,7 @@ export const CustomerRentalsScreen: React.FC = () => {
             </View>
 
             <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Booking Status</Text>
+              <Text style={styles.fieldLabel}>Trạng thái đặt chỗ</Text>
               <View style={styles.statusRow}>
                 {["Booked", "Unavailable", "Available"].map((s) => {
                   const active = filterStatus === s;
@@ -466,14 +467,14 @@ export const CustomerRentalsScreen: React.FC = () => {
                 style={[styles.modalBtn, styles.resetBtn]}
                 onPress={resetFilters}
               >
-                <Text style={styles.modalBtnText}>Reset</Text>
+                <Text style={styles.modalBtnText}>Đặt lại</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.applyBtn]}
                 onPress={applyFilters}
               >
                 <Text style={[styles.modalBtnText, { color: "#000" }]}>
-                  Apply
+                  Áp dụng
                 </Text>
               </TouchableOpacity>
             </View>
@@ -540,6 +541,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontSize: 14,
     marginRight: 4,
+    fontWeight: "bold",
+    textTransform: "uppercase",
   },
   filterRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   filterText: { color: colors.text.primary, marginLeft: 6 },

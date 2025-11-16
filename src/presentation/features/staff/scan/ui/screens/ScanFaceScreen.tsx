@@ -84,7 +84,7 @@ export const ScanFaceScreen: React.FC = () => {
   const handleCallManager = () => {
     navigation.navigate("ScanResult", {
       renter: {
-        id: "019a5a2c-a5c9-74ec-bcf7-d28c69d0931b",
+        id: "019a7d00-e789-738b-b90c-fd022f9833fa",
         email: "test@test.com",
         phone: "1234567890",
         address: "1234567890",
@@ -92,7 +92,7 @@ export const ScanFaceScreen: React.FC = () => {
         avatarUrl: "https://via.placeholder.com/150",
         faceScanUrl: "https://via.placeholder.com/150",
         account: {
-          id: "1",
+          id: "019a7d00-e789-738a-93db-af9acccb4acf",
           username: "test",
           role: "test",
           fullname: "test",
