@@ -16,7 +16,6 @@ export const ContractGenerationProgress: React.FC<ContractGenerationProgressProp
             setProgress((prev) => {
                 if (prev >= 100) {
                     clearInterval(interval);
-                    onComplete();
                     return 100;
                 }
                 return prev + 10;
@@ -25,6 +24,19 @@ export const ContractGenerationProgress: React.FC<ContractGenerationProgressProp
 
         return () => clearInterval(interval);
     }, []);
+
+    // Separate useEffect to handle completion callback
+    useEffect(() => {
+        if (progress === 100) {
+            // Use setTimeout to defer the callback to the next tick
+            // This prevents updating parent state during render
+            const timer = setTimeout(() => {
+                onComplete();
+            }, 0);
+
+            return () => clearTimeout(timer);
+        }
+    }, [progress, onComplete]);
 
     return (
         <View style={styles.container}>
