@@ -19,6 +19,7 @@ import { useAppSelector } from "../../../../authentication/store/hooks";
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import sl from "../../../../../../core/di/InjectionContainer";
+import Toast from "react-native-toast-message";
 
 type HandoverReportNav = StackNavigationProp<
   StaffStackParamList,
@@ -53,6 +54,10 @@ export const HandoverReportScreen: React.FC = () => {
         receiptId
       );
       // if (response.success) {
+      Toast.show({
+        text1: "Đã gửi báo cáo bàn giao cho khách hàng",
+        type: "success",
+      });
       navigation.navigate("AwaitingApproval");
       // }
     } catch (error) {
@@ -66,16 +71,16 @@ export const HandoverReportScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Handover Report"
-          subtitle="Ready to send"
+          title="Báo cáo bàn giao"
+          subtitle="Sẵn sàng gửi"
           onBack={() => navigation.goBack()}
         />
 
         {/* Customer Information */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Customer Information</Text>
+          <Text style={styles.cardHeader}>Thông tin khách hàng</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Name</Text>
+            <Text style={styles.infoLabel}>Tên</Text>
             <View style={styles.valueRight}>
               <Text style={styles.infoValue}>John Nguyen</Text>
               <AntDesign
@@ -87,37 +92,37 @@ export const HandoverReportScreen: React.FC = () => {
             </View>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Booking</Text>
+            <Text style={styles.infoLabel}>Đặt chỗ</Text>
             <Text style={styles.infoValue}>#EMR240915001</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Booking Date</Text>
+            <Text style={styles.infoLabel}>Ngày đặt chỗ</Text>
             <Text style={styles.infoValue}>06/09/2025</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Handover Time</Text>
+            <Text style={styles.infoLabel}>Thời gian bàn giao</Text>
             <Text style={styles.infoValue}>06/09/2025 - 12:05</Text>
           </View>
         </View>
 
         {/* Vehicle Specifications */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Inspection Details</Text>
+          <Text style={styles.cardHeader}>Chi tiết kiểm tra</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Booking ID</Text>
+            <Text style={styles.infoLabel}>Mã đặt chỗ</Text>
             <Text style={styles.infoValue}>{bookingId || "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Battery Level</Text>
+            <Text style={styles.infoLabel}>Mức pin</Text>
             <Text style={styles.infoValue}>{startBatteryPercentage || 0}%</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Odometer Reading</Text>
+            <Text style={styles.infoLabel}>Số km</Text>
             <Text style={styles.infoValue}>{startOdometerKm || 0} km</Text>
           </View>
           {notes && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Notes</Text>
+              <Text style={styles.infoLabel}>Ghi chú</Text>
               <Text style={styles.infoValue}>{notes}</Text>
             </View>
           )}
@@ -153,10 +158,10 @@ export const HandoverReportScreen: React.FC = () => {
         {/* Photo Gallery */}
         {vehicleFiles && vehicleFiles.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardHeader}>Photo Gallery</Text>
+            <Text style={styles.cardHeader}>Thư viện ảnh</Text>
             <View style={styles.galleryRow}>
               {vehicleFiles.slice(0, 2).map((imageUrl, index) => {
-                const labels = ["Front", "Back"];
+                const labels = ["Mặt trước", "Mặt sau"];
                 return (
                   <View key={index} style={styles.galleryItem}>
                     <Image
@@ -172,7 +177,7 @@ export const HandoverReportScreen: React.FC = () => {
             {vehicleFiles.length > 2 && (
               <View style={styles.galleryRow}>
                 {vehicleFiles.slice(2, 4).map((imageUrl, index) => {
-                  const labels = ["Left", "Right"];
+                  const labels = ["Bên trái", "Bên phải"];
                   return (
                     <View key={index + 2} style={styles.galleryItem}>
                       <Image
@@ -196,7 +201,7 @@ export const HandoverReportScreen: React.FC = () => {
                     style={styles.checklistImage}
                     resizeMode="cover"
                   />
-                  <Text style={styles.galleryLabel}>Checklist</Text>
+                  <Text style={styles.galleryLabel}>Danh sách kiểm tra</Text>
                 </View>
               </View>
             )}
@@ -205,24 +210,24 @@ export const HandoverReportScreen: React.FC = () => {
 
         {/* Report Verification */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Report Verification</Text>
+          <Text style={styles.cardHeader}>Xác minh báo cáo</Text>
           <View style={styles.metaRow}>
             <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Staff member</Text>
+              <Text style={styles.metaLabel}>Nhân viên</Text>
               <Text style={styles.metaValue}>{user?.fullName}</Text>
             </View>
             <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Inspection time</Text>
-              <Text style={styles.metaValue}>15 minutes</Text>
+              <Text style={styles.metaLabel}>Thời gian kiểm tra</Text>
+              <Text style={styles.metaValue}>15 phút</Text>
             </View>
           </View>
           <View style={styles.metaRow}>
             <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Location</Text>
-              <Text style={styles.metaValue}>{user?.branchName} Branch</Text>
+              <Text style={styles.metaLabel}>Địa điểm</Text>
+              <Text style={styles.metaValue}>Chi nhánh {user?.branchName}</Text>
             </View>
             <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Report ID</Text>
+              <Text style={styles.metaLabel}>Mã báo cáo</Text>
               <Text style={styles.metaValue}>{receiptId || "N/A"}</Text>
             </View>
           </View>
@@ -240,12 +245,12 @@ export const HandoverReportScreen: React.FC = () => {
             <AntDesign name="send" size={16} color="#000" />
           )}
           <Text style={styles.sendCtaText}>
-            {isLoading ? "Sending..." : "Send to Customer"}
+            {isLoading ? "Đang gửi..." : "Gửi cho khách hàng"}
           </Text>
         </TouchableOpacity>
         <Text style={styles.noteText}>
-          Customer will receive notification to approve. Report expires in 30
-          minutes if not reviewed.
+          Khách hàng sẽ nhận được thông báo để phê duyệt. Báo cáo sẽ hết hạn sau
+          30 phút nếu không được xem xét.
         </Text>
       </ScrollView>
     </SafeAreaView>

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,9 @@ import sl from "../../../../../../core/di/InjectionContainer";
 import { AiAnalyzeUseCase } from "../../../../../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
 import { AnalyzeReturnResponse } from "../../../../../../data/models/rentalReturn/AnalyzeReturnResponse";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import Toast from "react-native-toast-message";
+import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import { Booking } from "../../../../../../domain/entities/booking/Booking";
 
 const customerAvatar = require("../../../../../../../assets/images/avatar2.png");
 
@@ -92,7 +95,7 @@ type ReturnInspectionScreenRouteProp = RouteProp<
 export const ReturnInspectionScreen: React.FC = () => {
   const route = useRoute<ReturnInspectionScreenRouteProp>();
   const { bookingId } = route.params || {};
-  const navigation = useNavigation<ReturnInspectionScreenNavigationProp>(); 
+  const navigation = useNavigation<ReturnInspectionScreenNavigationProp>();
 
   const [photos, setPhotos] = useState<Record<string, string | null>>({
     front: null,
@@ -100,11 +103,32 @@ export const ReturnInspectionScreen: React.FC = () => {
     left: null,
     right: null,
   });
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(false);
   const ensurePermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
     const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
     return cam.status === "granted" && lib.status === "granted";
+  };
+
+  useEffect(() => {
+    fetchBooking();
+  }, [bookingId]);
+
+
+  const fetchBooking = async () => {
+    try {
+      setLoading(true);
+      const getBookingByIdUseCase = new GetBookingByIdUseCase(
+        sl.get("BookingRepository")
+      );
+      const booking = await getBookingByIdUseCase.execute(bookingId);
+      setBooking(booking);
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getPhotosCount = () => {
@@ -113,14 +137,6 @@ export const ReturnInspectionScreen: React.FC = () => {
 
   const handleContinue = async () => {
     try {
-
-      // Validate required fields
-      // if (!endOdometerKm || !endBatteryPercentage) {
-      //   Alert.alert("Lỗi", "Vui lòng nhập số km và % pin bắt đầu");
-      //   setIsSubmitting(false);
-      //   return;
-      // }
-
       if (!bookingId) {
         Alert.alert("Lỗi", "Vui lòng chọn booking");
         return;
@@ -139,18 +155,25 @@ export const ReturnInspectionScreen: React.FC = () => {
       const analyzeReturnUseCase = new AiAnalyzeUseCase(
         sl.get("RentalReturnRepository")
       );
-      
+
       const analyzeReturnResponse = await analyzeReturnUseCase.execute({
         bookingId,
-        returnImages: [photos.front, photos.back, photos.left, photos.right].filter(Boolean) as string[],
+        returnImages: [
+          photos.front,
+          photos.back,
+          photos.left,
+          photos.right,
+        ].filter(Boolean) as string[],
       });
 
-      const analyzeReturnData: AnalyzeReturnResponse = unwrapResponse(analyzeReturnResponse);
-
-      Alert.alert(
-        "Thành công",
-        "Kiểm tra đã được hoàn thành"
+      const analyzeReturnData: AnalyzeReturnResponse = unwrapResponse(
+        analyzeReturnResponse
       );
+
+      Toast.show({
+        text1: "Phân tích đã được hoàn thành",
+        type: "success",
+      });
 
       navigation.navigate("AIAnalysis", {
         bookingId,
@@ -167,15 +190,15 @@ export const ReturnInspectionScreen: React.FC = () => {
     const ok = await ensurePermissions();
     if (!ok) {
       Alert.alert(
-        "Permission required",
-        "Please grant camera and media permissions."
+        "Yêu cầu quyền truy cập",
+        "Vui lòng cấp quyền truy cập camera và phương tiện."
       );
       return;
     }
 
-    Alert.alert("Add photo", "Choose source", [
+    Alert.alert("Thêm ảnh", "Chọn nguồn", [
       {
-        text: "Camera",
+        text: "Máy ảnh",
         onPress: async () => {
           const res = await ImagePicker.launchCameraAsync({
             allowsEditing: true,
@@ -187,7 +210,7 @@ export const ReturnInspectionScreen: React.FC = () => {
         },
       },
       {
-        text: "Library",
+        text: "Thư viện",
         onPress: async () => {
           const res = await ImagePicker.launchImageLibraryAsync({
             allowsEditing: true,
@@ -199,7 +222,7 @@ export const ReturnInspectionScreen: React.FC = () => {
           }
         },
       },
-      { text: "Cancel", style: "cancel" },
+      { text: "Hủy", style: "cancel" },
     ]);
   };
 
@@ -207,7 +230,7 @@ export const ReturnInspectionScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Return Inspection"
+          title="Kiểm tra trả xe"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
@@ -218,10 +241,13 @@ export const ReturnInspectionScreen: React.FC = () => {
         {/* User and Vehicle Information Card */}
         <View style={styles.infoCard}>
           <View style={styles.userInfo}>
-            <Image source={customerAvatar} style={styles.userAvatar} />
+            <Image source={{ uri: booking?.renter?.avatarUrl }} style={styles.userAvatar} />
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>Customer Return</Text>
-              <Text style={styles.userBranch}>Booking ID: {bookingId ? `#${bookingId.slice(-10)}` : 'N/A'}</Text>
+              <Text style={styles.userName}>{booking?.renter?.fullName()}</Text>
+              <Text style={styles.userPhone}>Số điện thoại: {booking?.renter?.phone}</Text>
+              <Text style={styles.userBranch}>
+                Mã đặt chỗ: {bookingId ? `#${bookingId.slice(-10)}` : "N/A"}
+              </Text>
             </View>
           </View>
 
@@ -235,7 +261,9 @@ export const ReturnInspectionScreen: React.FC = () => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Thời gian kiểm tra</Text>
-              <Text style={styles.infoValue}>{new Date().toLocaleTimeString("vi-VN")}</Text>
+              <Text style={styles.infoValue}>
+                {new Date().toLocaleTimeString("vi-VN")}
+              </Text>
             </View>
           </View>
         </View>
@@ -243,13 +271,9 @@ export const ReturnInspectionScreen: React.FC = () => {
         {/* Capture Vehicle Photos Section */}
         <View style={styles.photoSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              Chụp ảnh xe (Yêu cầu 4 góc)
-            </Text>
+            <Text style={styles.sectionTitle}>Chụp ảnh xe (Yêu cầu 4 góc)</Text>
             <View style={styles.photoCountBadge}>
-              <Text style={styles.photoCountText}>
-                {getPhotosCount()}/4
-              </Text>
+              <Text style={styles.photoCountText}>{getPhotosCount()}/4</Text>
             </View>
           </View>
           <View style={styles.photoGrid}>
@@ -286,18 +310,25 @@ export const ReturnInspectionScreen: React.FC = () => {
 
         {/* Continue Button */}
         <TouchableOpacity
-          style={[styles.continueButton, loading && styles.continueButtonDisabled]}
+          style={[
+            styles.continueButton,
+            loading && styles.continueButtonDisabled,
+          ]}
           onPress={handleContinue}
           disabled={loading}
         >
-                      {loading ? (
-              <>
-                <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
-                <Text style={styles.continueButtonText}>Đang phân tích...</Text>
-              </>
-            ) : (
-              <Text style={styles.continueButtonText}>Tiếp tục</Text>
-            )}
+          {loading ? (
+            <>
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.continueButtonText}>Đang phân tích...</Text>
+            </>
+          ) : (
+            <Text style={styles.continueButtonText}>Tiếp tục</Text>
+          )}
         </TouchableOpacity>
         {/* <TouchableOpacity
           style={styles.continueButton}
@@ -373,6 +404,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: colors.text.primary,
+    marginBottom: 4,
+  },
+  userPhone: {
+    fontSize: 14,
+    color: colors.text.secondary,
     marginBottom: 4,
   },
   userBranch: {
@@ -547,7 +583,8 @@ const styles = StyleSheet.create({
     left: 8,
     color: "#fff",
     fontWeight: "600",
-  },modalBackdrop: {
+  },
+  modalBackdrop: {
     position: "absolute",
     top: 0,
     left: 0,

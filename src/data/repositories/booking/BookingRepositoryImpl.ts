@@ -651,7 +651,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       "",
       dto.dateOfBirth,
       undefined,
-      "",
+      dto.avatarUrl,
       undefined,
       this.mapAccountFromStaffResponse(dto.account)
     );

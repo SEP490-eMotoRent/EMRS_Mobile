@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface User {
-  id?: string;        // ✅ Added
-  username?: string;  // ✅ Added
+  id?: string; // ✅ Added
+  username?: string; // ✅ Added
   role: string;
   fullName: string;
   branchId?: string;

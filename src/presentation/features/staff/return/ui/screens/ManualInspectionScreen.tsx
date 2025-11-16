@@ -17,6 +17,7 @@ import { ScreenHeader } from "../../../../../common/components/organisms/ScreenH
 import { StepProgressBar } from "../atoms";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
+import Toast from "react-native-toast-message";
 
 type ManualInspectionScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -53,7 +54,7 @@ export const ManualInspectionScreen: React.FC = () => {
   const [categories, setCategories] = useState<InspectionCategory[]>([
     {
       id: "body-paint",
-      title: "Body & Paint",
+      title: "Thân xe & Sơn",
       expanded: true,
       items: [
         { id: "1", label: "Đèn hậu hoạt động tốt", checked: false },
@@ -68,7 +69,7 @@ export const ManualInspectionScreen: React.FC = () => {
     },
     {
       id: "wheels-tires",
-      title: "Wheels & Tires",
+      title: "Bánh xe & Lốp",
       expanded: false,
       items: [
         { id: "9", label: "Lốp không bị mòn quá mức", checked: false },
@@ -79,7 +80,7 @@ export const ManualInspectionScreen: React.FC = () => {
     },
     {
       id: "lights-signals",
-      title: "Lights & Signals",
+      title: "Đèn & Tín hiệu",
       expanded: false,
       items: [
         { id: "13", label: "Đèn pha hoạt động", checked: false },
@@ -92,7 +93,7 @@ export const ManualInspectionScreen: React.FC = () => {
     },
     {
       id: "interior-features",
-      title: "Interior & Features",
+      title: "Nội thất & Tính năng",
       expanded: false,
       items: [
         { id: "19", label: "Ghế ngồi không bị rách", checked: false },
@@ -105,7 +106,7 @@ export const ManualInspectionScreen: React.FC = () => {
     },
     {
       id: "safety-equipment",
-      title: "Safety Equipment",
+      title: "Thiết bị an toàn",
       expanded: false,
       items: [
         { id: "25", label: "Mũ bảo hiểm có sẵn", checked: false },
@@ -199,7 +200,7 @@ export const ManualInspectionScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Manual Inspection"
+          title="Kiểm tra thủ công"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
@@ -210,7 +211,7 @@ export const ManualInspectionScreen: React.FC = () => {
 
         {/* Overall Progress */}
         <View style={styles.progressSection}>
-          <Text style={styles.progressLabel}>Progress</Text>
+          <Text style={styles.progressLabel}>Tiến độ</Text>
           <View style={styles.progressBarContainer}>
             <View
               style={[
@@ -220,7 +221,7 @@ export const ManualInspectionScreen: React.FC = () => {
             />
           </View>
           <Text style={styles.progressText}>
-            {checkedItems}/{totalItems} items checked
+            {checkedItems}/{totalItems} mục đã kiểm tra
           </Text>
         </View>
 
@@ -245,13 +246,13 @@ export const ManualInspectionScreen: React.FC = () => {
 
         {/* Vehicle Status Inputs */}
         <View style={styles.statusInputsCard}>
-          <Text style={styles.statusInputsTitle}>Vehicle Status</Text>
+          <Text style={styles.statusInputsTitle}>Trạng thái xe</Text>
 
           {/* Battery Percentage Input */}
           <View style={styles.inputGroup}>
             <View style={styles.inputHeader}>
               <Entypo name="battery" size={18} color="#4CAF50" />
-              <Text style={styles.inputLabel}>Battery Percentage</Text>
+              <Text style={styles.inputLabel}>Phần trăm pin</Text>
             </View>
             <View style={styles.inputContainer}>
               <View style={styles.inputIconContainer}>
@@ -266,7 +267,7 @@ export const ManualInspectionScreen: React.FC = () => {
                 value={endBatteryPercentage}
                 onChangeText={setEndBatteryPercentage}
                 keyboardType="numeric"
-                placeholder="Enter battery %"
+                placeholder="Nhập % pin"
                 placeholderTextColor={colors.text.secondary}
               />
               <Text style={styles.inputUnit}>%</Text>
@@ -278,7 +279,7 @@ export const ManualInspectionScreen: React.FC = () => {
                 color={colors.text.secondary}
               />
               <Text style={styles.inputHelperText}>
-                Current value: {endBatteryPercentage}%
+                Giá trị hiện tại: {endBatteryPercentage}%
               </Text>
             </View>
           </View>
@@ -287,7 +288,7 @@ export const ManualInspectionScreen: React.FC = () => {
           <View style={styles.inputGroup}>
             <View style={styles.inputHeader}>
               <Entypo name="gauge" size={18} color="#C9B6FF" />
-              <Text style={styles.inputLabel}>End Odometer (km)</Text>
+              <Text style={styles.inputLabel}>Số km cuối (km)</Text>
             </View>
             <View style={styles.inputContainer}>
               <View style={styles.inputIconContainer}>
@@ -302,7 +303,7 @@ export const ManualInspectionScreen: React.FC = () => {
                 value={endOdometerKm}
                 onChangeText={setEndOdometerKm}
                 keyboardType="numeric"
-                placeholder="Enter odometer reading"
+                placeholder="Nhập số km"
                 placeholderTextColor={colors.text.secondary}
               />
               <Text style={styles.inputUnit}>km</Text>
@@ -314,7 +315,7 @@ export const ManualInspectionScreen: React.FC = () => {
                 color={colors.text.secondary}
               />
               <Text style={styles.inputHelperText}>
-                Final odometer reading at return
+                Số km cuối cùng khi trả xe
               </Text>
             </View>
           </View>
@@ -332,7 +333,7 @@ export const ManualInspectionScreen: React.FC = () => {
                 {category.title}{" "}
                 <Text style={styles.categoryCount}>
                   ({getCategoryCheckedCount(category)}/{category.items.length}{" "}
-                  items)
+                  mục)
                 </Text>
               </Text>
               <AntDesign
@@ -382,7 +383,7 @@ export const ManualInspectionScreen: React.FC = () => {
           onPress={handleCompleteInspection}
           disabled={checkedItems !== totalItems}
         >
-          <Text style={styles.completeButtonText}>Complete Inspection</Text>
+          <Text style={styles.completeButtonText}>Hoàn thành kiểm tra</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
