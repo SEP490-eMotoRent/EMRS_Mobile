@@ -25,7 +25,7 @@ export const HandoverCompleteScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <ScreenHeader
-          title="Handover Complete"
+          title="Hoàn thành bàn giao"
           subtitle="John Nguyen"
           onBack={() => navigation.goBack()}
         />
@@ -35,90 +35,99 @@ export const HandoverCompleteScreen: React.FC = () => {
           <View style={styles.successIcon}>
             <AntDesign name="check-circle" size={28} color="#67D16C" />
           </View>
-          <Text style={styles.successTitle}>Vehicle successfully rented</Text>
+          <Text style={styles.successTitle}>
+            Xe đã được cho thuê thành công
+          </Text>
           <View style={styles.metaGrid}>
             <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Customer</Text>
+              <Text style={styles.metaLabel}>Khách hàng</Text>
               <Text style={styles.metaValue}>John Nguyen</Text>
             </View>
             <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Completion time</Text>
+              <Text style={styles.metaLabel}>Thời gian hoàn thành</Text>
               <Text style={styles.metaValue}>11:05 AM</Text>
             </View>
             <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Duration</Text>
-              <Text style={styles.metaValue}>35 minutes</Text>
+              <Text style={styles.metaLabel}>Thời lượng</Text>
+              <Text style={styles.metaValue}>35 phút</Text>
             </View>
             <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Status</Text>
-              <Text style={[styles.metaValue, styles.link]}>Active rental</Text>
+              <Text style={styles.metaLabel}>Trạng thái</Text>
+              <Text style={[styles.metaValue, styles.link]}>Đang thuê</Text>
             </View>
           </View>
         </View>
 
         {/* GPS Tracking Status (placeholder map box) */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>GPS Tracking Status</Text>
+          <Text style={styles.cardHeader}>Trạng thái theo dõi GPS</Text>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Real-time tracking</Text>
-            <Text style={styles.okPill}>ACTIVE</Text>
+            <Text style={styles.subtle}>Theo dõi thời gian thực</Text>
+            <Text style={styles.okPill}>ĐANG HOẠT ĐỘNG</Text>
           </View>
           <View style={styles.mapBox}>
-            <Text style={styles.subtle}>Map</Text>
+            <Text style={styles.subtle}>Bản đồ</Text>
           </View>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Battery level</Text>
+            <Text style={styles.subtle}>Mức pin</Text>
             <Text style={styles.subtle}>92%</Text>
           </View>
-          <Text style={styles.muted}>Customer location sharing enabled</Text>
+          <Text style={styles.muted}>Chia sẻ vị trí khách hàng đã bật</Text>
         </View>
 
         {/* Customer Journey Next Steps */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Customer Journey Next Steps</Text>
+          <Text style={styles.cardHeader}>
+            Các bước tiếp theo của khách hàng
+          </Text>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Customer journey status</Text>
-            <Text style={styles.subtle}>Active rental</Text>
+            <Text style={styles.subtle}>Trạng thái hành trình khách hàng</Text>
+            <Text style={styles.subtle}>Đang thuê</Text>
           </View>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Expected return</Text>
-            <Text style={styles.subtle}>Sep 23, 2025 at 11:00 AM</Text>
+            <Text style={styles.subtle}>Dự kiến trả xe</Text>
+            <Text style={styles.subtle}>23/09/2025 lúc 11:00 AM</Text>
           </View>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Return prep notification</Text>
-            <Text style={styles.subtle}>Sep 21</Text>
+            <Text style={styles.subtle}>Thông báo chuẩn bị trả xe</Text>
+            <Text style={styles.subtle}>21/09</Text>
           </View>
         </View>
 
         {/* Staff Next Actions */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Staff Next Actions</Text>
+          <Text style={styles.cardHeader}>
+            Hành động tiếp theo của nhân viên
+          </Text>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Next handover</Text>
-            <Text style={styles.subtle}>2:30 PM (3 hours)</Text>
+            <Text style={styles.subtle}>Bàn giao tiếp theo</Text>
+            <Text style={styles.subtle}>2:30 PM (3 giờ)</Text>
           </View>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Prepare for</Text>
+            <Text style={styles.subtle}>Chuẩn bị cho</Text>
             <Text style={styles.subtle}>Sarah Chen - Klara S</Text>
           </View>
           <View style={styles.rowBetween}>
-            <Text style={styles.subtle}>Free time</Text>
-            <Text style={styles.subtle}>2.5 hours</Text>
+            <Text style={styles.subtle}>Thời gian rảnh</Text>
+            <Text style={styles.subtle}>2.5 giờ</Text>
           </View>
         </View>
 
         <View style={styles.noteCard}>
           <Text style={styles.noteText}>
-            Great job! Another successful handover{"\n"}You've completed 47
-            handovers this month{"\n"}Customer feedback score: 4.8/5
+            Làm tốt lắm! Một bàn giao thành công nữa{"\n"}Bạn đã hoàn thành 47
+            bàn giao trong tháng này{"\n"}Điểm đánh giá khách hàng: 4.8/5
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.primaryCta}>
-          <Text style={styles.primaryCtaText}>Return to Dashboard</Text>
+        <TouchableOpacity
+          style={styles.primaryCta}
+          onPress={() => navigation.navigate("Rental")}
+        >
+          <Text style={styles.primaryCtaText}>Về trang chủ</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondaryCta}>
-          <Text style={styles.secondaryCtaText}>View Next Booking →</Text>
+          <Text style={styles.secondaryCtaText}>Xem đặt chỗ tiếp theo →</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

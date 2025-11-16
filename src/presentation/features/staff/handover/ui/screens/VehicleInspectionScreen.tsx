@@ -23,6 +23,7 @@ import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { HandoverReceiptResponse } from "../../../../../../data/models/receipt/HandoverReceiptResponse";
 import { AssignVehicleToBookingUseCase } from "../../../../../../domain/usecases/booking/AssignVehicleToBookingUseCase";
 import { CreateReceiptUseCase } from "../../../../../../domain/usecases/receipt/CreateReceiptUseCase";
+import Toast from "react-native-toast-message";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -356,10 +357,10 @@ export const VehicleInspectionScreen: React.FC = () => {
       const receiptData: HandoverReceiptResponse =
         unwrapResponse(handoverResponse);
 
-      Alert.alert(
-        "Thành công",
-        "Kiểm tra đã được hoàn thành và xe đã được gán cho booking"
-      );
+      Toast.show({
+        text1: "Kiểm tra đã được hoàn thành và xe đã được gán cho đặt chỗ",
+        type: "success",
+      });
 
       navigation.navigate("HandoverReport", {
         receiptId: receiptData.id,
@@ -428,43 +429,45 @@ export const VehicleInspectionScreen: React.FC = () => {
           {sections.map((section) => {
             const isOpen = !!expanded[section.key];
             return (
-              <View key={section.key} style={styles.accordion}>
+              <View key={section.key} style={styles.categoryCard}>
                 <TouchableOpacity
-                  style={styles.accordionHeader}
+                  style={styles.categoryHeader}
                   onPress={() =>
                     setExpanded((prev) => ({
                       ...prev,
                       [section.key]: !prev[section.key],
                     }))
                   }
-                  activeOpacity={0.7}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.accordionTitle}>{section.title}</Text>
+                  <Text style={styles.categoryTitle}>{section.title}</Text>
                   <AntDesign
                     name={isOpen ? "up" : "down"}
-                    size={14}
+                    size={16}
                     color={colors.text.secondary}
                   />
                 </TouchableOpacity>
 
                 {isOpen && (
-                  <View style={styles.checklistWrap}>
+                  <View style={styles.itemsContainer}>
                     {section.items.map((item, idx) => (
                       <TouchableOpacity
                         key={idx}
-                        style={styles.checkItemRow}
+                        style={styles.itemCard}
                         onPress={() => toggleChecklistItem(item.key)}
+                        activeOpacity={0.8}
                       >
-                        <Text style={styles.checkItemText}>{item.label}</Text>
-                        {checklistItems[item.key] ? (
-                          <AntDesign
-                            name="check-circle"
-                            size={18}
-                            color="#67D16C"
-                          />
-                        ) : (
-                          <View style={styles.pendingCircle} />
-                        )}
+                        <View
+                          style={[
+                            styles.checkboxCircle,
+                            checklistItems[item.key] && styles.checkboxChecked,
+                          ]}
+                        >
+                          {checklistItems[item.key] && (
+                            <AntDesign name="check" size={12} color="#FFFFFF" />
+                          )}
+                        </View>
+                        <Text style={styles.itemText}>{item.label}</Text>
                       </TouchableOpacity>
                     ))}
 
@@ -803,42 +806,54 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  accordion: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
-    padding: 16,
+  categoryCard: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 12,
+    marginHorizontal: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    overflow: "hidden",
   },
-  accordionHeader: {
+  categoryHeader: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
   },
-  accordionTitle: {
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
     color: colors.text.primary,
-    fontSize: 14,
-    fontWeight: "600",
   },
-  checklistWrap: { marginTop: 10 },
-  checkItemRow: {
+  itemsContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 8,
+  },
+  itemCard: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 8,
+    padding: 12,
+    gap: 12,
   },
-  checkItemText: { color: colors.text.primary, fontSize: 14 },
-  pendingCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: "#3A3A3A",
+  checkboxCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.text.secondary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#4CAF50",
+    borderColor: "#4CAF50",
+  },
+  itemText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text.primary,
   },
   addIssueRow: {
     flexDirection: "row",
@@ -1024,14 +1039,13 @@ const styles = StyleSheet.create({
   tertiaryCtaText: { color: colors.text.secondary, fontWeight: "600" },
   checklistContainer: {
     backgroundColor: "transparent",
-    paddingHorizontal: 16,
   },
   checklistTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: colors.text.primary,
     marginBottom: 16,
-    textAlign: "center",
+    marginHorizontal: 16,
   },
   inputCard: {
     backgroundColor: "#1E1E1E",

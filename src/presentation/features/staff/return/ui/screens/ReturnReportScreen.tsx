@@ -71,7 +71,7 @@ export const ReturnReportScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Awaiting Customer Approval"
+          title="Đang chờ phê duyệt khách hàng"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
@@ -87,48 +87,48 @@ export const ReturnReportScreen: React.FC = () => {
               <AntDesign name="file-text" size={20} color="#C9B6FF" />
             </View>
           </View>
-          <Text style={styles.centerTitle}>Report sent to customer</Text>
-          <Text style={styles.centerSub}>Waiting for approval...</Text>
+          <Text style={styles.centerTitle}>Báo cáo đã gửi cho khách hàng</Text>
+          <Text style={styles.centerSub}>Đang chờ phê duyệt...</Text>
         </View>
 
         {/* Report Summary */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Report Summary</Text>
+          <Text style={styles.cardHeader}>Tóm tắt báo cáo</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Vehicle</Text>
+            <Text style={styles.summaryLabel}>Xe</Text>
             <Text style={styles.summaryValueRight}>
               VinFast Evo200 (59X1-12345)
             </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Return Time</Text>
+            <Text style={styles.summaryLabel}>Thời gian trả</Text>
             <Text style={styles.summaryValueRight}>
               {new Date().toLocaleTimeString("vi-VN")}
             </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Odometer</Text>
+            <Text style={styles.summaryLabel}>Số km</Text>
             <Text style={styles.summaryValueRight}>—</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Battery</Text>
+            <Text style={styles.summaryLabel}>Pin</Text>
             <Text style={styles.summaryValueRight}>—</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Condition</Text>
+            <Text style={styles.summaryLabel}>Tình trạng</Text>
             <Text style={[styles.summaryValueRight, { color: "#F59E0B" }]}>
-              Minor damage detected
+              Phát hiện hư hỏng nhỏ
             </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Photos</Text>
-            <Text style={styles.summaryValueRight}>4 angles captured</Text>
+            <Text style={styles.summaryLabel}>Ảnh</Text>
+            <Text style={styles.summaryValueRight}>Đã chụp 4 góc</Text>
           </View>
         </View>
 
         {/* Financial Summary */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Financial Summary</Text>
+          <Text style={styles.cardHeader}>Tóm tắt tài chính</Text>
           <View style={styles.feeRow}>
             <Text style={styles.feeLabel}>Phí thuê xe</Text>
             <Text style={styles.feeAmount}>
@@ -231,7 +231,7 @@ export const ReturnReportScreen: React.FC = () => {
         {/* Hint box */}
         <View style={styles.hintCard}>
           <Text style={styles.hintText}>
-            If customer doesn't respond in 15 mins, you can force complete
+            Nếu khách hàng không phản hồi trong 15 phút, bạn có thể buộc hoàn tất
           </Text>
         </View>
 
@@ -243,18 +243,18 @@ export const ReturnReportScreen: React.FC = () => {
         >
           <AntDesign name="reload" size={16} color="#C9B6FF" />
           <Text style={styles.refreshText}>
-            {isRefreshing ? "Refreshing..." : "Refresh Status"}
+            {isRefreshing ? "Đang làm mới..." : "Làm mới trạng thái"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.waitingBtn} disabled>
-          <Text style={styles.waitingText}>Waiting for Customer...</Text>
+          <Text style={styles.waitingText}>Đang chờ khách hàng...</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.homeBtn}
           onPress={() => navigation.navigate("Rental")}
         >
           <AntDesign name="home" size={16} color="#000" />
-          <Text style={styles.homeText}>Back to Home</Text>
+          <Text style={styles.homeText}>Về trang chủ</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

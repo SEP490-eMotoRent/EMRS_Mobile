@@ -27,6 +27,7 @@ export interface RenterBookingResponse {
     phone?: string; // ✅ Note: backend has lowercase 'phone'
     address?: string;
     dateOfBirth?: string;
+    avatarUrl?: string;
     account?: AccountBookingResponse; // ✅ Nested
 }
 

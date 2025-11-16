@@ -39,8 +39,6 @@ export const ScanResultScreen: React.FC = () => {
     navigation.navigate("CustomerRentals", { renterId: renter.id });
   };
 
-  console.log(renter);
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -52,7 +50,7 @@ export const ScanResultScreen: React.FC = () => {
 
         {/* Customer Information Card */}
         <View style={styles.customerSection}>
-          <Text style={styles.sectionTitle}>Customer Information</Text>
+          <Text style={styles.sectionTitle}>Thông tin khách hàng</Text>
           <View style={styles.customerCard}>
             <View style={styles.customerAvatar}>
               <Image
@@ -108,7 +106,7 @@ export const ScanResultScreen: React.FC = () => {
                   Danh tính đã được xác minh - 98% khớp
                 </Text>
                 <Text style={styles.verificationDescription}>
-                  Customer identity confirmed
+                  Danh tính khách hàng đã được xác nhận
                 </Text>
               </>
             )}
@@ -144,9 +142,9 @@ export const ScanResultScreen: React.FC = () => {
                 <AntDesign name="swap" size={24} color="#FFFFFF" />
               </View>
               <View style={styles.buttonTextContainer}>
-                <Text style={styles.returnButtonText}>Continue to Return</Text>
+                <Text style={styles.returnButtonText}>Tiếp tục trả xe</Text>
                 <Text style={styles.returnButtonSubtext}>
-                  Vehicle return process
+                  Quy trình trả xe
                 </Text>
               </View>
               <AntDesign name="right" size={16} color="#FFFFFF" />
@@ -163,10 +161,10 @@ export const ScanResultScreen: React.FC = () => {
               </View>
               <View style={styles.buttonTextContainer}>
                 <Text style={styles.handoverButtonText}>
-                  Continue to Handover
+                  Tiếp tục bàn giao
                 </Text>
                 <Text style={styles.handoverButtonSubtext}>
-                  Vehicle pickup process
+                  Quy trình nhận xe
                 </Text>
               </View>
               <AntDesign name="right" size={16} color="#000000" />

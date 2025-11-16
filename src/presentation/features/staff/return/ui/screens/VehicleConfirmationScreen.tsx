@@ -19,6 +19,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { formatVnd } from "../../../../../../core/utils/VndFormatter";
+import { useAppSelector } from "../../../../authentication/store/hooks";
 
 const vehicleImage = require("../../../../../../../assets/images/technician.png");
 
@@ -34,6 +36,7 @@ type VehicleConfirmationScreenRouteProp = RouteProp<
 
 export const VehicleConfirmationScreen: React.FC = () => {
   const navigation = useNavigation<VehicleConfirmationScreenNavigationProp>();
+  const user = useAppSelector((state) => state.auth.user);
   const route = useRoute<VehicleConfirmationScreenRouteProp>();
   const { bookingId, vehicleId } = route.params;
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -76,7 +79,7 @@ export const VehicleConfirmationScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Vehicle Confirmation"
+          title="Xác nhận xe"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
@@ -90,7 +93,9 @@ export const VehicleConfirmationScreen: React.FC = () => {
               <AntDesign name="check" size={24} color="#FFFFFF" />
             </View>
             <View style={styles.verificationContent}>
-              <Text style={styles.verificationText}>Customer Verified</Text>
+              <Text style={styles.verificationText}>
+                Khách hàng đã xác minh
+              </Text>
               <Text style={styles.verificationName}>
                 {booking?.renter.account?.fullname}
               </Text>
@@ -102,7 +107,9 @@ export const VehicleConfirmationScreen: React.FC = () => {
               size={14}
               color={colors.text.secondary}
             />
-            <Text style={styles.verificationTime}>Verified at 11:00 AM</Text>
+            <Text style={styles.verificationTime}>
+              Đã xác minh lúc {booking?.createdAt?.toLocaleTimeString()}
+            </Text>
           </View>
         </View>
 
@@ -123,7 +130,7 @@ export const VehicleConfirmationScreen: React.FC = () => {
             <View style={styles.tagIcon}>
               <AntDesign name="car" size={12} color="#FFFFFF" />
             </View>
-            <Text style={styles.activeRentalText}>Active Rental</Text>
+            <Text style={styles.activeRentalText}>Đang thuê</Text>
           </View>
         </View>
 
@@ -157,7 +164,7 @@ export const VehicleConfirmationScreen: React.FC = () => {
           <View style={styles.detailsColumn}>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Chi nhánh nhận xe</Text>
-              <Text style={styles.detailValue}>District 2 Branch</Text>
+              <Text style={styles.detailValue}>{user?.branchName}</Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Thời gian nhận xe</Text>
@@ -174,9 +181,9 @@ export const VehicleConfirmationScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Status</Text>
+              <Text style={styles.detailLabel}>Trạng thái</Text>
               <View style={styles.statusTag}>
-                <Text style={styles.statusText}>On-time</Text>
+                <Text style={styles.statusText}>Đúng giờ</Text>
               </View>
             </View>
           </View>
@@ -194,11 +201,15 @@ export const VehicleConfirmationScreen: React.FC = () => {
           </View>
           <View style={styles.bookingRow}>
             <Text style={styles.bookingLabel}>Bảo hiểm</Text>
-            <Text style={styles.bookingValue}>Premium Package</Text>
+            <Text style={styles.bookingValue}>
+              {booking?.insurancePackage?.packageName}
+            </Text>
           </View>
           <View style={styles.bookingRow}>
             <Text style={styles.bookingLabel}>Tiền cọc</Text>
-            <Text style={styles.bookingValue}>5,000,000 VND</Text>
+            <Text style={styles.bookingValue}>
+              {formatVnd(booking?.depositAmount || 0)}
+            </Text>
           </View>
         </View>
 
@@ -214,11 +225,9 @@ export const VehicleConfirmationScreen: React.FC = () => {
               </View>
               <View style={styles.buttonTextContainer}>
                 <Text style={styles.startReturnText}>
-                  Start Return Inspection
+                  Bắt đầu kiểm tra trả xe
                 </Text>
-                <Text style={styles.buttonSubtext}>
-                  Begin 4-angle photo capture
-                </Text>
+                <Text style={styles.buttonSubtext}>Bắt đầu chụp ảnh 4 góc</Text>
               </View>
               <AntDesign name="right" size={16} color="#000000" />
             </View>

@@ -22,6 +22,7 @@ import { RentalReturnCreateReceiptUseCase } from "../../../../../../domain/useca
 import sl from "../../../../../../core/di/InjectionContainer";
 import { CreateReceiptResponse } from "../../../../../../data/models/rentalReturn/CreateReceiptResponse";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import Toast from "react-native-toast-message";
 
 type AdditionalFeesScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -48,7 +49,6 @@ export const AdditionalFeesScreen: React.FC = () => {
     endBatteryPercentage,
     returnImageUrls,
     checkListImage,
-    additionalFees,
   } = route.params || ({} as any);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customFees, setCustomFees] = useState<AdditionalFeesBreakdown[]>([
@@ -144,6 +144,11 @@ export const AdditionalFeesScreen: React.FC = () => {
         returnReceiptResponse
       );
 
+      Toast.show({
+        text1: "Tạo báo cáo trả xe đã được hoàn thành",
+        type: "success",
+      });
+
       navigation.navigate("ReturnReport", {
         bookingId,
         rentalReceiptId: returnReceiptData.rentalReceiptId,
@@ -160,7 +165,7 @@ export const AdditionalFeesScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ScreenHeader
-          title="Additional Fees"
+          title="Phí bổ sung"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
@@ -171,27 +176,27 @@ export const AdditionalFeesScreen: React.FC = () => {
 
         {/* Odometer & Distance Card (Fee only, based on settlement) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Odometer & Distance</Text>
+          <Text style={styles.cardTitle}>Số km & Khoảng cách</Text>
           <View style={styles.feeRow}>
-            <Text style={styles.feeLabel}>Excess KM Fee</Text>
+            <Text style={styles.feeLabel}>Phí vượt quá km</Text>
             <Text style={styles.feeValue}>+ {formatCurrency(distanceFee)}</Text>
           </View>
         </View>
 
         {/* Battery Charge Fee Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Battery Charge Fee</Text>
+          <Text style={styles.cardTitle}>Phí sạc pin</Text>
           <View style={styles.feeRow}>
-            <Text style={styles.feeLabel}>Charging Fee</Text>
+            <Text style={styles.feeLabel}>Phí sạc</Text>
             <Text style={styles.feeValue}>+ {formatCurrency(batteryFee)}</Text>
           </View>
         </View>
 
         {/* Damage Fees Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Damage Fees</Text>
+          <Text style={styles.cardTitle}>Phí hư hỏng</Text>
           <View style={styles.damageRow}>
-            <Text style={styles.damageDescription}>Damage total</Text>
+            <Text style={styles.damageDescription}>Tổng hư hỏng</Text>
             <Text style={styles.damageAmount}>{formatCurrency(damageFee)}</Text>
           </View>
         </View>
@@ -201,12 +206,12 @@ export const AdditionalFeesScreen: React.FC = () => {
           <View style={styles.additionalFeesIcon}>
             <AntDesign name="plus" size={16} color="#FFFFFF" />
           </View>
-          <Text style={styles.additionalFeesTitle}>Additional Fees</Text>
+          <Text style={styles.additionalFeesTitle}>Phí bổ sung</Text>
         </View>
 
         {/* Other Fees Card (display-only from settlement) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Other Fees</Text>
+          <Text style={styles.cardTitle}>Phí khác</Text>
           {otherFees.map((fee) => (
             <View key={fee.id} style={styles.otherFeeRow}>
               <View
@@ -229,8 +234,12 @@ export const AdditionalFeesScreen: React.FC = () => {
         {/* Custom Additional Fees (user input) */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>Add Additional Fees</Text>
-             <TouchableOpacity style={[styles.iconBtn, isSubmitting && styles.disabled]} onPress={addFeeRow} disabled={isSubmitting}>
+            <Text style={styles.cardTitle}>Thêm phí bổ sung</Text>
+            <TouchableOpacity
+              style={[styles.iconBtn, isSubmitting && styles.disabled]}
+              onPress={addFeeRow}
+              disabled={isSubmitting}
+            >
               <AntDesign name="plus" size={16} color="#000" />
             </TouchableOpacity>
           </View>
@@ -238,17 +247,17 @@ export const AdditionalFeesScreen: React.FC = () => {
           {customFees.map((fee, index) => (
             <View key={index} style={styles.feeInputRow}>
               <View style={styles.feeColWide}>
-                <Text style={styles.inputLabel}>Type</Text>
-                 <TouchableOpacity
-                   style={[styles.selectBox, isSubmitting && styles.disabled]}
-                   activeOpacity={0.8}
-                   disabled={isSubmitting}
-                   onPress={() =>
+                <Text style={styles.inputLabel}>Loại</Text>
+                <TouchableOpacity
+                  style={[styles.selectBox, isSubmitting && styles.disabled]}
+                  activeOpacity={0.8}
+                  disabled={isSubmitting}
+                  onPress={() =>
                     setOpenTypeIdx(openTypeIdx === index ? null : index)
                   }
                 >
                   <Text style={styles.selectText}>
-                    {fee.feeType || "Select type"}
+                    {fee.feeType || "Chọn loại"}
                   </Text>
                   <AntDesign
                     name={openTypeIdx === index ? "up" : "down"}
@@ -274,33 +283,33 @@ export const AdditionalFeesScreen: React.FC = () => {
                 )}
               </View>
               <View style={styles.feeColNarrow}>
-                <Text style={styles.inputLabel}>Amount</Text>
-                 <TextInput
-                   style={styles.input}
+                <Text style={styles.inputLabel}>Số tiền</Text>
+                <TextInput
+                  style={styles.input}
                   placeholder="0"
                   placeholderTextColor={colors.text.secondary}
                   keyboardType="numeric"
                   value={String(fee.amount || 0)}
                   onChangeText={(t) => updateFeeField(index, "amount", t)}
-                   editable={!isSubmitting}
+                  editable={!isSubmitting}
                 />
               </View>
-               <TouchableOpacity
-                 style={[styles.removeBtn, isSubmitting && styles.disabled]}
-                 onPress={() => removeFeeRow(index)}
-                 disabled={isSubmitting}
-               >
+              <TouchableOpacity
+                style={[styles.removeBtn, isSubmitting && styles.disabled]}
+                onPress={() => removeFeeRow(index)}
+                disabled={isSubmitting}
+              >
                 <AntDesign name="delete" size={16} color="#FF6B35" />
               </TouchableOpacity>
               <View style={styles.feeColFull}>
-                <Text style={styles.inputLabel}>Description (optional)</Text>
-                 <TextInput
-                   style={styles.input}
-                  placeholder="Short note"
+                <Text style={styles.inputLabel}>Mô tả (tùy chọn)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ghi chú ngắn"
                   placeholderTextColor={colors.text.secondary}
                   value={fee.description}
                   onChangeText={(t) => updateFeeField(index, "description", t)}
-                   editable={!isSubmitting}
+                  editable={!isSubmitting}
                 />
               </View>
             </View>
@@ -310,36 +319,20 @@ export const AdditionalFeesScreen: React.FC = () => {
         {/* Summary Card */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Base Rental Fee</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(0)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Additional + Charging</Text>
+            <Text style={styles.summaryLabel}>Tổng phụ phí</Text>
             <Text style={styles.summaryValue}>
               {formatCurrency(subtotalFees)}
             </Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Deposit Held</Text>
-            <Text style={styles.summaryValue}>
-              {formatCurrency(depositHeld)}
-            </Text>
-          </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryRow}>
-            <Text style={styles.refundLabel}>Refund Amount</Text>
+            <Text style={styles.refundLabel}>Tổng phí</Text>
             <Text
               style={[
                 styles.refundValue,
                 { color: refundAmount >= 0 ? "#4CAF50" : "#FF6B35" },
               ]}
             >
-              {formatCurrency(refundAmount)}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total</Text>
-            <Text style={styles.summaryValue}>
               {formatCurrency(totalAmount)}
             </Text>
           </View>
@@ -353,11 +346,15 @@ export const AdditionalFeesScreen: React.FC = () => {
         >
           {isSubmitting ? (
             <>
-              <ActivityIndicator size="small" color="#000" style={{ marginRight: 8 }} />
-              <Text style={styles.generateButtonText}>Generating...</Text>
+              <ActivityIndicator
+                size="small"
+                color="#000"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.generateButtonText}>Đang tạo...</Text>
             </>
           ) : (
-            <Text style={styles.generateButtonText}>Generate Return Report</Text>
+            <Text style={styles.generateButtonText}>Tạo báo cáo trả xe</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
