@@ -96,12 +96,18 @@ import { CreateWalletUseCase } from "../../domain/usecases/wallet/CreateWalletUs
 import { GetWalletBalanceUseCase } from "../../domain/usecases/wallet/GetWalletBalanceUseCase";
 import { AxiosClient } from "../network/AxiosClient";
 
+// Configuration imports
+import { ConfigurationRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/configuration/ConfigurationRemoteDataSourceImpl";
+import { ConfigurationRepositoryImpl } from "../../data/repositories/configuration/ConfigurationRepositoryImpl";
+import { GetAllConfigurationsUseCase } from "../../domain/usecases/configuration/GetAllConfigurationsUseCase";
+import { GetConfigurationByIdUseCase } from "../../domain/usecases/configuration/GetConfigurationByIdUseCase";
+import { GetConfigurationsByTypeUseCase } from "../../domain/usecases/configuration/GetConfigurationsByTypeUseCase";
 // Charging imports
 import { ChargingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/charging/ChargingRemoteDataSourceImpl';
 import { ChargingRepositoryImpl } from '../../data/repositories/charging/ChargingRepositoryImpl';
 import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
-import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
 import { CancelBookingUseCase } from "../../domain/usecases/booking/CancelBookingUseCase";
+import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -267,6 +273,18 @@ class ServiceLocator {
     this.services.set("CreateWalletUseCase", createWalletUseCase);
     const getWalletBalanceUseCase = new GetWalletBalanceUseCase(walletRepository);
     this.services.set("GetWalletBalanceUseCase", getWalletBalanceUseCase);
+
+    // Configuration services
+    const configurationRemoteDataSource = new ConfigurationRemoteDataSourceImpl(axiosClient);
+    this.services.set("ConfigurationRemoteDataSource", configurationRemoteDataSource);
+    const configurationRepository = new ConfigurationRepositoryImpl(configurationRemoteDataSource);
+    this.services.set("ConfigurationRepository", configurationRepository);
+    const getAllConfigurationsUseCase = new GetAllConfigurationsUseCase(configurationRepository);
+    this.services.set("GetAllConfigurationsUseCase", getAllConfigurationsUseCase);
+    const getConfigurationByIdUseCase = new GetConfigurationByIdUseCase(configurationRepository);
+    this.services.set("GetConfigurationByIdUseCase", getConfigurationByIdUseCase);
+    const getConfigurationsByTypeUseCase = new GetConfigurationsByTypeUseCase(configurationRepository);
+    this.services.set("GetConfigurationsByTypeUseCase", getConfigurationsByTypeUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -466,6 +484,18 @@ class ServiceLocator {
 
   getCancelBookingUseCase(): CancelBookingUseCase {
     return this.get<CancelBookingUseCase>('CancelBookingUseCase');
+  }
+
+  getGetAllConfigurationsUseCase(): GetAllConfigurationsUseCase {
+    return this.get<GetAllConfigurationsUseCase>('GetAllConfigurationsUseCase');
+  }
+
+  getGetConfigurationByIdUseCase(): GetConfigurationByIdUseCase {
+    return this.get<GetConfigurationByIdUseCase>('GetConfigurationByIdUseCase');
+  }
+
+  getGetConfigurationsByTypeUseCase(): GetConfigurationsByTypeUseCase {
+    return this.get<GetConfigurationsByTypeUseCase>('GetConfigurationsByTypeUseCase');
   }
 }
 

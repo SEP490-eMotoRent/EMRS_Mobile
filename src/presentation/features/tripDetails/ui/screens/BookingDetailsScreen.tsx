@@ -1,9 +1,11 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, Alert, BackHandler, Linking, Text, View } from 'react-native';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
-import { BookingDetailsData, BookingDetailsTemplate } from '../templates/BookingDetailsTemplate';
+import { BookingDetailsTemplate } from '../templates/BookingDetailsTemplate';
+import { useBookingDetails } from '../../hooks/useBookingDetails';
+import sl from '../../../../../core/di/InjectionContainer';
 
 type BookingDetailsScreenRouteProp = RouteProp<TripStackParamList, 'BookingDetails'>;
 type BookingDetailsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'BookingDetails'>;
@@ -12,9 +14,11 @@ export const BookingDetailsScreen: React.FC = () => {
     const route = useRoute<BookingDetailsScreenRouteProp>();
     const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
     
-    const { tripId, bookingReference } = route.params;
-    const [bookingData, setBookingData] = useState<BookingDetailsData | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { bookingId } = route.params;
+    const bookingReference = (route.params as any).bookingReference; // Optional param
+    
+    // Use the custom hook to fetch booking details
+    const { bookingData, loading, error, refetch } = useBookingDetails(bookingId, bookingReference);
     
     useEffect(() => {
         const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -23,71 +27,6 @@ export const BookingDetailsScreen: React.FC = () => {
         });
         return () => backHandler.remove();
     }, [navigation]);
-    
-    useEffect(() => {
-        // Fetch booking details based on tripId
-        fetchBookingDetails(tripId);
-    }, [tripId]);
-
-    const fetchBookingDetails = async (id: string) => {
-        try {
-        setLoading(true);
-        console.log('Fetching booking details for trip:', id);
-        
-        // TODO: Replace with actual API call
-        // Simulating API response
-        const data: BookingDetailsData = {
-            status: 'confirmed',
-            startsIn: '3 days 2 hours 45 minutes',
-            
-            bookingReference: bookingReference || '#EMR240920002',
-            contractStatus: 'Contract Signed',
-            contractVerified: true,
-            vehicleName: 'VinFast Klara',
-            rentalPeriod: 'Sep 24 5:00 PM - Sep 26 1:00 PM',
-            duration: '2 days 8 hours',
-            vehicleImageUrl: undefined, // Add actual image URL
-            
-            branchName: 'District 2, eMotoRent Branch',
-            branchAddress: '193 Nguyen Van Linh Street, District 2, Ho Chi Minh City',
-            operatingHours: 'Open 24/7',
-            branchPhone: '+84 123 456 789',
-            
-            rentalFee: '1,200,000đ',
-            insuranceFee: '150,000đ',
-            insuranceBadge: 'Premium',
-            serviceFee: '50,000đ',
-            securityDeposit: '2,000,000đ',
-            totalPaid: '3,600,000đ',
-            paymentMethod: 'eMotoRent Wallet',
-            
-            digitalSignatureCompleted: true,
-            signedOn: 'Sep 20, 2025 - 15:22',
-            otpVerified: true,
-            keyTerms: [
-            'Refund up to 24 hours before pickup',
-            'Late arrivals (>30 min) may result in cancellation',
-            'Renter is liable for damages not covered by insurance',
-            'Vehicle must be returned with minimum 10% battery',
-            ],
-            
-            cancellationPolicy: 'Free until 24h before pickup, 50% fee after that',
-            lateArrivalPolicy: 'May result in booking cancellation with 50% fee',
-            emergencyHotline: '1900 1234',
-        };
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setBookingData(data);
-        console.log('Booking details loaded successfully');
-        } catch (error) {
-        console.error('Error fetching booking details:', error);
-        Alert.alert('Error', 'Failed to load booking details');
-        } finally {
-        setLoading(false);
-        }
-    };
 
     const handleGetDirections = () => {
         if (!bookingData) return;
@@ -102,14 +41,25 @@ export const BookingDetailsScreen: React.FC = () => {
 
     const handleViewFullContract = () => {
         Alert.alert('View Contract', 'Opening full contract...');
+        // TODO: Navigate to contract viewer or open PDF
     };
 
-    const handleDownloadContract = () => {
-        Alert.alert('Download', 'Downloading contract PDF...');
+    const handleDownloadContract = async () => {
+        try {
+            Alert.alert('Download', 'Downloading contract PDF...');
+            // TODO: Implement contract download
+            // const getContractUseCase = sl.getGetContractUseCase();
+            // const contract = await getContractUseCase.execute(bookingId);
+        } catch (error) {
+            console.error('Error downloading contract:', error);
+            Alert.alert('Error', 'Failed to download contract');
+        }
     };
 
     const handleAddToCalendar = () => {
+        if (!bookingData) return;
         Alert.alert('Calendar', 'Adding to calendar...');
+        // TODO: Implement calendar integration
     };
 
     const handleContactBranch = () => {
@@ -119,52 +69,86 @@ export const BookingDetailsScreen: React.FC = () => {
 
     const handleCancelBooking = () => {
         Alert.alert(
-        'Cancel Booking',
-        'Are you sure you want to cancel this booking? This action cannot be undone.',
-        [
-            { text: 'No', style: 'cancel' },
-            { 
-            text: 'Yes, Cancel', 
-            style: 'destructive',
-            onPress: () => {
-                console.log('Booking cancelled for trip:', tripId);
-                // TODO: Call API to cancel booking
-                navigation.goBack();
-            }
-            },
-        ]
+            'Cancel Booking',
+            'Are you sure you want to cancel this booking? This action cannot be undone.',
+            [
+                { text: 'No', style: 'cancel' },
+                { 
+                    text: 'Yes, Cancel', 
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            console.log('🚫 Cancelling booking:', bookingId);
+                            
+                            const cancelBookingUseCase = sl.getCancelBookingUseCase();
+                            const cancelledBooking = await cancelBookingUseCase.execute(bookingId);
+                            
+                            console.log('✅ Booking cancelled successfully:', cancelledBooking.id);
+                            console.log('📊 New status:', cancelledBooking.bookingStatus);
+                            
+                            Alert.alert(
+                                'Success',
+                                'Your booking has been cancelled successfully.',
+                                [
+                                    {
+                                        text: 'OK',
+                                        onPress: () => {
+                                            // Navigate back or refresh the booking list
+                                            navigation.goBack();
+                                        }
+                                    }
+                                ]
+                            );
+                        } catch (error: any) {
+                            console.error('❌ Error cancelling booking:', error);
+                            Alert.alert(
+                                'Error',
+                                error.message || 'Failed to cancel booking. Please try again.'
+                            );
+                        }
+                    }
+                },
+            ]
         );
     };
 
     // Loading state
     if (loading) {
         return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1628' }}>
-            <ActivityIndicator size="large" color="#2196F3" />
-            <Text style={{ color: '#FFFFFF', marginTop: 16 }}>Loading booking details...</Text>
-        </View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1628' }}>
+                <ActivityIndicator size="large" color="#2196F3" />
+                <Text style={{ color: '#FFFFFF', marginTop: 16 }}>Loading booking details...</Text>
+            </View>
         );
     }
 
-    // No data state
-    if (!bookingData) {
+    // Error state
+    if (error || !bookingData) {
         return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1628' }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 16 }}>No booking data available</Text>
-        </View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1628', padding: 20 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, marginBottom: 20, textAlign: 'center' }}>
+                    {error || 'No booking data available'}
+                </Text>
+                <Text 
+                    style={{ color: '#2196F3', fontSize: 14 }}
+                    onPress={() => refetch()}
+                >
+                    Tap to retry
+                </Text>
+            </View>
         );
     }
 
     return (
         <BookingDetailsTemplate
-        data={bookingData}
-        onGetDirections={handleGetDirections}
-        onCallBranch={handleCallBranch}
-        onViewFullContract={handleViewFullContract}
-        onDownloadContract={handleDownloadContract}
-        onAddToCalendar={handleAddToCalendar}
-        onContactBranch={handleContactBranch}
-        onCancelBooking={handleCancelBooking}
+            data={bookingData}
+            onGetDirections={handleGetDirections}
+            onCallBranch={handleCallBranch}
+            onViewFullContract={handleViewFullContract}
+            onDownloadContract={handleDownloadContract}
+            onAddToCalendar={handleAddToCalendar}
+            onContactBranch={handleContactBranch}
+            onCancelBooking={handleCancelBooking}
         />
     );
 };

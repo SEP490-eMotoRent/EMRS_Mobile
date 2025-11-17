@@ -19,6 +19,12 @@ export const ApiEndpoints = {
     },
   },
 
+    configuration: {
+    getAll: "/Configuration",
+    getById: (id: string) => `/Configuration/${id}`,
+    getByType: (type: number) => `/Configuration/type/${type}`,
+  },
+
   // Booking endpoints
   booking: {
     create: "/Booking/create",

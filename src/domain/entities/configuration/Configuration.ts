@@ -1,5 +1,10 @@
 import { BaseEntity, CreateEntityInput, UpdateEntityInput } from "../shared/BaseEntity";
+import { ConfigurationType } from "./ConfigurationType";
 
+/**
+ * Configuration Domain Entity
+ * Represents system configuration settings like pricing, rates, and policies
+ */
 export class Configuration implements BaseEntity {
     public readonly id: string;
     public createdAt: Date;
@@ -9,15 +14,15 @@ export class Configuration implements BaseEntity {
 
     public title: string;
     public description: string;
-    public value1: string;
-    public value2: string;
+    public type: ConfigurationType;
+    public value: string;
 
     constructor(
         id: string,
         title: string,
         description: string,
-        value1: string,
-        value2: string,
+        type: ConfigurationType,
+        value: string,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
@@ -31,8 +36,8 @@ export class Configuration implements BaseEntity {
 
         this.title = title;
         this.description = description;
-        this.value1 = value1;
-        this.value2 = value2;
+        this.type = type;
+        this.value = value;
     }
 
     delete(): void {
@@ -45,6 +50,31 @@ export class Configuration implements BaseEntity {
         this.updatedAt = new Date();
         this.deletedAt = null;
         this.isDeleted = false;
+    }
+
+    /**
+     * Helper method to parse value as number
+     * Useful for rate/price configurations
+     */
+    getNumericValue(): number {
+        return parseFloat(this.value) || 0;
+    }
+
+    /**
+     * Helper method to check if this is a financial configuration
+     */
+    isFinancialConfig(): boolean {
+        return [
+            ConfigurationType.RentingDurationRate,
+            ConfigurationType.ChargingRate,
+            ConfigurationType.BookingDiscountRate,
+            ConfigurationType.DepositRate,
+            ConfigurationType.AdditionalFee,
+            ConfigurationType.RefundRate,
+            ConfigurationType.EconomyDepositPrice,
+            ConfigurationType.StandardDepositPrice,
+            ConfigurationType.PremiumDepositPrice,
+        ].includes(this.type);
     }
 }
 

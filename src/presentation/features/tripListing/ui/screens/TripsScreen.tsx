@@ -50,18 +50,21 @@ export const TripsScreen: React.FC = () => {
     };
 
     const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
-        const statusMap: Record<string, "renting" | "confirmed" | "returned"> = {
+        const bookingStatus = booking.bookingStatus?.toUpperCase();
+        
+        // ✅ FILTER OUT: Returned/Completed/Cancelled bookings don't belong in "Current"
+        if (["COMPLETED", "RETURNED", "CANCELLED"].includes(bookingStatus)) {
+            return null;
+        }
+
+        const statusMap: Record<string, "renting" | "confirmed"> = {
             "ACTIVE": "renting",
             "RENTING": "renting",
             "CONFIRMED": "confirmed",
             "BOOKED": "confirmed",
-            "COMPLETED": "returned",
-            "RETURNED": "returned",
         };
 
-        const bookingStatus = booking.bookingStatus?.toUpperCase();
         const status = statusMap[bookingStatus] || "confirmed";
-        if (bookingStatus === "CANCELLED") return null;
 
         const startDate = booking.startDatetime ? formatShortDate(booking.startDatetime) : "";
         const endDate = booking.endDatetime ? formatShortDate(booking.endDatetime) : "";
@@ -80,7 +83,6 @@ export const TripsScreen: React.FC = () => {
             return "";
         };
 
-        // ✅ UPDATED: Only show timeInfo for "renting" status, not "confirmed"
         const calculateTimeInfo = () => {
             if (!booking.startDatetime) return undefined;
             const now = new Date();
@@ -92,8 +94,6 @@ export const TripsScreen: React.FC = () => {
                 return daysLeft > 0 ? `${daysLeft} ngày còn lại` : "Sắp kết thúc";
             }
             
-            // ✅ REMOVED: Don't show "Bắt đầu..." for confirmed bookings
-            // The dates are already displayed, no need to repeat
             return undefined;
         };
 
@@ -117,7 +117,11 @@ export const TripsScreen: React.FC = () => {
 
     const mapBookingToPastTrip = (booking: Booking): PastTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
-        if (!["COMPLETED", "CANCELLED"].includes(bookingStatus)) return null;
+        
+        // ✅ INCLUDE: Completed, Returned, and Cancelled
+        if (!["COMPLETED", "RETURNED", "CANCELLED"].includes(bookingStatus)) {
+            return null;
+        }
 
         const startDate = booking.startDatetime ? formatShortDate(booking.startDatetime) : "";
         const endDate = booking.endDatetime ? formatShortDate(booking.endDatetime) : "";
@@ -132,14 +136,19 @@ export const TripsScreen: React.FC = () => {
             return "";
         };
 
+        // ✅ Map RETURNED → completed for display
+        const displayStatus = (bookingStatus === "COMPLETED" || bookingStatus === "RETURNED") 
+            ? "completed" 
+            : "cancelled";
+
         return {
             id: booking.id,
             vehicleName,
             vehicleCategory,
             dates: `${startDate} - ${endDate}, ${year}`,
             duration: calculateDuration(),
-            status: bookingStatus === "COMPLETED" ? "completed" : "cancelled",
-            rating: bookingStatus === "COMPLETED" ? 5 : undefined,
+            status: displayStatus,
+            rating: displayStatus === "completed" ? 5 : undefined,
             totalAmount: formatVnd(booking.totalAmount),
             refundedAmount: bookingStatus === "CANCELLED" && booking.depositAmount
                 ? formatVnd(booking.depositAmount)
@@ -416,7 +425,6 @@ const styles = StyleSheet.create({
         textAlign: "center",
         paddingHorizontal: 20,
     },
-    // ✅ Enhanced empty state
     emptyState: {
         alignItems: "center",
         paddingTop: 60,
