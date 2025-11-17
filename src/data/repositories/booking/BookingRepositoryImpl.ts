@@ -100,7 +100,7 @@ export class BookingRepositoryImpl implements BookingRepository {
 
     return {
       booking: this.mapVNPayResponseToEntity(response),
-      vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backend
+      vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backendQ 
     };
   }
 
