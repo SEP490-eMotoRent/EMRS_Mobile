@@ -2,6 +2,7 @@ import { ServerException } from "../../../../../core/errors/ServerException";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { AppLogger } from "../../../../../core/utils/Logger";
+import { GoogleLoginRequest } from "../../../../models/account/accountDTO/GoogleLoginRequest";
 import { LoginRequest } from "../../../../models/account/accountDTO/LoginRequest";
 import { LoginResponseData } from "../../../../models/account/accountDTO/LoginResponse";
 import { RegisterUserRequest } from "../../../../models/account/accountDTO/RegisterUserRequest";
@@ -95,6 +96,34 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
             this.logger.error(`❌ Login failed: ${error.message}`);
             throw new ServerException(
                 error.response?.data?.message || 'Invalid username or password',
+                error.response?.status || 401
+            );
+        }
+    }
+
+    async googleLogin(request: GoogleLoginRequest): Promise<ApiResponse<LoginResponseData>> {
+        try {
+            this.logger.info('🔄 Google login...');
+            console.log('Request payload:', JSON.stringify(request, null, 2));
+            
+            const response = await this.apiClient.post<ApiResponse<{ accessToken: string; user: any }>>(
+                '/auth/google-login',
+                request
+            );
+
+            this.logger.info('✅ Google login successful');
+            
+            return {
+                success: response.data.success,
+                message: response.data.message,
+                code: response.data.code,
+                data: response.data.data
+            };
+        } catch (error: any) {
+            this.logger.error(`❌ Google login failed: ${error.message}`);
+            console.log('Full error:', JSON.stringify(error.response?.data, null, 2));
+            throw new ServerException(
+                error.response?.data?.message || 'Google login failed',
                 error.response?.status || 401
             );
         }
