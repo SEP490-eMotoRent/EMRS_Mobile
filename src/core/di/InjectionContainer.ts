@@ -108,6 +108,8 @@ import { ChargingRepositoryImpl } from '../../data/repositories/charging/Chargin
 import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
 import { CancelBookingUseCase } from "../../domain/usecases/booking/CancelBookingUseCase";
 import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
+import { GoogleSignInUseCase } from "../../domain/usecases/account/Google/GoogleSignInUseCase";
+import { GoogleLoginUseCase } from "../../domain/usecases/account/Google/GoogleLoginUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -127,6 +129,12 @@ class ServiceLocator {
     this.services.set("AccountRemoteDataSource", accountRemoteDataSource);
     const accountRepository = new AccountRepositoryImpl(accountRemoteDataSource);
     this.services.set("AccountRepository", accountRepository);
+
+    //Google Sign-In Use Case
+    const googleSignInUseCase = new GoogleSignInUseCase();
+    this.services.set("GoogleSignInUseCase", googleSignInUseCase);
+    const googleLoginUseCase = new GoogleLoginUseCase(accountRepository);
+    this.services.set("GoogleLoginUseCase", googleLoginUseCase);
 
     // Local data sources
     this.services.set("AccountLocalDataSource", new AccountLocalDataSourceImpl());
@@ -496,6 +504,14 @@ class ServiceLocator {
 
   getGetConfigurationsByTypeUseCase(): GetConfigurationsByTypeUseCase {
     return this.get<GetConfigurationsByTypeUseCase>('GetConfigurationsByTypeUseCase');
+  }
+
+  getGoogleSignInUseCase(): GoogleSignInUseCase {
+    return this.get<GoogleSignInUseCase>('GoogleSignInUseCase');
+  }
+
+  getGoogleLoginUseCase(): GoogleLoginUseCase {
+    return this.get<GoogleLoginUseCase>('GoogleLoginUseCase');
   }
 }
 

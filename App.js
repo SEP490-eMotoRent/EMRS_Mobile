@@ -1,6 +1,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet } from "react-native";
+import React, { useEffect } from "react"; // CHANGE THIS LINE
+import { StyleSheet } from "react-native"; // REMOVE useEffect FROM HERE
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { RootNavigator } from "./src/presentation/shared/navigation/RootNavigator";
 import { AuthProvider } from "./src/presentation/features/authentication/notifiers/AuthContext";
@@ -12,6 +13,8 @@ import {
 import { PersistGate } from "redux-persist/integration/react";
 import Toast from "react-native-toast-message";
 import { LogBox } from 'react-native';
+import { configureGoogleSignIn } from "./src/core/config/GoogleSignInConfig";
+
 LogBox.ignoreLogs([
   'ServerException',
   'An error occurred while retrieving vehicles',
@@ -21,6 +24,10 @@ LogBox.ignoreLogs([
 import { LocationProvider } from "./src/presentation/features/battery/context/LocationContext";
 
 export default function App() {
+  useEffect(() => {
+    configureGoogleSignIn();
+  }, []);
+
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>

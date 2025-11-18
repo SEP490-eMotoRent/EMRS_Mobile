@@ -4,8 +4,9 @@ import { Renter } from "../../../domain/entities/account/Renter";
 import { Membership } from "../../../domain/entities/financial/Membership";
 import { AccountRepository } from "../../../domain/repositories/account/AccountRepository";
 import { AccountRemoteDataSource } from "../../datasources/interfaces/remote/account/AccountRemoteDataSource";
-import { RegisterUserRequest } from "../../models/account/accountDTO/RegisterUserRequest";
+import { GoogleLoginRequest } from "../../models/account/accountDTO/GoogleLoginRequest";
 import { LoginResponseData } from "../../models/account/accountDTO/LoginResponse";
+import { RegisterUserRequest } from "../../models/account/accountDTO/RegisterUserRequest";
 
 export class AccountRepositoryImpl implements AccountRepository {
     constructor(private remote: AccountRemoteDataSource) {}
@@ -90,5 +91,10 @@ export class AccountRepositoryImpl implements AccountRepository {
 
     async login(username: string, password: string): Promise<ApiResponse<LoginResponseData>> {
         return await this.remote.login({ username, password });
+    }
+
+    async googleLogin(idToken: string): Promise<ApiResponse<LoginResponseData>> {
+        const request: GoogleLoginRequest = { idToken };
+        return await this.remote.googleLogin(request);
     }
 }

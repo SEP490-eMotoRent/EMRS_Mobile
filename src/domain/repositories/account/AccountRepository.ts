@@ -6,5 +6,6 @@ export interface AccountRepository {
     create(account: Account): Promise<void>;
     getAll(): Promise<Account[]>;
     getByEmail(email: string): Promise<Account | null>;
-    login(username: string, password: string): Promise<ApiResponse<LoginResponseData>>;  // ✅ Use ApiResponse
+    login(username: string, password: string): Promise<ApiResponse<LoginResponseData>>;
+    googleLogin(idToken: string): Promise<ApiResponse<LoginResponseData>>;
 }

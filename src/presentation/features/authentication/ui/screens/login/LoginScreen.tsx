@@ -12,7 +12,6 @@ import sl from "../../../../../../core/di/InjectionContainer";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
 import { LoginUseCase } from "../../../../../../domain/usecases/account/LoginUseCase";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { colors } from "../../../../../common/theme/colors";
 import { RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useAppDispatch } from "../../../store/hooks";
@@ -29,17 +28,6 @@ type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   "Auth"
 >;
-
-// Define JWT payload structure
-interface JWTPayload {
-  Id: string;
-  UserId: string;
-  Username: string;
-  Role: string;
-  exp: number;
-  iat: number;
-  nbf: number;
-}
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -62,10 +50,8 @@ export const LoginScreen: React.FC = () => {
           password: data.password,
         });
 
-        // Unwrap to get the JWT token string
-        const loginData: LoginResponseData  = unwrapResponse(response);
+        const loginData: LoginResponseData = unwrapResponse(response);
 
-        // Store auth data in Redux
         dispatch(
           addAuth({
             token: loginData.accessToken,
@@ -101,8 +87,48 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleGoogleSignUp = () => {
-    console.log("Google sign up");
+  const handleGoogleSignUp = async () => {
+    try {
+      setLoading(true);
+
+      // Step 1: Get idToken from Google
+      const googleSignInUseCase = sl.getGoogleSignInUseCase();
+      const { idToken, email, name } = await googleSignInUseCase.execute();
+
+      // Step 2: Send idToken to backend
+      const googleLoginUseCase = sl.getGoogleLoginUseCase();
+      const response = await googleLoginUseCase.execute(idToken);
+
+      // Step 3: Unwrap response
+      const loginData: LoginResponseData = unwrapResponse(response);
+
+      // Step 4: Store auth data in Redux
+      dispatch(
+        addAuth({
+          token: loginData.accessToken,
+          user: {
+            id: loginData.user.id,
+            username: loginData.user.username,
+            role: loginData.user.role,
+            fullName: loginData.user.fullName,
+            branchId: loginData.user.branchId,
+            branchName: loginData.user.branchName,
+          },
+        })
+      );
+
+      Toast.show({
+        type: "success",
+        text1: "Đăng nhập thành công",
+        text2: `Chào mừng ${name}`,
+      });
+
+    } catch (error: any) {
+      Alert.alert('Đăng nhập Google thất bại', error.message);
+      console.error('Google Sign-In error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEmailSignUp = () => {
@@ -128,7 +154,6 @@ export const LoginScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-
           <BrandTitle subtitle="Đăng nhập vào tài khoản eMotoRent của bạn" />
 
           <LoginForm onContinue={handleContinue} loading={loading} />
