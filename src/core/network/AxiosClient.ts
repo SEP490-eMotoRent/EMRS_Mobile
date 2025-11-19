@@ -44,10 +44,21 @@ export class AxiosClient {
         if (config.data instanceof FormData) {
           // DO NOT delete Content-Type
           // Axios will set: multipart/form-data; boundary=...
+          // @ts-ignore
+          for (const [key, value] of config.data._parts) {
+            // If value is a File/Blob, you can log name & type
+            if (value && typeof value === "object" && "uri" in value) {
+              // React Native file object from Expo/ImagePicker
+              console.log(
+                `${key}: File { uri: ${value.uri}, name: ${value.name}, type: ${value.type} }`
+              );
+            } else {
+              console.log(`${key}:`, value);
+            }
+          }
           config.headers["Content-Type"] = "multipart/form-data";
-          console.log(
-            "Request contains FormData - Content-Type set to multipart/form-data"
-          );
+
+          console.log("Request data:", config.data);
         }
 
         AppLogger.getInstance().info(
@@ -80,7 +91,9 @@ export class AxiosClient {
       },
       (error) => {
         if (error.response) {
+          console.log("Response error:", error.response.data);
         } else if (error.request) {
+          console.log("Request error:", error.request);
         }
         return Promise.reject(error);
       }

@@ -334,7 +334,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 <Text style={styles.iconLabel}>Địa điểm thuê</Text>
               </View>
               <Text style={styles.iconValue}>
-                Xx Street, Ward 2, Tan Binh District
+                {booking?.handoverBranch?.branchName || "-"}
               </Text>
             </View>
             <View style={styles.divider} />
@@ -345,7 +345,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 <Text style={styles.iconLabel}>Thời gian thuê</Text>
               </View>
               <Text style={styles.iconValue}>
-                {booking?.startDatetime?.toLocaleDateString("en-GB") || "-"}
+                {booking?.startDatetime?.toLocaleString("en-GB") || "-"}
               </Text>
             </View>
             <View style={styles.divider} />
@@ -356,7 +356,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 <Text style={styles.iconLabel}>Thời gian trả</Text>
               </View>
               <Text style={styles.iconValue}>
-                {booking?.endDatetime?.toLocaleDateString("en-GB") || "-"}
+                {booking?.endDatetime?.toLocaleString("en-GB") || "-"}
               </Text>
             </View>
             <View style={styles.divider} />
