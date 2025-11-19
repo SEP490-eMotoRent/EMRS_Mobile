@@ -1,28 +1,28 @@
-import { NavigationContainer } from "@react-navigation/native";
+import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react"; // CHANGE THIS LINE
-import { StyleSheet } from "react-native"; // REMOVE useEffect FROM HERE
+import { StyleSheet, LogBox } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { RootNavigator } from "./src/presentation/shared/navigation/RootNavigator";
-import { AuthProvider } from "./src/presentation/features/authentication/notifiers/AuthContext";
+import { NavigationContainer } from "@react-navigation/native";
 import { Provider } from "react-redux";
-import {
-  store,
-  persistor,
-} from "./src/presentation/features/authentication/store";
 import { PersistGate } from "redux-persist/integration/react";
 import Toast from "react-native-toast-message";
-import { LogBox } from 'react-native';
+
+import MapboxGL from "@rnmapbox/maps";
+import { MapboxConfig } from "./src/core/config/MapboxConfig";
+
+import { store, persistor } from "./src/presentation/features/authentication/store";
+import { AuthProvider } from "./src/presentation/features/authentication/notifiers/AuthContext";
+import { LocationProvider } from "./src/presentation/features/battery/context/LocationContext";
+import { RootNavigator } from "./src/presentation/shared/navigation/RootNavigator";
 import { configureGoogleSignIn } from "./src/core/config/GoogleSignInConfig";
 
 LogBox.ignoreLogs([
-  'ServerException',
-  'An error occurred while retrieving vehicles',
-  'column v0.vehicle_price does not exist',
-  'POSITION:',
+  "ServerException",
+  "An error occurred while retrieving vehicles",
+  "column v0.vehicle_price does not exist",
+  "POSITION:",
 ]);
-import { LocationProvider } from "./src/presentation/features/battery/context/LocationContext";
-
+MapboxGL.setAccessToken(MapboxConfig.accessToken);
 export default function App() {
   useEffect(() => {
     configureGoogleSignIn();
@@ -33,16 +33,16 @@ export default function App() {
       <PersistGate loading={null} persistor={persistor}>
         <AuthProvider>
           <LocationProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
+            <GestureHandlerRootView style={styles.container}>
               <StatusBar backgroundColor="#FFFFFF" style="light" />
               <NavigationContainer>
                 <RootNavigator />
               </NavigationContainer>
+              <Toast />
             </GestureHandlerRootView>
           </LocationProvider>
         </AuthProvider>
       </PersistGate>
-      <Toast />
     </Provider>
   );
 }

@@ -1,3 +1,4 @@
+
 export const MapboxConfig = {
     // Get your free token from: https://account.mapbox.com/access-tokens/
     // NO CREDIT CARD REQUIRED for basic tier
@@ -7,11 +8,11 @@ export const MapboxConfig = {
     region: 'vn',
     language: 'vi',
     
-    // Ho Chi Minh City bounds for better search results
+    // Ho Chi Minh City bounds for better search results (use in MapView styleURL or search bias)
     locationBias: {
         latitude: 10.8231,
         longitude: 106.6297,
-        latitudeDelta: 0.5,
+        latitudeDelta: 0.5,  // Adjust for zoom level
         longitudeDelta: 0.5,
     },
     

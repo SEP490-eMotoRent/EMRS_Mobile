@@ -20,6 +20,21 @@ interface LocationProviderProps {
 
 const LocationContext = createContext<LocationContextValue | undefined>(undefined);
 
+// DEVELOPMENT MODE: Set to true to use mock location
+const USE_MOCK_LOCATION = __DEV__; // Automatically uses mock in dev mode
+
+// Mock location for testing (Ho Chi Minh City center)
+const MOCK_LOCATION: LocationData = {
+  latitude: 10.8231, // Landmark 81 area
+  longitude: 106.6297,
+  timestamp: Date.now(),
+};
+
+// You can also set specific locations for testing:
+// District 1: { latitude: 10.7769, longitude: 106.7009 }
+// Cho Ben Thanh: { latitude: 10.7724, longitude: 106.6980 }
+// Crescent Mall area: { latitude: 10.7295, longitude: 106.7192 }
+
 export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) => {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -27,6 +42,16 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
 
   useEffect(() => {
     (async () => {
+      // Use mock location in development
+      if (USE_MOCK_LOCATION) {
+        console.log('🧪 Using mock location:', MOCK_LOCATION);
+        setLocation(MOCK_LOCATION);
+        setErrorMsg(null);
+        setLoading(false);
+        return;
+      }
+
+      // Production: Get real location
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
@@ -57,6 +82,17 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     try {
       setLoading(true);
       setErrorMsg(null);
+      
+      // Use mock location in development
+      if (USE_MOCK_LOCATION) {
+        setLocation({
+          ...MOCK_LOCATION,
+          timestamp: Date.now(),
+        });
+        setLoading(false);
+        return;
+      }
+
       const currentLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
@@ -95,4 +131,3 @@ export const useLocation = (): LocationContextValue => {
   }
   return context;
 };
-

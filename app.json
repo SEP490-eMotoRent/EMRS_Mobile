@@ -26,7 +26,9 @@
           {
             "CFBundleURLSchemes": ["emrs"]
           }
-        ]
+        ],
+        "NSLocationWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí để hiển thị bản đồ và tìm xe gần bạn.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí để hiển thị bản đồ và tìm xe gần bạn."
       }
     },
     "android": {
@@ -37,7 +39,7 @@
       "edgeToEdgeEnabled": true,
       "config": {
         "googleMaps": {
-          "apiKey": "NOTHING_HERE"
+          "apiKey": "AIzaSyC7c9p7Wisku-WORcC51G60WXiQZUdvOOc"
         }
       },
       "package": "com.phuuthanh2003.eMotoRent_Mobile",
@@ -68,6 +70,13 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "eMotoRent cần truy cập vị trí của bạn để tìm chi nhánh gần nhất và hiển thị xe có sẵn xung quanh bạn."
+        }
+      ],
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsImpl": "mapbox",
+          "RNMapboxMapsVersion": "11.16.4"
         }
       ]
     ]
