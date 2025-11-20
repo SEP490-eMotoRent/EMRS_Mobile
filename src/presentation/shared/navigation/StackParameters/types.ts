@@ -242,6 +242,13 @@ export type ProfileStackParamList = {
     claimId: string;
   };
   Auth: NavigatorScreenParams<AuthStackParamList>;
+
+  CreateWithdrawalRequest: undefined;
+  WithdrawalRequestList: undefined;
+  WithdrawalRequestDetail: {
+    requestId: string;
+  };
+  
 };
 
 export type BatteryStackParamList = {

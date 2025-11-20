@@ -4,7 +4,7 @@ export const ApiEndpoints = {
 
   // Vehicle endpoints
   vehicle: {
-    paginatedList: "/Vehicle",
+    // paginatedList: "/Vehicle",
     list: "/Vehicle/list",
     create: "/Vehicle/create",
     model: {
@@ -23,6 +23,14 @@ export const ApiEndpoints = {
     getAll: "/Configuration",
     getById: (id: string) => `/Configuration/${id}`,
     getByType: (type: number) => `/Configuration/type/${type}`,
+  },
+
+  // Withdrawal Request endpoints
+  withdrawalRequest: {
+    create: "/WithdrawalRequest/create",
+    myRequests: "/WithdrawalRequest/my-requests",
+    detail: (id: string) => `/WithdrawalRequest/${id}`,
+    cancel: (id: string) => `/WithdrawalRequest/${id}/cancel`,
   },
 
   // Booking endpoints

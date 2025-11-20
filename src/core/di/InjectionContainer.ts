@@ -106,10 +106,17 @@ import { GetConfigurationsByTypeUseCase } from "../../domain/usecases/configurat
 import { ChargingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/charging/ChargingRemoteDataSourceImpl';
 import { ChargingRepositoryImpl } from '../../data/repositories/charging/ChargingRepositoryImpl';
 import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
+import { GoogleLoginUseCase } from "../../domain/usecases/account/Google/GoogleLoginUseCase";
+import { GoogleSignInUseCase } from "../../domain/usecases/account/Google/GoogleSignInUseCase";
 import { CancelBookingUseCase } from "../../domain/usecases/booking/CancelBookingUseCase";
 import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
-import { GoogleSignInUseCase } from "../../domain/usecases/account/Google/GoogleSignInUseCase";
-import { GoogleLoginUseCase } from "../../domain/usecases/account/Google/GoogleLoginUseCase";
+import { WithdrawalRequestRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/withdrawRequest/WithdrawalRequestRemoteDataSourceImpl";
+import { WithdrawalRequestRepositoryImpl } from "../../data/repositories/withdrawRequest/WithdrawalRequestRepositoryImpl";
+import { WithdrawalRequestRepository } from "../../domain/repositories/withdrawRequest/WithdrawalRequestRepository";
+import { CancelWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CancelWithdrawalRequestUseCase";
+import { CreateWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CreateWithdrawalRequestUseCase";
+import { GetMyWithdrawalRequestsUseCase } from "../../domain/usecases/withdrawRequest/GetMyWithdrawalRequestsUseCase";
+import { GetWithdrawalRequestDetailUseCase } from "../../domain/usecases/withdrawRequest/GetWithdrawalRequestDetailUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -281,6 +288,21 @@ class ServiceLocator {
     this.services.set("CreateWalletUseCase", createWalletUseCase);
     const getWalletBalanceUseCase = new GetWalletBalanceUseCase(walletRepository);
     this.services.set("GetWalletBalanceUseCase", getWalletBalanceUseCase);
+
+    // Withdrawal Request services
+    const withdrawalRequestRemoteDataSource = new WithdrawalRequestRemoteDataSourceImpl(axiosClient);
+    this.services.set("WithdrawalRequestRemoteDataSource", withdrawalRequestRemoteDataSource);
+    const withdrawalRequestRepository = new WithdrawalRequestRepositoryImpl(withdrawalRequestRemoteDataSource);
+    this.services.set("WithdrawalRequestRepository", withdrawalRequestRepository);
+    const createWithdrawalRequestUseCase = new CreateWithdrawalRequestUseCase(withdrawalRequestRepository);
+    this.services.set("CreateWithdrawalRequestUseCase", createWithdrawalRequestUseCase);
+    const getMyWithdrawalRequestsUseCase = new GetMyWithdrawalRequestsUseCase(withdrawalRequestRepository);
+    this.services.set("GetMyWithdrawalRequestsUseCase", getMyWithdrawalRequestsUseCase);
+    const getWithdrawalRequestDetailUseCase = new GetWithdrawalRequestDetailUseCase(withdrawalRequestRepository);
+    this.services.set("GetWithdrawalRequestDetailUseCase", getWithdrawalRequestDetailUseCase);
+    const cancelWithdrawalRequestUseCase = new CancelWithdrawalRequestUseCase(withdrawalRequestRepository);
+    this.services.set("CancelWithdrawalRequestUseCase", cancelWithdrawalRequestUseCase);
+
 
     // Configuration services
     const configurationRemoteDataSource = new ConfigurationRemoteDataSourceImpl(axiosClient);
@@ -512,6 +534,25 @@ class ServiceLocator {
 
   getGoogleLoginUseCase(): GoogleLoginUseCase {
     return this.get<GoogleLoginUseCase>('GoogleLoginUseCase');
+  }
+  getWithdrawalRequestRepository(): WithdrawalRequestRepository {
+    return this.get<WithdrawalRequestRepository>('WithdrawalRequestRepository');
+  }
+
+  getCreateWithdrawalRequestUseCase(): CreateWithdrawalRequestUseCase {
+    return this.get<CreateWithdrawalRequestUseCase>('CreateWithdrawalRequestUseCase');
+  }
+
+  getGetMyWithdrawalRequestsUseCase(): GetMyWithdrawalRequestsUseCase {
+    return this.get<GetMyWithdrawalRequestsUseCase>('GetMyWithdrawalRequestsUseCase');
+  }
+
+  getGetWithdrawalRequestDetailUseCase(): GetWithdrawalRequestDetailUseCase {
+    return this.get<GetWithdrawalRequestDetailUseCase>('GetWithdrawalRequestDetailUseCase');
+  }
+
+  getCancelWithdrawalRequestUseCase(): CancelWithdrawalRequestUseCase {
+    return this.get<CancelWithdrawalRequestUseCase>('CancelWithdrawalRequestUseCase');
   }
 }
 
