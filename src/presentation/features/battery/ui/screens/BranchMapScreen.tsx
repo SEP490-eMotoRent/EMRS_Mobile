@@ -1,27 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
   ActivityIndicator,
   Text,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
-import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AntDesign, FontAwesome } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import { useBranches } from "../../../map/hooks/useBranches";
 import { colors } from "../../../../common/theme/colors";
 import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 import { Branch } from "../../../../../domain/entities/operations/Branch";
 import { BranchMapMarker } from "../atoms/BranchMapMarker";
+import { UserLocationMarker } from "../atoms/UserLocationMarker";
+import { RouteLine } from "../molecules/RouteLine";
+import { NavigationView } from "../organisms/NavigationView";
 import { useLocation } from "../../context/LocationContext";
+import { BranchInfoCard } from "../organisms/BranchInfoCard";
 
 export const BranchMapScreen: React.FC = () => {
   const { branches, loading, error, refetch } = useBranches();
   const { location } = useLocation();
+  const mapRef = useRef<MapView>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const [showRoute, setShowRoute] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [routeDistance, setRouteDistance] = useState<string>("");
+  const [routeDuration, setRouteDuration] = useState<string>("");
   const [region, setRegion] = useState<Region>({
     latitude: location?.latitude || 0,
     longitude: location?.longitude || 0,
@@ -33,65 +40,109 @@ export const BranchMapScreen: React.FC = () => {
   useEffect(() => {
     if (!location) return;
     if (branches.length > 0) {
-        // Center map on user location with branches visible
-        const allLatitudes = [
-          location.latitude,
-          ...branches.map((b) => b.latitude),
-        ];
-        const allLongitudes = [
-          location.longitude,
-          ...branches.map((b) => b.longitude),
-        ];
+      const allLatitudes = [
+        location.latitude,
+        ...branches.map((b) => b.latitude),
+      ];
+      const allLongitudes = [
+        location.longitude,
+        ...branches.map((b) => b.longitude),
+      ];
 
-        const minLat = Math.min(...allLatitudes);
-        const maxLat = Math.max(...allLatitudes);
-        const minLng = Math.min(...allLongitudes);
-        const maxLng = Math.max(...allLongitudes);
+      const minLat = Math.min(...allLatitudes);
+      const maxLat = Math.max(...allLatitudes);
+      const minLng = Math.min(...allLongitudes);
+      const maxLng = Math.max(...allLongitudes);
 
-        const latDelta = (maxLat - minLat) * 1.5;
-        const lngDelta = (maxLng - minLng) * 1.5;
+      const latDelta = (maxLat - minLat) * 1.5;
+      const lngDelta = (maxLng - minLng) * 1.5;
 
-        setRegion({
-          latitude: (minLat + maxLat) / 2,
-          longitude: (minLng + maxLng) / 2,
-          latitudeDelta: Math.max(latDelta, 0.05),
-          longitudeDelta: Math.max(lngDelta, 0.05),
-        });
-      } else {
-        // No user location, center on all branches
-        const allLatitudes = branches.map((b) => b.latitude);
-        const allLongitudes = branches.map((b) => b.longitude);
-
-        const minLat = Math.min(...allLatitudes);
-        const maxLat = Math.max(...allLatitudes);
-        const minLng = Math.min(...allLongitudes);
-        const maxLng = Math.max(...allLongitudes);
-
-        const latDelta = (maxLat - minLat) * 1.5;
-        const lngDelta = (maxLng - minLng) * 1.5;
-
-        setRegion({
-          latitude: (minLat + maxLat) / 2,
-          longitude: (minLng + maxLng) / 2,
-          latitudeDelta: Math.max(latDelta, 0.05),
-          longitudeDelta: Math.max(lngDelta, 0.05),
+      setRegion({
+        latitude: (minLat + maxLat) / 2,
+        longitude: (minLng + maxLng) / 2,
+        latitudeDelta: Math.max(latDelta, 0.05),
+        longitudeDelta: Math.max(lngDelta, 0.05),
       });
     }
   }, [branches, location]);
 
+  // Auto-zoom to route when navigation starts
+  useEffect(() => {
+    if (isNavigating && location && selectedBranch && mapRef.current) {
+      const coordinates = [
+        { latitude: location.latitude, longitude: location.longitude },
+        { latitude: selectedBranch.latitude, longitude: selectedBranch.longitude },
+      ];
+
+      // Small delay to ensure map is ready
+      setTimeout(() => {
+        mapRef.current?.fitToCoordinates(coordinates, {
+          edgePadding: { 
+            top: 150,      // Space for top bar
+            right: 50,     // Margin
+            bottom: 250,   // Space for bottom buttons
+            left: 50       // Margin
+          },
+          animated: true,
+        });
+      }, 300);
+    }
+  }, [isNavigating, location, selectedBranch]);
+
   const handleBranchPress = (branch: Branch) => {
     setSelectedBranch(branch);
-    // Center map on selected branch
-    // setRegion({
-    //   latitude: branch.latitude,
-    //   longitude: branch.longitude,
-    //   latitudeDelta: 0.01,
-    //   longitudeDelta: 0.01,
-    // });
+    setShowRoute(false);
+    setIsNavigating(false);
+    setRouteDistance("");
+    setRouteDuration("");
   };
 
   const handleCloseBranchInfo = () => {
     setSelectedBranch(null);
+    setShowRoute(false);
+    setIsNavigating(false);
+    setRouteDistance("");
+    setRouteDuration("");
+  };
+
+  const handleToggleRoute = () => {
+    setShowRoute(!showRoute);
+  };
+
+  const handleStartNavigation = () => {
+    if (!selectedBranch || !location) return;
+    setIsNavigating(true);
+    setShowRoute(true);
+  };
+
+  const handleStopNavigation = () => {
+    setIsNavigating(false);
+    setShowRoute(false);
+  };
+
+  const handleOverview = () => {
+    // Fit the route on screen
+    if (!location || !selectedBranch || !mapRef.current) return;
+
+    const coordinates = [
+      { latitude: location.latitude, longitude: location.longitude },
+      { latitude: selectedBranch.latitude, longitude: selectedBranch.longitude },
+    ];
+
+    mapRef.current.fitToCoordinates(coordinates, {
+      edgePadding: { 
+        top: 150,      // Space for top bar
+        right: 50, 
+        bottom: 250,   // Space for bottom buttons
+        left: 50 
+      },
+      animated: true,
+    });
+  };
+
+  const handleRouteData = (distance: string, duration: string) => {
+    setRouteDistance(distance);
+    setRouteDuration(duration);
   };
 
   if (loading && branches.length === 0) {
@@ -112,22 +163,24 @@ export const BranchMapScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader
-        title="Chi nhánh"
-        subtitle="Tìm chi nhánh gần bạn"
-        showBackButton={false}
-      />
+      {!isNavigating && (
+        <ScreenHeader
+          title="Chi nhánh"
+          subtitle="Tìm chi nhánh gần bạn"
+          showBackButton={false}
+        />
+      )}
       {location ? (
         <View style={styles.mapContainer}>
           <MapView
+            ref={mapRef}
             key={branches?.length}
             provider={PROVIDER_GOOGLE}
             style={styles.map}
             mapType="standard"
             region={region}
-            // onRegionChangeComplete={setRegion}
-            showsUserLocation
-            showsMyLocationButton
+            showsUserLocation={false}
+            showsMyLocationButton={false}
             initialRegion={{
               latitude: location?.latitude,
               longitude: location?.longitude,
@@ -135,6 +188,35 @@ export const BranchMapScreen: React.FC = () => {
               longitudeDelta: 0.02,
             }}
           >
+            {/* Custom User Location Marker */}
+            {location && (
+              <Marker
+                coordinate={{
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                }}
+                anchor={{ x: 0.5, y: 0.5 }}
+                flat
+              >
+                <UserLocationMarker />
+              </Marker>
+            )}
+
+            {/* Route Line using Mapbox Directions API */}
+            {showRoute && selectedBranch && location && (
+              <RouteLine
+                origin={{
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                }}
+                destination={{
+                  latitude: selectedBranch.latitude,
+                  longitude: selectedBranch.longitude,
+                }}
+                onRouteData={handleRouteData}
+              />
+            )}
+
             {/* Branch Markers */}
             {branches.map((branch) => (
               <Marker
@@ -153,58 +235,66 @@ export const BranchMapScreen: React.FC = () => {
             ))}
           </MapView>
 
-          {/* Refresh Button */}
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={refetch}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#000" />
-            ) : (
-              <AntDesign name="reload" size={20} color="#000" />
-            )}
-          </TouchableOpacity>
+          {/* Navigation Mode Overlay */}
+          {isNavigating && selectedBranch && (
+            <NavigationView
+              branch={selectedBranch}
+              distance={routeDistance}
+              duration={routeDuration}
+              onStop={handleStopNavigation}
+              onOverview={handleOverview}
+            />
+          )}
 
-          {/* Branch Info Card */}
-          {selectedBranch && (
-            <View style={styles.branchInfoCard}>
+          {/* Only show these buttons when NOT navigating */}
+          {!isNavigating && (
+            <>
+              {/* My Location Button */}
+              {location && (
+                <TouchableOpacity
+                  style={styles.myLocationButton}
+                  onPress={() => {
+                    mapRef.current?.animateToRegion({
+                      latitude: location.latitude,
+                      longitude: location.longitude,
+                      latitudeDelta: 0.02,
+                      longitudeDelta: 0.02,
+                    });
+                  }}
+                >
+                  <AntDesign name="aim" size={22} color="#C9B6FF" />
+                </TouchableOpacity>
+              )}
+
+              {/* Refresh Button */}
               <TouchableOpacity
-                style={styles.closeButton}
-                onPress={handleCloseBranchInfo}
+                style={styles.refreshButton}
+                onPress={refetch}
+                disabled={loading}
               >
-                <AntDesign name="close" size={20} color={colors.text.primary} />
+                {loading ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <AntDesign name="reload" size={20} color="#000" />
+                )}
               </TouchableOpacity>
-              <Text style={styles.branchName}>{selectedBranch.branchName}</Text>
-              <View style={styles.branchInfoRow}>
-                <AntDesign
-                  name="environment"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.branchAddress}>
-                  {selectedBranch.address}, {selectedBranch.city}
-                </Text>
-              </View>
-              <View style={styles.branchInfoRow}>
-                <AntDesign
-                  name="phone"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.branchPhone}>{selectedBranch.phone}</Text>
-              </View>
-              <View style={styles.branchInfoRow}>
-                <AntDesign
-                  name="clock-circle"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.branchHours}>
-                  {selectedBranch.openingTime} - {selectedBranch.closingTime}
-                </Text>
-              </View>
-            </View>
+
+              {/* Branch Info Card */}
+              {selectedBranch && (
+                <View style={styles.branchInfoCardContainer}>
+                  <BranchInfoCard
+                    branch={selectedBranch}
+                    onClose={handleCloseBranchInfo}
+                    onNavigate={handleStartNavigation}
+                    onShowRoute={handleToggleRoute}
+                    isRouteVisible={showRoute}
+                    hasUserLocation={!!location}
+                    distance={routeDistance}
+                    duration={routeDuration}
+                  />
+                </View>
+              )}
+            </>
           )}
 
           {/* Error Message */}
@@ -249,6 +339,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
   },
+  myLocationButton: {
+    position: "absolute",
+    bottom: 260,
+    right: 16,
+    backgroundColor: "#1E1E1E",
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#C9B6FF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   refreshButton: {
     position: "absolute",
     bottom: 180,
@@ -265,53 +373,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  branchInfoCard: {
+  branchInfoCardContainer: {
     position: "absolute",
     bottom: 20,
     left: 16,
     right: 16,
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#2E2E2E",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-  closeButton: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    padding: 4,
-  },
-  branchName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.text.primary,
-    marginBottom: 8,
-    paddingRight: 32,
-  },
-  branchInfoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 6,
-  },
-  branchAddress: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    flex: 1,
-  },
-  branchPhone: {
-    fontSize: 13,
-    color: colors.text.secondary,
-  },
-  branchHours: {
-    fontSize: 13,
-    color: colors.text.secondary,
   },
   errorContainer: {
     position: "absolute",
