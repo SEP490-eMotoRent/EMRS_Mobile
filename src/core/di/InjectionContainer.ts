@@ -104,19 +104,25 @@ import { GetConfigurationByIdUseCase } from "../../domain/usecases/configuration
 import { GetConfigurationsByTypeUseCase } from "../../domain/usecases/configuration/GetConfigurationsByTypeUseCase";
 // Charging imports
 import { ChargingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/charging/ChargingRemoteDataSourceImpl';
+import { WithdrawalRequestRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/withdrawRequest/WithdrawalRequestRemoteDataSourceImpl";
 import { ChargingRepositoryImpl } from '../../data/repositories/charging/ChargingRepositoryImpl';
+import { WithdrawalRequestRepositoryImpl } from "../../data/repositories/withdrawRequest/WithdrawalRequestRepositoryImpl";
 import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
+import { WithdrawalRequestRepository } from "../../domain/repositories/withdrawRequest/WithdrawalRequestRepository";
 import { GoogleLoginUseCase } from "../../domain/usecases/account/Google/GoogleLoginUseCase";
 import { GoogleSignInUseCase } from "../../domain/usecases/account/Google/GoogleSignInUseCase";
 import { CancelBookingUseCase } from "../../domain/usecases/booking/CancelBookingUseCase";
 import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
-import { WithdrawalRequestRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/withdrawRequest/WithdrawalRequestRemoteDataSourceImpl";
-import { WithdrawalRequestRepositoryImpl } from "../../data/repositories/withdrawRequest/WithdrawalRequestRepositoryImpl";
-import { WithdrawalRequestRepository } from "../../domain/repositories/withdrawRequest/WithdrawalRequestRepository";
 import { CancelWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CancelWithdrawalRequestUseCase";
 import { CreateWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CreateWithdrawalRequestUseCase";
 import { GetMyWithdrawalRequestsUseCase } from "../../domain/usecases/withdrawRequest/GetMyWithdrawalRequestsUseCase";
 import { GetWithdrawalRequestDetailUseCase } from "../../domain/usecases/withdrawRequest/GetWithdrawalRequestDetailUseCase";
+import { TicketRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/ticket/TicketRemoteDataSourceImpl";
+import { TicketRepositoryImpl } from "../../data/repositories/ticket/TicketRepositoryImpl";
+import { TicketRepository } from "../../domain/repositories/ticket/TicketRepository";
+import { CreateTicketUseCase } from "../../domain/usecases/ticket/CreateTicketUseCase";
+import { GetTicketDetailUseCase } from "../../domain/usecases/ticket/GetTicketDetailUseCase";
+import { GetTicketsByBookingIdUseCase } from "../../domain/usecases/ticket/GetTicketsByBookingIdUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -315,6 +321,18 @@ class ServiceLocator {
     this.services.set("GetConfigurationByIdUseCase", getConfigurationByIdUseCase);
     const getConfigurationsByTypeUseCase = new GetConfigurationsByTypeUseCase(configurationRepository);
     this.services.set("GetConfigurationsByTypeUseCase", getConfigurationsByTypeUseCase);
+
+    //Tickets services
+    const ticketRemoteDataSource = new TicketRemoteDataSourceImpl(axiosClient);
+    this.services.set("TicketRemoteDataSource", ticketRemoteDataSource);
+    const ticketRepository = new TicketRepositoryImpl(ticketRemoteDataSource);
+    this.services.set("TicketRepository", ticketRepository);
+    const createTicketUseCase = new CreateTicketUseCase(ticketRepository);
+    this.services.set("CreateTicketUseCase", createTicketUseCase);
+    const getTicketsByBookingIdUseCase = new GetTicketsByBookingIdUseCase(ticketRepository);
+    this.services.set("GetTicketsByBookingIdUseCase", getTicketsByBookingIdUseCase);
+    const getTicketDetailUseCase = new GetTicketDetailUseCase(ticketRepository);
+    this.services.set("GetTicketDetailUseCase", getTicketDetailUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -553,6 +571,22 @@ class ServiceLocator {
 
   getCancelWithdrawalRequestUseCase(): CancelWithdrawalRequestUseCase {
     return this.get<CancelWithdrawalRequestUseCase>('CancelWithdrawalRequestUseCase');
+  }
+
+    getTicketRepository(): TicketRepository {
+      return this.get<TicketRepository>('TicketRepository');
+  }
+
+  getCreateTicketUseCase(): CreateTicketUseCase {
+      return this.get<CreateTicketUseCase>('CreateTicketUseCase');
+  }
+
+  getGetTicketsByBookingIdUseCase(): GetTicketsByBookingIdUseCase {
+      return this.get<GetTicketsByBookingIdUseCase>('GetTicketsByBookingIdUseCase');
+  }
+
+  getGetTicketDetailUseCase(): GetTicketDetailUseCase {
+      return this.get<GetTicketDetailUseCase>('GetTicketDetailUseCase');
   }
 }
 
