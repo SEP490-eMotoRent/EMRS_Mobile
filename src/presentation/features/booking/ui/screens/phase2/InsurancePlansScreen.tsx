@@ -17,7 +17,6 @@ import { useInsurancePackages } from "../../../hooks/useInsurancePackages";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { VehicleInfoHeader } from "../../molecules/VehicleInfoHeader";
-import { InsuranceBookingSummary } from "../../organisms/insurance/InsuranceBookingSummary";
 import { InsurancePlan, InsurancePlanCard } from "../../organisms/insurance/InsurancePlanCard";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
@@ -25,7 +24,7 @@ type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsuranceP
 
 const noProtectionPlan: InsurancePlan = {
     id: "none",
-    icon: "⊘", // ✅ Unicode "not sign" instead of emoji
+    icon: "⊘",
     iconColor: "#ef4444",
     title: "Không bảo vệ",
     price: "MIỄN PHÍ",
@@ -52,7 +51,12 @@ export const InsurancePlansScreen: React.FC = () => {
         endDate, 
         duration, 
         rentalDays,
-        rentalPrice 
+        rentalPrice,
+        // ✅ NEW: Receive from ConfirmRentalDurationScreen
+        baseRentalFee,
+        rentingRate,
+        averageRentalPrice,
+        vehicleCategory,
     } = route.params;
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
@@ -61,7 +65,6 @@ export const InsurancePlansScreen: React.FC = () => {
 
     const { packages, loading, error, refetch } = useInsurancePackages();
 
-    // ✅ Tooltip auto-hide logic (same as BookingSummary)
     useEffect(() => {
         if (showTooltip) {
             Animated.timing(fadeAnim, {
@@ -115,7 +118,6 @@ export const InsurancePlansScreen: React.FC = () => {
     const rentalFee = `${rentalPrice.toLocaleString()}đ`;
     const depositFee = `${securityDeposit.toLocaleString()}đ`;
     
-    const subtotalForDisplay = rentalPrice + insuranceFeeValue;
     const fullTotalAmount = rentalPrice + insuranceFeeValue + securityDeposit;
     const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
 
@@ -137,6 +139,11 @@ export const InsurancePlansScreen: React.FC = () => {
             insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
             total: fullTotal,
+            // ✅ NEW: Pass through to PaymentConfirmation
+            baseRentalFee,
+            rentingRate,
+            averageRentalPrice,
+            vehicleCategory,
         });
     };
 
@@ -210,7 +217,6 @@ export const InsurancePlansScreen: React.FC = () => {
                     />
                 ))}
 
-                {/* ✅ Cost summary with tooltip */}
                 <View style={styles.summaryCard}>
                     <Text style={styles.summaryTitle}>Chi tiết chi phí</Text>
                     
@@ -247,7 +253,6 @@ export const InsurancePlansScreen: React.FC = () => {
                         <Text style={styles.totalValue}>{fullTotal}</Text>
                     </View>
 
-                    {/* ✅ Tooltip Popup */}
                     {showTooltip && (
                         <Animated.View 
                             style={[
@@ -346,7 +351,6 @@ const styles = StyleSheet.create({
         minWidth: 200,
         backgroundColor: "#374151",
     },
-    // Cost summary card
     summaryCard: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,
@@ -354,7 +358,7 @@ const styles = StyleSheet.create({
         marginTop: 24,
         borderWidth: 1,
         borderColor: "#333",
-        position: "relative", // ✅ For tooltip positioning
+        position: "relative",
     },
     summaryTitle: {
         color: "#fff",
@@ -413,7 +417,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "700",
     },
-    // ✅ Tooltip styles
     tooltip: {
         position: "absolute",
         bottom: "100%",

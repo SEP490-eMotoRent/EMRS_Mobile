@@ -99,6 +99,7 @@ export const VehicleDetailsScreen: React.FC = () => {
         securityDeposit: securityDeposit,
         branchOpenTime: selectedBranch.openingTime,
         branchCloseTime: selectedBranch.closingTime,
+        vehicleCategory: data.category || "ECONOMY",
       },
     });
   };
