@@ -57,8 +57,12 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
         return await this.remote.generateContract(bookingId, receiptId);
     }
 
-    async getReceiptDetails(bookingId: string): Promise<ApiResponse<RentalReceipt>> {
-        return await this.remote.getReceiptDetails(bookingId);
+    async getListRentalReceipt(bookingId: string): Promise<ApiResponse<RentalReceipt[]>> {
+        return await this.remote.getListRentalReceipt(bookingId);
+    }
+
+    async getDetailRentalReceipt(rentalReceiptId: string): Promise<ApiResponse<RentalReceipt>> {
+        return await this.remote.getDetailRentalReceipt(rentalReceiptId);
     }
 
     async getContract(bookingId: string): Promise<RentalContract | null> {

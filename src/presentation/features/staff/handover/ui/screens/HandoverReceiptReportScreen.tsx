@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -29,10 +24,10 @@ import { ScreenHeader } from "../../../../../common/components/organisms/ScreenH
 import { SectionHeader } from "../molecules/SectionHeader";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import sl from "../../../../../../core/di/InjectionContainer";
-import { GetReceiptDetailsUseCase } from "../../../../../../domain/usecases/receipt/GetReceiptDetails";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
 import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { GetDetailRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -60,7 +55,7 @@ const formatDateTime = (value?: Date | string | null) => {
 export const HandoverReceiptReportScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<RouteProps>();
-  const { bookingId } = route.params;
+  const { bookingId, rentalReceiptId } = route.params;
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -77,7 +72,7 @@ export const HandoverReceiptReportScreen: React.FC = () => {
 
   const handoverImages = rentalReceipt?.handOverVehicleImageFiles ?? [];
   const checklistImage = rentalReceipt?.checkListFile
-    ? [rentalReceipt.checkListFile].flat()[0]
+    ? [rentalReceipt?.checkListFile].flat()[0]
     : undefined;
 
   const loadData = useCallback(
@@ -88,9 +83,9 @@ export const HandoverReceiptReportScreen: React.FC = () => {
         }
         setErrorMessage(null);
         const [receiptRes, bookingRes] = await Promise.all([
-          new GetReceiptDetailsUseCase(sl.get("ReceiptRepository")).execute(
-            bookingId
-          ),
+          new GetDetailRentalReceiptUseCase(
+            sl.get("ReceiptRepository")
+          ).execute(rentalReceiptId),
           new GetBookingByIdUseCase(sl.get("BookingRepository")).execute(
             bookingId
           ),
@@ -233,7 +228,7 @@ export const HandoverReceiptReportScreen: React.FC = () => {
             </InfoRow>
             <InfoRow label="Mã booking">{bookingCode}</InfoRow>
             <InfoRow label="Biên bản">
-              {rentalReceipt?.id ? `#${rentalReceipt.id.slice(-8)}` : "-"}
+              {rentalReceipt?.id ? `#${rentalReceipt?.id.slice(-8)}` : "-"}
             </InfoRow>
             <InfoRow label="Thời gian tạo">
               {formatDateTime(rentalReceipt?.createdAt)}
@@ -251,12 +246,8 @@ export const HandoverReceiptReportScreen: React.FC = () => {
             <InfoRow label="Pin ban đầu">
               {rentalReceipt?.startBatteryPercentage ?? "-"}%
             </InfoRow>
-            <InfoRow label="Nhân viên bàn giao">
-              {staffName}
-            </InfoRow>
-            <InfoRow label="Chi nhánh">
-              {branchName}
-            </InfoRow>
+            <InfoRow label="Nhân viên bàn giao">{staffName}</InfoRow>
+            <InfoRow label="Chi nhánh">{branchName}</InfoRow>
           </View>
         </View>
 
@@ -644,5 +635,3 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
 });
-
-
