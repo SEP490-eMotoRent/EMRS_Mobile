@@ -94,7 +94,8 @@ export const ApiEndpoints = {
   receipt: {
     changeVehicle: "/rental/receipt/change/vehicle",
     create: "/rental/receipt",
-    getDetails: (bookingId: string) => `/rental/receipt/${bookingId}`,
+    getListRentalReceipt: (bookingId: string) => `/rental/receipt/${bookingId}`,
+    getDetailRentalReceipt: (rentalReceiptId: string) => `/rental/receipt/by/${rentalReceiptId}`,
     generateContract: (bookingId: string, receiptId: string) =>
       `/rental/contract/${bookingId}/${receiptId}`,
     getContract: (bookingId: string) => `/rental/contract/${bookingId}`,

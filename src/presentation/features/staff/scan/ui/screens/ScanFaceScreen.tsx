@@ -31,48 +31,51 @@ export const ScanFaceScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const handleStartFacialScan = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        console.warn("Camera permission not granted");
-        return;
-      }
+  // const handleStartFacialScan = async () => {
+  //   try {
+  //     const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  //     if (status !== "granted") {
+  //       console.warn("Camera permission not granted");
+  //       return;
+  //     }
 
-      const capture = await ImagePicker.launchCameraAsync({
-        cameraType: ImagePicker.CameraType.front,
-        allowsEditing: true,
-        quality: 0.7,
-      });
-      if (capture.canceled || !capture.assets?.[0]?.uri) {
-        return;
-      }
+  //     const capture = await ImagePicker.launchCameraAsync({
+  //       cameraType: ImagePicker.CameraType.front,
+  //       allowsEditing: true,
+  //       quality: 0.7,
+  //     });
+  //     if (capture.canceled || !capture.assets?.[0]?.uri) {
+  //       return;
+  //     }
 
-      const imageUri = capture.assets[0].uri;
+  //     const imageUri = capture.assets[0].uri;
 
-      // Fix mirror image from front camera by flipping horizontally
-      const flipped = await manipulateAsync(
-        imageUri,
-        [{ flip: FlipType.Horizontal }],
-        { compress: 0.8, format: SaveFormat.JPEG }
-      );
+  //     // Fix mirror image from front camera by flipping horizontally
+  //     const flipped = await manipulateAsync(
+  //       imageUri,
+  //       [{ flip: FlipType.Horizontal }],
+  //       { compress: 0.8, format: SaveFormat.JPEG }
+  //     );
 
-      setLoading(true);
-      const scanFaceUseCase = new ScanFaceUseCase(sl.get("RenterRepository"));
-      const response = await scanFaceUseCase.execute({
-        image: flipped.uri,
-      });
+  //     setLoading(true);
+  //     const scanFaceUseCase = new ScanFaceUseCase(sl.get("RenterRepository"));
+  //     const response = await scanFaceUseCase.execute({
+  //       image: flipped.uri,
+  //     });
 
-      if (response.success) {
-        navigation.navigate("ScanResult", { renter: response.data });
-      }
-    } catch (error) {
-      console.error("Error scanning face:", error);
-    } finally {
-      setLoading(false);
-    }
+  //     if (response.success) {
+  //       navigation.navigate("ScanResult", { renter: response.data });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error scanning face:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const handleStartFacialScan = () => {
+    navigation.navigate("FaceScanCamera");
   };
-
+  
   const handleScanID = () => {
     console.log("Scan ID Document");
   };

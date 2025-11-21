@@ -19,6 +19,7 @@ export interface BookingForStaffResponse {
     rentalContract: RentalContractBookingResponse; // ✅ Nested
     rentalReceipt: RentalReceiptBookingResponse; // ✅ Nested
     insurancePackage: InsurancePackageBookingResponse; // ✅ Nested
+    handoverBranch: BranchBookingResponse; // ✅ Nested
 }
 
 export interface RenterBookingResponse {
@@ -100,4 +101,15 @@ export interface InsurancePackageBookingResponse {
     coverageTheft: number;
     deductibleAmount: number;
     description: string;
+}
+
+export interface BranchBookingResponse {
+    id: string;
+    branchName: string;
+    address: string;
+    city: string;
+    phone: string;
+    email: string;
+    openingTime: string;
+    closingTime: string;
 }

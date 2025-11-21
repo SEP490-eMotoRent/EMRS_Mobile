@@ -23,6 +23,7 @@ import { GetContractUseCase } from "../../../../../domain/usecases/contract/GetC
 import { RentalContract } from "../../../../../domain/entities/booking/RentalContract";
 import { GenerateOtpContractUseCase } from "../../../../../domain/usecases/contract/GenerateOtpContractUseCase";
 import { SignContractUseCase } from "../../../../../domain/usecases/contract/SignContractUseCase";
+import Toast from "react-native-toast-message";
 
 type SignContractScreenRouteProp = RouteProp<
   TripStackParamList,
@@ -91,10 +92,10 @@ export const SignContractScreen: React.FC = () => {
       );
       const response = await generateOtpUseCase.execute(contract?.id || "");
       if (response.success) {
-        Alert.alert(
-          "Thành công",
-          "Mã OTP đã được gửi đến email đã đăng ký của bạn"
-        );
+        Toast.show({
+          text1: "Mã OTP đã được gửi đến email đã đăng ký của bạn",
+          type: "success",
+        });
         setHasRequestedOtp(true);
         setResendSeconds(60);
       } else {
@@ -136,10 +137,16 @@ export const SignContractScreen: React.FC = () => {
         otp.join("")
       );
       if (response.success) {
-        Alert.alert("Thành công", "Hợp đồng đã được ký thành công");
+        Toast.show({
+          text1: "Hợp đồng đã được ký thành công",
+          type: "success",
+        });
         navigation.goBack();
       } else {
-        Alert.alert("Lỗi", response.message || "Failed to sign contract");
+        Toast.show({
+          text1: response.message || "Failed to sign contract",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Error signing contract:", error);

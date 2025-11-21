@@ -11,7 +11,8 @@ import { ChangeVehicleResponse } from "../../../../models/receipt/ChangeVehicleR
 export interface ReceiptRemoteDataSource {
     changeVehicle(request: ChangeVehicleRequest): Promise<ApiResponse<ChangeVehicleResponse>>;
     createHandoverReceipt(request: CreateReceiptRequest): Promise<ApiResponse<HandoverReceiptResponse>>;
-    getReceiptDetails(bookingId: string): Promise<ApiResponse<RentalReceipt>>;
+    getListRentalReceipt(bookingId: string): Promise<ApiResponse<RentalReceipt[]>>;
+    getDetailRentalReceipt(rentalReceiptId: string): Promise<ApiResponse<RentalReceipt>>;
     updateRentalReceipt(request: UpdateReceiptRequest): Promise<void>;
     generateContract(bookingId: string, receiptId: string): Promise<ApiResponse<string>>;
     getContract(bookingId: string): Promise<ApiResponse<GetContractResponse>>;
