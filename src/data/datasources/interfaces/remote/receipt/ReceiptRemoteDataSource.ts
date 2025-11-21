@@ -8,7 +8,8 @@ import { UpdateReceiptRequest } from "../../../../models/receipt/UpdateReceiptRe
 
 export interface ReceiptRemoteDataSource {
     createHandoverReceipt(request: CreateReceiptRequest): Promise<ApiResponse<HandoverReceiptResponse>>;
-    getReceiptDetails(bookingId: string): Promise<ApiResponse<RentalReceipt>>;
+    getListRentalReceipt(bookingId: string): Promise<ApiResponse<RentalReceipt[]>>;
+    getDetailRentalReceipt(rentalReceiptId: string): Promise<ApiResponse<RentalReceipt>>;
     updateRentalReceipt(request: UpdateReceiptRequest): Promise<void>;
     generateContract(bookingId: string, receiptId: string): Promise<ApiResponse<string>>;
     getContract(bookingId: string): Promise<ApiResponse<GetContractResponse>>;

@@ -81,10 +81,10 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
     }
   }
 
-  async getReceiptDetails(bookingId: string): Promise<ApiResponse<RentalReceipt>> {
+  async getListRentalReceipt(bookingId: string): Promise<ApiResponse<RentalReceipt[]>> {
     try {
-      const response = await this.axiosClient.get<ApiResponse<RentalReceipt>>(
-        ApiEndpoints.receipt.getDetails(bookingId)
+      const response = await this.axiosClient.get<ApiResponse<RentalReceipt[]>>(
+        ApiEndpoints.receipt.getListRentalReceipt(bookingId)
       );
       return {
         success: true,
@@ -94,6 +94,23 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
       };
     } catch (error: any) {
       console.error("Error getting receipt details:", error);
+      throw error;
+    }
+  }
+
+  async getDetailRentalReceipt(rentalReceiptId: string): Promise<ApiResponse<RentalReceipt>> {
+    try {
+      const response = await this.axiosClient.get<ApiResponse<RentalReceipt>>(
+        ApiEndpoints.receipt.getDetailRentalReceipt(rentalReceiptId)
+      );
+      return {
+        success: true,
+        message: "Rental receipt retrieved successfully",
+        data: response.data.data,
+        code: response.status,
+      };
+    } catch (error: any) {
+      console.error("Error getting rental receipt:", error);
       throw error;
     }
   }

@@ -32,11 +32,11 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../authentication/store";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
-import { GetReceiptDetailsUseCase } from "../../../../../../domain/usecases/receipt/GetReceiptDetails";
 import { useFocusEffect } from "@react-navigation/native";
 import { RentalReturnSummaryUseCase } from "../../../../../../domain/usecases/rentalReturn/SummaryReceiptUseCase";
 import { SummaryResponse } from "../../../../../../data/models/rentalReturn/SummaryResponse";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetListRentalReceipt";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -51,7 +51,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [contract, setContract] = useState<RentalContract | null>(null);
-  const [rentalReceipt, setRentalReceipt] = useState<RentalReceipt | null>(
+  const [rentalReceipts, setRentalReceipts] = useState<RentalReceipt[] | null>(
     null
   );
   const [loading, setLoading] = useState(false);
@@ -99,11 +99,11 @@ export const BookingDetailsScreen: React.FC = () => {
 
   const fetchRentalReceipt = async () => {
     try {
-      const getReceiptDetailsUseCase = new GetReceiptDetailsUseCase(
+      const getListRentalReceiptUseCase = new GetListRentalReceiptUseCase(
         sl.get("ReceiptRepository")
       );
-      const rentalReceipt = await getReceiptDetailsUseCase.execute(bookingId);
-      setRentalReceipt(rentalReceipt.data);
+      const rentalReceipts = await getListRentalReceiptUseCase.execute(bookingId);
+      setRentalReceipts(rentalReceipts.data);
     } catch (error) {
       console.error("Error fetching rental receipt:", error);
       return null;
@@ -131,7 +131,7 @@ export const BookingDetailsScreen: React.FC = () => {
       );
       const response = await generateContractUseCase.execute(
         bookingId,
-        rentalReceipt?.id
+        rentalReceipts?.[0]?.id || ""
       );
       // if (response.success) {
       navigation.navigate("AwaitingApproval");
@@ -180,7 +180,7 @@ export const BookingDetailsScreen: React.FC = () => {
   };
 
   const hasContract = !!contract?.contractPdfUrl;
-  const hasRentalReceipt = !!rentalReceipt;
+  const hasRentalReceipt = rentalReceipts?.[0]?.id ? true : false;
   const contractInfo = useMemo(
     () => ({
       number: contract?.contractNumber || "(chưa cấp)",
@@ -222,7 +222,7 @@ export const BookingDetailsScreen: React.FC = () => {
     const zero = 0;
     navigation.navigate("ReturnReport", {
       bookingId,
-      rentalReceiptId: rentalReceipt?.id || "",
+      rentalReceiptId: rentalReceipts?.[0]?.id || "",
       settlement: {
         baseRentalFee: zero,
         depositAmount: zero,
@@ -560,14 +560,14 @@ export const BookingDetailsScreen: React.FC = () => {
                 onPress={() =>
                   navigation.navigate("HandoverReceiptReport", {
                     bookingId,
-                    rentalReceiptId: rentalReceipt?.id || "",
+                    rentalReceiptId: rentalReceipts?.[0]?.id || "",
                   })
                 }
               >
                 <AntDesign name="file" size={16} color="#000" />
                 <Text style={styles.actionBtnText}>Xem biên bản bàn giao</Text>
               </TouchableOpacity>
-              {rentalReceipt?.returnVehicleImageFiles?.length > 0 && (
+              {rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
                 <TouchableOpacity
                   style={[styles.actionBtn, styles.returnReportBtn]}
                   onPress={openReturnReport}
@@ -598,7 +598,7 @@ export const BookingDetailsScreen: React.FC = () => {
                       bookingId,
                       email: booking?.renter?.email,
                       fullName: booking?.renter?.account?.fullname,
-                      receiptId: rentalReceipt?.id,
+                      receiptId: rentalReceipts?.[0]?.id || "",
                     })
                   }
                 >

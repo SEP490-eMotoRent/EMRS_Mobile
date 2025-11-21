@@ -136,8 +136,8 @@ export const FaceScanCameraScreen = () => {
             : "Close",
       });
 
-      // kiểm tra mặt ổn định
-      if (isFaceStable(face)) {
+       // kiểm tra mặt ổn định
+    if (isFaceStable(face)) {
         if (!stableTimer.current) {
           stableTimer.current = setTimeout(() => {
             onFaceStable();
@@ -163,26 +163,26 @@ export const FaceScanCameraScreen = () => {
     // 1. Kiểm tra góc đầu
     const yawOK = Math.abs(face.yawAngle) < 5;
     const pitchOK = Math.abs(face.pitchAngle) < 5;
-
+  
     // 2. Kiểm tra mắt mở
     const eyesOK =
       face.leftEyeOpenProbability > 0.6 && face.rightEyeOpenProbability > 0.6;
-
+  
     // 3. Kiểm tra kích thước khuôn mặt (QUAN TRỌNG)
     const faceWidth = face.bounds.width;
     const faceHeight = face.bounds.height;
-
+  
     const minFaceWidth = width * 0.25; // >= 25% chiều rộng màn hình
     const minFaceHeight = height * 0.25; // >= 25% chiều cao màn hình
-
+  
     const sizeOK = faceWidth > minFaceWidth && faceHeight > minFaceHeight;
-
+  
     return yawOK && pitchOK && eyesOK && sizeOK;
   };
-
+  
   const onFaceStable = async () => {
     if (isProcessing) return; // tránh double trigger
-
+  
     setIsProcessing(true);
     // TODO: GỌI API / CHỤP ẢNH / XỬ LÝ TIẾP TỤC
 
@@ -251,12 +251,12 @@ export const FaceScanCameraScreen = () => {
             <Text style={styles.guideSubtitle}>
               Giữ thẳng, mở mắt và nhìn chính diện
             </Text>
-          </View>
+        </View>
           <View style={styles.statusGroup}>
             <Text style={styles.statusText}>{readableStatus.yaw}</Text>
             <Text style={styles.statusText}>{readableStatus.pitch}</Text>
             <Text style={styles.statusText}>{readableStatus.eye}</Text>
-          </View>
+        </View>
         </View>
       </View>
 

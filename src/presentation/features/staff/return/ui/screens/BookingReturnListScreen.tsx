@@ -22,6 +22,8 @@ import { GetBookingListUseCase } from "../../../../../../domain/usecases/booking
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { useAppSelector } from "../../../../authentication/store/hooks";
+import { RootState } from "../../../../authentication/store";
 
 type BookingReturnListScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -34,6 +36,7 @@ type BookingReturnListScreenRouteProp = RouteProp<
 >;
 
 export const BookingReturnListScreen: React.FC = () => {
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const navigation = useNavigation<BookingReturnListScreenNavigationProp>();
   const route = useRoute<BookingReturnListScreenRouteProp>();
   const { renterId } = route.params;
@@ -42,7 +45,7 @@ export const BookingReturnListScreen: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("Completed");
+  const [filterStatus, setFilterStatus] = useState<string>("Renting");
   const [filterVehicleModelId, setFilterVehicleModelId] = useState<string>("");
   const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
   const [showModelList, setShowModelList] = useState<boolean>(false);
@@ -317,7 +320,7 @@ export const BookingReturnListScreen: React.FC = () => {
           <View style={styles.header}>
             <View style={styles.branchRow}>
               <Text style={styles.branchText}>
-                {bookings?.[0]?.vehicle?.branch?.branchName ||
+                {user?.branchName ||
                   "Đang tải chi nhánh..."}
               </Text>
               <AntDesign name="down" size={12} color={colors.text.primary} />

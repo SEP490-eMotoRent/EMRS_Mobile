@@ -25,7 +25,6 @@ import { unwrapResponse } from "../../../../../core/network/APIResponse";
 import { RentalReturnFinalizeUseCase } from "../../../../../domain/usecases/rentalReturn/RentalReturnFinalizeUseCase";
 import { FinalizeReturnResponse } from "../../../../../data/models/rentalReturn/FinalizeReturnResponse";
 import sl from "../../../../../core/di/InjectionContainer";
-import { GetReceiptDetailsUseCase } from "../../../../../domain/usecases/receipt/GetReceiptDetails";
 import { RentalReceipt } from "../../../../../domain/entities/booking/RentalReceipt";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
 import { GetBookingByIdUseCase } from "../../../../../domain/usecases/booking/GetBookingByIdUseCase";
@@ -35,6 +34,8 @@ import {
   BookingStatusMap,
 } from "../../constant/BookingStatus";
 import { BookingStatusBadge } from "../atoms/BookingStatusBadge";
+import Toast from "react-native-toast-message";
+import { GetDetailRentalReceiptUseCase } from "../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -44,7 +45,7 @@ type RouteP = RouteProp<TripStackParamList, "ReturnReport">;
 export const ReturnReportScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<RouteP>();
-  const { bookingId } = route.params;
+  const { bookingId, rentalReceiptId } = route.params;
 
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -93,10 +94,12 @@ export const ReturnReportScreen: React.FC = () => {
 
   const fetchRentalReceipt = async () => {
     try {
-      const getRentalReceiptUseCase = new GetReceiptDetailsUseCase(
+      const getDetailRentalReceiptUseCase = new GetDetailRentalReceiptUseCase(
         sl.get("ReceiptRepository")
       );
-      const rentalReceipt = await getRentalReceiptUseCase.execute(bookingId);
+      const rentalReceipt = await getDetailRentalReceiptUseCase.execute(
+        rentalReceiptId
+      );
       setRentalReceipt(rentalReceipt.data);
     } catch (error: any) {
       Alert.alert("Lỗi", `Không thể tải biên bản trả xe: ${error.message}`);
@@ -121,10 +124,16 @@ export const ReturnReportScreen: React.FC = () => {
       );
 
       // Navigate to Return Complete screen
-      Alert.alert("Success", "Trả xe thành công");
+      Toast.show({
+        text1: "Trả xe thành công",
+        type: "success",
+      });
       navigation.navigate("ReturnComplete");
     } catch (error: any) {
-      Alert.alert("Lỗi", `Không thể hoàn tất trả xe: ${error.message}`);
+      Toast.show({
+        text1: `Không thể hoàn tất trả xe: ${error.message}`,
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -151,7 +160,7 @@ export const ReturnReportScreen: React.FC = () => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(contentOffsetX / SCREEN_WIDTH);
     setSelectedImageIndex(index);
-    
+
     // Auto-scroll thumbnail strip to show selected thumbnail
     if (thumbnailScrollRef.current && rentalReceipt?.returnVehicleImageFiles) {
       const thumbnailWidth = 60 + 8; // thumbnail width + gap
@@ -171,7 +180,7 @@ export const ReturnReportScreen: React.FC = () => {
       });
     }
     setSelectedImageIndex(index);
-    
+
     // Auto-scroll thumbnail strip to show selected thumbnail
     if (thumbnailScrollRef.current && rentalReceipt?.returnVehicleImageFiles) {
       const thumbnailWidth = 60 + 8; // thumbnail width + gap
@@ -185,17 +194,24 @@ export const ReturnReportScreen: React.FC = () => {
 
   // Scroll to selected image when modal opens
   useEffect(() => {
-    if (modalVisible && imageScrollRef.current && rentalReceipt?.returnVehicleImageFiles) {
+    if (
+      modalVisible &&
+      imageScrollRef.current &&
+      rentalReceipt?.returnVehicleImageFiles
+    ) {
       const scrollTimeout = setTimeout(() => {
         imageScrollRef.current?.scrollTo({
           x: selectedImageIndex * SCREEN_WIDTH,
           animated: false,
         });
-        
+
         // Also scroll thumbnail strip
         if (thumbnailScrollRef.current) {
           const thumbnailWidth = 60 + 8; // thumbnail width + gap
-          const scrollPosition = Math.max(0, (selectedImageIndex - 2) * thumbnailWidth);
+          const scrollPosition = Math.max(
+            0,
+            (selectedImageIndex - 2) * thumbnailWidth
+          );
           thumbnailScrollRef.current.scrollTo({
             x: scrollPosition,
             animated: false,
@@ -204,7 +220,11 @@ export const ReturnReportScreen: React.FC = () => {
       }, 50);
       return () => clearTimeout(scrollTimeout);
     }
-  }, [modalVisible, selectedImageIndex, rentalReceipt?.returnVehicleImageFiles]);
+  }, [
+    modalVisible,
+    selectedImageIndex,
+    rentalReceipt?.returnVehicleImageFiles,
+  ]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -219,12 +239,14 @@ export const ReturnReportScreen: React.FC = () => {
 
         {/* Banner cảnh báo */}
         {booking?.bookingStatus === BookingStatus.RENTING && (
-        <View style={styles.banner}>
-          <AntDesign name="exclamation-circle" size={14} color="#FFEDD5" />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>Vui lòng kiểm tra kỹ báo cáo</Text>
-            <Text style={styles.bannerSub}>
-              Đã báo cáo vào {new Date().toLocaleString("vi-VN")}
+          <View style={styles.banner}>
+            <AntDesign name="exclamation-circle" size={14} color="#FFEDD5" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bannerTitle}>
+                Vui lòng kiểm tra kỹ báo cáo
+              </Text>
+              <Text style={styles.bannerSub}>
+                Đã báo cáo vào {new Date().toLocaleString("vi-VN")}
               </Text>
             </View>
           </View>
@@ -262,14 +284,14 @@ export const ReturnReportScreen: React.FC = () => {
             <Text style={styles.cardHeader}>Ảnh tình trạng xe</Text>
             {rentalReceipt?.returnVehicleImageFiles && (
               <Text style={styles.imageCount}>
-                {rentalReceipt.returnVehicleImageFiles.length} ảnh
+                {rentalReceipt?.returnVehicleImageFiles.length} ảnh
               </Text>
             )}
           </View>
-          {rentalReceipt?.returnVehicleImageFiles && 
-           rentalReceipt.returnVehicleImageFiles.length > 0 ? (
+          {rentalReceipt?.returnVehicleImageFiles &&
+          rentalReceipt?.returnVehicleImageFiles.length > 0 ? (
             <View style={styles.photoGrid}>
-              {rentalReceipt.returnVehicleImageFiles.map((image, i) => (
+              {rentalReceipt?.returnVehicleImageFiles.map((image, i) => (
                 <TouchableOpacity
                   key={i}
                   style={styles.photoItem}
@@ -287,7 +309,11 @@ export const ReturnReportScreen: React.FC = () => {
             </View>
           ) : (
             <View style={styles.noImagesContainer}>
-              <AntDesign name="picture" size={32} color={colors.text.secondary} />
+              <AntDesign
+                name="picture"
+                size={32}
+                color={colors.text.secondary}
+              />
               <Text style={styles.noImagesText}>Chưa có ảnh</Text>
             </View>
           )}
@@ -425,13 +451,17 @@ export const ReturnReportScreen: React.FC = () => {
         onRequestClose={closeImageModal}
         statusBarTranslucent
       >
-        <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.95)" />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="rgba(0,0,0,0.95)"
+        />
         <View style={styles.modalContainer}>
           {/* Header */}
           <SafeAreaView style={styles.modalHeader}>
             <View style={styles.modalHeaderContent}>
               <Text style={styles.modalImageCounter}>
-                {selectedImageIndex + 1} / {rentalReceipt?.returnVehicleImageFiles?.length || 0}
+                {selectedImageIndex + 1} /{" "}
+                {rentalReceipt?.returnVehicleImageFiles?.length || 0}
               </Text>
               <TouchableOpacity
                 style={styles.modalCloseButton}
@@ -465,37 +495,40 @@ export const ReturnReportScreen: React.FC = () => {
           </ScrollView>
 
           {/* Thumbnail Strip */}
-          {rentalReceipt?.returnVehicleImageFiles && 
-           rentalReceipt.returnVehicleImageFiles.length > 1 && (
-            <View style={styles.thumbnailStrip}>
-              <ScrollView
-                ref={thumbnailScrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.thumbnailScrollContent}
-              >
-                {rentalReceipt.returnVehicleImageFiles.map((image, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.thumbnailItem,
-                      selectedImageIndex === index && styles.thumbnailItemActive,
-                    ]}
-                    onPress={() => scrollToImage(index)}
-                    activeOpacity={0.8}
-                  >
-                    <Image
-                      source={{ uri: image }}
-                      style={styles.thumbnailImage}
-                    />
-                    {selectedImageIndex === index && (
-                      <View style={styles.thumbnailIndicator} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+          {rentalReceipt?.returnVehicleImageFiles &&
+            rentalReceipt?.returnVehicleImageFiles.length > 1 && (
+              <View style={styles.thumbnailStrip}>
+                <ScrollView
+                  ref={thumbnailScrollRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.thumbnailScrollContent}
+                >
+                  {rentalReceipt?.returnVehicleImageFiles.map(
+                    (image, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.thumbnailItem,
+                          selectedImageIndex === index &&
+                            styles.thumbnailItemActive,
+                        ]}
+                        onPress={() => scrollToImage(index)}
+                        activeOpacity={0.8}
+                      >
+                        <Image
+                          source={{ uri: image }}
+                          style={styles.thumbnailImage}
+                        />
+                        {selectedImageIndex === index && (
+                          <View style={styles.thumbnailIndicator} />
+                        )}
+                      </TouchableOpacity>
+                    )
+                  )}
+                </ScrollView>
+              </View>
+            )}
         </View>
       </Modal>
     </SafeAreaView>

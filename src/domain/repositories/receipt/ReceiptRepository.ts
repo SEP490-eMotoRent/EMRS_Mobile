@@ -9,7 +9,8 @@ export interface ReceiptRepository {
   createHandoverReceipt(
     input: CreateReceiptUseCaseInput
   ): Promise<ApiResponse<HandoverReceiptResponse>>;
-  getReceiptDetails(bookingId: string): Promise<ApiResponse<RentalReceipt>>;
+  getListRentalReceipt(bookingId: string): Promise<ApiResponse<RentalReceipt[]>>;
+  getDetailRentalReceipt(rentalReceiptId: string): Promise<ApiResponse<RentalReceipt>>;
   updateRentalReceipt(input: UpdateReceiptUseCaseInput): Promise<void>;
   generateContract(bookingId: string, receiptId: string): Promise<ApiResponse<string>>;
   getContract(bookingId: string): Promise<RentalContract | null>;
