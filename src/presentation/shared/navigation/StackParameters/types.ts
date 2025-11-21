@@ -68,6 +68,7 @@ export type BookingStackParamList = {
       securityDeposit: number;
       branchOpenTime?: string;
       branchCloseTime?: string;
+      vehicleCategory: string;  // ✅ NEW
   };
   InsurancePlans: {
       vehicleId: string;
@@ -82,6 +83,11 @@ export type BookingStackParamList = {
       duration: string;
       rentalDays: number;
       rentalPrice: number;
+      // ✅ NEW fields
+      baseRentalFee: number;
+      rentingRate: number;
+      averageRentalPrice: number;
+      vehicleCategory: string;
   };
   PaymentConfirmation: {
     vehicleId: string;
@@ -100,15 +106,18 @@ export type BookingStackParamList = {
     insuranceFee: string;
     securityDeposit: string;
     total: string;
+    // ✅ NEW fields
+    baseRentalFee: number;
+    rentingRate: number;
+    averageRentalPrice: number;
+    vehicleCategory: string;
   };
-  // ✅ NEW: VNPay payment flow
   VNPayWebView: {
       vnpayUrl: string;
       bookingId: string;
       expiresAt: string;
       vehicleName: string;
       totalAmount: string;
-      // Pass-through data for contract screen after payment
       vehicleId: string;
       vehicleImageUrl: string;
       startDate: string;
@@ -128,7 +137,6 @@ export type BookingStackParamList = {
     vnp_BankCode?: string;
     vnp_SecureHash?: string;
   };
-  
   PaymentProcessing: {
     bookingId: string;
     vehicleName: string;
@@ -143,13 +151,11 @@ export type BookingStackParamList = {
     insurancePlan: string;
     securityDeposit: string;
   };
-  
   PaymentFailed: {
     bookingId: string;
     vehicleName: string;
     errorMessage?: string;
   };
-  
   DigitalContract: {
     vehicleId: string;
     vehicleName: string;
@@ -242,6 +248,13 @@ export type ProfileStackParamList = {
     claimId: string;
   };
   Auth: NavigatorScreenParams<AuthStackParamList>;
+
+  CreateWithdrawalRequest: undefined;
+  WithdrawalRequestList: undefined;
+  WithdrawalRequestDetail: {
+    requestId: string;
+  };
+  
 };
 
 export type BatteryStackParamList = {

@@ -17,12 +17,27 @@ export const ApiEndpoints = {
     pricing: {
       create: "/Vehicle/pricing/create",
     },
+    tracking: (vehicleId: string) => `/Vehicle/tracking/${vehicleId}`,
   },
 
-    configuration: {
+  ticket: {
+      create: "/Ticket/create",
+      byBookingId: (bookingId: string) => `/Ticket/booking/${bookingId}`,
+      detail: (ticketId: string) => `/Ticket/${ticketId}`,
+  },
+
+  configuration: {
     getAll: "/Configuration",
     getById: (id: string) => `/Configuration/${id}`,
     getByType: (type: number) => `/Configuration/type/${type}`,
+  },
+
+  // Withdrawal Request endpoints
+  withdrawalRequest: {
+    create: "/WithdrawalRequest/create",
+    myRequests: "/WithdrawalRequest/my-requests",
+    detail: (id: string) => `/WithdrawalRequest/${id}`,
+    cancel: (id: string) => `/WithdrawalRequest/${id}/cancel`,
   },
 
   // Booking endpoints

@@ -53,14 +53,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     console.log("Add funds");
   };
   
+
   const handleWithdraw = () => {
-    // TODO: Navigate to withdraw screen
-    console.log("Withdraw money");
+    navigation.navigate("CreateWithdrawalRequest");
   };
-  
+
   const handleManage = () => {
-    // TODO: Navigate to wallet management screen
-    console.log("Manage wallet");
+    navigation.navigate("WithdrawalRequestList");
   };
   
   const handleViewAllTransactions = () => {

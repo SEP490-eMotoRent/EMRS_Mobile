@@ -1,6 +1,7 @@
 import { CreateVehicleRequest } from '../../../../models/vehicle/CreateVehicleRequest';
 import { PaginatedVehicleResponse } from '../../../../models/vehicle/PaginatedVehicle';
 import { VehicleResponse } from '../../../../models/vehicle/VehicleResponse';
+import { VehicleTrackingResponse } from '../../../../models/vehicle/VehicleTrackingResponse';
 
 export interface VehicleRemoteDataSource {
     create(request: CreateVehicleRequest): Promise<VehicleResponse>;
@@ -18,4 +19,5 @@ export interface VehicleRemoteDataSource {
         pageSize: number,
         pageNum: number
     ): Promise<PaginatedVehicleResponse>;
+    getTracking(vehicleId: string): Promise<VehicleTrackingResponse>;
 }
