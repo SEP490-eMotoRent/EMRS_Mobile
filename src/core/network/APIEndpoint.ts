@@ -19,6 +19,7 @@ export const ApiEndpoints = {
     },
   },
 
+  
   ticket: {
       create: "/Ticket/create",
       byBookingId: (bookingId: string) => `/Ticket/booking/${bookingId}`,
@@ -87,6 +88,8 @@ export const ApiEndpoints = {
   wallet: {
     create: "/Wallet/model/create",
     myBalance: "/Wallet/my-balance",
+    topUp: "/Wallet/topup",
+    vnPayCallback: "/Wallet/vnpay/callback",
   },
 
   // Receipt endpoints
