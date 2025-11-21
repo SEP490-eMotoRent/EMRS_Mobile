@@ -6,6 +6,7 @@ export const ApiEndpoints = {
   vehicle: {
     paginatedList: "/Vehicle",
     list: "/Vehicle/list",
+    detail: (id: string) => `/Vehicle/${id}`,
     create: "/Vehicle/create",
     model: {
       create: "/Vehicle/model/create",

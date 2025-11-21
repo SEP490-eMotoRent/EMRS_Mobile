@@ -66,11 +66,6 @@ export const BookingDetailsScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
-  // useEffect(() => {
-  //   fetchBooking();
-  //   fetchVehicleModels();
-  //   fetchRentalReceipt();
-  // }, [bookingId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -102,7 +97,9 @@ export const BookingDetailsScreen: React.FC = () => {
       const getListRentalReceiptUseCase = new GetListRentalReceiptUseCase(
         sl.get("ReceiptRepository")
       );
-      const rentalReceipts = await getListRentalReceiptUseCase.execute(bookingId);
+      const rentalReceipts = await getListRentalReceiptUseCase.execute(
+        bookingId
+      );
       setRentalReceipts(rentalReceipts.data);
     } catch (error) {
       console.error("Error fetching rental receipt:", error);
@@ -165,6 +162,12 @@ export const BookingDetailsScreen: React.FC = () => {
     setShowEdit(false);
     setSelectedModelId("");
     setShowModelList(false);
+  };
+
+  const openVehicleDetails = () => {
+    navigation.navigate("RentedVehicleDetails", {
+      vehicleId: booking?.vehicle?.id,
+    });
   };
 
   const saveEdit = async () => {
@@ -380,6 +383,31 @@ export const BookingDetailsScreen: React.FC = () => {
             </View>
           </InfoCard>
         </View>
+        {booking?.vehicle?.id && (
+          <TouchableOpacity
+            style={styles.vehicleDetailsBtn}
+            activeOpacity={0.85}
+            onPress={openVehicleDetails}
+          >
+            <View style={styles.vehicleDetailsLeft}>
+              <View style={styles.vehicleIconBadge}>
+                <AntDesign name="car" size={18} color="#000" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.vehicleDetailsTitle}>
+                  Xem thông tin xe đang thuê
+                </Text>
+                <Text style={styles.vehicleDetailsSubtitle}>
+                  {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
+                  {booking?.vehicleModel?.modelName ||
+                    booking?.vehicle?.vehicleModel?.modelName ||
+                    "Đang cập nhật"}
+                </Text>
+              </View>
+            </View>
+            <AntDesign name="arrow-right" size={18} color="#fff" />
+          </TouchableOpacity>
+        )}
 
         {hasInsurancePackage && insurancePackage && (
           <View style={styles.section}>
@@ -632,9 +660,9 @@ export const BookingDetailsScreen: React.FC = () => {
                   }}
                 >
                   <AntDesign name="file" size={16} color="#000" />
-                  <Text style={styles.contractBtnText}>Xem trong ứng dụng</Text>
+                  <Text style={styles.contractBtnText}>Xem hợp đồng</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={[styles.contractBtn, styles.contractBtnSecondary]}
                   onPress={() => {
                     setViewer("webview");
@@ -643,7 +671,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 >
                   <AntDesign name="export" size={16} color="#000" />
                   <Text style={styles.contractBtnText}>Mở bằng WebView</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
               <Text style={styles.contractNote}>
                 Bạn có thể xem hợp đồng trong ứng dụng hoặc mở bằng trình duyệt
@@ -1442,5 +1470,42 @@ const styles = StyleSheet.create({
     textAlign: "left",
     marginTop: 8,
     marginHorizontal: 16,
+  },
+  vehicleDetailsBtn: {
+    marginBottom: 8,
+    marginHorizontal: 16,
+    backgroundColor: "#131313",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  vehicleDetailsLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  vehicleIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFD666",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vehicleDetailsTitle: {
+    color: colors.text.primary,
+    fontWeight: "700",
+  },
+  vehicleDetailsSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginTop: 2,
   },
 });

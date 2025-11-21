@@ -232,6 +232,9 @@ export type TripStackParamList = {
     licensePlate?: string;
   };
   ReturnComplete: undefined;
+  RentedVehicleDetails: {
+    vehicleId: string;
+  };
 };
 
 export type ProfileStackParamList = {
@@ -347,6 +350,9 @@ export type StaffStackParamList = {
     licensePlate?: string;
   };
   BookingReturnList: { renterId: string };
+  RentedVehicleDetails: {
+    vehicleId: string;
+  };
 };
 
 export type RootStackParamList = {
