@@ -2,14 +2,41 @@ import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { RentalReceipt } from "../../../../../domain/entities/booking/RentalReceipt";
+import { ChangeVehicleRequest } from "../../../../models/receipt/ChangeVehicleRequest";
 import { CreateReceiptRequest } from "../../../../models/receipt/CreateReceiptRequest";
 import { GetContractResponse } from "../../../../models/receipt/GetContractResponse";
 import { HandoverReceiptResponse } from "../../../../models/receipt/HandoverReceiptResponse";
 import { UpdateReceiptRequest } from "../../../../models/receipt/UpdateReceiptRequest";
 import { ReceiptRemoteDataSource } from "../../../interfaces/remote/receipt/ReceiptRemoteDataSource";
+import { ChangeVehicleResponse } from "../../../../models/receipt/ChangeVehicleResponse";
 
 export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
+
+  async changeVehicle(request: ChangeVehicleRequest): Promise<ApiResponse<ChangeVehicleResponse>> {
+    try {
+      const formData = new FormData();
+      formData.append("Notes", request.notes);
+      formData.append("StartOdometerKm", request.startOdometerKm.toString());
+      formData.append("StartBatteryPercentage", request.startBatteryPercentage.toString());
+      formData.append("BookingId", request.bookingId);
+      formData.append("VehicleId", request.vehicleId);
+      request.vehicleFiles.forEach((file, index) => {
+        formData.append("VehicleFiles", file);
+      });
+      formData.append("CheckListFile", request.checkListFile);
+      const response = await this.axiosClient.post<ApiResponse<ChangeVehicleResponse>>(ApiEndpoints.receipt.changeVehicle, formData);
+      return {
+        success: true,
+        message: "Vehicle changed successfully",
+        data: response.data.data,
+        code: response.status,
+      };
+    } catch (error: any) {
+      console.error("Error changing vehicle:", error);
+      throw error;
+    }
+  }
 
   async createHandoverReceipt(
     request: CreateReceiptRequest

@@ -24,6 +24,7 @@ import { HandoverReceiptResponse } from "../../../../../../data/models/receipt/H
 import { AssignVehicleToBookingUseCase } from "../../../../../../domain/usecases/booking/AssignVehicleToBookingUseCase";
 import { CreateReceiptUseCase } from "../../../../../../domain/usecases/receipt/CreateReceiptUseCase";
 import Toast from "react-native-toast-message";
+import { ChangeVehicleUseCase } from "../../../../../../domain/usecases/receipt/ChangeVehicleUseCase";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -89,8 +90,13 @@ type VehicleInspectionScreenRouteProp = RouteProp<
 
 export const VehicleInspectionScreen: React.FC = () => {
   const route = useRoute<VehicleInspectionScreenRouteProp>();
-  const { vehicleId, bookingId, currentOdometerKm, batteryHealthPercentage } =
-    route.params || {};
+  const {
+    vehicleId,
+    bookingId,
+    currentOdometerKm,
+    batteryHealthPercentage,
+    isChangeVehicle,
+  } = route.params || {};
   const navigation = useNavigation<InspectionNav>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [photos, setPhotos] = useState<Record<string, string | null>>({
@@ -330,47 +336,83 @@ export const VehicleInspectionScreen: React.FC = () => {
           result: "tmpfile", // tạo file thật để upload
         });
       }
-      const assignVehicleToBookingUseCase = new AssignVehicleToBookingUseCase(
-        sl.get("BookingRepository")
-      );
 
-      await assignVehicleToBookingUseCase.execute(vehicleId, bookingId);
+      if (isChangeVehicle) {
+        const changeVehicleUseCase = new ChangeVehicleUseCase(
+          sl.get("ReceiptRepository")
+        );
+        const changeVehicleResponse = await changeVehicleUseCase.execute({
+          notes,
+          startOdometerKm: parseInt(startOdometerKm),
+          startBatteryPercentage: parseInt(startBatteryPercentage),
+          bookingId,
+          vehicleFiles: [
+            photos.front,
+            photos.back,
+            photos.left,
+            photos.right,
+          ].filter(Boolean) as string[],
+          checkListFile: checklistUri,
+          vehicleId: vehicleId,
+        });
+        if (changeVehicleResponse.success) {
+          Toast.show({
+            text1: "Xe đã được thay đổi",
+            type: "success",
+          });
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "BookingDetails", params: { bookingId } }],
+          });
+        } else {
+          Toast.show({
+            text1: "Không thể thay đổi xe",
+            type: "error",
+          });
+        }
+      } else {
+        const assignVehicleToBookingUseCase = new AssignVehicleToBookingUseCase(
+          sl.get("BookingRepository")
+        );
 
-      const createReceiptUseCase = new CreateReceiptUseCase(
-        sl.get("ReceiptRepository")
-      );
+        await assignVehicleToBookingUseCase.execute(vehicleId, bookingId);
 
-      const handoverResponse = await createReceiptUseCase.execute({
-        notes,
-        startOdometerKm: parseInt(startOdometerKm),
-        startBatteryPercentage: parseInt(startBatteryPercentage),
-        bookingId,
-        vehicleFiles: [
-          photos.front,
-          photos.back,
-          photos.left,
-          photos.right,
-        ].filter(Boolean) as string[],
-        checkListFile: checklistUri,
-      });
+        const createReceiptUseCase = new CreateReceiptUseCase(
+          sl.get("ReceiptRepository")
+        );
 
-      const receiptData: HandoverReceiptResponse =
-        unwrapResponse(handoverResponse);
+        const handoverResponse = await createReceiptUseCase.execute({
+          notes,
+          startOdometerKm: parseInt(startOdometerKm),
+          startBatteryPercentage: parseInt(startBatteryPercentage),
+          bookingId,
+          vehicleFiles: [
+            photos.front,
+            photos.back,
+            photos.left,
+            photos.right,
+          ].filter(Boolean) as string[],
+          checkListFile: checklistUri,
+        });
 
-      Toast.show({
-        text1: "Kiểm tra đã được hoàn thành và xe đã được gán cho đặt chỗ",
-        type: "success",
-      });
+        const receiptData: HandoverReceiptResponse =
+          unwrapResponse(handoverResponse);
 
-      navigation.navigate("HandoverReport", {
-        receiptId: receiptData.id,
-        notes: receiptData.notes,
-        startOdometerKm: receiptData.startOdometerKm,
-        startBatteryPercentage: receiptData.startBatteryPercentage,
-        bookingId: receiptData.bookingId,
-        vehicleFiles: receiptData.vehicleFiles,
-        checkListFile: receiptData.checkListFile,
-      });
+        Toast.show({
+          text1: "Kiểm tra đã được hoàn thành và xe đã được gán cho đặt chỗ",
+          type: "success",
+        });
+
+        navigation.navigate("HandoverReport", {
+          receiptId: receiptData.id,
+          notes: receiptData.notes,
+          startOdometerKm: receiptData.startOdometerKm,
+          startBatteryPercentage: receiptData.startBatteryPercentage,
+          bookingId: receiptData.bookingId,
+          vehicleFiles: receiptData.vehicleFiles,
+          checkListFile: receiptData.checkListFile,
+        });
+      }
     } catch (error) {
       Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
     } finally {
@@ -700,22 +742,6 @@ export const VehicleInspectionScreen: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity style={styles.tertiaryCta}>
           <Text style={styles.tertiaryCtaText}>Lưu & Tiếp tục sau</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tertiaryCta}
-          onPress={() =>
-            navigation.navigate("HandoverReport", {
-              receiptId: "",
-              notes: "",
-              startOdometerKm: 0,
-              startBatteryPercentage: 0,
-              bookingId: bookingId,
-              vehicleFiles: [],
-              checkListFile: "",
-            })
-          }
-        >
-          <Text style={styles.tertiaryCtaText}>Next Step</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

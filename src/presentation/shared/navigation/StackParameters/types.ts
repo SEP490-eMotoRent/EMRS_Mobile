@@ -273,12 +273,15 @@ export type StaffStackParamList = {
     bookingId: string;
     renterName: string;
     vehicleModel: VehicleModel;
+    vehicleStatus?: string;
+    isChangeVehicle?: boolean;
   };
   VehicleInspection: {
     vehicleId: string;
     bookingId: string;
     currentOdometerKm: number;
     batteryHealthPercentage: number;
+    isChangeVehicle?: boolean;
   };
   HandoverReport: {
     receiptId: string;

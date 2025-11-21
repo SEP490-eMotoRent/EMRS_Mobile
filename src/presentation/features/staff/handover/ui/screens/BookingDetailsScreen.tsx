@@ -24,7 +24,7 @@ import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../../../../domain/entities/booking/RentalContract";
 import { Linking } from "react-native";
-// import Pdf from "react-native-pdf";
+import Pdf from "react-native-pdf";
 import { WebView } from "react-native-webview";
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
@@ -152,6 +152,7 @@ export const BookingDetailsScreen: React.FC = () => {
       setVehicleModels(res);
     } catch (e) {
       // ignore
+      console.error("Error fetching vehicle models:", e);
     }
   };
 
@@ -241,7 +242,6 @@ export const BookingDetailsScreen: React.FC = () => {
     });
   };
 
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Global loading overlay */}
@@ -318,6 +318,16 @@ export const BookingDetailsScreen: React.FC = () => {
             {/* Vehicle Model */}
             <View style={styles.iconRow}>
               <View style={styles.iconLeft}>
+                <AntDesign name="idcard" size={14} color="#FFD666" />
+                <Text style={styles.iconLabel}>Mã xe thuê</Text>
+              </View>
+              <Text style={styles.iconValue}>
+                #{booking?.vehicle?.id.slice(-12) || "-"}
+              </Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.iconRow}>
+              <View style={styles.iconLeft}>
                 <AntDesign name="car" size={14} color="#FFD666" />
                 <Text style={styles.iconLabel}>Mẫu xe thuê</Text>
               </View>
@@ -373,7 +383,10 @@ export const BookingDetailsScreen: React.FC = () => {
 
         {hasInsurancePackage && insurancePackage && (
           <View style={styles.section}>
-            <SectionHeader title="Thông tin Bảo hiểm" icon="safety-certificate" />
+            <SectionHeader
+              title="Thông tin Bảo hiểm"
+              icon="safety-certificate"
+            />
             <InfoCard style={styles.insuranceCard}>
               <View style={styles.insuranceHeaderRow}>
                 <View style={styles.insuranceTitleWrap}>
@@ -434,7 +447,9 @@ export const BookingDetailsScreen: React.FC = () => {
 
               {!!insurancePackage.description && (
                 <View style={styles.insuranceDescription}>
-                  <Text style={styles.insuranceDescriptionLabel}>Quyền lợi</Text>
+                  <Text style={styles.insuranceDescriptionLabel}>
+                    Quyền lợi
+                  </Text>
                   <Text style={styles.insuranceDescriptionText}>
                     {insurancePackage.description}
                   </Text>
@@ -658,21 +673,27 @@ export const BookingDetailsScreen: React.FC = () => {
                 <AntDesign name="edit" size={16} color="#000" />
                 <Text style={styles.actionBtnText}>Update Booking</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.changeBtn]}
-                onPress={() => {
-                  navigation.navigate("SelectVehicle", {
-                    bookingId: bookingId,
-                    renterName: booking?.renter?.fullName?.() ?? "",
-                    vehicleModel: booking?.vehicleModel,
-                  });
-                }}
-              >
-                <AntDesign name="swap" size={16} color="#000" />
-                <Text style={styles.actionBtnText}>Change Vehicle</Text>
-              </TouchableOpacity>
             </View>
           )}
+        {booking?.bookingStatus === "Renting" && user?.role === "STAFF" && (
+          <View style={styles.editRow}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.changeBtn]}
+              onPress={() => {
+                navigation.navigate("SelectVehicle", {
+                  bookingId: bookingId,
+                  renterName: booking?.renter?.fullName?.() ?? "",
+                  vehicleModel: booking?.vehicleModel,
+                  vehicleStatus: "Available",
+                  isChangeVehicle: true,
+                });
+              }}
+            >
+              <AntDesign name="swap" size={16} color="#000" />
+              <Text style={styles.actionBtnText}>Đổi xe</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {booking?.bookingStatus === "Booked" &&
           hasRentalReceipt &&
           !hasContract && (
@@ -740,16 +761,16 @@ export const BookingDetailsScreen: React.FC = () => {
             )}
             {contractInfo.url ? (
               viewer === "pdf" ? (
-                // <Pdf
-                //   trustAllCerts={false}
-                //   source={{ uri: contractInfo.url, cache: true }}
-                //   onLoadProgress={() => setWebviewLoading(true)}
-                //   onLoadComplete={() => setWebviewLoading(false)}
-                //   onError={() => setWebviewLoading(false)}
-                //   style={styles.webview}
-                // />
-                <Text>PDF</Text>
+                <Pdf
+                  trustAllCerts={false}
+                  source={{ uri: contractInfo.url, cache: true }}
+                  onLoadProgress={() => setWebviewLoading(true)}
+                  onLoadComplete={() => setWebviewLoading(false)}
+                  onError={() => setWebviewLoading(false)}
+                  style={styles.webview}
+                />
               ) : (
+                // <Text>PDF</Text>
                 <WebView
                   source={{ uri: contract?.contractPdfUrl }}
                   onLoadStart={() => setWebviewLoading(true)}

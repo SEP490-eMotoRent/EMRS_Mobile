@@ -84,7 +84,7 @@ export const ScanFaceScreen: React.FC = () => {
   const handleCallManager = () => {
     navigation.navigate("ScanResult", {
       renter: {
-        id: "019a7d00-e789-738b-b90c-fd022f9833fa",
+        id: "019a9afd-4826-7221-9342-cfdb46a9153d",
         email: "test@test.com",
         phone: "1234567890",
         address: "1234567890",
