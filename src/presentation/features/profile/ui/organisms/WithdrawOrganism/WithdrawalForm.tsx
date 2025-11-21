@@ -1,0 +1,192 @@
+import React, { useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { FormInput } from "../../atoms/FormInput";
+
+
+interface WithdrawalFormProps {
+    currentBalance: number;
+    onSubmit: (data: {
+        amount: number;
+        bankName: string;
+        bankAccountNumber: string;
+        bankAccountName: string;
+    }) => Promise<void>;
+    loading?: boolean;
+    }
+
+    export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
+    currentBalance,
+    onSubmit,
+    loading = false,
+    }) => {
+    const [amount, setAmount] = useState("");
+    const [bankName, setBankName] = useState("");
+    const [accountNumber, setAccountNumber] = useState("");
+    const [accountName, setAccountName] = useState("");
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validate = (): boolean => {
+        const newErrors: Record<string, string> = {};
+
+        if (!amount || parseFloat(amount) <= 0) {
+        newErrors.amount = "Vui lòng nhập số tiền hợp lệ";
+        } else if (parseFloat(amount) > currentBalance) {
+        newErrors.amount = "Số dư không đủ";
+        }
+
+        if (!bankName.trim()) {
+        newErrors.bankName = "Vui lòng nhập tên ngân hàng";
+        }
+
+        if (!accountNumber.trim()) {
+        newErrors.accountNumber = "Vui lòng nhập số tài khoản";
+        }
+
+        if (!accountName.trim()) {
+        newErrors.accountName = "Vui lòng nhập tên chủ tài khoản";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async () => {
+        if (!validate()) return;
+
+        Alert.alert(
+        "Xác nhận rút tiền",
+        `Bạn có chắc muốn rút ${parseFloat(amount).toLocaleString()}đ?`,
+        [
+            { text: "Hủy", style: "cancel" },
+            {
+            text: "Xác nhận",
+            onPress: async () => {
+                await onSubmit({
+                amount: parseFloat(amount),
+                bankName: bankName.trim(),
+                bankAccountNumber: accountNumber.trim(),
+                bankAccountName: accountName.trim(),
+                });
+            },
+            },
+        ]
+        );
+    };
+
+    return (
+        <View style={styles.container}>
+        <View style={styles.balanceCard}>
+            <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
+            <Text style={styles.balanceAmount}>
+            {currentBalance.toLocaleString()}đ
+            </Text>
+        </View>
+
+        <FormInput
+            label="Số tiền muốn rút"
+            placeholder="Nhập số tiền"
+            keyboardType="numeric"
+            value={amount}
+            onChangeText={setAmount}
+            error={errors.amount}
+            required
+        />
+
+        <FormInput
+            label="Tên ngân hàng"
+            placeholder="VD: Vietcombank, BIDV, Techcombank"
+            value={bankName}
+            onChangeText={setBankName}
+            error={errors.bankName}
+            required
+        />
+
+        <FormInput
+            label="Số tài khoản"
+            placeholder="Nhập số tài khoản ngân hàng"
+            keyboardType="numeric"
+            value={accountNumber}
+            onChangeText={setAccountNumber}
+            error={errors.accountNumber}
+            required
+        />
+
+        <FormInput
+            label="Tên chủ tài khoản"
+            placeholder="Nhập tên chủ tài khoản"
+            value={accountName}
+            onChangeText={setAccountName}
+            error={errors.accountName}
+            required
+        />
+
+        <TouchableOpacity
+            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
+        >
+            {loading ? (
+            <ActivityIndicator color="#000" />
+            ) : (
+            <Text style={styles.submitText}>Tạo yêu cầu rút tiền</Text>
+            )}
+        </TouchableOpacity>
+
+        <Text style={styles.note}>
+            💡 Yêu cầu sẽ được xử lý trong vòng 1-3 ngày làm việc
+        </Text>
+        </View>
+    );
+    };
+
+    const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    balanceCard: {
+        backgroundColor: "#1a1a1a",
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+        alignItems: "center",
+    },
+    balanceLabel: {
+        color: "#999",
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    balanceAmount: {
+        color: "#c4b5fd",
+        fontSize: 32,
+        fontWeight: "700",
+    },
+    submitButton: {
+        backgroundColor: "#c4b5fd",
+        borderRadius: 12,
+        padding: 16,
+        alignItems: "center",
+        marginTop: 8,
+    },
+    submitButtonDisabled: {
+        opacity: 0.5,
+    },
+    submitText: {
+        color: "#000",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    note: {
+        color: "#999",
+        fontSize: 13,
+        textAlign: "center",
+        marginTop: 16,
+    },
+});

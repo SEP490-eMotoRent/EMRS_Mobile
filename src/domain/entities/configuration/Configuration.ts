@@ -3,7 +3,6 @@ import { ConfigurationType } from "./ConfigurationType";
 
 /**
  * Configuration Domain Entity
- * Represents system configuration settings like pricing, rates, and policies
  */
 export class Configuration implements BaseEntity {
     public readonly id: string;
@@ -29,15 +28,46 @@ export class Configuration implements BaseEntity {
         isDeleted: boolean = false
     ) {
         this.id = id;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-        this.isDeleted = isDeleted;
-
         this.title = title;
         this.description = description;
         this.type = type;
         this.value = value;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.deletedAt = deletedAt;
+        this.isDeleted = isDeleted;
+    }
+
+    /**
+     * Helper method to parse value as number
+     */
+    getNumericValue(): number {
+        return parseFloat(this.value) || 0;
+    }
+
+    /**
+     * Helper method to check if this is a fee-related configuration
+     */
+    isFeeConfig(): boolean {
+        return [
+            ConfigurationType.LateReturnFee,
+            ConfigurationType.CleaningFee,
+            ConfigurationType.DamageFee,
+            ConfigurationType.CrossBranchFee,
+            ConfigurationType.ExcessKmFee,
+            ConfigurationType.EarlyHandoverFee,
+        ].includes(this.type);
+    }
+
+    /**
+     * Helper method to check if this is a deposit configuration
+     */
+    isDepositConfig(): boolean {
+        return [
+            ConfigurationType.EconomyDepositPrice,
+            ConfigurationType.StandardDepositPrice,
+            ConfigurationType.PremiumDepositPrice,
+        ].includes(this.type);
     }
 
     delete(): void {
@@ -50,31 +80,6 @@ export class Configuration implements BaseEntity {
         this.updatedAt = new Date();
         this.deletedAt = null;
         this.isDeleted = false;
-    }
-
-    /**
-     * Helper method to parse value as number
-     * Useful for rate/price configurations
-     */
-    getNumericValue(): number {
-        return parseFloat(this.value) || 0;
-    }
-
-    /**
-     * Helper method to check if this is a financial configuration
-     */
-    isFinancialConfig(): boolean {
-        return [
-            ConfigurationType.RentingDurationRate,
-            ConfigurationType.ChargingRate,
-            ConfigurationType.BookingDiscountRate,
-            ConfigurationType.DepositRate,
-            ConfigurationType.AdditionalFee,
-            ConfigurationType.RefundRate,
-            ConfigurationType.EconomyDepositPrice,
-            ConfigurationType.StandardDepositPrice,
-            ConfigurationType.PremiumDepositPrice,
-        ].includes(this.type);
     }
 }
 
