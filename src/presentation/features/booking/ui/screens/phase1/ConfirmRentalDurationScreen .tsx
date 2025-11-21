@@ -1,9 +1,10 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { calculateRentalFees, useRentingRate, VehicleCategory } from "../../../hooks/useRentingRate";
 import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
@@ -22,12 +23,12 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         branchName,
         pricePerDay,
         securityDeposit,
-        branchOpenTime,  // ✅ NEW: From navigation params
-        branchCloseTime, // ✅ NEW: From navigation params
+        branchOpenTime,
+        branchCloseTime,
+        vehicleCategory,
     } = route.params;
     const navigation = useNavigation<NavigationPropType>();
     
-    // ✅ Convert 24-hour format (e.g., "06:00", "22:00") to SA/CH format (e.g., "6:00 SA", "10:00 CH")
     const convertTo12HourFormat = (time24: string): string => {
         const [hourStr, minute] = time24.split(':');
         let hour = parseInt(hourStr);
@@ -42,11 +43,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         return `${hour}:${minute} ${period}`;
     };
 
-    // ✅ Use branch operating hours or defaults
     const branchOpenTimeSACH = branchOpenTime ? convertTo12HourFormat(branchOpenTime) : "6:00 SA";
     const branchCloseTimeSACH = branchCloseTime ? convertTo12HourFormat(branchCloseTime) : "10:00 CH";
 
-    // Initialize with current date/time
     const now = new Date();
     const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     
@@ -66,18 +65,35 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const [duration, setDuration] = useState("7 Ngày 0 Giờ");
     const [rentalDays, setRentalDays] = useState(7);
 
-    // Calculate prices dynamically
-    const rentalPrice = useMemo(() => pricePerDay * rentalDays, [pricePerDay, rentalDays]);
-    const total = useMemo(() => rentalPrice + securityDeposit, [rentalPrice, securityDeposit]);
+    // ✅ Use renting rate hook
+    const category = (vehicleCategory?.toUpperCase() || "ECONOMY") as VehicleCategory;
+    const { 
+        rentingRate, 
+        discountPercentage, 
+        durationType,
+        loading: rateLoading 
+    } = useRentingRate(rentalDays, category);
 
-    console.log("Booking vehicle ID:", vehicleId);
-    console.log("Vehicle name:", vehicleName);
-    console.log("Branch:", branchName);
-    console.log("Branch hours:", branchOpenTime, "-", branchCloseTime);
-    console.log("Branch hours (SA/CH):", branchOpenTimeSACH, "-", branchCloseTimeSACH);
-    console.log("Price per day:", pricePerDay);
-    console.log("Rental days:", rentalDays);
-    console.log("Calculated rental price:", rentalPrice);
+    // ✅ Calculate fees with discount
+    const { baseRentalFee, totalRentalFee, averageRentalPrice, discountAmount } = useMemo(
+        () => calculateRentalFees(pricePerDay, rentalDays, rentingRate),
+        [pricePerDay, rentalDays, rentingRate]
+    );
+
+    const total = useMemo(() => totalRentalFee + securityDeposit, [totalRentalFee, securityDeposit]);
+
+    const hasDiscount = discountPercentage > 0;
+
+    console.log("📊 Rental calculation:", {
+        category,
+        rentalDays,
+        durationType,
+        rentingRate,
+        discountPercentage: `${discountPercentage}%`,
+        baseRentalFee,
+        totalRentalFee,
+        discountAmount,
+    });
 
     const handleBack = () => {
         navigation.goBack();
@@ -104,13 +120,13 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         const startTime = parseTime(startTimeStr);
         const endTime = parseTime(endTimeStr);
         
-        const startDate = new Date(startDateStr);
-        startDate.setHours(startTime.hours, startTime.minutes, 0, 0);
+        const start = new Date(startDateStr);
+        start.setHours(startTime.hours, startTime.minutes, 0, 0);
         
-        const endDate = new Date(endDateStr);
-        endDate.setHours(endTime.hours, endTime.minutes, 0, 0);
+        const end = new Date(endDateStr);
+        end.setHours(endTime.hours, endTime.minutes, 0, 0);
         
-        const diffMs = endDate.getTime() - startDate.getTime();
+        const diffMs = end.getTime() - start.getTime();
         const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
         const days = Math.floor(totalHours / 24);
         const hours = totalHours % 24;
@@ -160,8 +176,27 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             endDate,
             duration,
             rentalDays,
-            rentalPrice,
+            rentalPrice: totalRentalFee,
+            baseRentalFee,
+            rentingRate,
+            averageRentalPrice,
+            vehicleCategory: category,
         });
+    };
+
+    const getDiscountLabel = (): string => {
+        if (durationType === "monthly") return "Giảm giá thuê tháng";
+        if (durationType === "yearly") return "Giảm giá thuê năm";
+        return "";
+    };
+
+    const getCategoryLabel = (cat: VehicleCategory): string => {
+        switch (cat) {
+            case "ECONOMY": return "Phổ thông";
+            case "STANDARD": return "Trung cấp";
+            case "PREMIUM": return "Cao cấp";
+            default: return cat;
+        }
     };
     
     return (
@@ -174,27 +209,48 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* ✅ DateTimeSelector with REAL branch operating hours */}
                 <DateTimeSelector
                     startDate={startDate}
                     endDate={endDate}
                     duration={duration}
                     onDateRangeChange={handleDateRangeChange}
                     branchName={branchName}
-                    branchOpenTime={branchOpenTimeSACH}   // ✅ Real data: "6:00 SA"
-                    branchCloseTime={branchCloseTimeSACH} // ✅ Real data: "10:00 CH"
+                    branchOpenTime={branchOpenTimeSACH}
+                    branchCloseTime={branchCloseTimeSACH}
                 />
+
+                {/* ✅ Discount Banner */}
+                {hasDiscount && (
+                    <View style={styles.discountBanner}>
+                        <View style={styles.discountIconContainer}>
+                            <Text style={styles.discountIcon}>🎉</Text>
+                        </View>
+                        <View style={styles.discountContent}>
+                            <Text style={styles.discountTitle}>{getDiscountLabel()}</Text>
+                            <Text style={styles.discountText}>
+                                Giảm {discountPercentage}% cho xe {getCategoryLabel(category)}
+                            </Text>
+                            <Text style={styles.discountSavings}>
+                                Tiết kiệm: {discountAmount.toLocaleString()}đ
+                            </Text>
+                        </View>
+                    </View>
+                )}
                 
                 <BookingSummary
                     rentalDays={rentalDays}
-                    rentalPrice={`${rentalPrice.toLocaleString()}đ`}
+                    rentalPrice={`${totalRentalFee.toLocaleString()}đ`}
                     securityDeposit={`${securityDeposit.toLocaleString()}đ`}
                     total={`${total.toLocaleString()}đ`}
                 />
             </ScrollView>
 
             <View style={styles.footer}>
-                <PrimaryButton title="Tiếp tục" onPress={handleContinue} />
+                <PrimaryButton 
+                    title="Tiếp tục" 
+                    onPress={handleContinue}
+                    disabled={rateLoading}
+                />
             </View>
         </View>
     );
@@ -218,5 +274,46 @@ const styles = StyleSheet.create({
         backgroundColor: "#000",
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
+    },
+    discountBanner: {
+        backgroundColor: "#1a2e1a",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#22c55e",
+    },
+    discountIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "#22c55e20",
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 12,
+    },
+    discountIcon: {
+        fontSize: 24,
+    },
+    discountContent: {
+        flex: 1,
+    },
+    discountTitle: {
+        color: "#22c55e",
+        fontSize: 14,
+        fontWeight: "700",
+        marginBottom: 2,
+    },
+    discountText: {
+        color: "#86efac",
+        fontSize: 13,
+        marginBottom: 4,
+    },
+    discountSavings: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "700",
     },
 });

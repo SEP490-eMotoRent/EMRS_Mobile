@@ -52,7 +52,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
 
-    // Wallet hook — ALWAYS called, never conditionally
     const { balance: walletBalance, loading: walletLoading, refresh: refreshWallet } = useWallet();
 
     const user = useAppSelector((state) => state.auth.user);
@@ -100,24 +99,25 @@ export const PaymentConfirmationScreen: React.FC = () => {
         rentalFee,
         insuranceFee,
         securityDeposit,
-        total, // This is now correct from InsurancePlansScreen
+        total,
+        // ✅ NEW: Receive from InsurancePlansScreen
+        baseRentalFee,
+        rentingRate,
+        averageRentalPrice,
+        vehicleCategory,
     } = route.params;
 
     const parsePrice = (price: string): number => {
         return parseInt(price.replace(/[^0-9]/g, ""), 10) || 0;
     };
 
-    // Parse individual amounts
     const rental = parsePrice(rentalFee);
     const insurance = parsePrice(insuranceFee);
     const deposit = parsePrice(securityDeposit);
     
-    // ✅ ALWAYS calculate the total ourselves to ensure accuracy
-    // Don't trust the passed total - recalculate it
     const totalAmount = rental + insurance + deposit;
     const passedTotal = parsePrice(total);
 
-    // Verify totals match (for debugging)
     if (totalAmount !== passedTotal) {
         console.warn("⚠️ Total mismatch detected!");
         console.warn("Our calculation:", totalAmount);
@@ -126,18 +126,21 @@ export const PaymentConfirmationScreen: React.FC = () => {
     } else {
         console.log("✅ Total verification passed:", totalAmount);
     }
+
     const afterBalance = safeBalance - totalAmount;
     const isSufficient = afterBalance >= 0;
 
     const totalAmountFormatted = `${totalAmount.toLocaleString('vi-VN')}đ`;
 
     console.log("Payment Confirmation - Amounts:");
-    console.log("- Rental Fee:", rental);
+    console.log("- Base Rental Fee:", baseRentalFee);
+    console.log("- Renting Rate:", rentingRate);
+    console.log("- Rental Fee (after discount):", rental);
+    console.log("- Average Rental Price:", averageRentalPrice);
     console.log("- Insurance Fee:", insurance);
     console.log("- Security Deposit:", deposit);
     console.log("- Total Amount:", totalAmount);
-    console.log("- Wallet Balance:", safeBalance);
-    console.log("- After Payment:", afterBalance);
+    console.log("- Vehicle Category:", vehicleCategory);
 
     const parseDateString = (dateStr: string): Date => {
         const monthNames: { [key: string]: number } = {
@@ -146,7 +149,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
             "Tháng 9": 8, "Tháng 10": 9, "Tháng 11": 10, "Tháng 12": 11
         };
 
-        // ✅ Support both English (AM/PM) and Vietnamese (SA/CH)
         const match = dateStr.match(/(Tháng \d+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
         if (!match) {
             console.error("❌ Failed to parse date:", dateStr);
@@ -162,7 +164,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
         let hour = parseInt(hours, 10);
         
-        // ✅ Handle both English and Vietnamese
         const isPM = period.toUpperCase() === 'PM' || period.toUpperCase() === 'CH';
         const isAM = period.toUpperCase() === 'AM' || period.toUpperCase() === 'SA';
         
@@ -183,6 +184,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
         
         return date;
     };
+
     // ==================== 4. PAYMENT HANDLER ====================
     const handlePayment = async () => {
         if (!userId) {
@@ -199,6 +201,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     ? insurancePlanId
                     : undefined;
 
+            // ✅ UPDATED: Use values from navigation params
             const bookingInput = {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
@@ -206,21 +209,21 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 handoverBranchId: branchId,
                 rentalDays,
                 rentalHours: 0,
-                baseRentalFee: rental,              // 1,260,000
-                depositAmount: deposit,              // 2,000,000
-                rentingRate: 1.0,
-                averageRentalPrice: rental / rentalDays,
-                insurancePackageId,                  // Backend fetches 800,000 fee
-                totalRentalFee: rental,              // ✅ FIXED: Only send rental fee
+                baseRentalFee: baseRentalFee,           // ✅ From params (original price)
+                depositAmount: deposit,
+                rentingRate: rentingRate,               // ✅ From params (e.g., 0.80 for 20% off)
+                averageRentalPrice: averageRentalPrice, // ✅ From params (discounted avg)
+                insurancePackageId,
+                totalRentalFee: rental,                 // ✅ Discounted rental fee
                 renterId: userId,
             };
 
             console.log("Creating booking with:", bookingInput);
-            console.log("Expected total charge:", totalAmount); // For debugging
+            console.log("Expected total charge:", totalAmount);
 
             if (selectedPaymentMethod === "wallet") {
                 const booking = await createBooking(bookingInput);
-                await refreshWallet(); // Update balance after payment
+                await refreshWallet();
 
                 navigation.replace("DigitalContract", {
                     vehicleId,
@@ -304,7 +307,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 />
 
                 <View style={styles.section}>
-                    {/* Wallet Card */}
                     <PaymentMethodCard
                         isSelected={selectedPaymentMethod === "wallet"}
                         onSelect={() => setSelectedPaymentMethod("wallet")}
@@ -313,7 +315,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                         isSufficient={isSufficient}
                     />
 
-                    {/* VNPay Card */}
                     <TouchableOpacity
                         style={[
                             styles.paymentOption,
@@ -345,7 +346,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     rentalFee={rentalFee}
                     insuranceFee={insuranceFee}
                     securityDeposit={securityDeposit}
-                    total={totalAmountFormatted} // ✅ Use formatted calculated total
+                    total={totalAmountFormatted}
                 />
 
                 <PaymentNotices />
@@ -384,8 +385,6 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
     },
-
-    // VNPay Option
     paymentOption: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,
@@ -433,8 +432,6 @@ const styles = StyleSheet.create({
     vnpayBadgeText: { color: "#fff", fontSize: 11, fontWeight: "600" },
     paymentOptionDesc: { color: "#999", fontSize: 14, marginBottom: 8 },
     paymentMethodsText: { color: "#666", fontSize: 12 },
-
-    // Loading
     center: { flex: 1, justifyContent: "center", alignItems: "center" },
     loadingText: { color: "#aaa", marginTop: 12, fontSize: 16 },
 });
