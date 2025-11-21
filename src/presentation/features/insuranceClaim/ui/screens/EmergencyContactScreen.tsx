@@ -1,7 +1,7 @@
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ActivityIndicator, Text, Linking, Alert, ScrollView } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text, Linking, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { 
     RentalDetailsSection, 
@@ -99,6 +99,20 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
         });
     };
 
+    const handleReportTechnicalIssue = () => {
+        navigation.navigate('CreateTicket', {
+            bookingId: bookingId || '',
+            vehicleName: finalRentalDetails?.bikeModel || 'Xe đang thuê',
+            licensePlate: finalRentalDetails?.licensePlate,
+        });
+    };
+
+    const handleViewTickets = () => {
+        navigation.navigate('TicketList', {
+            bookingId: bookingId || '',
+        });
+    };
+
     const safetyItems = [
         'Đảm bảo bạn đang ở vị trí an toàn, tránh xa giao thông',
         'Bật đèn cảnh báo nếu có thể',
@@ -139,7 +153,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     contentContainerStyle={styles.scrollContentContainer}
                 >
                     <View style={styles.errorContainer}>
-                        <Text style={styles.errorIcon}>Warning</Text>
+                        <Text style={styles.errorIcon}>⚠️</Text>
                         <Text style={styles.errorText}>{error}</Text>
                         <Text style={styles.errorSubtext}>
                             Bạn vẫn có thể gọi cứu hộ hoặc sử dụng danh sách kiểm tra an toàn bên dưới.
@@ -180,7 +194,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     contentContainerStyle={styles.scrollContentContainer}
                 >
                     <View style={styles.errorContainer}>
-                        <Text style={styles.errorIcon}>Warning</Text>
+                        <Text style={styles.errorIcon}>⚠️</Text>
                         <Text style={styles.errorText}>Thiếu thông tin đặt xe</Text>
                         <Text style={styles.errorSubtext}>
                             Một số tính năng có thể không khả dụng. Vui lòng quay lại chuyến đi và thử lại.
@@ -219,10 +233,26 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContentContainer}
             >
+                {/* ✅ Ticket Summary Card */}
+                <TouchableOpacity
+                    style={styles.ticketSummaryCard}
+                    onPress={handleViewTickets}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.ticketSummaryLeft}>
+                        <Text style={styles.ticketSummaryIcon}>🎫</Text>
+                        <View>
+                            <Text style={styles.ticketSummaryTitle}>Ticket đã gửi</Text>
+                            <Text style={styles.ticketSummaryHint}>Xem trạng thái các báo cáo</Text>
+                        </View>
+                    </View>
+                    <Text style={styles.ticketSummaryArrow}>→</Text>
+                </TouchableOpacity>
+
                 {emergencyData?.renterInfo && (
                     <View style={styles.prominentCard}>
                         <View style={styles.cardHeader}>
-                            <Text style={styles.cardIcon}>Person</Text>
+                            <Text style={styles.cardIcon}>👤</Text>
                             <Text style={styles.cardTitle}>Thông tin liên hệ của bạn</Text>
                         </View>
                         <View style={styles.infoRow}>
@@ -251,7 +281,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                 {emergencyData?.bookingContext && (
                     <View style={styles.compactCard}>
                         <View style={styles.cardHeader}>
-                            <Text style={styles.cardIcon}>Clipboard</Text>
+                            <Text style={styles.cardIcon}>📋</Text>
                             <Text style={styles.cardTitle}>Thông tin đặt xe</Text>
                         </View>
                         <View style={styles.compactInfoGrid}>
@@ -295,6 +325,13 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
             </ScrollView>
 
             <View style={styles.fixedButtonContainer}>
+                <ActionButton
+                    icon="tool"
+                    label="Báo cáo sự cố kỹ thuật"
+                    onPress={handleReportTechnicalIssue}
+                    variant="warning"
+                />
+                
                 <View style={styles.buttonRow}>
                     <View style={styles.secondaryButton}>
                         <ActionButton
@@ -387,6 +424,41 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         textAlign: 'center',
     },
+    // ✅ Ticket Summary Card
+    ticketSummaryCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#1a1a2a',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#d4c5f9',
+    },
+    ticketSummaryLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    ticketSummaryIcon: {
+        fontSize: 24,
+    },
+    ticketSummaryTitle: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    ticketSummaryHint: {
+        color: '#999',
+        fontSize: 13,
+        marginTop: 2,
+    },
+    ticketSummaryArrow: {
+        color: '#d4c5f9',
+        fontSize: 20,
+        fontWeight: '600',
+    },
     prominentCard: {
         backgroundColor: '#1A1A1A',
         borderRadius: 16,
@@ -475,7 +547,7 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     bottomSpacing: {
-        height: 100,
+        height: 140,
     },
     fixedButtonContainer: {
         position: 'absolute',
@@ -493,6 +565,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 8,
+        gap: 12,
     },
     buttonRow: {
         flexDirection: 'row',

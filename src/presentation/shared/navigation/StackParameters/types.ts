@@ -215,6 +215,17 @@ export type TripStackParamList = {
       branch: string;
     };
   };
+  CreateTicket: {
+    bookingId: string;
+    vehicleName: string;
+    licensePlate?: string;
+  };
+  TicketList: {
+      bookingId: string;
+  };
+  TicketDetail: {
+      ticketId: string;
+  };
   IncidentReport: {
     bookingId: string;
     initialData?: {
@@ -255,6 +266,19 @@ export type ProfileStackParamList = {
     requestId: string;
   };
   
+  WalletTopUp: undefined;
+  WalletVNPayWebView: {
+      vnpayUrl: string;
+      transactionId: string;
+      amount: number;
+      expiresAt: string;
+  };
+  WalletTopUpResult: {
+      success: boolean;
+      amount: number;
+      transactionId?: string;
+      errorMessage?: string;
+  };
 };
 
 export type BatteryStackParamList = {

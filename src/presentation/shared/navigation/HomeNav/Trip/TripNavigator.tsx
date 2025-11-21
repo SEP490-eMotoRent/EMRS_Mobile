@@ -10,6 +10,9 @@ import { IncidentPhotoCaptureScreen } from '../../../../features/insuranceClaim/
 import TrackingGPSScreen from '../../../../features/staff/tracking/ui/screens/TrackingGPSScreen';
 import { ReturnReportScreen } from '../../../../features/tripDetails/ui/screens/ReturnReportScreen';
 import { ReturnCompleteScreen } from '../../../../features/tripDetails/ui/screens/ReturnCompleteScreen';
+import { CreateTicketScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/CreateTicketScreen';
+import { TicketListScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/TicketListScreen';
+import { TicketDetailScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/TicketDetailScreen';
 
 const Stack = createStackNavigator<TripStackParamList>();
 
@@ -86,6 +89,72 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
+      {/* Create Ticket */}
+      <Stack.Screen
+        name="CreateTicket"
+        component={CreateTicketScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* Ticket List */}
+      <Stack.Screen
+        name="TicketList"
+        component={TicketListScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* Ticket Detail */}
+      <Stack.Screen
+        name="TicketDetail"
+        component={TicketDetailScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          }),
+        }}
+      />
+
       {/* Incident Report */}
       <Stack.Screen
         name="IncidentReport"
@@ -108,7 +177,7 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* NEW: Incident Photo Capture (Modal-style) */}
+      {/* Incident Photo Capture (Modal-style) */}
       <Stack.Screen
         name="IncidentPhotoCapture"
         component={IncidentPhotoCaptureScreen}
@@ -162,7 +231,7 @@ export const TripNavigator: React.FC = () => {
         component={ReturnCompleteScreen}
         options={{
           headerShown: false,
-          gestureEnabled: false, // Prevent going back after completion
+          gestureEnabled: false,
         }}
       />
     </Stack.Navigator>

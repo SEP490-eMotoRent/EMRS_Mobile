@@ -1,28 +1,27 @@
 import { StackNavigationProp } from "@react-navigation/stack";
 import React from "react";
 import {
+  ActivityIndicator,
   Alert,
-  Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
-  View,
-  ActivityIndicator,
-  RefreshControl,
   Text,
+  View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { DocumentVerificationHelper } from "../../../../../domain/helpers/DocumentVerificationHelper";
 import { ProfileStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { useAppDispatch } from "../../../authentication/store/hooks";
+import { removeAuth } from "../../../authentication/store/slices/authSlice";
+import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
+import { useWallet } from "../../hooks/wallet/useWallet";
 import { ProfileHeader } from "../molecules/ProfileHeader";
 import { QuickSettings } from "../organisms/QuickSettings";
 import { TransactionList } from "../organisms/TransactionList";
 import { VerificationCard } from "../organisms/VerificationCard";
 import { WalletCard } from "../organisms/WalletCard";
 import { Transaction } from "../temp";
-import { removeAuth } from "../../../authentication/store/slices/authSlice";
-import { useAppDispatch } from "../../../authentication/store/hooks";
-import { DocumentVerificationHelper } from "../../../../../domain/helpers/DocumentVerificationHelper";
-import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
-import { useWallet } from "../../hooks/wallet/useWallet";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -49,10 +48,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleEdit = () => navigation.navigate("EditProfile");
   
   const handleAddFunds = () => {
-    // TODO: Navigate to add funds screen
-    console.log("Add funds");
+      navigation.navigate("WalletTopUp");
   };
-  
 
   const handleWithdraw = () => {
     navigation.navigate("CreateWithdrawalRequest");

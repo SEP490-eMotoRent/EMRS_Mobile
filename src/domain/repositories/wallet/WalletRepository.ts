@@ -1,4 +1,7 @@
+import { VNPayCallback } from "../../../data/models/booking/vnpay/VNPayCallback";
 import { CreateWalletResponse } from "../../../data/models/wallet/CreateWalletResponse";
+import { WalletTopUpRequest } from "../../../data/models/wallet/topUp/WalletTopUpRequest";
+import { WalletTopUpResponse } from "../../../data/models/wallet/topUp/WalletTopUpResponse";
 import { WalletBalanceResponse } from "../../../data/models/wallet/WalletBalanceResponse";
 
 /**
@@ -16,4 +19,7 @@ export interface WalletRepository {
      * @returns Promise with wallet balance response
      */
     getMyBalance(): Promise<WalletBalanceResponse>;
+
+    createTopUpRequest(request: WalletTopUpRequest): Promise<WalletTopUpResponse>;
+    processTopUpCallback(vnPayResponse: VNPayCallback): Promise<boolean>;
 }

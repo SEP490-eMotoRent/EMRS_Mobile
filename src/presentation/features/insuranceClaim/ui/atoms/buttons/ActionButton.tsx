@@ -6,45 +6,49 @@ export interface ActionButtonProps {
     icon: string;
     label: string;
     onPress: () => void;
-    variant?: 'primary' | 'secondary' | 'danger';
+    variant?: 'primary' | 'secondary' | 'danger' | 'warning';
     disabled?: boolean;
     style?: ViewStyle;
 }
 
 export const ActionButton: React.FC<ActionButtonProps> = ({
-        icon,
-        label,
-        onPress,
-        variant = 'primary',
-        disabled = false,
-        style,
-    }) => {
-        const getBackgroundColor = () => {
-            if (disabled) return '#2A2A2A';
-            switch (variant) {
+    icon,
+    label,
+    onPress,
+    variant = 'primary',
+    disabled = false,
+    style,
+}) => {
+    const getBackgroundColor = () => {
+        if (disabled) return '#2A2A2A';
+        switch (variant) {
             case 'primary':
-                return '#00ff00'; // Green for emergency actions
+                return '#00ff00';
             case 'secondary':
-                return '#d4c5f9'; // Purple/lavender
+                return '#d4c5f9';
             case 'danger':
-                return '#ef4444'; // Red for emergency/danger
+                return '#ef4444';
+            case 'warning':
+                return '#f59e0b'; // Orange/Amber
             default:
                 return '#00ff00';
-            }
-        };
+        }
+    };
 
-        const getTextColor = () => {
-            if (disabled) return '#666';
-            switch (variant) {
+    const getTextColor = () => {
+        if (disabled) return '#666';
+        switch (variant) {
             case 'danger':
                 return '#fff';
+            case 'warning':
+                return '#000';
             default:
                 return '#000';
-            }
-        };
+        }
+    };
 
-        return (
-            <TouchableOpacity
+    return (
+        <TouchableOpacity
             style={[
                 styles.button,
                 { backgroundColor: getBackgroundColor() },
@@ -53,11 +57,11 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
             onPress={onPress}
             disabled={disabled}
             activeOpacity={0.7}
-            >
+        >
             <Icon name={icon} size={20} color={getTextColor()} />
             <Text style={[styles.label, { color: getTextColor() }]}>{label}</Text>
-            </TouchableOpacity>
-        );
+        </TouchableOpacity>
+    );
 };
 
 const styles = StyleSheet.create({

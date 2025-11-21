@@ -123,6 +123,8 @@ import { TicketRepository } from "../../domain/repositories/ticket/TicketReposit
 import { CreateTicketUseCase } from "../../domain/usecases/ticket/CreateTicketUseCase";
 import { GetTicketDetailUseCase } from "../../domain/usecases/ticket/GetTicketDetailUseCase";
 import { GetTicketsByBookingIdUseCase } from "../../domain/usecases/ticket/GetTicketsByBookingIdUseCase";
+import { CreateTopUpRequestUseCase } from "../../domain/usecases/wallet/topUp/CreateTopUpRequestUseCase";
+import { ProcessTopUpCallbackUseCase } from "../../domain/usecases/wallet/topUp/ProcessTopUpCallbackUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -294,6 +296,12 @@ class ServiceLocator {
     this.services.set("CreateWalletUseCase", createWalletUseCase);
     const getWalletBalanceUseCase = new GetWalletBalanceUseCase(walletRepository);
     this.services.set("GetWalletBalanceUseCase", getWalletBalanceUseCase);
+    //wallet top-up services
+    const createTopUpRequestUseCase = new CreateTopUpRequestUseCase(walletRepository);
+    this.services.set("CreateTopUpRequestUseCase", createTopUpRequestUseCase);
+    const processTopUpCallbackUseCase = new ProcessTopUpCallbackUseCase(walletRepository);
+    this.services.set("ProcessTopUpCallbackUseCase", processTopUpCallbackUseCase);
+
 
     // Withdrawal Request services
     const withdrawalRequestRemoteDataSource = new WithdrawalRequestRemoteDataSourceImpl(axiosClient);
@@ -587,6 +595,14 @@ class ServiceLocator {
 
   getGetTicketDetailUseCase(): GetTicketDetailUseCase {
       return this.get<GetTicketDetailUseCase>('GetTicketDetailUseCase');
+  }
+
+  getCreateTopUpRequestUseCase(): CreateTopUpRequestUseCase {
+    return this.get<CreateTopUpRequestUseCase>('CreateTopUpRequestUseCase');
+  }
+
+  getProcessTopUpCallbackUseCase(): ProcessTopUpCallbackUseCase {
+      return this.get<ProcessTopUpCallbackUseCase>('ProcessTopUpCallbackUseCase');
   }
 }
 
