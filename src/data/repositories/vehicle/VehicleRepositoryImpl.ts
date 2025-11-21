@@ -7,6 +7,7 @@ import { VehicleRemoteDataSource } from "../../datasources/interfaces/remote/veh
 import { CreateVehicleRequest } from "../../models/vehicle/CreateVehicleRequest";
 import { PaginatedVehicleResponse } from "../../models/vehicle/PaginatedVehicle";
 import { VehicleResponse } from "../../models/vehicle/VehicleResponse";
+import { VehicleTrackingResponse } from "../../models/vehicle/VehicleTrackingResponse";
 
 export class VehicleRepositoryImpl implements VehicleRepository {
     constructor(private remote: VehicleRemoteDataSource) {}
@@ -83,6 +84,10 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             totalPages: response.totalPages,
             items: response.items.map((item) => this.mapToEntity(item)),
         };
+    }
+
+    async getTracking(vehicleId: string): Promise<VehicleTrackingResponse> {
+        return await this.remote.getTracking(vehicleId);
     }
 
     private mapToEntity(model: VehicleResponse): Vehicle {

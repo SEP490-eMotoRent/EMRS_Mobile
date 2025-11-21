@@ -17,6 +17,7 @@ export const ApiEndpoints = {
     pricing: {
       create: "/Vehicle/pricing/create",
     },
+    tracking: (vehicleId: string) => `/Vehicle/tracking/${vehicleId}`,
   },
 
   ticket: {
