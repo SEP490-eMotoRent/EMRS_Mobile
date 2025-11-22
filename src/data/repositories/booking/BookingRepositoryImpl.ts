@@ -5,6 +5,7 @@ import { RentalContract } from "../../../domain/entities/booking/RentalContract"
 import { RentalReceipt } from "../../../domain/entities/booking/RentalReceipt";
 import { RentalPricing } from "../../../domain/entities/financial/RentalPricing";
 import { InsurancePackage } from "../../../domain/entities/insurance/InsurancePackage";
+import { Branch } from "../../../domain/entities/operations/Branch";
 import { Vehicle } from "../../../domain/entities/vehicle/Vehicle";
 import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
 import {
@@ -26,6 +27,7 @@ import { PaginatedBookingResponse } from "../../models/booking/PaginatedBookingR
 import {
   AccountBookingResponse,
   BookingForStaffResponse,
+  BranchBookingResponse,
   InsurancePackageBookingResponse,
   RentalContractBookingResponse,
   RentalPricingBookingResponse,
@@ -100,7 +102,7 @@ export class BookingRepositoryImpl implements BookingRepository {
 
     return {
       booking: this.mapVNPayResponseToEntity(response),
-      vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backendQ 
+      vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backendQ
     };
   }
 
@@ -285,9 +287,9 @@ export class BookingRepositoryImpl implements BookingRepository {
   // ✅ NEW: Cancel booking
   async cancelBooking(bookingId: string): Promise<Booking> {
     console.log("🔄 [REPOSITORY] Cancelling booking:", bookingId);
-    
+
     const response = await this.remote.cancelBooking(bookingId);
-    
+
     // Map the BookingResponse to Booking entity
     const cancelledBooking = new Booking(
       response.id,
@@ -316,7 +318,9 @@ export class BookingRepositoryImpl implements BookingRepository {
       undefined, // vehicle
       response.startDatetime ? new Date(response.startDatetime) : undefined,
       response.endDatetime ? new Date(response.endDatetime) : undefined,
-      response.actualReturnDatetime ? new Date(response.actualReturnDatetime) : undefined,
+      response.actualReturnDatetime
+        ? new Date(response.actualReturnDatetime)
+        : undefined,
       undefined, // insurancePackageId
       undefined, // insurancePackage
       undefined, // rentalContract
@@ -335,7 +339,10 @@ export class BookingRepositoryImpl implements BookingRepository {
       false
     );
 
-    console.log("✅ [REPOSITORY] Booking cancelled and mapped:", cancelledBooking.bookingStatus);
+    console.log(
+      "✅ [REPOSITORY] Booking cancelled and mapped:",
+      cancelledBooking.bookingStatus
+    );
     return cancelledBooking;
   }
 
@@ -501,6 +508,10 @@ export class BookingRepositoryImpl implements BookingRepository {
       ? this.mapInsurancePackageFromStaffResponse(dto.insurancePackage)
       : undefined;
 
+    const handoverBranch = dto.handoverBranch
+      ? this.mapBranchFromStaffResponse(dto.handoverBranch)
+      : undefined;
+
     return new Booking(
       dto?.id,
       "",
@@ -533,8 +544,8 @@ export class BookingRepositoryImpl implements BookingRepository {
       insurancePackage,
       rentalContract,
       rentalReceipt ? [rentalReceipt] : undefined, // ✅ Convert to array
-      undefined,
-      undefined,
+      handoverBranch?.id ?? "unknown-handover-branch",
+      handoverBranch,
       undefined,
       undefined,
       undefined, // feedback
@@ -545,6 +556,25 @@ export class BookingRepositoryImpl implements BookingRepository {
       null,
       null,
       false
+    );
+  }
+
+  private mapBranchFromStaffResponse(dto: BranchBookingResponse): Branch {
+    return new Branch(
+      dto.id,
+      dto.branchName,
+      dto.address,
+      dto.city,
+      dto.phone,
+      dto.email,
+      0,
+      0,
+      dto.openingTime,
+      dto.closingTime,
+      [],
+      [],
+      [],
+      [],
     );
   }
 
@@ -628,6 +658,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.checkListFile?.[0],
       dto.bookingId,
       dto.staffId,
+      undefined,
       undefined,
       undefined,
       dto.notes,

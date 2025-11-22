@@ -6,7 +6,9 @@ import { VehicleRepository } from "../../../domain/repositories/vehicle/VehicleR
 import { VehicleRemoteDataSource } from "../../datasources/interfaces/remote/vehicle/VehicleRemoteDataSource";
 import { CreateVehicleRequest } from "../../models/vehicle/CreateVehicleRequest";
 import { PaginatedVehicleResponse } from "../../models/vehicle/PaginatedVehicle";
+import { VehicleDetailResponse } from "../../models/vehicle/VehicleDetailResponse";
 import { VehicleResponse } from "../../models/vehicle/VehicleResponse";
+import { VehicleTrackingResponse } from "../../models/vehicle/VehicleTrackingResponse";
 
 export class VehicleRepositoryImpl implements VehicleRepository {
     constructor(private remote: VehicleRemoteDataSource) {}
@@ -41,7 +43,7 @@ export class VehicleRepositoryImpl implements VehicleRepository {
 
     async getById(id: string): Promise<Vehicle | null> {
         const response = await this.remote.getById(id);
-        return response ? this.mapToEntity(response) : null;
+        return response ? this.mapToEntityDetail(response) : null;
     }
 
     async update(vehicle: Vehicle): Promise<void> {
@@ -83,6 +85,10 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             totalPages: response.totalPages,
             items: response.items.map((item) => this.mapToEntity(item)),
         };
+    }
+
+    async getTracking(vehicleId: string): Promise<VehicleTrackingResponse> {
+        return await this.remote.getTracking(vehicleId);
     }
 
     private mapToEntity(model: VehicleResponse): Vehicle {
@@ -167,6 +173,78 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             nextMaintenanceDue,
             model?.fileUrl,
             purchaseDate,
+            new Date(),
+            null,
+            null,
+            false
+        );
+    }
+
+    
+
+    private mapToEntityDetail(model: VehicleDetailResponse): Vehicle {
+        // Create RentalPricing from response if available
+        const rentalPricing = model.vehicleModel.rentalPricing 
+            ? new RentalPricing(
+                model.vehicleModel.rentalPricing.id,
+                model.vehicleModel.rentalPricing.rentalPrice,
+                model.vehicleModel.rentalPricing.excessKmPrice,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+              )
+            : new RentalPricing('default_pricing', 0, 0, []);
+
+        // Create VehicleModel - using minimal data since backend doesn't return full model
+        const vehicleModel = new VehicleModel(
+            model.vehicleModel.id,           // Derive from vehicle ID
+            model.vehicleModel.modelName,               // Backend doesn't return this
+            model.vehicleModel.category,
+            model.vehicleModel.batteryCapacityKwh,
+            model.vehicleModel.maxRangeKm,
+            model.vehicleModel.maxSpeedKmh,
+            model.vehicleModel.description,
+            rentalPricing.id,
+            rentalPricing
+        );
+
+        // Create Branch - minimal data since backend doesn't return this
+        const branch = new Branch(
+            model.branch.id,
+            model.branch.branchName,
+            model.branch.address,
+            model.branch.city,
+            model.branch.phone,
+            model.branch.email,
+            model.branch.latitude,
+            model.branch.longitude,
+            model.branch.openingTime,
+            model.branch.closingTime,
+        );
+
+        // Create Vehicle entity with all required parameters
+        return new Vehicle(
+            model.id,
+            model.licensePlate,
+            model.color,
+            model.currentOdometerKm,
+            model.batteryHealthPercentage,
+            model.status,
+            model.description,
+            branch.id,
+            vehicleModel.id,
+            branch,
+            vehicleModel,
+            [],
+            [],
+            [],
+            undefined,
+            undefined,
+            undefined,
+            model?.fileUrl,
+            undefined,
             new Date(),
             null,
             null,

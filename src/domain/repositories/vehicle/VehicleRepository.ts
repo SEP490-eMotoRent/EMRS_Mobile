@@ -1,5 +1,6 @@
 import { PaginatedVehicleResponse } from '../../../data/models/vehicle/PaginatedVehicle';
 import { Vehicle } from '../../entities/vehicle/Vehicle';
+import { VehicleTrackingResponse } from '../../../data/models/vehicle/VehicleTrackingResponse';
 
 export interface VehicleRepository {
     create(vehicle: Vehicle): Promise<void>;
@@ -19,4 +20,5 @@ export interface VehicleRepository {
         pageSize: number,
         pageNum: number
     ): Promise<PaginatedVehicleResponse>;
+    getTracking(vehicleId: string): Promise<VehicleTrackingResponse>;
 }

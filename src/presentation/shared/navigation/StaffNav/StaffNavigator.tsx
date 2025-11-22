@@ -16,6 +16,7 @@ import {
   AwaitingApprovalScreen,
   HandoverDocumentScreen,
   HandoverCompleteScreen,
+  RentedVehicleDetailsScreen,
 } from "../../../features/staff/handover/ui/screens";
 import { ChargingScreen } from "../../../features/staff/charging/ui/screens";
 import {
@@ -31,6 +32,7 @@ import {
 } from "../../../features/staff/scan/ui/screens";
 import TrackingGPSScreen from "../../../features/staff/tracking/ui/screens/TrackingGPSScreen";
 import { BookingReturnListScreen } from "../../../features/staff/return/ui/screens/BookingReturnListScreen";
+import { FaceScanCameraScreen } from "../../../features/staff/scan/ui/screens/FaceScanCameraScreen ";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -115,7 +117,12 @@ export const StaffNavigator: React.FC = () => {
         <Stack.Screen name="ReturnReport" component={ReturnReportScreen} />
         <Stack.Screen name="TrackingGPS" component={TrackingGPSScreen} />
         <Stack.Screen name="ScanFace" component={ScanFaceScreen} />
+        <Stack.Screen name="FaceScanCamera" component={FaceScanCameraScreen} />
         <Stack.Screen name="BookingReturnList" component={BookingReturnListScreen} />
+        <Stack.Screen
+          name="RentedVehicleDetails"
+          component={RentedVehicleDetailsScreen}
+        />
       </Stack.Navigator>
     </View>
   );

@@ -6,6 +6,7 @@ export const ApiEndpoints = {
   vehicle: {
     paginatedList: "/Vehicle",
     list: "/Vehicle/list",
+    detail: (id: string) => `/Vehicle/${id}`,
     create: "/Vehicle/create",
     model: {
       create: "/Vehicle/model/create",
@@ -17,6 +18,7 @@ export const ApiEndpoints = {
     pricing: {
       create: "/Vehicle/pricing/create",
     },
+    tracking: (vehicleId: string) => `/Vehicle/tracking/${vehicleId}`,
   },
 
   
@@ -94,8 +96,10 @@ export const ApiEndpoints = {
 
   // Receipt endpoints
   receipt: {
+    changeVehicle: "/rental/receipt/change/vehicle",
     create: "/rental/receipt",
-    getDetails: (bookingId: string) => `/rental/receipt/${bookingId}`,
+    getListRentalReceipt: (bookingId: string) => `/rental/receipt/${bookingId}`,
+    getDetailRentalReceipt: (rentalReceiptId: string) => `/rental/receipt/by/${rentalReceiptId}`,
     generateContract: (bookingId: string, receiptId: string) =>
       `/rental/contract/${bookingId}/${receiptId}`,
     getContract: (bookingId: string) => `/rental/contract/${bookingId}`,
