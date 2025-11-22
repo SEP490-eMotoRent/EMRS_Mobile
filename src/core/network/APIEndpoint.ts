@@ -131,6 +131,12 @@ export const ApiEndpoints = {
     detail: (id: string) => `/InsuranceClaim/${id}`,
   },
 
+  // Holiday Pricing endpoints
+  holidayPricing: {
+    getAll: "/HolidayPricing",
+    getById: (id: string) => `/HolidayPricing/${id}`,
+  },
+
   // Rental return endpoints
   rentalReturn: {
     analyzeReturn: "/rental-return/return/upload-and-analyze",

@@ -52,11 +52,13 @@ export const InsurancePlansScreen: React.FC = () => {
         duration, 
         rentalDays,
         rentalPrice,
-        // ✅ NEW: Receive from ConfirmRentalDurationScreen
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
         vehicleCategory,
+        // ✅ NEW: Receive holiday data
+        holidaySurcharge,
+        holidayDayCount,
     } = route.params;
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
@@ -139,11 +141,13 @@ export const InsurancePlansScreen: React.FC = () => {
             insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
             total: fullTotal,
-            // ✅ NEW: Pass through to PaymentConfirmation
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
             vehicleCategory,
+            // ✅ NEW: Pass through holiday data
+            holidaySurcharge,
+            holidayDayCount,
         });
     };
 
@@ -224,6 +228,18 @@ export const InsurancePlansScreen: React.FC = () => {
                         <Text style={styles.summaryLabel}>Phí thuê xe</Text>
                         <Text style={styles.summaryValue}>{rentalFee}</Text>
                     </View>
+
+                    {/* ✅ NEW: Show holiday surcharge if applicable */}
+                    {holidaySurcharge > 0 && (
+                        <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabelHoliday}>
+                                ↳ Bao gồm phụ thu lễ ({holidayDayCount} ngày)
+                            </Text>
+                            <Text style={styles.summaryValueHoliday}>
+                                +{holidaySurcharge.toLocaleString()}đ
+                            </Text>
+                        </View>
+                    )}
                     
                     <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>Phí bảo hiểm</Text>
@@ -380,6 +396,17 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 14,
         fontWeight: "600",
+    },
+    // ✅ NEW: Holiday surcharge styles
+    summaryLabelHoliday: {
+        color: "#fca5a5",
+        fontSize: 12,
+        marginLeft: 12,
+    },
+    summaryValueHoliday: {
+        color: "#fca5a5",
+        fontSize: 12,
+        fontWeight: "500",
     },
     depositRow: {
         flexDirection: "row",

@@ -6,13 +6,17 @@ interface CostBreakdownProps {
   rentalFee: string;
   insuranceFee: string;
   securityDeposit: string;
-  total: string; // Chỉ để đồng bộ với backend, không dùng để tính
+  total: string;
+  holidaySurcharge?: number;
+  holidayDayCount?: number;
 }
 
 export const CostBreakdown: React.FC<CostBreakdownProps> = ({
   rentalFee,
   insuranceFee,
   securityDeposit,
+  holidaySurcharge = 0,
+  holidayDayCount = 0,
 }) => {
   const parsePrice = (price: string): number => {
     return parseInt(price.replace(/[^0-9]/g, ""), 10) || 0;
@@ -22,7 +26,6 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({
   const insurance = parsePrice(insuranceFee);
   const deposit = parsePrice(securityDeposit);
 
-  // Tổng tiền phải trả NGAY = Thuê + Bảo hiểm + Cọc
   const immediatePayment = rental + insurance + deposit;
 
   const format = (num: number) => num.toLocaleString("vi-VN") + "đ";
@@ -32,14 +35,21 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({
       <Text style={styles.title}>Chi tiết thanh toán</Text>
       <View style={styles.content}>
         <CostRow label="Phí Thuê Xe" value={format(rental)} />
+        
+        {/* ✅ Holiday Surcharge - shown as sub-item if applicable */}
+        {holidaySurcharge > 0 && (
+          <View style={styles.holidayRow}>
+            <Text style={styles.holidayLabel}>
+              ↳ Bao gồm phụ thu lễ ({holidayDayCount} ngày)
+            </Text>
+            <Text style={styles.holidayValue}>
+              +{format(holidaySurcharge)}
+            </Text>
+          </View>
+        )}
+        
         <CostRow label="Bảo Hiểm" value={format(insurance)} highlight />
         <CostRow label="Đặt Cọc" value={format(deposit)} highlight />
-        {/* <CostRow
-          label="Tổng cộng"
-          value={format(immediatePayment)}
-          isTotal
-          highlightValue
-        /> */}
       </View>
 
       <View style={styles.immediateSection}>
@@ -47,6 +57,13 @@ export const CostBreakdown: React.FC<CostBreakdownProps> = ({
           <Text style={styles.immediateLabel}>Tổng cộng</Text>
           <Text style={styles.immediateValue}>{format(immediatePayment)}</Text>
         </View>
+        
+        {/* ✅ Holiday notice */}
+        {holidaySurcharge > 0 && (
+          <Text style={styles.holidayNotice}>
+            * Giá đã bao gồm phụ thu ngày lễ
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -68,6 +85,32 @@ const styles = StyleSheet.create({
   content: {
     gap: 4,
     marginBottom: 16,
+  },
+  // ✅ Holiday Surcharge Styles
+  holidayRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingLeft: 12,
+    paddingVertical: 4,
+    marginTop: -4,
+    marginBottom: 4,
+  },
+  holidayLabel: {
+    color: "#fca5a5",
+    fontSize: 12,
+    flex: 1,
+  },
+  holidayValue: {
+    color: "#fca5a5",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  holidayNotice: {
+    color: "#fca5a5",
+    fontSize: 11,
+    marginTop: 8,
+    textAlign: "right",
   },
   immediateSection: {
     borderTopWidth: 1,

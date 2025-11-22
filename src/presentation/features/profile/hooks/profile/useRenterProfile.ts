@@ -1,12 +1,11 @@
-// src/features/profile/hooks/useRenterProfile.ts
 import { useEffect, useState } from 'react';
-import { RenterResponse } from '../../../../../data/models/account/renter/RenterResponse';
+import { MembershipResponse, RenterResponse } from '../../../../../data/models/account/renter/RenterResponse';
 import { Renter } from '../../../../../domain/entities/account/Renter';
+import { Membership } from '../../../../../domain/entities/financial/Membership';
 import { useAppSelector } from '../../../authentication/store/hooks';
 import sl from '../../../../../core/di/InjectionContainer';
 
-
-// NORMALIZE AVATAR URL - FIX THE ARRAY ISSUE HERE
+// NORMALIZE AVATAR URL
 const normalizeAvatarUrl = (url: any): string | null => {
     if (!url) return null;
     if (typeof url === 'string') return url;
@@ -16,7 +15,7 @@ const normalizeAvatarUrl = (url: any): string | null => {
     return null;
 };
 
-// NORMALIZE RENTER RESPONSE - FIX AVATAR BEFORE IT SPREADS
+// NORMALIZE RENTER RESPONSE
 const normalizeRenterResponse = (response: any): RenterResponse => {
     return {
         ...response,
@@ -24,7 +23,7 @@ const normalizeRenterResponse = (response: any): RenterResponse => {
     };
 };
 
-// NORMALIZE RENTER ENTITY - FIX AVATAR IN THE ENTITY TOO
+// NORMALIZE RENTER ENTITY
 const normalizeRenter = (renter: any): Renter => {
     return {
         ...renter,
@@ -50,7 +49,6 @@ export const useRenterProfile = () => {
             setLoading(true);
             setError(null);
 
-            // Single fetch using the use case
             const getCurrentRenterUseCase = sl.getGetCurrentRenterUseCase();
             const result = await getCurrentRenterUseCase.execute();
 
@@ -58,10 +56,11 @@ export const useRenterProfile = () => {
                 avatarUrl: result.renter.avatarUrl,
                 isArray: Array.isArray(result.renter.avatarUrl),
                 rawResponseAvatar: result.rawResponse.avatarUrl,
-                isRawArray: Array.isArray(result.rawResponse.avatarUrl)
+                isRawArray: Array.isArray(result.rawResponse.avatarUrl),
+                // ✅ NEW: Log membership
+                membership: result.rawResponse.membership,
             });
 
-            // NORMALIZE THE DATA BEFORE SETTING STATE
             const normalizedRenter = normalizeRenter(result.renter);
             const normalizedResponse = normalizeRenterResponse(result.rawResponse);
 
@@ -69,7 +68,10 @@ export const useRenterProfile = () => {
                 avatarUrl: normalizedRenter.avatarUrl,
                 isArray: Array.isArray(normalizedRenter.avatarUrl),
                 responseAvatar: normalizedResponse.avatarUrl,
-                isResponseArray: Array.isArray(normalizedResponse.avatarUrl)
+                isResponseArray: Array.isArray(normalizedResponse.avatarUrl),
+                // ✅ NEW: Log membership
+                membershipTier: normalizedResponse.membership?.tierName,
+                membershipDiscount: normalizedResponse.membership?.discountPercentage,
             });
 
             setRenter(normalizedRenter);
@@ -90,11 +92,18 @@ export const useRenterProfile = () => {
         await fetchRenterProfile();
     };
 
+    const membership = renterResponse?.membership || null;
+    const membershipTier = membership?.tierName || 'BRONZE';
+    const membershipDiscount = membership?.discountPercentage || 0;
+
     return {
         renter,
         renterResponse,
         loading,
         error,
         refresh,
+        membership,
+        membershipTier,
+        membershipDiscount,
     };
 };

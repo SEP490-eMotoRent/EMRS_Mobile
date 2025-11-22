@@ -8,10 +8,8 @@ export class HolidayPricing implements BaseEntity {
     public isDeleted: boolean;
 
     public holidayName: string;
-    public holidayDate?: Date;
+    public holidayDate: Date | null;
     public priceMultiplier: number;
-    public effectiveFrom?: Date;
-    public effectiveTo?: Date;
     public description: string;
     public isActive: boolean;
 
@@ -21,9 +19,7 @@ export class HolidayPricing implements BaseEntity {
         priceMultiplier: number,
         description: string,
         isActive: boolean,
-        holidayDate?: Date,
-        effectiveFrom?: Date,
-        effectiveTo?: Date,
+        holidayDate: Date | null = null,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
@@ -35,26 +31,40 @@ export class HolidayPricing implements BaseEntity {
         this.deletedAt = deletedAt;
         this.isDeleted = isDeleted;
 
-        // Required fields
         this.holidayName = holidayName;
+        this.holidayDate = holidayDate;
         this.priceMultiplier = priceMultiplier;
         this.description = description;
         this.isActive = isActive;
-
-        // Optional fields
-        this.holidayDate = holidayDate;
-        this.effectiveFrom = effectiveFrom;
-        this.effectiveTo = effectiveTo;
     }
 
-    isActiveNow(): boolean {
-        if (!this.effectiveFrom || !this.effectiveTo) return this.isActive;
-        const now = new Date();
-        return this.isActive && now >= this.effectiveFrom && now <= this.effectiveTo;
+    /**
+     * Check if a given date falls on this holiday
+     */
+    isDateOnHoliday(date: Date): boolean {
+        if (!this.holidayDate || !this.isActive) return false;
+        
+        const holidayDateOnly = new Date(this.holidayDate);
+        holidayDateOnly.setHours(0, 0, 0, 0);
+        
+        const checkDateOnly = new Date(date);
+        checkDateOnly.setHours(0, 0, 0, 0);
+        
+        return holidayDateOnly.getTime() === checkDateOnly.getTime();
     }
 
-    applyMultiplier(price: number): number {
-        return price * this.priceMultiplier;
+    /**
+     * Apply price multiplier to base price
+     */
+    applyMultiplier(basePrice: number): number {
+        return basePrice * this.priceMultiplier;
+    }
+
+    /**
+     * Calculate surcharge amount
+     */
+    getSurchargeAmount(basePrice: number): number {
+        return basePrice * (this.priceMultiplier - 1);
     }
 
     delete(): void {

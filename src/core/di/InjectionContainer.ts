@@ -104,27 +104,32 @@ import { GetConfigurationByIdUseCase } from "../../domain/usecases/configuration
 import { GetConfigurationsByTypeUseCase } from "../../domain/usecases/configuration/GetConfigurationsByTypeUseCase";
 // Charging imports
 import { ChargingRemoteDataSourceImpl } from '../../data/datasources/implementations/remote/charging/ChargingRemoteDataSourceImpl';
+import { TicketRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/ticket/TicketRemoteDataSourceImpl";
 import { WithdrawalRequestRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/withdrawRequest/WithdrawalRequestRemoteDataSourceImpl";
 import { ChargingRepositoryImpl } from '../../data/repositories/charging/ChargingRepositoryImpl';
+import { TicketRepositoryImpl } from "../../data/repositories/ticket/TicketRepositoryImpl";
 import { WithdrawalRequestRepositoryImpl } from "../../data/repositories/withdrawRequest/WithdrawalRequestRepositoryImpl";
 import { ChargingRepository } from '../../domain/repositories/charging/ChargingRepository';
+import { TicketRepository } from "../../domain/repositories/ticket/TicketRepository";
 import { WithdrawalRequestRepository } from "../../domain/repositories/withdrawRequest/WithdrawalRequestRepository";
 import { GoogleLoginUseCase } from "../../domain/usecases/account/Google/GoogleLoginUseCase";
 import { GoogleSignInUseCase } from "../../domain/usecases/account/Google/GoogleSignInUseCase";
 import { CancelBookingUseCase } from "../../domain/usecases/booking/CancelBookingUseCase";
 import { GetChargingByLicensePlateUseCase } from "../../domain/usecases/charging/GetChargingByLicensePlateUseCase";
-import { CancelWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CancelWithdrawalRequestUseCase";
-import { CreateWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CreateWithdrawalRequestUseCase";
-import { GetMyWithdrawalRequestsUseCase } from "../../domain/usecases/withdrawRequest/GetMyWithdrawalRequestsUseCase";
-import { GetWithdrawalRequestDetailUseCase } from "../../domain/usecases/withdrawRequest/GetWithdrawalRequestDetailUseCase";
-import { TicketRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/ticket/TicketRemoteDataSourceImpl";
-import { TicketRepositoryImpl } from "../../data/repositories/ticket/TicketRepositoryImpl";
-import { TicketRepository } from "../../domain/repositories/ticket/TicketRepository";
 import { CreateTicketUseCase } from "../../domain/usecases/ticket/CreateTicketUseCase";
 import { GetTicketDetailUseCase } from "../../domain/usecases/ticket/GetTicketDetailUseCase";
 import { GetTicketsByBookingIdUseCase } from "../../domain/usecases/ticket/GetTicketsByBookingIdUseCase";
 import { CreateTopUpRequestUseCase } from "../../domain/usecases/wallet/topUp/CreateTopUpRequestUseCase";
 import { ProcessTopUpCallbackUseCase } from "../../domain/usecases/wallet/topUp/ProcessTopUpCallbackUseCase";
+import { CancelWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CancelWithdrawalRequestUseCase";
+import { CreateWithdrawalRequestUseCase } from "../../domain/usecases/withdrawRequest/CreateWithdrawalRequestUseCase";
+import { GetMyWithdrawalRequestsUseCase } from "../../domain/usecases/withdrawRequest/GetMyWithdrawalRequestsUseCase";
+import { GetWithdrawalRequestDetailUseCase } from "../../domain/usecases/withdrawRequest/GetWithdrawalRequestDetailUseCase";
+import { HolidayPricingRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/financial/holidayPricing/HolidayPricingRemoteDataSourceImpl";
+import { HolidayPricingRepositoryImpl } from "../../data/repositories/financial/HolidayPricingRepositoryImpl";
+import { HolidayPricingRepository } from "../../domain/repositories/financial/HolidayPricingRepository";
+import { GetAllHolidayPricingsUseCase } from "../../domain/usecases/holidayPricing/GetAllHolidayPricingsUseCase";
+import { GetHolidayPricingByIdUseCase } from "../../domain/usecases/holidayPricing/GetHolidayPricingByIdUseCase";
 
 /**
  * Service Locator / Dependency Injection Container
@@ -302,6 +307,15 @@ class ServiceLocator {
     const processTopUpCallbackUseCase = new ProcessTopUpCallbackUseCase(walletRepository);
     this.services.set("ProcessTopUpCallbackUseCase", processTopUpCallbackUseCase);
 
+    //Holiday Pricing services
+    const holidayPricingRemoteDataSource = new HolidayPricingRemoteDataSourceImpl(axiosClient);
+    this.services.set("HolidayPricingRemoteDataSource", holidayPricingRemoteDataSource);
+    const holidayPricingRepository = new HolidayPricingRepositoryImpl(holidayPricingRemoteDataSource);
+    this.services.set("HolidayPricingRepository", holidayPricingRepository);
+    const getAllHolidayPricingsUseCase = new GetAllHolidayPricingsUseCase(holidayPricingRepository);
+    this.services.set("GetAllHolidayPricingsUseCase", getAllHolidayPricingsUseCase);
+    const getHolidayPricingByIdUseCase = new GetHolidayPricingByIdUseCase(holidayPricingRepository);
+    this.services.set("GetHolidayPricingByIdUseCase", getHolidayPricingByIdUseCase);
 
     // Withdrawal Request services
     const withdrawalRequestRemoteDataSource = new WithdrawalRequestRemoteDataSourceImpl(axiosClient);
@@ -603,6 +617,18 @@ class ServiceLocator {
 
   getProcessTopUpCallbackUseCase(): ProcessTopUpCallbackUseCase {
       return this.get<ProcessTopUpCallbackUseCase>('ProcessTopUpCallbackUseCase');
+  }
+
+  getHolidayPricingRepository(): HolidayPricingRepository {
+    return this.get<HolidayPricingRepository>('HolidayPricingRepository');
+  }
+
+  getGetAllHolidayPricingsUseCase(): GetAllHolidayPricingsUseCase {
+      return this.get<GetAllHolidayPricingsUseCase>('GetAllHolidayPricingsUseCase');
+  }
+
+  getGetHolidayPricingByIdUseCase(): GetHolidayPricingByIdUseCase {
+      return this.get<GetHolidayPricingByIdUseCase>('GetHolidayPricingByIdUseCase');
   }
 }
 

@@ -15,6 +15,9 @@ import { ScanFaceResponse } from "../../../../models/account/renter/ScanFaceResp
 import { UpdateRenterResponse } from "../../../../models/account/renter/update/RenterAccountUpdateResponse";
 import { UpdateRenterRequest } from "../../../../models/account/renter/update/UpdateRenterRequest";
 import { RenterRemoteDataSource } from "../../../interfaces/remote/account/RenterRemoteDataSource";
+import { Account } from "../../../../../domain/entities/account/Account";
+import { Renter } from "../../../../../domain/entities/account/Renter";
+import { Membership } from "../../../../../domain/entities/financial/Membership";
 
 interface JWTPayload {
   Id: string;
@@ -231,5 +234,83 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         error.response?.status || 500
       );
     }
-  }
+
+    private mapRenterResponseToEntity(response: RenterResponse): Renter {
+        const account = new Account(
+            response.account.id,
+            response.account.username,
+            '',
+            response.account.role,
+            response.account.fullname,
+            undefined, undefined, false, undefined, undefined,
+            null,
+            undefined,
+            new Date(), null, null, false
+        );
+
+        // ✅ UPDATED: Use real membership from API response
+        let membership: Membership;
+        if (response.membership) {
+            membership = new Membership(
+                response.membership.id,
+                response.membership.tierName,
+                response.membership.minBookings,
+                response.membership.discountPercentage,
+                0, // maxDiscountAmount - not in API, default to 0
+                response.membership.description,
+                [], // renters - not needed
+                new Date(response.membership.createdAt),
+                response.membership.updatedAt ? new Date(response.membership.updatedAt) : null,
+                null,
+                false
+            );
+        } else {
+            // Fallback for users without membership
+            membership = new Membership(
+                '',
+                'BRONZE',
+                0,
+                0,
+                0,
+                'Hạng thành viên mới',
+                [],
+                new Date(), null, null, false
+            );
+        }
+
+        // Parse dateOfBirth from "DD/MM/YYYY" format
+        let dateOfBirth = response.dateOfBirth;
+        if (response.dateOfBirth && response.dateOfBirth.includes('/')) {
+            const [day, month, year] = response.dateOfBirth.split('/');
+            dateOfBirth = `${year}-${month}-${day}`;
+        }
+
+        const hasCitizenDoc = response.documents.some(
+            doc => doc.documentType === 'Citizen' && doc.verificationStatus
+        );
+
+        const renter = new Renter(
+            response.id,
+            response.email,
+            response.phone,
+            response.address,
+            response.account.id,
+            response.membership?.id || '', // ✅ Use real membership ID
+            hasCitizenDoc,
+            '',
+            dateOfBirth,
+            undefined,
+            response.avatarUrl || '',
+            undefined,
+            account,
+            new Date(),
+            null,
+            null,
+            false
+        );
+
+        renter.attachMembership(membership);
+
+        return renter;
+    }
 }

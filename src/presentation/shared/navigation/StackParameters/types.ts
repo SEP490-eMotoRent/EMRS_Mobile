@@ -68,7 +68,7 @@ export type BookingStackParamList = {
       securityDeposit: number;
       branchOpenTime?: string;
       branchCloseTime?: string;
-      vehicleCategory: string;  // ✅ NEW
+      vehicleCategory: string;
   };
   InsurancePlans: {
       vehicleId: string;
@@ -83,11 +83,16 @@ export type BookingStackParamList = {
       duration: string;
       rentalDays: number;
       rentalPrice: number;
-      // ✅ NEW fields
       baseRentalFee: number;
       rentingRate: number;
       averageRentalPrice: number;
       vehicleCategory: string;
+      holidaySurcharge: number;
+      holidayDayCount: number;
+      // NEW: Membership data
+      membershipDiscountPercentage: number;
+      membershipDiscountAmount: number;
+      membershipTier: string;
   };
   PaymentConfirmation: {
     vehicleId: string;
@@ -106,11 +111,15 @@ export type BookingStackParamList = {
     insuranceFee: string;
     securityDeposit: string;
     total: string;
-    // ✅ NEW fields
     baseRentalFee: number;
     rentingRate: number;
     averageRentalPrice: number;
     vehicleCategory: string;
+    holidaySurcharge: number;
+    holidayDayCount: number;
+    membershipDiscountPercentage: number;
+    membershipDiscountAmount: number;
+    membershipTier: string;
   };
   VNPayWebView: {
       vnpayUrl: string;
