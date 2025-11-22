@@ -16,10 +16,20 @@ export interface DocumentResponse {
     verifiedAt: string;
     renterId: string;
     renter: null;
-    images: Array<{           // ✅ CHANGED from fileUrl: string
-        id: string;           // ✅ Media ID (GUID)
-        fileUrl: string;      // ✅ Media URL
+    images: Array<{
+        id: string;
+        fileUrl: string;
     }>;
+}
+
+export interface MembershipResponse {
+    id: string;
+    tierName: string;
+    minBookings: number;
+    discountPercentage: number;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface RenterResponse {
@@ -31,4 +41,5 @@ export interface RenterResponse {
     avatarUrl: string | null;
     account: AccountResponse;
     documents: DocumentResponse[];
+    membership: MembershipResponse | null;
 }

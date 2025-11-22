@@ -16,6 +16,7 @@ import { useAppDispatch } from "../../../authentication/store/hooks";
 import { removeAuth } from "../../../authentication/store/slices/authSlice";
 import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
 import { useWallet } from "../../hooks/wallet/useWallet";
+// import { MembershipCard } from "../molecules/MembershipCard";
 import { ProfileHeader } from "../molecules/ProfileHeader";
 import { QuickSettings } from "../organisms/QuickSettings";
 import { TransactionList } from "../organisms/TransactionList";
@@ -34,7 +35,14 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const { renter, renterResponse, loading: profileLoading, error: profileError, refresh: refreshProfile } = useRenterProfile();
+  const { 
+    renter, 
+    renterResponse, 
+    loading: profileLoading, 
+    error: profileError, 
+    refresh: refreshProfile,
+    membership,
+  } = useRenterProfile();
   const { balance, loading: walletLoading, error: walletError, refresh: refreshWallet, createWallet } = useWallet();
 
   // Mock transactions
@@ -60,7 +68,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   };
   
   const handleViewAllTransactions = () => {
-    // TODO: Navigate to transactions screen
     console.log("View all transactions");
   };
   
@@ -68,28 +75,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleViewDetails = () => console.log("View verification details");
   const handleInsuranceClaims = () => navigation.navigate("InsuranceClaims");
 
+  // const handleMembershipPress = () => {
+  //   console.log("View membership details");
+  // };
+
   const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
+      { text: "Hủy", style: "cancel" },
       {
-        text: "Sign Out",
+        text: "Đăng xuất",
         style: "destructive",
         onPress: () => dispatch(removeAuth()),
       },
     ]);
   };
 
-  // Handle wallet retry (for error state)
   const handleWalletRetry = async () => {
     await refreshWallet();
   };
 
-  // Handle refresh (pull-to-refresh)
   const handleRefresh = async () => {
     await Promise.all([refreshProfile(), refreshWallet()]);
   };
 
-  // === LOADING & ERROR STATES (Profile) ===
+  // === LOADING & ERROR STATES ===
   if (profileLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -101,7 +110,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   if (profileError || !renter || !renterResponse) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>Error: {profileError || "Profile not found"}</Text>
+        <Text style={styles.errorText}>Lỗi: {profileError || "Không tìm thấy hồ sơ"}</Text>
         <ActivityIndicator size="large" color="#ff0000" />
       </View>
     );
@@ -109,7 +118,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
   // === MEMBER SINCE ===
   const memberSince = new Date(renter.createdAt || Date.now()).toLocaleDateString(
-    "en-US",
+    "vi-VN",
     { year: "numeric", month: "long" }
   );
 
@@ -159,8 +168,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           memberSince={memberSince}
           trips="0"
           distance="0km"
+          membership={membership}
           onEdit={handleEdit}
         />
+
+        {/* MembershipCard - commented out, badge in header is sufficient */}
+        {/* <MembershipCard 
+          membership={membership}
+          onPress={handleMembershipPress}
+        /> */}
+
         <WalletCard
           balance={balance}
           loading={walletLoading}

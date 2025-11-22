@@ -100,11 +100,13 @@ export const PaymentConfirmationScreen: React.FC = () => {
         insuranceFee,
         securityDeposit,
         total,
-        // ✅ NEW: Receive from InsurancePlansScreen
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
         vehicleCategory,
+        // ✅ NEW: Receive holiday data
+        holidaySurcharge,
+        holidayDayCount,
     } = route.params;
 
     const parsePrice = (price: string): number => {
@@ -141,6 +143,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
     console.log("- Security Deposit:", deposit);
     console.log("- Total Amount:", totalAmount);
     console.log("- Vehicle Category:", vehicleCategory);
+    console.log("- Holiday Surcharge:", holidaySurcharge);
+    console.log("- Holiday Day Count:", holidayDayCount);
 
     const parseDateString = (dateStr: string): Date => {
         const monthNames: { [key: string]: number } = {
@@ -201,7 +205,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     ? insurancePlanId
                     : undefined;
 
-            // ✅ UPDATED: Use values from navigation params
             const bookingInput = {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
@@ -209,13 +212,16 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 handoverBranchId: branchId,
                 rentalDays,
                 rentalHours: 0,
-                baseRentalFee: baseRentalFee,           // ✅ From params (original price)
+                baseRentalFee: baseRentalFee,
                 depositAmount: deposit,
-                rentingRate: rentingRate,               // ✅ From params (e.g., 0.80 for 20% off)
-                averageRentalPrice: averageRentalPrice, // ✅ From params (discounted avg)
+                rentingRate: rentingRate,
+                averageRentalPrice: averageRentalPrice,
                 insurancePackageId,
-                totalRentalFee: rental,                 // ✅ Discounted rental fee
+                totalRentalFee: rental,
                 renterId: userId,
+                // ✅ NEW: Include holiday surcharge if backend expects it
+                holidaySurcharge: holidaySurcharge,
+                holidayDayCount: holidayDayCount,
             };
 
             console.log("Creating booking with:", bookingInput);
@@ -347,6 +353,9 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     insuranceFee={insuranceFee}
                     securityDeposit={securityDeposit}
                     total={totalAmountFormatted}
+                    // ✅ NEW: Pass holiday data for display
+                    holidaySurcharge={holidaySurcharge}
+                    holidayDayCount={holidayDayCount}
                 />
 
                 <PaymentNotices />
