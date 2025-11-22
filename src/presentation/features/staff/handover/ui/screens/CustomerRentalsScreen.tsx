@@ -130,11 +130,10 @@ export const CustomerRentalsScreen: React.FC = () => {
   };
 
   const handleSelectVehicle = (booking: Booking) => {
-    console.log("booking vehicle model", booking.vehicleModel);
     navigation.navigate("SelectVehicle", {
       bookingId: booking.id,
       renterName: booking.renter.account.fullname,
-      vehicleModel: booking.vehicleModel,
+      vehicleModel: booking.vehicleModel
     });
   };
 

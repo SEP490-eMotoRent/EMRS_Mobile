@@ -9,6 +9,7 @@ import { PaginatedVehicleResponse } from "../../../../models/vehicle/PaginatedVe
 import { VehicleResponse } from "../../../../models/vehicle/VehicleResponse";
 import { VehicleRemoteDataSource } from "../../../interfaces/remote/vehicle/VehicleRemoteDataSource";
 import { VehicleTrackingResponse } from "../../../../models/vehicle/VehicleTrackingResponse";
+import { VehicleDetailResponse } from "../../../../models/vehicle/VehicleDetailResponse";
 
 export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
@@ -28,10 +29,10 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
     return unwrapResponse(response.data);
   }
 
-  async getById(id: string): Promise<VehicleResponse | null> {
+  async getById(id: string): Promise<VehicleDetailResponse | null> {
     try {
-      const response = await this.axiosClient.get<ApiResponse<VehicleResponse>>(
-        `${ApiEndpoints.vehicle.list}/${id}`
+      const response = await this.axiosClient.get<ApiResponse<VehicleDetailResponse>>(
+        ApiEndpoints.vehicle.detail(id)
       );
       return unwrapResponse(response.data);
     } catch {

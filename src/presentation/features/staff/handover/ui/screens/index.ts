@@ -7,3 +7,4 @@ export { HandoverReceiptReportScreen } from './HandoverReceiptReportScreen';
 export { AwaitingApprovalScreen } from './AwaitingApprovalScreen';
 export { HandoverDocumentScreen } from './HandoverDocumentScreen';
 export { HandoverCompleteScreen } from './HandoverCompleteScreen';
+export { RentedVehicleDetailsScreen } from './RentedVehicleDetailsScreen';

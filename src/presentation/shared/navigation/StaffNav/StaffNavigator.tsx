@@ -16,6 +16,7 @@ import {
   AwaitingApprovalScreen,
   HandoverDocumentScreen,
   HandoverCompleteScreen,
+  RentedVehicleDetailsScreen,
 } from "../../../features/staff/handover/ui/screens";
 import { ChargingScreen } from "../../../features/staff/charging/ui/screens";
 import {
@@ -118,6 +119,10 @@ export const StaffNavigator: React.FC = () => {
         <Stack.Screen name="ScanFace" component={ScanFaceScreen} />
         <Stack.Screen name="FaceScanCamera" component={FaceScanCameraScreen} />
         <Stack.Screen name="BookingReturnList" component={BookingReturnListScreen} />
+        <Stack.Screen
+          name="RentedVehicleDetails"
+          component={RentedVehicleDetailsScreen}
+        />
       </Stack.Navigator>
     </View>
   );

@@ -1,6 +1,7 @@
 import { BaseEntity, CreateEntityInput, UpdateEntityInput } from '../shared/BaseEntity';
 import { Booking } from "./Booking";
 import { Staff } from "../account/Staff";
+import { Vehicle } from "../vehicle/Vehicle";
 
 export class RentalReceipt implements BaseEntity {
     public readonly id: string;
@@ -24,6 +25,7 @@ export class RentalReceipt implements BaseEntity {
     // ✅ RELATIONS
     public booking: Booking;
     public staff: Staff;
+    public vehicle: Vehicle;
 
     constructor(
         id: string,
@@ -38,6 +40,7 @@ export class RentalReceipt implements BaseEntity {
         staffId: string,
         booking: Booking,      // ✅ ADDED
         staff: Staff,          // ✅ ADDED
+        vehicle: Vehicle,
         notes?: string,
         renterConfirmedAt?: Date,
         createdAt: Date = new Date(),
@@ -64,7 +67,7 @@ export class RentalReceipt implements BaseEntity {
         // ✅ RELATIONS
         this.booking = booking;
         this.staff = staff;
-
+        this.vehicle = vehicle;
         this.notes = notes;
         this.renterConfirmedAt = renterConfirmedAt;
     }

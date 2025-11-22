@@ -24,6 +24,7 @@ import { RootState } from "../../../../authentication/store";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
+import { formatVnd } from "../../../../../../core/utils/VndFormatter";
 
 const banner = require("../../../../../../../assets/images/motor-bg.png");
 
@@ -40,7 +41,7 @@ type SelectVehicleScreenRouteProp = RouteProp<
 export const SelectVehicleScreen: React.FC = () => {
   const user = useAppSelector((state: RootState) => state.auth.user);
   const route = useRoute<SelectVehicleScreenRouteProp>();
-  const { bookingId, renterName, vehicleModel } = route.params;
+  const { bookingId, renterName, vehicleModel, vehicleStatus, isChangeVehicle } = route.params;
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -50,7 +51,7 @@ export const SelectVehicleScreen: React.FC = () => {
   const [filterColor, setFilterColor] = useState<string>("");
   const [filterOdometerMin, setFilterOdometerMin] = useState<string>("");
   const [filterBatteryMin, setFilterBatteryMin] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("Booked");
+  const [filterStatus, setFilterStatus] = useState<string>(vehicleStatus || "Booked");
   const [filterVehicleModelId, setFilterVehicleModelId] = useState<string>("");
   const [showModelList, setShowModelList] = useState<boolean>(false);
   const [shouldRefetch, setShouldRefetch] = useState<boolean>(false);
@@ -142,6 +143,7 @@ export const SelectVehicleScreen: React.FC = () => {
   };
 
   const mapVehicleToCard = (vehicle: Vehicle) => {
+    console.log("vehicle", vehicle);
     return {
       id: vehicle.id,
       plate: vehicle.licensePlate || "Không xác định",
@@ -426,7 +428,7 @@ export const SelectVehicleScreen: React.FC = () => {
                     </View>
                     <View style={styles.detailCard}>
                       <View style={styles.detailHeaderRow}>
-                        <Text style={styles.detailLabel}>Màu sắc</Text>
+                        <Text style={styles.detailLabel}>Màu sắc: </Text>
                         <View style={styles.valueRight}>
                           <Text
                             style={[
@@ -441,10 +443,10 @@ export const SelectVehicleScreen: React.FC = () => {
                     </View>
                     <View style={styles.detailCard}>
                       <View style={styles.detailHeaderRow}>
-                        <Text style={styles.detailLabel}>Giá thuê</Text>
+                        <Text style={styles.detailLabel}>Giá thuê: </Text>
                         <View style={styles.valueRight}>
                           <Text style={styles.okText}>
-                            {vehicleCard.rentalPricing}.000 đ/h
+                            {formatVnd(vehicleCard.rentalPricing)}/h
                           </Text>
                         </View>
                       </View>
@@ -472,6 +474,7 @@ export const SelectVehicleScreen: React.FC = () => {
                           currentOdometerKm: vehicle.currentOdometerKm,
                           batteryHealthPercentage:
                             vehicle.batteryHealthPercentage,
+                          isChangeVehicle: isChangeVehicle ?? false,
                         })
                       }
                       // disabled={vehicleCard.disabled}
