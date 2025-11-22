@@ -66,6 +66,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [showReceiptListModal, setShowReceiptListModal] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -220,6 +221,26 @@ export const BookingDetailsScreen: React.FC = () => {
     new Intl.NumberFormat("vi-VN").format(n) + " VND";
   const insurancePackage = booking?.insurancePackage || null;
   const hasInsurancePackage = !!insurancePackage;
+
+  const formatDateTime = (dateString?: string | Date) => {
+    if (!dateString) return "-";
+    const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+    return date.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const handleViewReceipt = (receiptId: string) => {
+    setShowReceiptListModal(false);
+    navigation.navigate("HandoverReceiptReport", {
+      bookingId,
+      rentalReceiptId: receiptId,
+    });
+  };
 
   const openReturnReport = () => {
     if (!booking) return;
@@ -596,19 +617,27 @@ export const BookingDetailsScreen: React.FC = () => {
 
         {hasRentalReceipt && (
           <View style={styles.section}>
-            <SectionHeader title="Biên bản bàn giao" icon="file-text" />
+            <View style={styles.sectionHeaderRow}>
+              <SectionHeader title="Biên bản bàn giao" icon="file-text" />
+              {rentalReceipts && rentalReceipts.length > 1 && (
+                <View style={styles.receiptCountBadge}>
+                  <Text style={styles.receiptCountText}>
+                    {rentalReceipts.length} biên bản
+                  </Text>
+                </View>
+              )}
+            </View>
             <InfoCard>
               <TouchableOpacity
                 style={[styles.actionBtn, styles.receiptBtn]}
-                onPress={() =>
-                  navigation.navigate("HandoverReceiptReport", {
-                    bookingId,
-                    rentalReceiptId: rentalReceipts?.[0]?.id || "",
-                  })
-                }
+                onPress={() => setShowReceiptListModal(true)}
               >
                 <AntDesign name="file" size={16} color="#000" />
-                <Text style={styles.actionBtnText}>Xem biên bản bàn giao</Text>
+                <Text style={styles.actionBtnText}>
+                  {rentalReceipts && rentalReceipts.length > 1
+                    ? `Xem ${rentalReceipts.length} biên bản bàn giao`
+                    : "Xem biên bản bàn giao"}
+                </Text>
               </TouchableOpacity>
               {rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
                 <TouchableOpacity
@@ -912,6 +941,157 @@ export const BookingDetailsScreen: React.FC = () => {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </RNModal>
+
+      {/* Receipt List Modal */}
+      <RNModal
+        visible={showReceiptListModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReceiptListModal(false)}
+      >
+        <View style={styles.receiptModalBackdrop}>
+          <View style={styles.receiptModalContainer}>
+            <View style={styles.receiptModalHeader}>
+              <View>
+                <Text style={styles.receiptModalTitle}>Danh sách biên bản</Text>
+                <Text style={styles.receiptModalSubtitle}>
+                  {rentalReceipts?.length || 0} biên bản bàn giao
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowReceiptListModal(false)}
+                style={styles.receiptModalCloseBtn}
+              >
+                <AntDesign name="close" size={20} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.receiptListContent}
+            >
+              {rentalReceipts?.map((receipt, index) => {
+                const receiptId = receipt.id
+                  ? `#${receipt.id.slice(-8).toUpperCase()}`
+                  : "-";
+                // Handle both entity structure and API response structure
+                const vehicle = (receipt as any).vehicle || receipt.vehicle;
+                const vehicleInfo = vehicle
+                  ? `${vehicle.licensePlate || "-"} · ${vehicle.color || "-"}`
+                  : "-";
+                // Handle both handOverVehicleImageFiles (entity) and API response
+                const imageFiles =
+                  (receipt as any).handOverVehicleImageFiles ||
+                  receipt.handOverVehicleImageFiles ||
+                  [];
+                const imageCount = Array.isArray(imageFiles)
+                  ? imageFiles.length
+                  : 0;
+                const isConfirmed = !!receipt.renterConfirmedAt;
+
+                return (
+                  <TouchableOpacity
+                    key={receipt.id || index}
+                    style={styles.receiptCard}
+                    onPress={() => handleViewReceipt(receipt.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.receiptCardHeader}>
+                      <View style={styles.receiptCardLeft}>
+                        <View style={styles.receiptNumberBadge}>
+                          <Text style={styles.receiptNumberText}>
+                            {index + 1}
+                          </Text>
+                        </View>
+                        <View style={styles.receiptCardInfo}>
+                          <Text style={styles.receiptCardId}>Mã: {receiptId}</Text>
+                        </View>
+                      </View>
+                      {isConfirmed && (
+                        <View style={styles.confirmedBadge}>
+                          <AntDesign name="check-circle" size={14} color="#67D16C" />
+                          <Text style={styles.confirmedText}>Đã xác nhận</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {receipt.notes && (
+                      <View style={styles.receiptNotes}>
+                        <AntDesign
+                          name="file-text"
+                          size={12}
+                          color={colors.text.secondary}
+                        />
+                        <Text style={styles.receiptNotesText} numberOfLines={2}>
+                          Ghi chú: {receipt.notes}
+                        </Text>
+                      </View>
+                    )}
+
+                    <View style={styles.receiptVehicleInfo}>
+                      <View style={styles.receiptVehicleRow}>
+                        <AntDesign
+                          name="car"
+                          size={14}
+                          color={colors.text.secondary}
+                        />
+                        <Text style={styles.receiptVehicleText}>
+                          {vehicleInfo}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.receiptMetrics}>
+                      <View style={styles.receiptMetricItem}>
+                        <View style={styles.receiptMetricIcon}>
+                          <AntDesign name="dashboard" size={12} color="#fff" />
+                        </View>
+                        <Text style={styles.receiptMetricLabel}>Số km</Text>
+                        <Text style={styles.receiptMetricValue}>
+                          {receipt.startOdometerKm?.toLocaleString("vi-VN") ||
+                            0}{" "}
+                          km
+                        </Text>
+                      </View>
+                      <View style={styles.receiptMetricItem}>
+                        <View style={styles.receiptMetricIcon}>
+                          <AntDesign name="thunderbolt" size={12} color="#fff" />
+                        </View>
+                        <Text style={styles.receiptMetricLabel}>Pin</Text>
+                        <Text style={styles.receiptMetricValue}>
+                          {receipt.startBatteryPercentage || 0}%
+                        </Text>
+                      </View>
+                      {imageCount > 0 && (
+                        <View style={styles.receiptMetricItem}>
+                          <View style={styles.receiptMetricIcon}>
+                            <AntDesign name="picture" size={12} color="#fff" />
+                          </View>
+                          <Text style={styles.receiptMetricLabel}>Ảnh</Text>
+                          <Text style={styles.receiptMetricValue}>
+                            {imageCount}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.receiptCardFooter}>
+                      <Text style={styles.receiptCardActionText}>
+                        Nhấn để xem chi tiết
+                      </Text>
+                      <AntDesign
+                        name="arrow-right"
+                        size={16}
+                        color={colors.text.secondary}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         </View>
       </RNModal>
@@ -1507,5 +1687,217 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: 12,
     marginTop: 2,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  receiptCountBadge: {
+    backgroundColor: "rgba(201,182,255,0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(201,182,255,0.3)",
+  },
+  receiptCountText: {
+    color: "#C9B6FF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  // Receipt List Modal Styles
+  receiptModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "flex-end",
+  },
+  receiptModalContainer: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "90%",
+    paddingTop: 8,
+  },
+  receiptModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  receiptModalTitle: {
+    color: colors.text.primary,
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  receiptModalSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  receiptModalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#2a2a2a",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  receiptListScroll: {
+    flex: 1,
+  },
+  receiptListContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  receiptCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  receiptCardHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  receiptCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  receiptNumberBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#C9B6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  receiptNumberText: {
+    color: "#000",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  receiptCardInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  receiptCardId: {
+    color: colors.text.primary,
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  receiptCardDate: {
+    color: colors.text.secondary,
+    fontSize: 12,
+  },
+  confirmedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(103,209,108,0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(103,209,108,0.3)",
+  },
+  confirmedText: {
+    color: "#67D16C",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  receiptNotes: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#131313",
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#222",
+  },
+  receiptNotesText: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    flex: 1,
+    lineHeight: 16,
+  },
+  receiptVehicleInfo: {
+    marginBottom: 12,
+  },
+  receiptVehicleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  receiptVehicleText: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  receiptMetrics: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  receiptMetricItem: {
+    flex: 1,
+    backgroundColor: "#131313",
+    padding: 10,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#222",
+  },
+  receiptMetricIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(201,182,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+  },
+  receiptMetricLabel: {
+    color: colors.text.secondary,
+    fontSize: 10,
+    marginBottom: 2,
+  },
+  receiptMetricValue: {
+    color: colors.text.primary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  receiptCardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#2a2a2a",
+  },
+  receiptCardActionText: {
+    color: "#C9B6FF",
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

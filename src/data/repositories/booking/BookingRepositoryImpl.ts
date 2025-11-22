@@ -660,6 +660,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.staffId,
       undefined,
       undefined,
+      undefined,
       dto.notes,
       undefined,
       undefined,
