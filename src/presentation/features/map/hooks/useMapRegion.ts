@@ -29,8 +29,9 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
     const lastGeocodedAddressRef = useRef<string>('');
     const isMountedRef = useRef<boolean>(true);
     const hasInitializedRef = useRef<boolean>(false);
+    const currentGeocodeIdRef = useRef<number>(0); // ✅ Track geocode requests
 
-    const geocodeAddress = useCallback(async (addr: string) => {
+    const geocodeAddress = useCallback(async (addr: string, requestId: number) => {
         if (lastGeocodedAddressRef.current === addr) {
             return;
         }
@@ -42,12 +43,17 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
             const geocodingRepo = sl.getGeocodingRepository();
             const coordinates = await geocodingRepo.geocodeAddress(addr);
 
-            if (!isMountedRef.current) return;
+            // ✅ CRITICAL: Only update if this is still the latest request
+            if (!isMountedRef.current || currentGeocodeIdRef.current !== requestId) {
+                console.log('⏭️ Geocode outdated, skipping');
+                return;
+            }
 
             lastGeocodedAddressRef.current = addr;
             setSearchedLocation(coordinates);
             setHasSearched(true);
             
+            // ✅ Single atomic region update
             setRegion({
                 latitude: coordinates.latitude,
                 longitude: coordinates.longitude,
@@ -55,13 +61,15 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
                 longitudeDelta: 0.02,
             });
         } catch (err) {
-            if (!isMountedRef.current) return;
+            if (!isMountedRef.current || currentGeocodeIdRef.current !== requestId) {
+                return;
+            }
             
             setError(err instanceof Error ? err.message : 'Geocoding failed');
             setSearchedLocation(null);
             setHasSearched(false);
         } finally {
-            if (isMountedRef.current) {
+            if (isMountedRef.current && currentGeocodeIdRef.current === requestId) {
                 setGeocoding(false);
             }
         }
@@ -69,12 +77,17 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
 
     useEffect(() => {
         if (address && address !== "1 Phạm Văn Hai, Street, Tân Bình...") {
+            // ✅ Cancel previous timeout
             if (geocodeTimeoutRef.current !== null) {
                 clearTimeout(geocodeTimeoutRef.current);
             }
 
+            // ✅ Increment request ID to invalidate old requests
+            currentGeocodeIdRef.current += 1;
+            const requestId = currentGeocodeIdRef.current;
+
             geocodeTimeoutRef.current = setTimeout(() => {
-                geocodeAddress(address);
+                geocodeAddress(address, requestId);
             }, 300);
         }
 
@@ -85,7 +98,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         };
     }, [address, geocodeAddress]);
 
-    // ✅ CRITICAL FIX: Add Earth bounds check to filter
     const validBranches = useMemo(() => {
         const filtered = branches.filter(b => {
             const isValid = 
@@ -99,16 +111,16 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
                 b.longitude <= 180;
             
             if (!isValid) {
-                console.warn(`⚠️ Skipping invalid branch: ${b.branchName} (lat: ${b.latitude}, lng: ${b.longitude})`);
+                console.warn(`⚠️ Skipping invalid branch: ${b.branchName}`);
             }
             
             return isValid;
         });
         
-        console.log(`✅ Valid branches: ${filtered.length} of ${branches.length}`);
         return filtered;
     }, [branches]);
 
+    // ✅ CRITICAL: Don't run if user has searched
     useEffect(() => {
         if (validBranches.length > 0 && !hasSearched && !hasInitializedRef.current) {
             hasInitializedRef.current = true;
@@ -124,8 +136,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
             const avgLat = totalLat / validBranches.length;
             const avgLng = totalLng / validBranches.length;
             
-            console.log('📍 Setting region:', avgLat, avgLng);
-            
             setRegion({
                 latitude: avgLat,
                 longitude: avgLng,
@@ -140,6 +150,7 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         setHasSearched(false);
         setError(null);
         lastGeocodedAddressRef.current = '';
+        hasInitializedRef.current = false; // ✅ Reset so branches can recenter
     }, []);
 
     useEffect(() => {
