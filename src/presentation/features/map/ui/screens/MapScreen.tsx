@@ -62,7 +62,11 @@ export const MapScreen: React.FC = () => {
             branch.latitude !== 0 && 
             branch.longitude !== 0 &&
             !isNaN(branch.latitude) &&
-            !isNaN(branch.longitude)
+            !isNaN(branch.longitude) &&
+            branch.latitude >= -90 && 
+            branch.latitude <= 90 &&
+            branch.longitude >= -180 && 
+            branch.longitude <= 180
         );
     }, [branches]);
 
@@ -120,26 +124,17 @@ export const MapScreen: React.FC = () => {
                 region={region}
                 onRegionChangeComplete={handleRegionChangeComplete}
                 onPress={handleMapPress}
-                showsUserLocation={false}
-                showsMyLocationButton={false}
-                showsCompass={false}
-                toolbarEnabled={false}
-                moveOnMarkerPress={false}
             >
-                {/* ✅ Location Pin - NOT TOUCHABLE */}
                 {searchedLocation && (
                     <Marker
                         coordinate={searchedLocation}
                         anchor={{ x: 0.5, y: 1 }}
-                        zIndex={1000}
                         identifier="searched-location"
-                        tappable={false}
                     >
                         <LocationPinMarker />
                     </Marker>
                 )}
 
-                {/* ✅ Branch Markers - LARGER HIT AREA */}
                 {validBranches.map((branch) => {
                     const isSelected = selectedBranchId === branch.id;
                     
@@ -152,8 +147,6 @@ export const MapScreen: React.FC = () => {
                             }}
                             onPress={() => handleBranchMarkerPress(branch)}
                             anchor={{ x: 0.5, y: 1 }}
-                            identifier={`branch-${branch.id}`}
-                            tappable={true}
                         >
                             <BranchMarker isSelected={isSelected} />
                         </Marker>

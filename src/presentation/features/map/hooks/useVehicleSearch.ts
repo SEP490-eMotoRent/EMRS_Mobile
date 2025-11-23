@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import sl from '../../../../core/di/InjectionContainer';
 import { VehicleModelSearchResponse } from '../../../../data/models/vehicle_model/VehicleModelSearchResponse';
 import { ElectricVehicle } from '../ui/molecules/VehicleCard';
@@ -17,18 +17,13 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
-    // ✅ Track component mount state
     const isMountedRef = useRef<boolean>(true);
-    
-    // ✅ Track current search request
-    const currentSearchRef = useRef<string | null>(null);
 
-    // ✅ Cleanup on unmount
-    useState(() => {
+    useEffect(() => {
         return () => {
             isMountedRef.current = false;
         };
-    });
+    }, []);
 
     const searchVehicles = useCallback(async (
         branchId: string,
@@ -36,7 +31,6 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
         startTime?: string,
         endTime?: string
     ) => {
-        // ✅ Validate inputs
         if (!branchId || typeof branchId !== 'string') {
             console.error('Invalid branchId:', branchId);
             if (isMountedRef.current) {
@@ -46,39 +40,23 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
             return;
         }
 
-        // ✅ Generate unique search ID
-        const searchId = `${branchId}-${Date.now()}`;
-        currentSearchRef.current = searchId;
-
         try {
             if (isMountedRef.current) {
                 setLoading(true);
                 setError(null);
+                setVehicles([]); // ✅ CLEAR OLD VEHICLES IMMEDIATELY
             }
 
-            console.log('🔍 useVehicleSearch - Starting search:', { 
-                branchId, 
-                dateRange,
-                startTime,
-                endTime 
-            });
+            console.log('🔍 Starting search:', { branchId, dateRange, startTime, endTime });
 
-            // ✅ Get use case safely
-            let searchUseCase;
-            try {
-                searchUseCase = sl.getSearchVehiclesUseCase();
-            } catch (err) {
-                throw new Error('Failed to initialize search use case');
-            }
+            const searchUseCase = sl.getSearchVehiclesUseCase();
 
-            // ✅ Execute search with timeout protection
             const searchPromise = searchUseCase.execute({
                 branchId,
                 startTime,
                 endTime,
             });
 
-            // ✅ Add timeout (15 seconds)
             const timeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => reject(new Error('Search timeout')), 15000);
             });
@@ -88,62 +66,50 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 timeoutPromise
             ]);
 
-            // ✅ Check if this search is still relevant (not cancelled)
-            if (currentSearchRef.current !== searchId || !isMountedRef.current) {
-                console.log('Search cancelled or component unmounted');
+            if (!isMountedRef.current) {
+                console.log('Component unmounted');
                 return;
             }
 
-            console.log('✅ useVehicleSearch - Got results:', results?.length || 0);
+            console.log('✅ Got results:', results?.length || 0);
 
-            // ✅ Validate results
             if (!Array.isArray(results)) {
                 throw new Error('Invalid search results format');
             }
 
-            // ✅ Calculate rental duration safely
-            let rentalDays = 1; // Default fallback
+            // ✅ Handle empty results
+            if (results.length === 0) {
+                setVehicles([]);
+                setLoading(false);
+                return;
+            }
+
+            let rentalDays = 1;
             try {
                 rentalDays = calculateRentalDuration(dateRange);
-                console.log('🔍 useVehicleSearch - rentalDays:', rentalDays);
             } catch (durationError) {
                 console.warn('Failed to calculate rental duration:', durationError);
             }
 
-            // ✅ Map to UI models safely
-            let mappedVehicles: ElectricVehicle[] = [];
-            try {
-                mappedVehicles = mapVehicleModelsToElectricVehicles(results, rentalDays);
-            } catch (mapError) {
-                console.error('Failed to map vehicles:', mapError);
-                throw new Error('Failed to process vehicle data');
-            }
+            const mappedVehicles = mapVehicleModelsToElectricVehicles(results, rentalDays);
 
-            // ✅ Validate mapped vehicles
-            if (!Array.isArray(mappedVehicles)) {
-                throw new Error('Invalid mapped vehicles format');
-            }
-
-            if (isMountedRef.current && currentSearchRef.current === searchId) {
+            if (isMountedRef.current) {
                 setVehicles(mappedVehicles);
-                console.log('✅ useVehicleSearch - Mapped vehicles:', mappedVehicles.length);
+                console.log('✅ Mapped vehicles:', mappedVehicles.length);
             }
 
         } catch (err) {
-            // ✅ Only update state if this search is still relevant
-            if (currentSearchRef.current !== searchId || !isMountedRef.current) {
-                return;
-            }
+            if (!isMountedRef.current) return;
 
             const errorMessage = err instanceof Error ? err.message : 'Failed to search vehicles';
-            console.error('❌ useVehicleSearch error:', err);
+            console.error('❌ Search error:', err);
             
             if (isMountedRef.current) {
                 setError(errorMessage);
-                setVehicles([]);
+                setVehicles([]); // ✅ CLEAR on error too
             }
         } finally {
-            if (isMountedRef.current && currentSearchRef.current === searchId) {
+            if (isMountedRef.current) {
                 setLoading(false);
             }
         }

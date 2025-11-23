@@ -25,16 +25,13 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
     const [geocoding, setGeocoding] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // ✅ FIXED: Refs for cleanup and debouncing
     const geocodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastGeocodedAddressRef = useRef<string>('');
     const isMountedRef = useRef<boolean>(true);
+    const hasInitializedRef = useRef<boolean>(false);
 
-    // ✅ Memoize geocode function with caching
     const geocodeAddress = useCallback(async (addr: string) => {
-        // ✅ Skip if already geocoded this address
-        if (lastGeocodedAddressRef.current === addr && searchedLocation) {
-            console.log('Using cached geocode result');
+        if (lastGeocodedAddressRef.current === addr) {
             return;
         }
 
@@ -61,7 +58,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
             if (!isMountedRef.current) return;
             
             setError(err instanceof Error ? err.message : 'Geocoding failed');
-            console.error('Error geocoding address:', err);
             setSearchedLocation(null);
             setHasSearched(false);
         } finally {
@@ -69,17 +65,14 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
                 setGeocoding(false);
             }
         }
-    }, [searchedLocation]);
+    }, []);
 
-    // ✅ Debounced geocoding effect
     useEffect(() => {
         if (address && address !== "1 Phạm Văn Hai, Street, Tân Bình...") {
-            // ✅ Clear previous timeout
             if (geocodeTimeoutRef.current !== null) {
                 clearTimeout(geocodeTimeoutRef.current);
             }
 
-            // ✅ Debounce by 300ms
             geocodeTimeoutRef.current = setTimeout(() => {
                 geocodeAddress(address);
             }, 300);
@@ -92,18 +85,46 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         };
     }, [address, geocodeAddress]);
 
-    // ✅ Memoize valid branches calculation
+    // ✅ CRITICAL FIX: Add Earth bounds check to filter
     const validBranches = useMemo(() => {
-        return branches.filter(
-            b => b.latitude !== 0 && b.longitude !== 0 && !isNaN(b.latitude) && !isNaN(b.longitude)
-        );
+        const filtered = branches.filter(b => {
+            const isValid = 
+                b.latitude !== 0 && 
+                b.longitude !== 0 && 
+                !isNaN(b.latitude) && 
+                !isNaN(b.longitude) &&
+                b.latitude >= -90 && 
+                b.latitude <= 90 &&
+                b.longitude >= -180 && 
+                b.longitude <= 180;
+            
+            if (!isValid) {
+                console.warn(`⚠️ Skipping invalid branch: ${b.branchName} (lat: ${b.latitude}, lng: ${b.longitude})`);
+            }
+            
+            return isValid;
+        });
+        
+        console.log(`✅ Valid branches: ${filtered.length} of ${branches.length}`);
+        return filtered;
     }, [branches]);
 
-    // ✅ Center on branches only if no search
     useEffect(() => {
-        if (validBranches.length > 0 && !hasSearched) {
-            const avgLat = validBranches.reduce((sum, b) => sum + b.latitude, 0) / validBranches.length;
-            const avgLng = validBranches.reduce((sum, b) => sum + b.longitude, 0) / validBranches.length;
+        if (validBranches.length > 0 && !hasSearched && !hasInitializedRef.current) {
+            hasInitializedRef.current = true;
+            
+            let totalLat = 0;
+            let totalLng = 0;
+            
+            for (const branch of validBranches) {
+                totalLat += branch.latitude;
+                totalLng += branch.longitude;
+            }
+            
+            const avgLat = totalLat / validBranches.length;
+            const avgLng = totalLng / validBranches.length;
+            
+            console.log('📍 Setting region:', avgLat, avgLng);
             
             setRegion({
                 latitude: avgLat,
@@ -114,7 +135,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         }
     }, [validBranches, hasSearched]);
 
-    // ✅ Memoized reset function
     const resetSearch = useCallback(() => {
         setSearchedLocation(null);
         setHasSearched(false);
@@ -122,7 +142,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         lastGeocodedAddressRef.current = '';
     }, []);
 
-    // ✅ Cleanup on unmount
     useEffect(() => {
         return () => {
             isMountedRef.current = false;

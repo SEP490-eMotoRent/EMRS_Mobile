@@ -8,15 +8,8 @@ export const useBranches = () => {
     const [error, setError] = useState<string | null>(null);
     
     const isMountedRef = useRef<boolean>(true);
-    const hasFetchedRef = useRef<boolean>(false); // ✅ Prevent multiple fetches
 
     const fetchBranches = useCallback(async () => {
-        // ✅ Don't fetch if already fetched successfully
-        if (hasFetchedRef.current && branches.length > 0) {
-            console.log('✅ Using cached branches');
-            return;
-        }
-
         try {
             setLoading(true);
             setError(null);
@@ -27,7 +20,6 @@ export const useBranches = () => {
             
             if (isMountedRef.current) {
                 setBranches(fetchedBranches);
-                hasFetchedRef.current = true;
                 console.log('✅ Branches loaded:', fetchedBranches.length);
             }
         } catch (err) {
@@ -40,7 +32,7 @@ export const useBranches = () => {
                 setLoading(false);
             }
         }
-    }, [branches.length]);
+    }, []);
 
     useEffect(() => {
         fetchBranches();
@@ -48,7 +40,7 @@ export const useBranches = () => {
         return () => {
             isMountedRef.current = false;
         };
-    }, []); // ✅ ONLY run once on mount
+    }, [fetchBranches]);
 
     return { branches, loading, error, refetch: fetchBranches };
 };
