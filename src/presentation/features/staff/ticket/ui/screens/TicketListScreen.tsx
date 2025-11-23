@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -95,24 +95,27 @@ export const TicketListScreen: React.FC = () => {
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchTickets = async () => {
-      if (user) {
-        const getTicketsByStaffIdUseCase = new GetTicketsByStaffIdUseCase(
-          sl.get("TicketRepository")
-        );
-        const tickets = await getTicketsByStaffIdUseCase.execute({
-          staffId: user.id,
-          pageSize: 10,
-          pageNum: 1,
-          orderByDescending: true,
-        });
-        console.log(tickets);
-        setTickets(tickets.items);
-      }
-    };
-    fetchTickets();
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchTickets();
+    }, [user])
+  );
+
+  const fetchTickets = async () => {
+    if (user) {
+      const getTicketsByStaffIdUseCase = new GetTicketsByStaffIdUseCase(
+        sl.get("TicketRepository")
+      );
+      const tickets = await getTicketsByStaffIdUseCase.execute({
+        staffId: user.id,
+        pageSize: 10,
+        pageNum: 1,
+        orderByDescending: true,
+      });
+      console.log(tickets);
+      setTickets(tickets.items);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);

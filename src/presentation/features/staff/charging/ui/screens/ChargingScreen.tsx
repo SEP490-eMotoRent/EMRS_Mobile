@@ -111,7 +111,6 @@ export const ChargingScreen: React.FC = () => {
         setKwhCharged("");
         setNotes("");
         setAutoCalculateKwh(true);
-        setChargingRate(null);
         Toast.show({
           type: "success",
           text1: "Thành công",
@@ -663,7 +662,7 @@ export const ChargingScreen: React.FC = () => {
               </Text>
             </View>
 
-            {kwhCharged && parseFloat(kwhCharged) > 0 && (
+            {kwhCharged && parseFloat(kwhCharged) > 0 && chargingRate && (
               <View style={styles.estimatedFeeContainer}>
                 <View style={styles.divider} />
                 <View style={styles.estimatedFeeRow}>
