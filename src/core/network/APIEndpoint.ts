@@ -64,6 +64,10 @@ export const ApiEndpoints = {
     googleLogin: "/auth/google-login",
   },
 
+  transaction: {
+    byRenterId: (renterId: string) => `/Transaction/renter/${renterId}`,
+  },
+
   renter: {
     list: "/renters",
     update: "/account/renter",

@@ -7,22 +7,17 @@ export class Transaction implements BaseEntity {
     public deletedAt: Date | null;
     public isDeleted: boolean;
 
-    // C# FIELDS - EXACT MATCH
     public transactionType: string;
     public amount: number;
     public docNo: string;
-    public description: string;
     public status: string;
-    public transactionDate?: Date;
 
     constructor(
         id: string,
         transactionType: string,
         amount: number,
         docNo: string,
-        description: string,
         status: string,
-        transactionDate?: Date,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
@@ -34,19 +29,23 @@ export class Transaction implements BaseEntity {
         this.deletedAt = deletedAt;
         this.isDeleted = isDeleted;
 
-        // Required fields
+        // Required fields matching C# entity
         this.transactionType = transactionType;
         this.amount = amount;
         this.docNo = docNo;
-        this.description = description;
         this.status = status;
-
-        // Optional
-        this.transactionDate = transactionDate;
     }
 
     isCompleted(): boolean {
         return this.status === 'Completed';
+    }
+
+    isPending(): boolean {
+        return this.status === 'Pending';
+    }
+
+    isFailed(): boolean {
+        return this.status === 'Failed';
     }
 
     isIncome(): boolean {
