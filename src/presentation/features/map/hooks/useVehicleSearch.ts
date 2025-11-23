@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import sl from '../../../../core/di/InjectionContainer';
 import { VehicleModelSearchResponse } from '../../../../data/models/vehicle_model/VehicleModelSearchResponse';
 import { ElectricVehicle } from '../ui/molecules/VehicleCard';
@@ -16,6 +16,14 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
     const [vehicles, setVehicles] = useState<ElectricVehicle[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    
+    const isMountedRef = useRef<boolean>(true);
+
+    useEffect(() => {
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     const searchVehicles = useCallback(async (
         branchId: string,
@@ -23,41 +31,32 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
         startTime?: string,
         endTime?: string
     ) => {
-        // ✅ Validate inputs
         if (!branchId || typeof branchId !== 'string') {
             console.error('Invalid branchId:', branchId);
-            setError('Invalid branch ID');
-            setVehicles([]);
+            if (isMountedRef.current) {
+                setError('Invalid branch ID');
+                setVehicles([]);
+            }
             return;
         }
 
         try {
-            setLoading(true);
-            setError(null);
-
-            console.log('🔍 useVehicleSearch - Starting search:', { 
-                branchId, 
-                dateRange,
-                startTime,
-                endTime 
-            });
-
-            // ✅ Get use case safely
-            let searchUseCase;
-            try {
-                searchUseCase = sl.getSearchVehiclesUseCase();
-            } catch (err) {
-                throw new Error('Failed to initialize search use case');
+            if (isMountedRef.current) {
+                setLoading(true);
+                setError(null);
+                setVehicles([]); // ✅ CLEAR OLD VEHICLES IMMEDIATELY
             }
 
-            // ✅ Execute search with timeout protection
+            console.log('🔍 Starting search:', { branchId, dateRange, startTime, endTime });
+
+            const searchUseCase = sl.getSearchVehiclesUseCase();
+
             const searchPromise = searchUseCase.execute({
                 branchId,
                 startTime,
                 endTime,
             });
 
-            // ✅ Add timeout (15 seconds)
             const timeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => reject(new Error('Search timeout')), 15000);
             });
@@ -67,50 +66,52 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 timeoutPromise
             ]);
 
-            console.log('✅ useVehicleSearch - Got results:', results?.length || 0);
+            if (!isMountedRef.current) {
+                console.log('Component unmounted');
+                return;
+            }
 
-            // ✅ Validate results
+            console.log('✅ Got results:', results?.length || 0);
+
             if (!Array.isArray(results)) {
                 throw new Error('Invalid search results format');
             }
 
-            // ✅ Calculate rental duration safely
-            let rentalDays = 1; // Default fallback
+            // ✅ Handle empty results
+            if (results.length === 0) {
+                setVehicles([]);
+                setLoading(false);
+                return;
+            }
+
+            let rentalDays = 1;
             try {
                 rentalDays = calculateRentalDuration(dateRange);
-                console.log('🔍 useVehicleSearch - rentalDays:', rentalDays);
             } catch (durationError) {
                 console.warn('Failed to calculate rental duration:', durationError);
-                // Continue with default value
             }
 
-            // ✅ Map to UI models safely
-            let mappedVehicles: ElectricVehicle[] = [];
-            try {
-                mappedVehicles = mapVehicleModelsToElectricVehicles(results, rentalDays);
-            } catch (mapError) {
-                console.error('Failed to map vehicles:', mapError);
-                throw new Error('Failed to process vehicle data');
-            }
+            const mappedVehicles = mapVehicleModelsToElectricVehicles(results, rentalDays);
 
-            // ✅ Validate mapped vehicles
-            if (!Array.isArray(mappedVehicles)) {
-                throw new Error('Invalid mapped vehicles format');
+            if (isMountedRef.current) {
+                setVehicles(mappedVehicles);
+                console.log('✅ Mapped vehicles:', mappedVehicles.length);
             }
-
-            setVehicles(mappedVehicles);
-            console.log('✅ useVehicleSearch - Mapped vehicles:', mappedVehicles.length);
 
         } catch (err) {
+            if (!isMountedRef.current) return;
+
             const errorMessage = err instanceof Error ? err.message : 'Failed to search vehicles';
-            console.error('❌ useVehicleSearch error:', err);
+            console.error('❌ Search error:', err);
             
-            setError(errorMessage);
-            setVehicles([]); // ✅ Clear vehicles on error
-            
-            // ✅ Don't throw - return gracefully
+            if (isMountedRef.current) {
+                setError(errorMessage);
+                setVehicles([]); // ✅ CLEAR on error too
+            }
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) {
+                setLoading(false);
+            }
         }
     }, []);
 

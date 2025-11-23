@@ -6,72 +6,68 @@ interface BranchMarkerProps {
     isSelected?: boolean;
 }
 
-export const BranchMarker: React.FC<BranchMarkerProps> = ({ isSelected = false }) => {
+// ✅ SIMPLIFIED - Remove custom comparison that might cause issues
+export const BranchMarker: React.FC<BranchMarkerProps> = React.memo(({ isSelected = false }) => {
     return (
-        <View style={styles.container}>
-            {/* Circle bubble - working from original */}
+        <View 
+            style={styles.container}
+            pointerEvents="box-none"
+        >
             <View style={[styles.bubble, isSelected && styles.bubbleSelected]}>
                 <FontAwesome 
                     name="motorcycle" 
-                    size={18} // Slightly bigger for better visibility
-                    color={isSelected ? "#000" : "#fff"} 
+                    size={16}
+                    color={isSelected ? "#000" : "#fff"}
                 />
             </View>
-            
-            {/* Pointed tail */}
             <View style={[styles.pointer, isSelected && styles.pointerSelected]} />
-            
-            {/* Spacer to prevent clipping */}
-            <View style={styles.spacer} />
         </View>
     );
-};
+});
+
+BranchMarker.displayName = 'BranchMarker';
 
 const styles = StyleSheet.create({
     container: {
         alignItems: "center",
         justifyContent: "flex-start",
+        width: 40,
+        height: 50,
     },
-    
     bubble: {
-        width: 42, // Slightly larger for better proportions
-        height: 42,
-        borderRadius: 21, // Perfect circle
-        backgroundColor: "#000",
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: "#1a1a1a",
+        borderWidth: 2,
+        borderColor: "#b8a4ff",
         alignItems: "center",
         justifyContent: "center",
-        // Clean shadow that doesn't distort
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        elevation: 4,
+        shadowOpacity: 0.4,
+        shadowRadius: 4,
+        elevation: 5,
     },
-    
     bubbleSelected: {
         backgroundColor: "#b8a4ff",
-        // Slightly stronger shadow when selected
-        elevation: 6,
+        borderColor: "#fff",
+        shadowOpacity: 0.6,
+        shadowRadius: 6,
+        elevation: 8,
     },
-    
     pointer: {
-        marginTop: -4,
         width: 0,
         height: 0,
-        borderLeftWidth: 10,
-        borderRightWidth: 10,
-        borderTopWidth: 18,
+        marginTop: -2,
+        borderLeftWidth: 8,
+        borderRightWidth: 8,
+        borderTopWidth: 12,
         borderLeftColor: "transparent",
         borderRightColor: "transparent",
-        borderTopColor: "#000",
-    },
-    
-    pointerSelected: {
         borderTopColor: "#b8a4ff",
     },
-    
-    spacer: {
-        height: 5,
-        width: 1,
+    pointerSelected: {
+        borderTopColor: "#fff",
     },
 });
