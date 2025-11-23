@@ -16,13 +16,12 @@ import { useAppDispatch } from "../../../authentication/store/hooks";
 import { removeAuth } from "../../../authentication/store/slices/authSlice";
 import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
 import { useWallet } from "../../hooks/wallet/useWallet";
-// import { MembershipCard } from "../molecules/MembershipCard";
+import { useTransactions } from "../../hooks/transactions/useTransactions";
 import { ProfileHeader } from "../molecules/ProfileHeader";
 import { QuickSettings } from "../organisms/QuickSettings";
 import { TransactionList } from "../organisms/TransactionList";
 import { VerificationCard } from "../organisms/VerificationCard";
 import { WalletCard } from "../organisms/WalletCard";
-import { Transaction } from "../temp";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -43,15 +42,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     refresh: refreshProfile,
     membership,
   } = useRenterProfile();
-  const { balance, loading: walletLoading, error: walletError, refresh: refreshWallet, createWallet } = useWallet();
-
-  // Mock transactions
-  const transactions: Transaction[] = [
-    { title: "VinFast Evo200 Rental", date: "Sep 01, 2025", amount: -2670000 },
-    { title: "Security Deposit Refund", date: "Aug 27, 2025", amount: 1500000 },
-    { title: "Wallet Top-up", date: "Aug 20, 2025", amount: 5000000 },
-    { title: "Klara S Rental", date: "Aug 05, 2025", amount: -950000 },
-  ];
+  const { 
+    balance, 
+    loading: walletLoading, 
+    error: walletError, 
+    refresh: refreshWallet 
+  } = useWallet();
+  const { 
+    transactions: transactionEntities, 
+    loading: transactionsLoading, 
+    error: transactionsError,
+    refresh: refreshTransactions 
+  } = useTransactions();
 
   const handleEdit = () => navigation.navigate("EditProfile");
   
@@ -69,15 +71,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   
   const handleViewAllTransactions = () => {
     console.log("View all transactions");
+    // TODO: Navigate to full transactions list screen
   };
   
   const handleVerify = () => navigation.navigate("EditProfile");
-  const handleViewDetails = () => console.log("View verification details");
   const handleInsuranceClaims = () => navigation.navigate("InsuranceClaims");
-
-  // const handleMembershipPress = () => {
-  //   console.log("View membership details");
-  // };
 
   const handleSignOut = () => {
     Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
@@ -95,7 +93,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   };
 
   const handleRefresh = async () => {
-    await Promise.all([refreshProfile(), refreshWallet()]);
+    await Promise.all([
+      refreshProfile(), 
+      refreshWallet(), 
+      refreshTransactions()
+    ]);
   };
 
   // === LOADING & ERROR STATES ===
@@ -145,6 +147,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     };
   });
 
+  // === MAP TRANSACTIONS TO UI FORMAT ===
+  const transactions = transactionEntities.map(t => ({
+    title: t.transactionType,
+    date: new Date(t.createdAt).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit'
+    }),
+    amount: t.amount,
+  }));
+
   // === RENDER ===
   return (
     <SafeAreaView style={styles.container}>
@@ -154,7 +167,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={profileLoading || walletLoading}
+            refreshing={profileLoading || walletLoading || transactionsLoading}
             onRefresh={handleRefresh}
             tintColor="#00ff00"
             colors={["#00ff00"]}
@@ -171,12 +184,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           membership={membership}
           onEdit={handleEdit}
         />
-
-        {/* MembershipCard - commented out, badge in header is sufficient */}
-        {/* <MembershipCard 
-          membership={membership}
-          onPress={handleMembershipPress}
-        /> */}
 
         <WalletCard
           balance={balance}

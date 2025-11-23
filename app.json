@@ -20,19 +20,18 @@
         "googleMapsApiKey": "YOUR_IOS_API_KEY_HERE"
       },
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí của bạn để tìm chi nhánh gần nhất và hiển thị xe có sẵn xung quanh bạn.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí của bạn để tìm chi nhánh gần nhất và hiển thị xe có sẵn xung quanh bạn.",
+        "NSLocationWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí để hiển thị bản đồ và tìm xe gần bạn.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí để hiển thị bản đồ và tìm xe gần bạn.",
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["emrs"]
+            "CFBundleURLSchemes": [
+              "emrs"
+            ]
           }
-        ],
-        "NSLocationWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí để hiển thị bản đồ và tìm xe gần bạn.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "eMotoRent cần truy cập vị trí để hiển thị bản đồ và tìm xe gần bạn."
+        ]
       }
     },
     "android": {
-      "minSdkVersion": 26,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -59,7 +58,10 @@
               "pathPrefix": "/callback"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -67,6 +69,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
       [
         "expo-location",
         {
