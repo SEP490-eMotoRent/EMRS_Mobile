@@ -2,7 +2,7 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { ListViewButton } from "../atoms/buttons/ListViewButton";
@@ -11,13 +11,9 @@ import { LocationPinMarker } from "../atoms/markers/LocationPinMarker";
 import { MapSearchBar } from "../molecules/MapSearchBar";
 import { MapFilters } from "../orgamisms/MapFilters";
 import { VehicleBottomSheet } from "../orgamisms/VehicleBottomSheet";
-
-// Custom hooks
 import { useBranches } from "../../hooks/useBranches";
 import { useMapInteractions } from "../../hooks/useMapInteractions";
 import { useMapRegion } from "../../hooks/useMapRegion";
-
-// Filter utilities
 import { FilterModal, FilterState } from "../../../vehicleList/ui/orgamism/FilterModal";
 import { getActiveFilterCount, getDefaultFilters } from "../../utils/filterUtils";
 
@@ -28,18 +24,17 @@ export const MapScreen: React.FC = () => {
     const route = useRoute<MapScreenRouteProp>();
     const navigation = useNavigation<MapScreenNavigationProp>();
     
-    // Get navigation parameters with defaults
-    const { location, dateRange, address } = route.params || {
+    const routeParams = useMemo(() => route.params || {
         location: "1 Phạm Văn Hai, Street, Tân Bình...",
         dateRange: "Chọn Ngày",
         address: "1 Phạm Văn Hai, Street, Tân Bình..."
-    };
+    }, [route.params]);
 
-    // ✅ Filter state
+    const { location, dateRange, address } = routeParams;
+
     const [filters, setFilters] = useState<FilterState>(getDefaultFilters());
     const [filterModalVisible, setFilterModalVisible] = useState(false);
 
-    // Custom hooks for state management
     const { branches, loading, error, refetch } = useBranches();
     const { region, setRegion, searchedLocation } = useMapRegion({ branches, address });
     
@@ -58,47 +53,10 @@ export const MapScreen: React.FC = () => {
         handleBookVehicle,
     } = useMapInteractions({ dateRange });
 
-    // ✅ Calculate active filter count
-    const activeFilterCount = useMemo(() => {
-        return getActiveFilterCount(filters);
-    }, [filters]);
+    const activeFilterCount = useMemo(() => 
+        getActiveFilterCount(filters), 
+    [filters]);
 
-    // ✅ Memoize navigation handler
-    const handleListViewPress = useCallback(() => {
-        // Pass filters to ListView
-        navigation.navigate('ListView', { 
-            location, 
-            dateRange, 
-            address,
-            // ✅ TODO: Add filters to navigation params if needed
-        });
-    }, [navigation, location, dateRange, address]);
-
-    // ✅ Filter handlers
-    const handleFilterPress = useCallback(() => {
-        setFilterModalVisible(true);
-    }, []);
-
-    const handleFilterApply = useCallback((newFilters: FilterState) => {
-        setFilters(newFilters);
-        setFilterModalVisible(false);
-        
-        // ✅ TODO: Apply filters to branches/vehicles
-        console.log('Filters applied:', newFilters);
-    }, []);
-
-    const handleFilterClose = useCallback(() => {
-        setFilterModalVisible(false);
-    }, []);
-
-    const handleRefresh = useCallback(() => {
-        // Reset filters
-        setFilters(getDefaultFilters());
-        // Refetch branches
-        refetch();
-    }, [refetch]);
-
-    // ✅ Memoize valid branches (filter out invalid coordinates)
     const validBranches = useMemo(() => {
         return branches.filter(branch => 
             branch.latitude !== 0 && 
@@ -108,7 +66,32 @@ export const MapScreen: React.FC = () => {
         );
     }, [branches]);
 
-    // ✅ Loading state
+    const handleListViewPress = useCallback(() => {
+        navigation.navigate('ListView', { location, dateRange, address });
+    }, [navigation, location, dateRange, address]);
+
+    const handleFilterPress = useCallback(() => {
+        setFilterModalVisible(true);
+    }, []);
+
+    const handleFilterApply = useCallback((newFilters: FilterState) => {
+        setFilters(newFilters);
+        setFilterModalVisible(false);
+    }, []);
+
+    const handleFilterClose = useCallback(() => {
+        setFilterModalVisible(false);
+    }, []);
+
+    const handleRefresh = useCallback(() => {
+        setFilters(getDefaultFilters());
+        refetch();
+    }, [refetch]);
+
+    const handleRegionChangeComplete = useCallback((newRegion: Region) => {
+        setRegion(newRegion);
+    }, [setRegion]);
+
     if (loading && branches.length === 0) {
         return (
             <View style={[styles.container, styles.centerContent]}>
@@ -118,7 +101,6 @@ export const MapScreen: React.FC = () => {
         );
     }
 
-    // ✅ Error state
     if (error && branches.length === 0) {
         return (
             <View style={[styles.container, styles.centerContent]}>
@@ -132,31 +114,32 @@ export const MapScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {/* Map */}
             <MapView
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 region={region}
-                onRegionChangeComplete={setRegion}
+                onRegionChangeComplete={handleRegionChangeComplete}
                 onPress={handleMapPress}
                 showsUserLocation={false}
                 showsMyLocationButton={false}
                 showsCompass={false}
                 toolbarEnabled={false}
+                moveOnMarkerPress={false}
             >
-                {/* Searched Location Pin */}
+                {/* ✅ Location Pin - NOT TOUCHABLE */}
                 {searchedLocation && (
                     <Marker
                         coordinate={searchedLocation}
                         anchor={{ x: 0.5, y: 1 }}
                         zIndex={1000}
                         identifier="searched-location"
+                        tappable={false}
                     >
                         <LocationPinMarker />
                     </Marker>
                 )}
 
-                {/* Branch Markers */}
+                {/* ✅ Branch Markers - LARGER HIT AREA */}
                 {validBranches.map((branch) => {
                     const isSelected = selectedBranchId === branch.id;
                     
@@ -169,8 +152,8 @@ export const MapScreen: React.FC = () => {
                             }}
                             onPress={() => handleBranchMarkerPress(branch)}
                             anchor={{ x: 0.5, y: 1 }}
-                            zIndex={isSelected ? 999 : 1}
                             identifier={`branch-${branch.id}`}
+                            tappable={true}
                         >
                             <BranchMarker isSelected={isSelected} />
                         </Marker>
@@ -178,7 +161,6 @@ export const MapScreen: React.FC = () => {
                 })}
             </MapView>
 
-            {/* Search Bar Overlay */}
             <View style={styles.searchBarContainer}>
                 <MapSearchBar
                     location={address}
@@ -187,7 +169,6 @@ export const MapScreen: React.FC = () => {
                 />
             </View>
 
-            {/* ✅ UPDATED: Unified Filters */}
             <View style={styles.filtersContainer}>
                 <MapFilters
                     onFilterPress={handleFilterPress}
@@ -196,7 +177,6 @@ export const MapScreen: React.FC = () => {
                 />
             </View>
 
-            {/* List View Button */}
             <View style={[
                 styles.listViewContainer,
                 bottomSheetVisible && styles.listViewContainerRaised
@@ -204,13 +184,11 @@ export const MapScreen: React.FC = () => {
                 <ListViewButton onPress={handleListViewPress} />
             </View>
 
-            {/* Booking Modal */}
             <BookingModal
                 visible={bookingModalVisible}
                 onClose={handleBookingModalClose}
             />
 
-            {/* ✅ NEW: Filter Modal (Shared with ListView) */}
             <FilterModal
                 visible={filterModalVisible}
                 onClose={handleFilterClose}
@@ -218,7 +196,6 @@ export const MapScreen: React.FC = () => {
                 currentFilters={filters}
             />
 
-            {/* Vehicle Bottom Sheet */}
             <VehicleBottomSheet
                 visible={bottomSheetVisible}
                 vehicles={selectedVehicles}
@@ -227,7 +204,6 @@ export const MapScreen: React.FC = () => {
                 onBookVehicle={handleBookVehicle}
             />
 
-            {/* Vehicle Loading Overlay */}
             {vehiclesLoading && bottomSheetVisible && (
                 <View style={styles.loadingOverlay}>
                     <View style={styles.loadingCard}>

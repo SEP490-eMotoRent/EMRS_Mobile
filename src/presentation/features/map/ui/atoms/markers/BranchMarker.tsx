@@ -6,23 +6,26 @@ interface BranchMarkerProps {
     isSelected?: boolean;
 }
 
-export const BranchMarker: React.FC<BranchMarkerProps> = ({ isSelected = false }) => {
+// ✅ SIMPLIFIED - Remove custom comparison that might cause issues
+export const BranchMarker: React.FC<BranchMarkerProps> = React.memo(({ isSelected = false }) => {
     return (
-        <View style={styles.container}>
-            {/* Main marker bubble */}
+        <View 
+            style={styles.container}
+            pointerEvents="box-none"
+        >
             <View style={[styles.bubble, isSelected && styles.bubbleSelected]}>
                 <FontAwesome 
                     name="motorcycle" 
                     size={16}
-                    color={isSelected ? "#000" : "#fff"} 
+                    color={isSelected ? "#000" : "#fff"}
                 />
             </View>
-
-            {/* Pointer tail */}
             <View style={[styles.pointer, isSelected && styles.pointerSelected]} />
         </View>
     );
-};
+});
+
+BranchMarker.displayName = 'BranchMarker';
 
 const styles = StyleSheet.create({
     container: {

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import sl from '../../../../core/di/InjectionContainer';
 import { VehicleModelSearchResponse } from '../../../../data/models/vehicle_model/VehicleModelSearchResponse';
 import { ElectricVehicle } from '../ui/molecules/VehicleCard';
@@ -16,6 +16,19 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
     const [vehicles, setVehicles] = useState<ElectricVehicle[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    
+    // ✅ Track component mount state
+    const isMountedRef = useRef<boolean>(true);
+    
+    // ✅ Track current search request
+    const currentSearchRef = useRef<string | null>(null);
+
+    // ✅ Cleanup on unmount
+    useState(() => {
+        return () => {
+            isMountedRef.current = false;
+        };
+    });
 
     const searchVehicles = useCallback(async (
         branchId: string,
@@ -26,14 +39,22 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
         // ✅ Validate inputs
         if (!branchId || typeof branchId !== 'string') {
             console.error('Invalid branchId:', branchId);
-            setError('Invalid branch ID');
-            setVehicles([]);
+            if (isMountedRef.current) {
+                setError('Invalid branch ID');
+                setVehicles([]);
+            }
             return;
         }
 
+        // ✅ Generate unique search ID
+        const searchId = `${branchId}-${Date.now()}`;
+        currentSearchRef.current = searchId;
+
         try {
-            setLoading(true);
-            setError(null);
+            if (isMountedRef.current) {
+                setLoading(true);
+                setError(null);
+            }
 
             console.log('🔍 useVehicleSearch - Starting search:', { 
                 branchId, 
@@ -67,6 +88,12 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 timeoutPromise
             ]);
 
+            // ✅ Check if this search is still relevant (not cancelled)
+            if (currentSearchRef.current !== searchId || !isMountedRef.current) {
+                console.log('Search cancelled or component unmounted');
+                return;
+            }
+
             console.log('✅ useVehicleSearch - Got results:', results?.length || 0);
 
             // ✅ Validate results
@@ -81,7 +108,6 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 console.log('🔍 useVehicleSearch - rentalDays:', rentalDays);
             } catch (durationError) {
                 console.warn('Failed to calculate rental duration:', durationError);
-                // Continue with default value
             }
 
             // ✅ Map to UI models safely
@@ -98,19 +124,28 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 throw new Error('Invalid mapped vehicles format');
             }
 
-            setVehicles(mappedVehicles);
-            console.log('✅ useVehicleSearch - Mapped vehicles:', mappedVehicles.length);
+            if (isMountedRef.current && currentSearchRef.current === searchId) {
+                setVehicles(mappedVehicles);
+                console.log('✅ useVehicleSearch - Mapped vehicles:', mappedVehicles.length);
+            }
 
         } catch (err) {
+            // ✅ Only update state if this search is still relevant
+            if (currentSearchRef.current !== searchId || !isMountedRef.current) {
+                return;
+            }
+
             const errorMessage = err instanceof Error ? err.message : 'Failed to search vehicles';
             console.error('❌ useVehicleSearch error:', err);
             
-            setError(errorMessage);
-            setVehicles([]); // ✅ Clear vehicles on error
-            
-            // ✅ Don't throw - return gracefully
+            if (isMountedRef.current) {
+                setError(errorMessage);
+                setVehicles([]);
+            }
         } finally {
-            setLoading(false);
+            if (isMountedRef.current && currentSearchRef.current === searchId) {
+                setLoading(false);
+            }
         }
     }, []);
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Region } from 'react-native-maps';
 import sl from '../../../../core/di/InjectionContainer';
 import { Branch } from '../../../../domain/entities/operations/Branch';
@@ -9,7 +9,7 @@ interface UseMapRegionProps {
 }
 
 const DEFAULT_REGION: Region = {
-    latitude: 10.8231, // Ho Chi Minh City
+    latitude: 10.8231,
     longitude: 106.6297,
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
@@ -25,44 +25,29 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
     const [geocoding, setGeocoding] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Geocode address when it changes - THIS HAS PRIORITY
-    useEffect(() => {
-        if (address && address !== "1 Phạm Văn Hai, Street, Tân Bình...") {
-            geocodeAddress(address);
+    // ✅ FIXED: Refs for cleanup and debouncing
+    const geocodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastGeocodedAddressRef = useRef<string>('');
+    const isMountedRef = useRef<boolean>(true);
+
+    // ✅ Memoize geocode function with caching
+    const geocodeAddress = useCallback(async (addr: string) => {
+        // ✅ Skip if already geocoded this address
+        if (lastGeocodedAddressRef.current === addr && searchedLocation) {
+            console.log('Using cached geocode result');
+            return;
         }
-    }, [address]);
 
-    // Center map on branches ONLY if user hasn't searched
-    useEffect(() => {
-        if (branches.length > 0 && !hasSearched) {
-            // Filter out branches with invalid coordinates (0,0)
-            const validBranches = branches.filter(
-                b => b.latitude !== 0 && b.longitude !== 0
-            );
-
-            if (validBranches.length > 0) {
-                const avgLat = validBranches.reduce((sum, b) => sum + b.latitude, 0) / validBranches.length;
-                const avgLng = validBranches.reduce((sum, b) => sum + b.longitude, 0) / validBranches.length;
-                
-                setRegion({
-                    latitude: avgLat,
-                    longitude: avgLng,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
-                });
-            }
-        }
-    }, [branches, hasSearched]);
-
-    const geocodeAddress = async (addr: string) => {
         try {
             setGeocoding(true);
             setError(null);
 
-            // Use the actual geocoding repository through dependency injection
             const geocodingRepo = sl.getGeocodingRepository();
             const coordinates = await geocodingRepo.geocodeAddress(addr);
 
+            if (!isMountedRef.current) return;
+
+            lastGeocodedAddressRef.current = addr;
             setSearchedLocation(coordinates);
             setHasSearched(true);
             
@@ -73,22 +58,79 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
                 longitudeDelta: 0.02,
             });
         } catch (err) {
+            if (!isMountedRef.current) return;
+            
             setError(err instanceof Error ? err.message : 'Geocoding failed');
             console.error('Error geocoding address:', err);
-            
-            // Fall back to default location on error
             setSearchedLocation(null);
             setHasSearched(false);
         } finally {
-            setGeocoding(false);
+            if (isMountedRef.current) {
+                setGeocoding(false);
+            }
         }
-    };
+    }, [searchedLocation]);
 
-    const resetSearch = () => {
+    // ✅ Debounced geocoding effect
+    useEffect(() => {
+        if (address && address !== "1 Phạm Văn Hai, Street, Tân Bình...") {
+            // ✅ Clear previous timeout
+            if (geocodeTimeoutRef.current !== null) {
+                clearTimeout(geocodeTimeoutRef.current);
+            }
+
+            // ✅ Debounce by 300ms
+            geocodeTimeoutRef.current = setTimeout(() => {
+                geocodeAddress(address);
+            }, 300);
+        }
+
+        return () => {
+            if (geocodeTimeoutRef.current !== null) {
+                clearTimeout(geocodeTimeoutRef.current);
+            }
+        };
+    }, [address, geocodeAddress]);
+
+    // ✅ Memoize valid branches calculation
+    const validBranches = useMemo(() => {
+        return branches.filter(
+            b => b.latitude !== 0 && b.longitude !== 0 && !isNaN(b.latitude) && !isNaN(b.longitude)
+        );
+    }, [branches]);
+
+    // ✅ Center on branches only if no search
+    useEffect(() => {
+        if (validBranches.length > 0 && !hasSearched) {
+            const avgLat = validBranches.reduce((sum, b) => sum + b.latitude, 0) / validBranches.length;
+            const avgLng = validBranches.reduce((sum, b) => sum + b.longitude, 0) / validBranches.length;
+            
+            setRegion({
+                latitude: avgLat,
+                longitude: avgLng,
+                latitudeDelta: 0.1,
+                longitudeDelta: 0.1,
+            });
+        }
+    }, [validBranches, hasSearched]);
+
+    // ✅ Memoized reset function
+    const resetSearch = useCallback(() => {
         setSearchedLocation(null);
         setHasSearched(false);
         setError(null);
-    };
+        lastGeocodedAddressRef.current = '';
+    }, []);
+
+    // ✅ Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            isMountedRef.current = false;
+            if (geocodeTimeoutRef.current !== null) {
+                clearTimeout(geocodeTimeoutRef.current);
+            }
+        };
+    }, []);
 
     return { 
         region, 
