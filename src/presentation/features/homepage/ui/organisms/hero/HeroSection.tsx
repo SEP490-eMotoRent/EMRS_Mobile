@@ -6,21 +6,19 @@ import { Heading1 } from '../../atoms/typography/Heading1';
 export const HeroSection: React.FC = () => (
     <View style={styles.container}>
         <Image
-        source={{ uri: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600' }}
-        style={styles.image}
-        resizeMode="cover"
+            source={{ uri: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600' }}
+            style={styles.image}
+            resizeMode="cover"
         />
         <View style={styles.overlay} />
         <View style={styles.textContainer}>
-        <Heading1 style={styles.heading}>
-            Chiếc xe tương lai{'\n'}
-            Thuê xe máy điện{'\n'}
-            cao cấp
-        </Heading1>
-        <BodyText style={styles.body}>
-            Trải nghiệm cảm giác lái xe thân thiện với môi trường với đội xe máy điện cao cấp của chúng tôi.
-            Không thải khí, tối đa hứng khởi.
-        </BodyText>
+            <Heading1 style={styles.heading}>
+                Thuê xe máy điện{'\n'}
+                Xanh - Tiện - An toàn
+            </Heading1>
+            <BodyText style={styles.body}>
+                Trải nghiệm di chuyển thân thiện với môi trường
+            </BodyText>
         </View>
     </View>
 );
@@ -28,8 +26,9 @@ export const HeroSection: React.FC = () => (
 const styles = StyleSheet.create({
     container: {
         position: 'relative',
-        height: 500,
+        height: 240, // Reduced from 500 to 240
         overflow: 'hidden',
+        marginBottom: 24,
     },
     image: {
         ...StyleSheet.absoluteFillObject,
@@ -38,7 +37,7 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     textContainer: {
         flex: 1,
@@ -46,10 +45,12 @@ const styles = StyleSheet.create({
         padding: 24,
     },
     heading: {
-        marginBottom: 16,
-        lineHeight: 36,
+        marginBottom: 12,
+        lineHeight: 32,
+        fontSize: 26, // Slightly smaller
     },
     body: {
-        maxWidth: 350,
+        maxWidth: 300,
+        fontSize: 14,
     },
 });

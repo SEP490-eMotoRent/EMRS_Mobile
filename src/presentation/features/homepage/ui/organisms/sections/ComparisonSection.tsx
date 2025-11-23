@@ -1,3 +1,5 @@
+//Deprecated: Comparison section is no longer used in the homepage design
+
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ComparisonFeature } from '../../molecules/features/ComparisonFeature';

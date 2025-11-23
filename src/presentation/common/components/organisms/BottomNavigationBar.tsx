@@ -8,7 +8,7 @@ import { ProfileIcon } from '../atoms/navigationBarIcons/ProfileIcon';
 import { ScheduleIcon } from '../atoms/navigationBarIcons/ScheduleIcon';
 import { NavItem } from '../molecules/navigationBar/NavItem';
 
-export type NavRoute = 'home' | 'trip' | 'map' | 'profile';
+export type NavRoute = 'home' | 'trip' | 'battery' | 'profile';
 
 interface BottomNavigationBarProps extends BottomTabBarProps {
     activeColor?: string;
@@ -30,7 +30,7 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
         switch (routeName) {
             case 'HomeTab': return 'home';
             case 'TripTab': return 'trip';
-            case 'MapTab': return 'map';
+            case 'BatteryTab': return 'battery';
             case 'ProfileTab': return 'profile';
             default: return 'home';
         }
@@ -42,7 +42,7 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
         const routeMap: Record<NavRoute, string> = {
             home: 'HomeTab',
             trip: 'TripTab',
-            map: 'MapTab',
+            battery: 'BatteryTab',
             profile: 'ProfileTab',
         };
         navigation.navigate(routeMap[route]);
@@ -77,8 +77,8 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
             <NavItem
                 icon={<MapIcon size={22} />}
                 label="Bản đồ"
-                isActive={activeRoute === 'map'}
-                onPress={() => handlePress('map')}
+                isActive={activeRoute === 'battery'}
+                onPress={() => handlePress('battery')}
                 activeColor={activeColor}
                 inactiveColor={inactiveColor}
             />
