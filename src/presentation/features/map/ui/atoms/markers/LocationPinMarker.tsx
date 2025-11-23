@@ -5,20 +5,17 @@ import { StyleSheet, View } from "react-native";
 export const LocationPinMarker: React.FC = () => {
     return (
         <View style={styles.container}>
-            {/* Circle with flag - black background, white flag */}
+            {/* Main marker bubble */}
             <View style={styles.bubble}>
                 <FontAwesome 
                     name="flag" 
-                    size={18} // Bigger for better visibility
-                    color="#fff" // WHITE flag on black background
+                    size={16}
+                    color="#fff"
                 />
             </View>
 
-            {/* Pointed tail */}
+            {/* Pointer tail */}
             <View style={styles.pointer} />
-            
-            {/* Spacer to prevent clipping */}
-            <View style={styles.spacer} />
         </View>
     );
 };
@@ -27,37 +24,33 @@ const styles = StyleSheet.create({
     container: {
         alignItems: "center",
         justifyContent: "flex-start",
+        width: 40,
+        height: 50,
     },
-
     bubble: {
-        width: 42, // Match branch marker size
-        height: 42,
-        borderRadius: 21, // Perfect circle
-        backgroundColor: "#1a1a1a", // Dark gray (same as original)
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: "#1a1a1a",
+        borderWidth: 2,
+        borderColor: "#10B981", // Green border to distinguish from branches
         alignItems: "center",
         justifyContent: "center",
-        // Clean shadow
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.4,
         shadowRadius: 4,
         elevation: 5,
     },
-
     pointer: {
-        marginTop: -4,
         width: 0,
         height: 0,
-        borderLeftWidth: 10,
-        borderRightWidth: 10,
-        borderTopWidth: 18,
+        marginTop: -2,
+        borderLeftWidth: 8,
+        borderRightWidth: 8,
+        borderTopWidth: 12,
         borderLeftColor: "transparent",
         borderRightColor: "transparent",
-        borderTopColor: "#1a1a1a",
-    },
-    
-    spacer: {
-        height: 5,
-        width: 1,
+        borderTopColor: "#10B981", // Match the green border
     },
 });
