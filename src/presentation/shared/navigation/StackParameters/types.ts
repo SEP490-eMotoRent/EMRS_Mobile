@@ -386,6 +386,12 @@ export type StaffStackParamList = {
   RentedVehicleDetails: {
     vehicleId: string;
   };
+  TicketList: {
+    bookingId: string;
+  };
+  TicketDetail: {
+    ticketId: string;
+  };
 };
 
 export type RootStackParamList = {

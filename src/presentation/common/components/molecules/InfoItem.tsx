@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     color: colors.text.secondary,
-    flex: 1,
+    // flex: 1,
     marginRight: 16,
   },
   value: {

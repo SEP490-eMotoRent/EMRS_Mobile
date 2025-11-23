@@ -25,7 +25,14 @@ import {
 } from "../../../features/staff/home/ui/screens";
 import { StaffProfileScreen } from "../../../features/staff/profile/ui/screens";
 import { RentalScreen } from "../../../features/staff/rental/ui/screens";
-import { VehicleConfirmationScreen, ReturnInspectionScreen, AIAnalysisScreen, ManualInspectionScreen, AdditionalFeesScreen, ReturnReportScreen } from "../../../features/staff/return/ui/screens";
+import {
+  VehicleConfirmationScreen,
+  ReturnInspectionScreen,
+  AIAnalysisScreen,
+  ManualInspectionScreen,
+  AdditionalFeesScreen,
+  ReturnReportScreen,
+} from "../../../features/staff/return/ui/screens";
 import {
   ScanFaceScreen,
   ScanResultScreen,
@@ -33,6 +40,10 @@ import {
 import TrackingGPSScreen from "../../../features/staff/tracking/ui/screens/TrackingGPSScreen";
 import { BookingReturnListScreen } from "../../../features/staff/return/ui/screens/BookingReturnListScreen";
 import { FaceScanCameraScreen } from "../../../features/staff/scan/ui/screens/FaceScanCameraScreen ";
+import {
+  TicketDetailScreen,
+  TicketListScreen,
+} from "../../../features/staff/ticket/ui/screens";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -110,19 +121,30 @@ export const StaffNavigator: React.FC = () => {
           name="VehicleConfirmation"
           component={VehicleConfirmationScreen}
         />
-        <Stack.Screen name="ReturnInspection" component={ReturnInspectionScreen} />
+        <Stack.Screen
+          name="ReturnInspection"
+          component={ReturnInspectionScreen}
+        />
         <Stack.Screen name="AIAnalysis" component={AIAnalysisScreen} />
-        <Stack.Screen name="ManualInspection" component={ManualInspectionScreen} />
+        <Stack.Screen
+          name="ManualInspection"
+          component={ManualInspectionScreen}
+        />
         <Stack.Screen name="AdditionalFees" component={AdditionalFeesScreen} />
         <Stack.Screen name="ReturnReport" component={ReturnReportScreen} />
         <Stack.Screen name="TrackingGPS" component={TrackingGPSScreen} />
         <Stack.Screen name="ScanFace" component={ScanFaceScreen} />
         <Stack.Screen name="FaceScanCamera" component={FaceScanCameraScreen} />
-        <Stack.Screen name="BookingReturnList" component={BookingReturnListScreen} />
+        <Stack.Screen
+          name="BookingReturnList"
+          component={BookingReturnListScreen}
+        />
         <Stack.Screen
           name="RentedVehicleDetails"
           component={RentedVehicleDetailsScreen}
         />
+        <Stack.Screen name="TicketList" component={TicketListScreen} />
+        <Stack.Screen name="TicketDetail" component={TicketDetailScreen} />
       </Stack.Navigator>
     </View>
   );

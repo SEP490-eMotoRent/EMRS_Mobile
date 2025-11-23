@@ -10,9 +10,9 @@ export const SignUpPrompt: React.FC<SignUpPromptProps> = ({ onSignUpPress }) => 
     return (
         <View style={styles.container}>
             <Text style={styles.text}>
-                Don't Have An Account?{' '}
+                Chưa có tài khoản?{' '}
                 <Text style={styles.link} onPress={onSignUpPress}>
-                    Sign Up Now
+                    Đăng ký ngay
                 </Text>
             </Text>
         </View>
@@ -22,8 +22,8 @@ export const SignUpPrompt: React.FC<SignUpPromptProps> = ({ onSignUpPress }) => 
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: 48,
-        marginBottom: 10,
+        marginTop: 32,
+        marginBottom: 16,
     },
     text: {
         color: colors.text.secondary,

@@ -20,15 +20,13 @@ import { removeAuth } from '../../../../authentication/store/slices/authSlice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-type StaffProfileScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Profile'>;
+type StaffProfileScreenNavigationProp = StackNavigationProp<StaffStackParamList>;
 
 interface StaffStats {
   totalHandovers: number;
   totalReturns: number;
   totalScans: number;
   rating: number;
-  workingHours: string;
-  branch: string;
 }
 
 interface QuickAction {
@@ -51,8 +49,6 @@ export const StaffProfileScreen: React.FC = () => {
     totalReturns: 142,
     totalScans: 298,
     rating: 4.8,
-    workingHours: '8:00 AM - 5:00 PM',
-    branch: 'District 2 eMotoRent Branch',
   };
 
   const quickActions: QuickAction[] = [
@@ -78,11 +74,11 @@ export const StaffProfileScreen: React.FC = () => {
       onPress: () => console.log('Settings'),
     },
     {
-      id: 'help',
-      title: 'Help & Support',
-      icon: 'question-circle',
+      id: 'ticket',
+      title: 'Ticket',
+      icon: 'audit',
       color: '#FF6B6B',
-      onPress: () => console.log('Help & Support'),
+      onPress: () => navigation.navigate('TicketList'),
     },
   ];
 
@@ -133,7 +129,7 @@ export const StaffProfileScreen: React.FC = () => {
           <View style={styles.profileInfo}>
             <Text style={styles.staffName}>{user?.fullName || 'Staff Member'}</Text>
             <Text style={styles.staffRole}>{user?.role || 'STAFF'}</Text>
-            <Text style={styles.branchName}>{staffStats.branch}</Text>
+            <Text style={styles.branchName}>{user?.branchName}</Text>
           </View>
 
           <TouchableOpacity
@@ -184,7 +180,7 @@ export const StaffProfileScreen: React.FC = () => {
 
         {/* Quick Actions */}
         <View style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>Tác vụ</Text>
           <View style={styles.actionsGrid}>
             {quickActions.map((action) => (
               <TouchableOpacity
@@ -198,19 +194,6 @@ export const StaffProfileScreen: React.FC = () => {
                 <Text style={styles.actionText}>{action.title}</Text>
               </TouchableOpacity>
             ))}
-          </View>
-        </View>
-
-        {/* Work Schedule */}
-        <View style={styles.scheduleCard}>
-          <Text style={styles.sectionTitle}>Work Schedule</Text>
-          <View style={styles.scheduleItem}>
-            <AntDesign name="clock-circle" size={16} color={colors.text.secondary} />
-            <Text style={styles.scheduleText}>{staffStats.workingHours}</Text>
-          </View>
-          <View style={styles.scheduleItem}>
-            <AntDesign name="environment" size={16} color={colors.text.secondary} />
-            <Text style={styles.scheduleText}>{staffStats.branch}</Text>
           </View>
         </View>
 

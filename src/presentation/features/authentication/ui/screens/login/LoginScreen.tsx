@@ -35,74 +35,62 @@ export const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const handleContinue = async (data: {
-    username?: string;
-    password?: string;
-    phoneNumber?: string;
+    username: string;
+    password: string;
   }) => {
-    // Handle username/password login
-    if (data.username && data.password) {
-      try {
-        setLoading(true);
-
-        const loginUseCase = new LoginUseCase(sl.get("AccountRepository"));
-        const response = await loginUseCase.execute({
-          username: data.username,
-          password: data.password,
-        });
-
-        const loginData: LoginResponseData = unwrapResponse(response);
-
-        dispatch(
-          addAuth({
-            token: loginData.accessToken,
-            user: {
-              id: loginData.user.id,
-              username: loginData.user.username,
-              role: loginData.user.role,
-              fullName: loginData.user.fullName,
-              branchId: loginData.user.branchId,
-              branchName: loginData.user.branchName,
-            },
-          })
-        );
-
-        Toast.show({
-          type: "success",
-          text1: "Đăng nhập thành công",
-          text2: "Chào mừng bạn đến với eMotoRent",
-        });
-      } catch (error: any) {
-        Alert.alert(
-          "Đăng nhập thất bại",
-          error.message || "Tên đăng nhập hoặc mật khẩu không đúng"
-        );
-        console.error("Login error:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    // Handle phone number login (TODO: Implement later)
-    else if (data.phoneNumber) {
-      Alert.alert("Sắp ra mắt", "Đăng nhập bằng số điện thoại sẽ sớm có mặt!");
-    }
-  };
-
-  const handleGoogleSignUp = async () => {
     try {
       setLoading(true);
 
-      // Step 1: Get idToken from Google
+      const loginUseCase = new LoginUseCase(sl.get("AccountRepository"));
+      const response = await loginUseCase.execute({
+        username: data.username,
+        password: data.password,
+      });
+
+      const loginData: LoginResponseData = unwrapResponse(response);
+
+      dispatch(
+        addAuth({
+          token: loginData.accessToken,
+          user: {
+            id: loginData.user.id,
+            username: loginData.user.username,
+            role: loginData.user.role,
+            fullName: loginData.user.fullName,
+            branchId: loginData.user.branchId,
+            branchName: loginData.user.branchName,
+          },
+        })
+      );
+
+      Toast.show({
+        type: "success",
+        text1: "Đăng nhập thành công",
+        text2: "Chào mừng bạn đến với eMotoRent",
+      });
+    } catch (error: any) {
+      Alert.alert(
+        "Đăng nhập thất bại",
+        error.message || "Tên đăng nhập hoặc mật khẩu không đúng"
+      );
+      console.error("Login error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+
       const googleSignInUseCase = sl.getGoogleSignInUseCase();
       const { idToken, email, name } = await googleSignInUseCase.execute();
 
-      // Step 2: Send idToken to backend
       const googleLoginUseCase = sl.getGoogleLoginUseCase();
       const response = await googleLoginUseCase.execute(idToken);
 
-      // Step 3: Unwrap response
       const loginData: LoginResponseData = unwrapResponse(response);
 
-      // Step 4: Store auth data in Redux
       dispatch(
         addAuth({
           token: loginData.accessToken,
@@ -131,10 +119,6 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleEmailSignUp = () => {
-    console.log("Email sign up");
-  };
-
   const handleSignUpNow = () => {
     // @ts-ignore
     navigation.navigate("Register");
@@ -145,7 +129,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
@@ -153,15 +137,13 @@ export const LoginScreen: React.FC = () => {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          bounces={false}
         >
           <BrandTitle subtitle="Đăng nhập vào tài khoản eMotoRent của bạn" />
 
           <LoginForm onContinue={handleContinue} loading={loading} />
 
-          <SocialAuthGroup
-            onGooglePress={handleGoogleSignUp}
-            onEmailPress={handleEmailSignUp}
-          />
+          <SocialAuthGroup onGooglePress={handleGoogleSignIn} />
 
           <SignUpPrompt onSignUpPress={handleSignUpNow} />
 
@@ -183,7 +165,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 20,
+    justifyContent: 'space-between',
   },
 });

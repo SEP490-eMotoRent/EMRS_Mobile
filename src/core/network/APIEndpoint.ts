@@ -21,11 +21,12 @@ export const ApiEndpoints = {
     tracking: (vehicleId: string) => `/Vehicle/tracking/${vehicleId}`,
   },
 
-  
   ticket: {
-      create: "/Ticket/create",
-      byBookingId: (bookingId: string) => `/Ticket/booking/${bookingId}`,
-      detail: (ticketId: string) => `/Ticket/${ticketId}`,
+    create: "/Ticket/create",
+    byBookingId: (bookingId: string) => `/Ticket/booking/${bookingId}`,
+    detail: (ticketId: string) => `/Ticket/${ticketId}`,
+    byStaffId: (staffId: string) => `/Ticket/staff/${staffId}`,
+    update: `/Ticket`,
   },
 
   configuration: {
@@ -89,7 +90,7 @@ export const ApiEndpoints = {
     updateDriving: "/Document/driving",
     delete: (documentId: string) => `/Document/${documentId}`,
   },
-  
+
   // Wallet endpoints
   wallet: {
     create: "/Wallet/model/create",
@@ -103,7 +104,8 @@ export const ApiEndpoints = {
     changeVehicle: "/rental/receipt/change/vehicle",
     create: "/rental/receipt",
     getListRentalReceipt: (bookingId: string) => `/rental/receipt/${bookingId}`,
-    getDetailRentalReceipt: (rentalReceiptId: string) => `/rental/receipt/by/${rentalReceiptId}`,
+    getDetailRentalReceipt: (rentalReceiptId: string) =>
+      `/rental/receipt/by/${rentalReceiptId}`,
     generateContract: (bookingId: string, receiptId: string) =>
       `/rental/contract/${bookingId}/${receiptId}`,
     getContract: (bookingId: string) => `/rental/contract/${bookingId}`,

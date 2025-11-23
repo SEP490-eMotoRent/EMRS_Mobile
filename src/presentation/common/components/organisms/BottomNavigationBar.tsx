@@ -1,13 +1,14 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { BatteryIcon } from '../atoms/navigationBarIcons/BatteryIcon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeIcon } from '../atoms/navigationBarIcons/HomeIcon';
+import { MapIcon } from '../atoms/navigationBarIcons/MapIcon';
 import { ProfileIcon } from '../atoms/navigationBarIcons/ProfileIcon';
 import { ScheduleIcon } from '../atoms/navigationBarIcons/ScheduleIcon';
 import { NavItem } from '../molecules/navigationBar/NavItem';
 
-export type NavRoute = 'home' | 'trip' | 'battery' | 'profile';
+export type NavRoute = 'home' | 'trip' | 'map' | 'profile';
 
 interface BottomNavigationBarProps extends BottomTabBarProps {
     activeColor?: string;
@@ -18,16 +19,18 @@ interface BottomNavigationBarProps extends BottomTabBarProps {
 export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
     state,
     navigation,
-    activeColor = '#FFFFFF',          // white for active
-    inactiveColor = '#9E9E9E',        // dimmed gray for inactive
-    backgroundColor = '#121212',      // dark background
+    activeColor = '#FFFFFF',
+    inactiveColor = '#9E9E9E',
+    backgroundColor = '#121212',
 }) => {
+    const insets = useSafeAreaInsets();
+
     // Map React Navigation route names to our NavRoute type
     const routeNameToNavRoute = (routeName: string): NavRoute => {
         switch (routeName) {
             case 'HomeTab': return 'home';
             case 'TripTab': return 'trip';
-            case 'BatteryTab': return 'battery';
+            case 'MapTab': return 'map';
             case 'ProfileTab': return 'profile';
             default: return 'home';
         }
@@ -39,14 +42,22 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
         const routeMap: Record<NavRoute, string> = {
             home: 'HomeTab',
             trip: 'TripTab',
-            battery: 'BatteryTab',
+            map: 'MapTab',
             profile: 'ProfileTab',
         };
         navigation.navigate(routeMap[route]);
     };
 
     return (
-        <View style={[styles.container, { backgroundColor }]}>
+        <View 
+            style={[
+                styles.container, 
+                { 
+                    backgroundColor,
+                    paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 8)
+                }
+            ]}
+        >
             <NavItem
                 icon={<HomeIcon size={22} />}
                 label="Trang Chủ"
@@ -64,10 +75,10 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
                 inactiveColor={inactiveColor}
             />
             <NavItem
-                icon={<BatteryIcon size={22} />}
-                label="Battery"
-                isActive={activeRoute === 'battery'}
-                onPress={() => handlePress('battery')}
+                icon={<MapIcon size={22} />}
+                label="Bản đồ"
+                isActive={activeRoute === 'map'}
+                onPress={() => handlePress('map')}
                 activeColor={activeColor}
                 inactiveColor={inactiveColor}
             />
@@ -87,8 +98,7 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         borderTopWidth: 1,
-        borderTopColor: '#2C2C2C', // subtle dark divider
-        paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+        borderTopColor: '#2C2C2C',
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
