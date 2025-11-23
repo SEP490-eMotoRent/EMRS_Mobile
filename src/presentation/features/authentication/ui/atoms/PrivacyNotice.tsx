@@ -10,10 +10,11 @@ export const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ onPrivacyPolicyPre
     return (
         <View style={styles.container}>
             <Text style={styles.text}>
-                By Clicking Continue, you agree to our{' '}
+                Bằng cách tiếp tục, bạn đồng ý với{' '}
                 <Text style={styles.link} onPress={onPrivacyPolicyPress}>
-                    Privacy Policy
+                    Chính sách bảo mật
                 </Text>
+                {' '}của chúng tôi
             </Text>
         </View>
     );
