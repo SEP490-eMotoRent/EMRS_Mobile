@@ -167,6 +167,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 40,
     paddingBottom: 20,
-    justifyContent: 'space-between',
   },
 });

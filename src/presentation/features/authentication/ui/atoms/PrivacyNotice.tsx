@@ -23,12 +23,14 @@ export const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ onPrivacyPolicyPre
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: 20,
+        paddingTop: 12,
+        paddingBottom: 32,
     },
     text: {
         color: colors.text.secondary,
         fontSize: 14,
         textAlign: 'center',
+        lineHeight: 20,
     },
     link: {
         color: colors.text.accent,
