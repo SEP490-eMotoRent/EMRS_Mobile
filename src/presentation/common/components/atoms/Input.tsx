@@ -83,13 +83,13 @@ export const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 8,
+    marginVertical: 5,
   },
   inputWrapper: {
     position: 'relative',
   },
   input: {
-    height: 56,
+    height: 54, // Default height, Each Screen using this can customize it
     borderWidth: 1,
     borderColor: colors.input.border,
     borderRadius: 8,
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#FF6B6B',
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 4,
     marginLeft: 4,
   },
