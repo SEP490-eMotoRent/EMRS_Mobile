@@ -2,12 +2,12 @@ import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 
 import { HomeScreen } from '../../../../features/homepage/ui/screens/HomeScreen';
+import { MapScreen } from '../../../../features/map/ui/screens/MapScreen';
+import { VehicleDetailsScreen } from '../../../../features/vehicleDetails/ui/screens/VehicleDetailsScreen';
 import { ListView } from '../../../../features/vehicleList/ui/screens/ListViewScreen';
 import { HomeStackParamList } from '../../StackParameters/types';
 import { BookingNavigator } from './BookingNavigator';
 import { BrowseNavigator } from './BrowseNavigator';
-import { VehicleDetailsScreen } from '../../../../features/vehicleDetails/ui/screens/VehicleDetailsScreen';
-import { MapScreen } from '../../../../features/map/ui/screens/MapScreen';
 
 const Stack = createStackNavigator<HomeStackParamList>();
 

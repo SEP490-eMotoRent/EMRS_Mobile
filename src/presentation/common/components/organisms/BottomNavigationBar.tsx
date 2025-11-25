@@ -39,13 +39,30 @@ export const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
     const activeRoute = routeNameToNavRoute(state.routeNames[state.index]);
 
     const handlePress = (route: NavRoute) => {
-        const routeMap: Record<NavRoute, string> = {
-            home: 'HomeTab',
-            trip: 'TripTab',
-            battery: 'BatteryTab',
-            profile: 'ProfileTab',
+        const routeMap: Record<NavRoute, { tab: string; screen: string }> = {
+            home: { tab: 'HomeTab', screen: 'Home' },
+            trip: { tab: 'TripTab', screen: 'Trip' },
+            battery: { tab: 'BatteryTab', screen: 'BranchMap' },
+            profile: { tab: 'ProfileTab', screen: 'Profile' },
         };
-        navigation.navigate(routeMap[route]);
+
+        const targetRoute = routeMap[route];
+
+        // Navigate to the tab and its root screen
+        // @ts-ignore
+        navigation.navigate(targetRoute.tab, {
+            screen: targetRoute.screen,
+        });
+
+        // Then pop to top of that tab's stack
+        setTimeout(() => {
+            // @ts-ignore
+            const tabNav = navigation.getParent(targetRoute.tab);
+            if (tabNav) {
+                // @ts-ignore
+                tabNav.popToTop?.();
+            }
+        }, 0);
     };
 
     return (
