@@ -291,6 +291,7 @@ export type ProfileStackParamList = {
       transactionId?: string;
       errorMessage?: string;
   };
+  AllTransactions: undefined;
 };
 
 export type BatteryStackParamList = {

@@ -19,14 +19,14 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
         <Text style={styles.sectionTitle}>Cài Đặt</Text>
         
         <View style={styles.settingsGroup}>
-            <SettingToggle
+            {/* <SettingToggle
                 icon="bell"
                 label="Thông Báo"
                 value={notifications}
                 onToggle={setNotifications}
-            />
+            /> */}
             {/* <SettingItem icon="card" label="Phương Thức Thanh Toán" showArrow /> */}
-            <SettingItem icon="language" label="Ngôn Ngữ" value="Tiếng Việt" />
+            {/* <SettingItem icon="language" label="Ngôn Ngữ" value="Tiếng Việt" /> */}
         </View>
         
         {/* <TouchableOpacity style={styles.referCard}>
@@ -39,14 +39,14 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
         </TouchableOpacity> */}
         
         <View style={styles.settingsGroup}>
-            <SettingItem icon="document" label="Lịch Sử Thuê" />
+            {/* <SettingItem icon="document" label="Lịch Sử Thuê" /> */}
             <SettingItem 
                     icon="shield" 
                     label="Yêu Cầu Bảo Hiểm" 
                     showArrow 
                     onPress={onInsuranceClaims}
                 />
-            <SettingItem icon="location" label="Địa Điểm Các Chi Nhánh" />
+            {/* <SettingItem icon="location" label="Địa Điểm Các Chi Nhánh" /> */}
             <SettingItem icon="help" label="Chăm Sóc Khách Hàng" />
             <SettingItem icon="terms" label="Điều Khoản và Chính Sách" />
         </View>
