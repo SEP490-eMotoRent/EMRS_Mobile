@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   TextInput,
   TextStyle,
+  TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 
 interface InputProps {
@@ -34,24 +36,46 @@ export const Input: React.FC<InputProps> = ({
   textStyle,
   error,
 }) => {
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
+  };
+
   return (
     <View style={[styles.container, style]}>
-      <TextInput
-        style={[
-          styles.input, 
-          textStyle,
-          !editable && styles.disabledInput,
-          error && styles.inputError
-        ]}
-        placeholder={placeholder}
-        placeholderTextColor={colors.input.placeholder}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        editable={editable}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={[
+            styles.input,
+            textStyle,
+            !editable && styles.disabledInput,
+            error && styles.inputError,
+            secureTextEntry && styles.inputWithIcon,
+          ]}
+          placeholder={placeholder}
+          placeholderTextColor={colors.input.placeholder}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry && !isPasswordVisible}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          editable={editable}
+        />
+        {secureTextEntry && (
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={togglePasswordVisibility}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+              size={24}
+              color={colors.input.placeholder}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
@@ -59,10 +83,13 @@ export const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 8,
+    marginVertical: 5,
+  },
+  inputWrapper: {
+    position: 'relative',
   },
   input: {
-    height: 50,
+    height: 54, // Default height, Each Screen using this can customize it
     borderWidth: 1,
     borderColor: colors.input.border,
     borderRadius: 8,
@@ -70,6 +97,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.input.text,
     backgroundColor: colors.input.background,
+  },
+  inputWithIcon: {
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
   },
   disabledInput: {
     opacity: 0.5,
@@ -81,7 +120,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#FF6B6B',
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 4,
     marginLeft: 4,
   },

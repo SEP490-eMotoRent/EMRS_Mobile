@@ -29,6 +29,7 @@ export const SocialAuthGroup: React.FC<SocialAuthGroupProps> = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
+        marginBottom: 28,
     },
     separatorContainer: {
         alignItems: 'center',

@@ -32,6 +32,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue, loading = fals
                     onChangeText={setUsername}
                     autoCapitalize="none"
                     editable={!loading}
+                    style={{ height: 70 }}
                 />
                 <Input
                     placeholder="Mật khẩu"
@@ -39,6 +40,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue, loading = fals
                     onChangeText={setPassword}
                     secureTextEntry={true}
                     editable={!loading}
+                    style={{ height: 70 }}
                 />
             </View>
 
@@ -57,10 +59,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue, loading = fals
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginBottom: 10,
+        marginTop: 40,
+        marginBottom: 20,
     },
     inputContainer: {
-        marginBottom: 32,
+        marginBottom: 28,
     },
     continueButton: {
         backgroundColor: '#000000',
