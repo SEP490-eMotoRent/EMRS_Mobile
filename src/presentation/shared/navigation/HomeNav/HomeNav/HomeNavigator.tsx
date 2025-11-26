@@ -13,9 +13,9 @@ const Stack = createStackNavigator<HomeStackParamList>();
 
 export const HomeNavigator: React.FC = () => {
     return (
-        <Stack.Navigator 
-            id={undefined} 
-            initialRouteName="Home" 
+        <Stack.Navigator
+            id={undefined}
+            initialRouteName="Home"
             screenOptions={{ headerShown: false }}
         >
             <Stack.Screen name="Home" component={HomeScreen} />

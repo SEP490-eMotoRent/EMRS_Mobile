@@ -107,7 +107,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
         
         const formatDate = (dateStr: string) => {
             const date = new Date(dateStr);
-            const months = ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"];
+            const months = ["Thg 1", "Thg 2", "Thg 3", "Thg 4", "Thg 5", "Thg 6",
+                            "Thg 7", "Thg 8", "Thg 9", "Thg 10", "Thg 11", "Thg 12"];
             return `${date.getDate()} ${months[date.getMonth()]}`;
         };
 

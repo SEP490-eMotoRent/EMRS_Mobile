@@ -69,6 +69,7 @@ export type BookingStackParamList = {
       branchOpenTime?: string;
       branchCloseTime?: string;
       vehicleCategory: string;
+      dateRange?: string;
   };
   InsurancePlans: {
       vehicleId: string;

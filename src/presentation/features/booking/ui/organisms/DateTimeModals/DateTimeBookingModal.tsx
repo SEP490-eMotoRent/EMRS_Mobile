@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Dimensions,
     Modal,
@@ -16,9 +16,14 @@ interface DateTimeBookingModalProps {
     visible: boolean;
     onClose: () => void;
     onConfirm: (dateRange: string) => void;
-    branchName?: string; // ✅ Optional: show which branch
-    branchOpenTime?: string; // ✅ e.g., "8:00 SA"
-    branchCloseTime?: string; // ✅ e.g., "9:00 CH"
+    branchName?: string;
+    branchOpenTime?: string;
+    branchCloseTime?: string;
+    // ✅ NEW: Initial dates for pre-population
+    initialStartDate?: string; // ISO format: "2024-11-28"
+    initialEndDate?: string;   // ISO format: "2024-12-05"
+    initialPickupTime?: string; // "10:00 SA"
+    initialReturnTime?: string; // "10:00 SA"
 }
 
 export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
@@ -28,34 +33,32 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     branchName,
     branchOpenTime = "6:00 SA",
     branchCloseTime = "10:00 CH",
+    initialStartDate,
+    initialEndDate,
+    initialPickupTime = "6:00 CH",
+    initialReturnTime = "10:00 SA",
 }) => {
-    const [startDate, setStartDate] = useState<string | null>(null);
-    const [endDate, setEndDate] = useState<string | null>(null);
+    const [startDate, setStartDate] = useState<string | null>(initialStartDate || null);
+    const [endDate, setEndDate] = useState<string | null>(initialEndDate || null);
     const [selectedDates, setSelectedDates] = useState<{ [key: string]: any }>({});
 
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [currentTimeType, setCurrentTimeType] = useState<"pickup" | "return">("pickup");
-    const [pickupTime, setPickupTime] = useState("6:00 CH");
-    const [returnTime, setReturnTime] = useState("10:00 SA");
+    const [pickupTime, setPickupTime] = useState(initialPickupTime);
+    const [returnTime, setReturnTime] = useState(initialReturnTime);
 
-    // ✅ Clean hours only - no 30 minutes
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-    const periods = ["SA", "CH"]; // Sáng (AM), Chiều (PM)
+    const periods = ["SA", "CH"];
 
-    // ✅ Today's date - blocks past dates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split("T")[0];
 
-    // ✅ Max date - 12 months from today + rest of that month
-    // Example: Nov 14, 2025 → Allow until Nov 30, 2026 (not just Nov 13, 2026)
     const maxDate = new Date(today);
     maxDate.setMonth(maxDate.getMonth() + 12);
-    // Go to last day of that month
-    maxDate.setMonth(maxDate.getMonth() + 1, 0); // Sets to last day of the 12th month
+    maxDate.setMonth(maxDate.getMonth() + 1, 0);
     const maxDateStr = maxDate.toISOString().split("T")[0];
 
-    // ✅ Parse branch operating hours
     const parseBranchTime = (timeStr: string): { hour: number; period: string } => {
         const match = timeStr.match(/(\d+):00\s*(SA|CH)/);
         if (!match) return { hour: 8, period: "SA" };
@@ -65,34 +68,68 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     const branchOpen = parseBranchTime(branchOpenTime);
     const branchClose = parseBranchTime(branchCloseTime);
 
-    // ✅ Filter available hours based on branch operating hours
     const getAvailableHours = (period: string) => {
         const allHours = Array.from({ length: 12 }, (_, i) => i + 1);
         
         if (period === branchOpen.period && period === branchClose.period) {
-            // Same period (both SA or both CH)
             return allHours.filter(h => h >= branchOpen.hour && h <= branchClose.hour);
         } else if (period === branchOpen.period) {
-            // Opening period
             return allHours.filter(h => h >= branchOpen.hour);
         } else if (period === branchClose.period) {
-            // Closing period
             return allHours.filter(h => h <= branchClose.hour);
         }
         
         return allHours;
     };
 
+    // ✅ NEW: Initialize selected dates when modal becomes visible
+    useEffect(() => {
+        if (visible && initialStartDate && initialEndDate) {
+            console.log('📅 Pre-populating calendar with:', { initialStartDate, initialEndDate });
+            
+            const range: { [key: string]: any } = {};
+            const start = new Date(initialStartDate);
+            const end = new Date(initialEndDate);
+
+            // Mark all dates in range
+            let currentDate = new Date(start);
+            while (currentDate <= end) {
+                const dateStr = currentDate.toISOString().split("T")[0];
+                range[dateStr] = { 
+                    color: "#b8a4ff", 
+                    textColor: "black",
+                };
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Mark start and end
+            range[initialStartDate] = {
+                startingDay: true,
+                color: "#b8a4ff",
+                textColor: "black",
+            };
+            range[initialEndDate] = {
+                endingDay: true,
+                color: "#b8a4ff",
+                textColor: "black",
+            };
+
+            setSelectedDates(range);
+            setStartDate(initialStartDate);
+            setEndDate(initialEndDate);
+            setPickupTime(initialPickupTime);
+            setReturnTime(initialReturnTime);
+        }
+    }, [visible, initialStartDate, initialEndDate, initialPickupTime, initialReturnTime]);
+
     const onDayPress = (day: any) => {
         const selectedDay = new Date(day.dateString);
         
-        // ✅ Prevent selecting past dates
         if (selectedDay < today) {
             return;
         }
 
         if (!startDate || (startDate && endDate)) {
-            // First selection or reset - set as new start
             setStartDate(day.dateString);
             setEndDate(null);
             setSelectedDates({
@@ -104,18 +141,15 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                 },
             });
         } else {
-            // Second selection - create range
             const range: { [key: string]: any } = {};
             const firstDate = new Date(startDate);
             const secondDate = new Date(day.dateString);
             
-            // ✅ SMART: Automatically determine which is start and which is end
             const start = firstDate < secondDate ? firstDate : secondDate;
             const end = firstDate < secondDate ? secondDate : firstDate;
             const startStr = start.toISOString().split("T")[0];
             const endStr = end.toISOString().split("T")[0];
 
-            // ✅ Mark ALL dates in range, including across month boundaries
             let currentDate = new Date(start);
             while (currentDate <= end) {
                 const dateStr = currentDate.toISOString().split("T")[0];
@@ -126,7 +160,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                 currentDate.setDate(currentDate.getDate() + 1);
             }
 
-            // Mark start and end specifically
             range[startStr] = {
                 startingDay: true,
                 color: "#b8a4ff",
@@ -139,8 +172,8 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             };
 
             setSelectedDates(range);
-            setStartDate(startStr);  // ✅ Update with correct start
-            setEndDate(endStr);      // ✅ Update with correct end
+            setStartDate(startStr);
+            setEndDate(endStr);
         }
     };
 
@@ -166,14 +199,11 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         setShowTimePicker(false);
     };
 
-    // ✅ Mark past dates and dates beyond max as disabled
     const markedDatesWithDisabled = { ...selectedDates };
     
-    // Disable all dates before today
     const currentDate = new Date(today);
-    currentDate.setDate(currentDate.getDate() - 1); // Start from yesterday
+    currentDate.setDate(currentDate.getDate() - 1);
     
-    // Go back 60 days to cover visible past dates in calendar
     for (let i = 0; i < 60; i++) {
         const pastDateStr = currentDate.toISOString().split("T")[0];
         if (!markedDatesWithDisabled[pastDateStr]) {
@@ -196,7 +226,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                 <View style={styles.overlay}>
                     <TouchableWithoutFeedback>
                         <View style={styles.sheet}>
-                            {/* Header with Branch Info */}
                             <View style={styles.header}>
                                 <View>
                                     <Text style={styles.headerTitle}>Xác Nhận Thời Gian Thuê</Text>
@@ -214,18 +243,16 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Calendar */}
                             <View style={styles.calendarContainer}>
                                 <CalendarList
                                     markingType="period"
                                     markedDates={markedDatesWithDisabled}
                                     onDayPress={onDayPress}
                                     pastScrollRange={0}
-                                    futureScrollRange={12} // ✅ 12 months
+                                    futureScrollRange={12}
                                     scrollEnabled={true}
                                     minDate={todayStr}
                                     maxDate={maxDateStr}
-                                    // ✅ Vietnamese month names
                                     monthFormat={'MMMM yyyy'}
                                     renderHeader={(date) => {
                                         const monthNames = [
@@ -252,7 +279,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                         dayTextColor: "#fff",
                                         monthTextColor: "#fff",
                                         arrowColor: "#fff",
-                                        textDisabledColor: "#444", // ✅ Darker gray for disabled dates
+                                        textDisabledColor: "#444",
                                         todayTextColor: "#b8a4ff",
                                         selectedDayBackgroundColor: "#b8a4ff",
                                         selectedDayTextColor: "#000",
@@ -261,7 +288,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                 />
                             </View>
 
-                            {/* Overlay for Date & Time Display */}
                             <View style={styles.dateTimeOverlay}>
                                 <View style={styles.dateTimeContainer}>
                                     <ScrollView style={styles.dateTimeBoxScroll}>
@@ -284,7 +310,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                 <PrimaryButton title="Xác Nhận" onPress={handleConfirm} />
                             </View>
 
-                            {/* Time Picker Modal */}
                             {showTimePicker && (
                                 <TimePickerModal
                                     onConfirm={handleTimeConfirm}
@@ -302,6 +327,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     );
 };
 
+// TimePickerModal component stays exactly the same...
 interface TimePickerModalProps {
     onConfirm: (hour: number, period: string) => void;
     onCancel: () => void;
@@ -361,7 +387,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
                     showsVerticalScrollIndicator={false}
                     snapToInterval={ITEM_HEIGHT}
                     decelerationRate="fast"
-                    contentContainerStyle={{ paddingVertical: ITEM_HEIGHT }} // ✅ FIXED: Only 1x padding instead of 2x
+                    contentContainerStyle={{ paddingVertical: ITEM_HEIGHT }}
                     onMomentumScrollEnd={(event) => {
                         const yOffset = event.nativeEvent.contentOffset.y;
                         const index = Math.round(yOffset / ITEM_HEIGHT);
@@ -400,24 +426,19 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
                 </Text>
                 
                 <View style={styles.pickerWrapper}>
-                    {/* Selection indicator */}
                     <View style={styles.selectionIndicator} />
                     
                     <View style={styles.pickerContainer}>
-                        {/* Hour picker */}
                         {renderPickerColumn(availableHours, selectedHour, setSelectedHour, 70)}
                         
-                        {/* Static colon */}
                         <View style={styles.staticElementContainer}>
                             <Text style={styles.timeSeparator}>:</Text>
                         </View>
                         
-                        {/* Static 00 */}
                         <View style={styles.staticElementContainer}>
                             <Text style={styles.timeFixed}>00</Text>
                         </View>
                         
-                        {/* Period picker */}
                         {renderPickerColumn(periods, selectedPeriod, handlePeriodChange, 90)}
                     </View>
                 </View>
@@ -570,12 +591,11 @@ const styles = StyleSheet.create({
         position: "relative",
         width: "100%",
         marginBottom: 30,
-        height: 180, // ✅ Fixed height for wrapper
+        height: 180,
     },
-    // ✅ FIXED: Selection indicator positioned at middle of wrapper
     selectionIndicator: {
         position: "absolute",
-        top: 60, // ✅ Middle position (180 / 3 = 60)
+        top: 60,
         left: "10%",
         right: "10%",
         height: 60,
@@ -598,9 +618,8 @@ const styles = StyleSheet.create({
     pickerColumn: {
         width: 70,
         height: 180,
-        overflow: "hidden", // ✅ Ensure items don't overflow
+        overflow: "hidden",
     },
-    // ✅ NEW: Container for static elements (colon and 00)
     staticElementContainer: {
         height: 180,
         justifyContent: "center",

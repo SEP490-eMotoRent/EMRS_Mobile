@@ -14,6 +14,7 @@ import { FeaturedBikesSection } from '../organisms/featuredBikes/FeaturedBikesSe
 import { PopularCitiesSection } from '../organisms/sections/PopularCitiesSection';
 import { AdvantagesSection } from '../organisms/sections/AdvantagesSection';
 import { ReviewsSection } from '../organisms/sections/ReviewsSection';
+import { DateHelper } from '../../../../../domain/helpers/DateHelper';
 
 type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 
@@ -66,7 +67,7 @@ export const HomeScreen: React.FC = () => {
     const handleViewAllBikes = () => {
         navigation.navigate('ListView', {
             location: 'Ho Chi Minh City, Vietnam',
-            dateRange: 'Oct 20 | 10:00 AM - Oct 23 | 10:00 AM',
+            dateRange: DateHelper.getDefaultDateRangeEnglish(),
             address: 'Ho Chi Minh City, Vietnam',
         });
     };
@@ -113,12 +114,10 @@ const styles = StyleSheet.create({
         paddingBottom: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#1A1A1A',
-        // Shadow for iOS
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        // Elevation for Android
         elevation: 4,
         zIndex: 1000,
     },

@@ -1,6 +1,6 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
@@ -10,6 +10,7 @@ import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { BookingSummary } from "../../organisms/booking/BookingSummary";
+import { DateHelper } from "../../../../../../domain/helpers/DateHelper";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ConfirmRentalDuration'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRentalDuration'>;
@@ -27,6 +28,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         branchOpenTime,
         branchCloseTime,
         vehicleCategory,
+        dateRange,
     } = route.params;
     const navigation = useNavigation<NavigationPropType>();
     
@@ -47,8 +49,75 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const branchOpenTimeSACH = branchOpenTime ? convertTo12HourFormat(branchOpenTime) : "6:00 SA";
     const branchCloseTimeSACH = branchCloseTime ? convertTo12HourFormat(branchCloseTime) : "10:00 CH";
 
-    const now = new Date();
-    const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const initialDateRangeISO = useMemo(() => {
+        if (dateRange) {
+            console.log('📅 Parsing Vietnamese dateRange:', dateRange);
+            return DateHelper.parseVietnameseDateRangeToISO(dateRange);
+        }
+        console.log('📅 Using default dateRange');
+        return DateHelper.getDefaultDateRangeForBooking();
+    }, [dateRange]);
+
+    const parseInitialDates = (isoRange: string) => {
+        const match = isoRange.match(/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})\s*\((.+?)\s*-\s*(.+?)\)/);
+        
+        if (match) {
+            const [, startDateStr, endDateStr, startTimeStr, endTimeStr] = match;
+            
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+            
+            const parseTime = (timeStr: string) => {
+                const match = timeStr.match(/(\d+):(\d+)\s*(SA|CH)/);
+                if (!match) return { hours: 10, minutes: 0 };
+                
+                let hours = parseInt(match[1]);
+                const minutes = parseInt(match[2]);
+                const period = match[3];
+                
+                if (period === 'CH' && hours !== 12) {
+                    hours += 12;
+                } else if (period === 'SA' && hours === 12) {
+                    hours = 0;
+                }
+                
+                return { hours, minutes };
+            };
+            
+            const startTime = parseTime(startTimeStr);
+            const endTime = parseTime(endTimeStr);
+            
+            startDate.setHours(startTime.hours, startTime.minutes, 0, 0);
+            endDate.setHours(endTime.hours, endTime.minutes, 0, 0);
+            
+            const diffMs = endDate.getTime() - startDate.getTime();
+            const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const days = Math.floor(totalHours / 24);
+            const hours = totalHours % 24;
+            
+            return {
+                startDate,
+                endDate,
+                startDateISO: startDateStr,
+                endDateISO: endDateStr,
+                days: days > 0 ? days : 1,
+                hours,
+            };
+        }
+        
+        const now = new Date();
+        const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return {
+            startDate: now,
+            endDate: weekLater,
+            startDateISO: now.toISOString().split('T')[0],
+            endDateISO: weekLater.toISOString().split('T')[0],
+            days: 7,
+            hours: 0,
+        };
+    };
+
+    const initialData = useMemo(() => parseInitialDates(initialDateRangeISO), [initialDateRangeISO]);
     
     const formatInitialDate = (date: Date) => {
         const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", 
@@ -61,13 +130,23 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')} ${timeStr}`;
     };
     
-    const [startDate, setStartDate] = useState(formatInitialDate(now));
-    const [endDate, setEndDate] = useState(formatInitialDate(weekLater));
-    const [duration, setDuration] = useState("7 Ngày 0 Giờ");
-    const [rentalDays, setRentalDays] = useState(7);
+    const [startDate, setStartDate] = useState(formatInitialDate(initialData.startDate));
+    const [endDate, setEndDate] = useState(formatInitialDate(initialData.endDate));
+    const [duration, setDuration] = useState(`${initialData.days} Ngày ${initialData.hours} Giờ`);
+    const [rentalDays, setRentalDays] = useState(initialData.days);
     
-    const [startDateTime, setStartDateTime] = useState<Date>(now);
-    const [endDateTime, setEndDateTime] = useState<Date>(weekLater);
+    const [startDateTime, setStartDateTime] = useState<Date>(initialData.startDate);
+    const [endDateTime, setEndDateTime] = useState<Date>(initialData.endDate);
+    
+    const [startDateISO, setStartDateISO] = useState<string | null>(initialData.startDateISO);
+    const [endDateISO, setEndDateISO] = useState<string | null>(initialData.endDateISO);
+
+    useEffect(() => {
+        if (dateRange && initialDateRangeISO) {
+            console.log('🔄 Auto-populating dates from search:', initialDateRangeISO);
+            handleDateRangeChange(initialDateRangeISO);
+        }
+    }, [dateRange, initialDateRangeISO]);
 
     const category = (vehicleCategory?.toUpperCase() || "ECONOMY") as VehicleCategory;
 
@@ -75,15 +154,12 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         rentingRate,
         discountPercentage,
         durationType,
-        // Membership
         membershipDiscountPercentage,
         membershipTier,
         membershipDiscountAmount,
-        // Holiday
         holidayDays,
         holidaySurcharge,
         hasHolidaySurcharge,
-        // Amounts
         baseRentalFee,
         discountAmount,
         totalRentalFee,
@@ -172,6 +248,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         if (match) {
             const [, startDateStr, endDateStr, startTimeStr, endTimeStr] = match;
             
+            setStartDateISO(startDateStr);
+            setEndDateISO(endDateStr);
+            
             const formattedStart = formatDateDisplay(startDateStr, startTimeStr);
             const formattedEnd = formatDateDisplay(endDateStr, endTimeStr);
             
@@ -217,7 +296,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             vehicleCategory: category,
             holidaySurcharge,
             holidayDayCount: holidayDays.length,
-            // Pass membership data
             membershipDiscountPercentage,
             membershipDiscountAmount,
             membershipTier,
@@ -304,9 +382,10 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     branchName={branchName}
                     branchOpenTime={branchOpenTimeSACH}
                     branchCloseTime={branchCloseTimeSACH}
+                    startDateISO={startDateISO}
+                    endDateISO={endDateISO}
                 />
 
-                {/* Current Membership Indicator */}
                 <View style={styles.membershipIndicator}>
                     <Text style={styles.membershipIndicatorIcon}>
                         {getMembershipIcon(membershipTier)}
@@ -323,7 +402,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     )}
                 </View>
 
-                {/* Config Discount Banner */}
                 {hasDiscount && (
                     <View style={styles.discountBanner}>
                         <View style={styles.discountIconContainer}>
@@ -341,7 +419,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     </View>
                 )}
 
-                {/* Membership Discount Banner */}
                 {hasMembershipDiscount && (
                     <View style={styles.membershipBanner}>
                         <View style={styles.membershipIconContainer}>
@@ -361,7 +438,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     </View>
                 )}
 
-                {/* Holiday Surcharge Banner */}
                 {hasHolidaySurcharge && (
                     <View style={styles.holidayBanner}>
                         <View style={styles.holidayHeader}>
@@ -433,7 +509,6 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
     },
-    // Membership Indicator (always visible)
     membershipIndicator: {
         flexDirection: "row",
         alignItems: "center",
@@ -467,7 +542,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "700",
     },
-    // Config Discount Banner
     discountBanner: {
         backgroundColor: "#1a2e1a",
         borderRadius: 12,
@@ -509,7 +583,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
     },
-    // Membership Discount Banner
     membershipBanner: {
         backgroundColor: "#1a1a2e",
         borderRadius: 12,
@@ -551,7 +624,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
     },
-    // Holiday Surcharge Banner
     holidayBanner: {
         backgroundColor: "#2e1a1a",
         borderRadius: 12,

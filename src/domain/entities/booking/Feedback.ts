@@ -14,9 +14,8 @@ export class Feedback implements BaseEntity {
     public renterId: string;
     public bookingId: string;
 
-    // ✅ RELATIONS
-    public renter: Renter;
-    public booking: Booking;
+    public renter?: Renter;
+    public booking?: Booking;
 
     constructor(
         id: string,
@@ -24,12 +23,12 @@ export class Feedback implements BaseEntity {
         comment: string,
         renterId: string,
         bookingId: string,
-        renter: Renter,    // ✅ ADDED
-        booking: Booking,  // ✅ ADDED
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
-        isDeleted: boolean = false
+        isDeleted: boolean = false,
+        renter?: Renter,
+        booking?: Booking,
     ) {
         this.id = id;
         this.createdAt = createdAt;
