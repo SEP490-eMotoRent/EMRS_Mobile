@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
   Alert,
 } from 'react-native';
 import { colors } from '../../../../../common/theme/colors';
@@ -53,29 +52,8 @@ export const StaffProfileScreen: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
-      id: 'edit-profile',
-      title: 'Edit Profile',
-      icon: 'edit',
-      color: '#C9B6FF',
-      onPress: () => console.log('Edit Profile'),
-    },
-    {
-      id: 'notifications',
-      title: 'Notifications',
-      icon: 'bell',
-      color: '#67D16C',
-      onPress: () => console.log('Notifications'),
-    },
-    {
-      id: 'settings',
-      title: 'Settings',
-      icon: 'setting',
-      color: '#FFB300',
-      onPress: () => console.log('Settings'),
-    },
-    {
       id: 'ticket',
-      title: 'Ticket',
+      title: 'Quản lý Ticket',
       icon: 'audit',
       color: '#FF6B6B',
       onPress: () => navigation.navigate('TicketList'),
@@ -129,15 +107,11 @@ export const StaffProfileScreen: React.FC = () => {
           <View style={styles.profileInfo}>
             <Text style={styles.staffName}>{user?.fullName || 'Staff Member'}</Text>
             <Text style={styles.staffRole}>{user?.role || 'STAFF'}</Text>
-            <Text style={styles.branchName}>{user?.branchName}</Text>
+            <View style={styles.branchRow}>
+              <AntDesign name="home" size={12} color={colors.text.secondary} />
+              <Text style={styles.branchName}>{user?.branchName || 'Chưa có chi nhánh'}</Text>
+            </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => console.log('Edit Profile')}
-          >
-            <AntDesign name="edit" size={16} color="#C9B6FF" />
-          </TouchableOpacity>
         </View>
 
         {/* Stats Overview */}
@@ -180,21 +154,31 @@ export const StaffProfileScreen: React.FC = () => {
 
         {/* Quick Actions */}
         <View style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>Tác vụ</Text>
-          <View style={styles.actionsGrid}>
-            {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                style={styles.actionItem}
-                onPress={action.onPress}
-              >
-                <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-                  <AntDesign name={action.icon as any} size={20} color="#FFFFFF" />
-                </View>
-                <Text style={styles.actionText}>{action.title}</Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionHeaderLeft}>
+              <AntDesign name="appstore" size={18} color="#C9B6FF" />
+              <Text style={styles.sectionTitle}>Tác vụ nhanh</Text>
+            </View>
           </View>
+          {quickActions.map((action) => (
+            <TouchableOpacity
+              key={action.id}
+              style={styles.actionCard}
+              onPress={action.onPress}
+              activeOpacity={0.8}
+            >
+              <View style={styles.actionCardLeft}>
+                <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
+                  <AntDesign name={action.icon as any} size={24} color={action.color} />
+                </View>
+                <View style={styles.actionCardInfo}>
+                  <Text style={styles.actionTitle}>{action.title}</Text>
+                  <Text style={styles.actionSubtitle}>Xem và quản lý các ticket</Text>
+                </View>
+              </View>
+              <AntDesign name="right" size={16} color={colors.text.secondary} />
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Sign Out Button */}
@@ -220,40 +204,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1E1E1E',
     marginHorizontal: 16,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2E2E2E',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   avatarContainer: {
     position: 'relative',
     marginRight: 16,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     borderWidth: 3,
     borderColor: '#C9B6FF',
+    backgroundColor: '#2A2A2A',
   },
   statusBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
     backgroundColor: '#1E1E1E',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
+    borderWidth: 2,
+    borderColor: '#1E1E1E',
   },
   statusDot: {
     width: 8,
@@ -271,31 +260,36 @@ const styles = StyleSheet.create({
   },
   staffName: {
     color: colors.text.primary,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   staffRole: {
     color: '#C9B6FF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  branchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   branchName: {
     color: colors.text.secondary,
-    fontSize: 12,
-  },
-  editButton: {
-    backgroundColor: '#2A2A2A',
-    borderRadius: 20,
-    padding: 8,
+    fontSize: 13,
+    fontWeight: '500',
   },
   statsCard: {
     backgroundColor: '#1E1E1E',
     marginHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2E2E2E',
   },
   statsHeader: {
     flexDirection: 'row',
@@ -305,8 +299,9 @@ const styles = StyleSheet.create({
   },
   statsTitle: {
     color: colors.text.primary,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
+    letterSpacing: 0.3,
   },
   toggleButton: {
     padding: 4,
@@ -319,59 +314,89 @@ const styles = StyleSheet.create({
   statItem: {
     width: '45%',
     backgroundColor: '#2A2A2A',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 18,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
   },
   statNumber: {
     color: '#C9B6FF',
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   statLabel: {
     color: colors.text.secondary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
+    letterSpacing: 0.2,
   },
   actionsCard: {
     backgroundColor: '#1E1E1E',
     marginHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2E2E2E',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   sectionTitle: {
     color: colors.text.primary,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    marginBottom: 16,
+    letterSpacing: 0.3,
   },
-  actionsGrid: {
+  actionCard: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#2A2A2A',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#333333',
+    marginBottom: 12,
+  },
+  actionCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
     gap: 16,
   },
-  actionItem: {
-    width: '45%',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
-  },
   actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
-  actionText: {
+  actionCardInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  actionTitle: {
     color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  actionSubtitle: {
+    color: colors.text.secondary,
     fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: '400',
   },
   scheduleCard: {
     backgroundColor: '#1E1E1E',
@@ -397,13 +422,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#2A2A2A',
     marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
-    gap: 8,
+    borderRadius: 16,
+    padding: 18,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#3A3A3A',
+    marginBottom: 20,
   },
   signOutText: {
     color: '#FF6B6B',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });

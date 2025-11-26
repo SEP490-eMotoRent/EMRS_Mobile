@@ -59,6 +59,15 @@ export const TrackingGPSScreen: React.FC = () => {
   );
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("Reconnecting MQTT...");
+      setConnectionNonce(prev => prev + 1);
+    }, 30000); // 30s
+  
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const tracking = async () => {
       try {
         const trackingUseCase = new TrackingVehicleUseCase(
@@ -225,8 +234,6 @@ export const TrackingGPSScreen: React.FC = () => {
             provider={PROVIDER_GOOGLE}
             initialRegion={initialRegion}
             mapType="standard"
-            showsUserLocation
-            showsMyLocationButton
           >
             {location && (
               <Marker
@@ -246,13 +253,6 @@ export const TrackingGPSScreen: React.FC = () => {
         )}
       </View>
       <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.refreshBtn]}
-          onPress={handleManualRefresh}
-        >
-          <AntDesign name="reload" size={16} color="#000" />
-          <Text style={styles.actionBtnText}>Làm mới</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionBtn, styles.centerBtn]}
           onPress={handleCenterOnVehicle}

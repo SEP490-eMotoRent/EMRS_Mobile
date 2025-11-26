@@ -873,6 +873,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
     flex: 1,
+    marginBottom: 8,
   },
   inputHelper: {
     color: colors.text.secondary,

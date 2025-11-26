@@ -23,7 +23,6 @@ import sl from "../../../../../../core/di/InjectionContainer";
 import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../../../../domain/entities/booking/RentalContract";
-import { Linking } from "react-native";
 import Pdf from "react-native-pdf";
 import { WebView } from "react-native-webview";
 import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
@@ -221,18 +220,6 @@ export const BookingDetailsScreen: React.FC = () => {
     new Intl.NumberFormat("vi-VN").format(n) + " VND";
   const insurancePackage = booking?.insurancePackage || null;
   const hasInsurancePackage = !!insurancePackage;
-
-  const formatDateTime = (dateString?: string | Date) => {
-    if (!dateString) return "-";
-    const date = typeof dateString === "string" ? new Date(dateString) : dateString;
-    return date.toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const handleViewReceipt = (receiptId: string) => {
     setShowReceiptListModal(false);
