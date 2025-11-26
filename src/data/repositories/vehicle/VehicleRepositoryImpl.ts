@@ -57,15 +57,15 @@ export class VehicleRepositoryImpl implements VehicleRepository {
     }
 
     async getVehicles(
-        licensePlate: string,
-        color: string,
-        currentOdometerKm: number,
-        batteryHealthPercentage: number,
-        status: string,
-        branchId: string,
-        vehicleModelId: string,
-        pageSize: number,
-        pageNum: number
+        licensePlate?: string,
+        color?: string,
+        currentOdometerKm?: number,
+        batteryHealthPercentage?: number,
+        status?: string,
+        branchId?: string,
+        vehicleModelId?: string,
+        pageSize: number = 10,
+        pageNum: number = 1
     ): Promise<PaginatedVehicleResponse> {
         const response = await this.remote.getVehicles(
             licensePlate,

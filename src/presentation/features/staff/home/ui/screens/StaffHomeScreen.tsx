@@ -1,331 +1,765 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Image,
   TextInput,
   FlatList,
-  Platform,
-} from 'react-native';
-import { colors } from '../../../../../common/theme/colors';
-import { AntDesign } from '@expo/vector-icons';
-import { ScreenHeader } from '../../../../../common/components/organisms/ScreenHeader';
-import { useNavigation } from '@react-navigation/native';
-import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  RefreshControl,
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+} from "react-native";
+import { colors } from "../../../../../common/theme/colors";
+import { AntDesign } from "@expo/vector-icons";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { useNavigation } from "@react-navigation/native";
+import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { SafeAreaView } from "react-native-safe-area-context";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { Vehicle } from "../../../../../../domain/entities/vehicle/Vehicle";
+import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
+import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
+import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
+import { useAppSelector } from "../../../../authentication/store/hooks";
 
-type StaffHomeScreenNavigationProp = StackNavigationProp<StaffStackParamList, 'Home'>;
+type StaffHomeScreenNavigationProp = StackNavigationProp<
+  StaffStackParamList,
+  "Home"
+>;
 
-interface Motorbike {
-  id: string;
-  name: string;
-  plate: string;
-  batteryLevel: number;
-  range: number;
-  status: 'available' | 'rented' | 'charging' | 'maintenance';
-  location: string;
-  lastCharged: string;
-  image: any;
-}
+const PAGE_SIZE = 6;
+type VehicleStatusFilter = "all" | "Available" | "Rented";
 
 export const StaffHomeScreen: React.FC = () => {
   const navigation = useNavigation<StaffHomeScreenNavigationProp>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'rented' | 'charging' | 'maintenance'>('all');
-
-  // Mock data for motorbikes
-  const motorbikes: Motorbike[] = [
-    {
-      id: '1',
-      name: 'VinFast Evo200',
-      plate: '59X1-12345',
-      batteryLevel: 85,
-      range: 180,
-      status: 'available',
-      location: 'Bay A-01',
-      lastCharged: '2 hours ago',
-      image: require('../../../../../../../assets/images/motor.png'),
-    },
-    {
-      id: '2',
-      name: 'VinFast Evo200',
-      plate: '59X1-12346',
-      batteryLevel: 45,
-      range: 95,
-      status: 'charging',
-      location: 'Bay A-02',
-      lastCharged: 'Currently charging',
-      image: require('../../../../../../../assets/images/motor.png'),
-    },
-    {
-      id: '3',
-      name: 'VinFast Evo200',
-      plate: '59X1-12347',
-      batteryLevel: 92,
-      range: 200,
-      status: 'rented',
-      location: 'Out for rental',
-      lastCharged: '6 hours ago',
-      image: require('../../../../../../../assets/images/motor.png'),
-    },
-    {
-      id: '4',
-      name: 'VinFast Evo200',
-      plate: '59X1-12348',
-      batteryLevel: 15,
-      range: 30,
-      status: 'maintenance',
-      location: 'Service Bay',
-      lastCharged: '1 day ago',
-      image: require('../../../../../../../assets/images/motor.png'),
-    },
-    {
-      id: '5',
-      name: 'VinFast Evo200',
-      plate: '59X1-12349',
-      batteryLevel: 78,
-      range: 165,
-      status: 'available',
-      location: 'Bay B-01',
-      lastCharged: '4 hours ago',
-      image: require('../../../../../../../assets/images/motor.png'),
-    },
-    {
-      id: '6',
-      name: 'VinFast Evo200',
-      plate: '59X1-12350',
-      batteryLevel: 100,
-      range: 220,
-      status: 'available',
-      location: 'Bay B-02',
-      lastCharged: 'Just charged',
-      image: require('../../../../../../../assets/images/motor.png'),
-    },
-  ];
-
-  const filteredMotorbikes = motorbikes.filter(bike => {
-    const matchesSearch = bike.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         bike.plate.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || bike.status === filterStatus;
-    return matchesSearch && matchesFilter;
+  const user = useAppSelector((state: any) => state.auth.user);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<VehicleStatusFilter>("all");
+  const [filterColor, setFilterColor] = useState("");
+  const [filterBatteryMin, setFilterBatteryMin] = useState("");
+  const [filterOdometerMin, setFilterOdometerMin] = useState("");
+  const [filterModelId, setFilterModelId] = useState("");
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showModelList, setShowModelList] = useState(false);
+  const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
+  const [draftFilterColor, setDraftFilterColor] = useState("");
+  const [draftFilterBatteryMin, setDraftFilterBatteryMin] = useState("");
+  const [draftFilterOdometerMin, setDraftFilterOdometerMin] = useState("");
+  const [draftFilterStatus, setDraftFilterStatus] =
+    useState<VehicleStatusFilter>("all");
+  const [draftFilterModelId, setDraftFilterModelId] = useState("");
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
   });
 
+  const vehiclePlaceholder = require("../../../../../../../assets/images/motor.png");
+
+  const fetchVehicles = useCallback(
+    async (page = 1, append = false, options?: { silent?: boolean }) => {
+      try {
+        if (append) {
+          setLoadingMore(true);
+        } else if (!options?.silent) {
+          setLoading(true);
+        }
+
+        const getVehicleListUseCase = new GetVehicleListUseCase(
+          sl.get("VehicleRepository")
+        );
+
+        const response = await getVehicleListUseCase.execute(
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          user.branchId,
+          undefined,
+          PAGE_SIZE,
+          page
+        );
+
+        setVehicles((prev) =>
+          append ? [...prev, ...response.items] : response.items
+        );
+        setPagination({
+          currentPage: response.currentPage,
+          totalPages: response.totalPages,
+          totalItems: response.totalItems,
+        });
+      } catch (error) {
+        console.error("Error fetching vehicles:", error);
+      } finally {
+        if (append) {
+          setLoadingMore(false);
+        } else if (!options?.silent) {
+          setLoading(false);
+        }
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    fetchVehicles(1);
+  }, [fetchVehicles]);
+
+  useEffect(() => {
+    const fetchVehicleModels = async () => {
+      try {
+        const getAllVehicleModelsUseCase = new GetAllVehicleModelsUseCase(
+          sl.get("VehicleModelRepository")
+        );
+        const models = await getAllVehicleModelsUseCase.execute();
+        setVehicleModels(models || []);
+      } catch (error) {
+        console.error("Error fetching vehicle models:", error);
+      }
+    };
+
+    fetchVehicleModels();
+  }, []);
+
+  const hasActiveFilters =
+    !!filterColor ||
+    !!filterBatteryMin ||
+    !!filterOdometerMin ||
+    !!filterModelId ||
+    filterStatus !== "all";
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchVehicles(1, false, { silent: true });
+    setRefreshing(false);
+  };
+
+  const handleLoadMore = () => {
+    if (
+      pagination.currentPage < pagination.totalPages &&
+      !loadingMore &&
+      !loading
+    ) {
+      fetchVehicles(pagination.currentPage + 1, true);
+    }
+  };
+
+  const syncDraftFilters = () => {
+    setDraftFilterColor(filterColor);
+    setDraftFilterBatteryMin(filterBatteryMin);
+    setDraftFilterOdometerMin(filterOdometerMin);
+    setDraftFilterStatus(filterStatus);
+    setDraftFilterModelId(filterModelId);
+  };
+
+  const openFilterModal = () => {
+    syncDraftFilters();
+    setShowModelList(false);
+    setShowFilterModal(true);
+  };
+
+  const resetDraftFilters = () => {
+    setDraftFilterColor("");
+    setDraftFilterBatteryMin("");
+    setDraftFilterOdometerMin("");
+    setDraftFilterStatus("all");
+    setDraftFilterModelId("");
+    setShowModelList(false);
+  };
+
+  const applyDraftFilters = () => {
+    setFilterColor(draftFilterColor);
+    setFilterBatteryMin(draftFilterBatteryMin);
+    setFilterOdometerMin(draftFilterOdometerMin);
+    setFilterStatus(draftFilterStatus);
+    setFilterModelId(draftFilterModelId);
+    handleCloseFilterModal();
+  };
+
+  const handleCloseFilterModal = () => {
+    setShowFilterModal(false);
+    setShowModelList(false);
+  };
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredVehicles = useMemo(() => {
+    const colorQuery = filterColor.trim().toLowerCase();
+    const batteryThreshold = filterBatteryMin ? Number(filterBatteryMin) : null;
+    const odometerThreshold = filterOdometerMin
+      ? Number(filterOdometerMin)
+      : null;
+
+    return vehicles.filter((vehicle) => {
+      const matchesModel =
+        !filterModelId || vehicle.vehicleModel?.id === filterModelId;
+
+      const matchesSearch =
+        !normalizedQuery ||
+        vehicle.licensePlate?.toLowerCase().includes(normalizedQuery) ||
+        vehicle.vehicleModel?.modelName
+          ?.toLowerCase()
+          .includes(normalizedQuery) ||
+        vehicle.color?.toLowerCase().includes(normalizedQuery);
+
+      const matchesStatus =
+        filterStatus === "all" ||
+        vehicle.status?.toLowerCase() === filterStatus.toLowerCase();
+
+      const matchesColor =
+        !colorQuery || vehicle.color?.toLowerCase().includes(colorQuery);
+
+      const matchesBattery =
+        batteryThreshold === null ||
+        (vehicle.batteryHealthPercentage ?? 0) >= batteryThreshold;
+
+      const matchesOdometer =
+        odometerThreshold === null ||
+        (vehicle.currentOdometerKm ?? 0) >= odometerThreshold;
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesColor &&
+        matchesBattery &&
+        matchesOdometer &&
+        matchesModel
+      );
+    });
+  }, [
+    vehicles,
+    normalizedQuery,
+    filterStatus,
+    filterColor,
+    filterBatteryMin,
+    filterOdometerMin,
+    filterModelId,
+  ]);
+
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available': return '#67D16C';
-      case 'rented': return '#FFB300';
-      case 'charging': return '#C9B6FF';
-      case 'maintenance': return '#FF6B6B';
-      default: return colors.text.secondary;
+    switch (status?.toLowerCase()) {
+      case "available":
+        return "#67D16C";
+      case "rented":
+        return "#FFB300";
+      default:
+        return colors.text.secondary;
     }
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case 'available': return 'Available';
-      case 'rented': return 'Rented';
-      case 'charging': return 'Charging';
-      case 'maintenance': return 'Maintenance';
-      default: return status;
+    switch (status?.toLowerCase()) {
+      case "available":
+        return "Sẵn sàng";
+      case "rented":
+        return "Đang thuê";
+      default:
+        return status || "Không xác định";
     }
   };
 
   const getBatteryColor = (level: number) => {
-    if (level >= 70) return '#67D16C';
-    if (level >= 40) return '#FFB300';
-    return '#FF6B6B';
+    if (level >= 70) return "#67D16C";
+    if (level >= 40) return "#FFB300";
+    return "#FF6B6B";
   };
 
-  const renderMotorbikeCard = ({ item }: { item: Motorbike }) => (
-    <TouchableOpacity style={styles.motorbikeCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.motorbikeInfo}>
-          <Text style={styles.motorbikeName}>{item.name}</Text>
-          <Text style={styles.motorbikePlate}>{item.plate}</Text>
-        </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
-        </View>
-      </View>
+  const renderVehicleCard = ({ item }: { item: Vehicle }) => {
+    const batteryLevel = item.batteryHealthPercentage || 0;
+    const statusColor = getStatusColor(item.status);
+    const imageSource =
+      item.fileUrl && item.fileUrl.length > 0
+        ? { uri: item.fileUrl[0] }
+        : vehiclePlaceholder;
+    const pricePerDay = item.vehicleModel?.rentalPricing?.rentalPrice || 0;
+    const reviewCount = item.bookings?.length || 0;
+    const ratingValue = (
+      Math.min(4.9, Math.max(3.6, (batteryLevel || 80) / 18)) || 4.5
+    ).toFixed(1);
 
-      <Image source={item.image} style={styles.motorbikeImage} />
+    return (
+      <TouchableOpacity
+        style={styles.motorbikeCard}
+        activeOpacity={0.92}
+        onPress={() =>
+          navigation.navigate("RentedVehicleDetails", { vehicleId: item.id })
+        }
+      >
+        <View style={styles.heroWrapper}>
+          <Image source={imageSource} style={styles.vehicleImage} />
+          <View style={styles.heroOverlay} />
+          <View style={styles.heroTopRow}>
+            <View style={styles.statusBadge}>
+              <View
+                style={[styles.statusDot, { backgroundColor: statusColor }]}
+              />
+              <Text style={[styles.statusText, { color: statusColor }]}>
+                {getStatusText(item.status)}
+              </Text>
+            </View>
+            <View style={styles.priceBadge}>
+              <Text style={styles.priceValue}>
+                {pricePerDay
+                  ? `${new Intl.NumberFormat("vi-VN").format(pricePerDay)}đ`
+                  : "—"}
+              </Text>
+              <Text style={styles.priceUnit}>/ngày</Text>
+            </View>
+          </View>
+          <View style={styles.heroBottomRow}>
+            <View style={styles.ratingBadge}>
+              <AntDesign name="star" size={12} color="#FFD666" />
+              <Text style={styles.ratingValue}>{ratingValue}</Text>
+              <Text style={styles.ratingLabel}>
+                {reviewCount > 0 ? `${reviewCount} lượt thuê` : "Mới cập nhật"}
+              </Text>
+            </View>
+            <View style={styles.platePill}>
+              <Text style={styles.plateText}>{item.licensePlate}</Text>
+            </View>
+          </View>
+        </View>
 
-      <View style={styles.cardContent}>
-        <View style={styles.batterySection}>
-          <View style={styles.batteryHeader}>
-            <AntDesign name="thunderbolt" size={16} color={getBatteryColor(item.batteryLevel)} />
-            <Text style={styles.batteryLabel}>Battery</Text>
-            <Text style={[styles.batteryLevel, { color: getBatteryColor(item.batteryLevel) }]}>
-              {item.batteryLevel}%
+        <View style={styles.cardHeader}>
+          <View style={styles.motorbikeInfo}>
+            <Text style={styles.motorbikeName}>
+              {item.vehicleModel?.modelName || "Mẫu xe chưa cập nhật"}
             </Text>
           </View>
-          <View style={styles.batteryBar}>
-            <View 
-              style={[
-                styles.batteryFill, 
-                { 
-                  width: `${item.batteryLevel}%`,
-                  backgroundColor: getBatteryColor(item.batteryLevel)
-                }
-              ]} 
+        </View>
+
+        <View style={styles.chipRow}>
+          <View style={styles.infoChip}>
+            <AntDesign name="home" size={13} color="#C9B6FF" />
+            <Text style={styles.infoChipText}>
+              {item.branch?.branchName || "Chưa có chi nhánh"}
+            </Text>
+          </View>
+          <View style={styles.infoChip}>
+            <AntDesign name="tag" size={13} color="#9CA3AF" />
+            <Text style={styles.infoChipText}>
+              {item.color || "Không rõ màu"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.metricRow}>
+          <View style={styles.metricCard}>
+            <AntDesign
+              name="thunderbolt"
+              size={16}
+              color={getBatteryColor(batteryLevel)}
             />
+            <Text style={styles.metricLabel}>Pin</Text>
+            <Text
+              style={[
+                styles.metricValue,
+                { color: getBatteryColor(batteryLevel) },
+              ]}
+            >
+              {batteryLevel || 0}%
+            </Text>
+          </View>
+          <View style={styles.metricCard}>
+            <AntDesign name="dashboard" size={16} color="#C9B6FF" />
+            <Text style={styles.metricLabel}>Số km</Text>
+            <Text style={styles.metricValue}>
+              {item.currentOdometerKm?.toLocaleString("vi-VN") || 0} km
+            </Text>
+          </View>
+          <View style={styles.metricCard}>
+            <AntDesign name="idcard" size={16} color="#FFB300" />
+            <Text style={styles.metricLabel}>Lượt thuê</Text>
+            <Text style={styles.metricValue}>{reviewCount}</Text>
           </View>
         </View>
 
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
-            <AntDesign name="environment" size={14} color={colors.text.secondary} />
-            <Text style={styles.infoText}>{item.range} km range</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <AntDesign name="home" size={14} color={colors.text.secondary} />
-            <Text style={styles.infoText}>{item.location}</Text>
+            <AntDesign
+              name="environment"
+              size={14}
+              color={colors.text.secondary}
+            />
+            <Text style={styles.infoText}>
+              {item.branch?.address || "Không có địa chỉ chi nhánh"}
+            </Text>
           </View>
         </View>
 
-        <View style={styles.lastChargedRow}>
-          <AntDesign name="clock-circle" size={12} color={colors.text.secondary} />
-          <Text style={styles.lastChargedText}>Last charged: {item.lastCharged}</Text>
+        <View style={styles.cardActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() =>
+              navigation.navigate("RentedVehicleDetails", {
+                vehicleId: item.id,
+              })
+            }
+          >
+            <AntDesign name="eye" size={16} color={colors.text.primary} />
+            <Text style={styles.actionText}>Chi tiết xe</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.primaryAction]}
+            onPress={() =>
+              navigation.navigate("TrackingGPS", {
+                vehicleId: item.id,
+                licensePlate: item.licensePlate,
+              })
+            }
+          >
+            <AntDesign name="environment" size={16} color="#000" />
+            <Text style={[styles.actionText, styles.primaryActionText]}>
+              Theo dõi GPS
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderListHeader = () => (
+    <View style={styles.listHeader}>
+      <ScreenHeader
+        title="Quản lý đội xe"
+        subtitle={`${pagination.totalItems || vehicles.length} xe • Trang ${
+          pagination.totalPages ? pagination.currentPage : 1
+        }/${Math.max(pagination.totalPages, 1)}`}
+        showBackButton={false}
+      />
+
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <AntDesign name="search" size={20} color={colors.text.secondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm theo tên, biển số..."
+            placeholderTextColor={colors.text.secondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <AntDesign name="close" size={20} color={colors.text.secondary} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
-      <View style={styles.cardActions}>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('MotorbikeDetail', { motorbikeId: item.id })}
+      <View style={styles.headerRow}>
+        <Text style={styles.sectionTitle}>
+          Xe trong kho ({filteredVehicles.length})
+        </Text>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={openFilterModal}
+          activeOpacity={0.8}
         >
-          <AntDesign name="eye" size={16} color={colors.text.primary} />
-          <Text style={styles.actionText}>View Details</Text>
+          <AntDesign name="filter" size={14} color="#000" />
+          <Text style={styles.filterButtonText}>Bộ lọc</Text>
         </TouchableOpacity>
-        {item.status === 'available' && (
-          <TouchableOpacity style={[styles.actionButton, styles.primaryAction]}>
-            <AntDesign name="car" size={16} color="#000" />
-            <Text style={[styles.actionText, styles.primaryActionText]}>Start Handover</Text>
-          </TouchableOpacity>
-        )}
-        {item.status === 'charging' && (
-          <TouchableOpacity style={[styles.actionButton, styles.chargingAction]}>
-            <AntDesign name="thunderbolt" size={16} color="#fff" />
-            <Text style={[styles.actionText, styles.chargingActionText]}>Charging Status</Text>
-          </TouchableOpacity>
-        )}
       </View>
-    </TouchableOpacity>
+
+      {hasActiveFilters && (
+        <View style={styles.activeFiltersRow}>
+          {!!filterModelId && (
+            <View style={[styles.filterChip, styles.chipModel]}>
+              <Text style={styles.filterChipText}>
+                {vehicleModels.find((m) => m.id === filterModelId)?.modelName ||
+                  "Mẫu xe"}
+              </Text>
+              <TouchableOpacity onPress={() => setFilterModelId("")}>
+                <AntDesign name="close" size={12} color="#000" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {filterStatus !== "all" && (
+            <View style={[styles.filterChip, styles.chipStatus]}>
+              <Text style={styles.filterChipText}>
+                {getStatusText(filterStatus)}
+              </Text>
+              <TouchableOpacity onPress={() => setFilterStatus("all")}>
+                <AntDesign name="close" size={12} color="#000" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {!!filterColor && (
+            <View style={[styles.filterChip, styles.chipColor]}>
+              <Text style={styles.filterChipText}>Màu: {filterColor}</Text>
+              <TouchableOpacity onPress={() => setFilterColor("")}>
+                <AntDesign name="close" size={12} color="#000" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {!!filterBatteryMin && (
+            <View style={[styles.filterChip, styles.chipBattery]}>
+              <Text style={styles.filterChipText}>
+                Pin ≥ {filterBatteryMin}%
+              </Text>
+              <TouchableOpacity onPress={() => setFilterBatteryMin("")}>
+                <AntDesign name="close" size={12} color="#000" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {!!filterOdometerMin && (
+            <View style={[styles.filterChip, styles.chipOdo]}>
+              <Text style={styles.filterChipText}>
+                Odo ≥ {filterOdometerMin} km
+              </Text>
+              <TouchableOpacity onPress={() => setFilterOdometerMin("")}>
+                <AntDesign name="close" size={12} color="#000" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
   );
 
-  const filterButtons = [
-    { key: 'all', label: 'All', count: motorbikes.length },
-    { key: 'available', label: 'Available', count: motorbikes.filter(b => b.status === 'available').length },
-    { key: 'rented', label: 'Rented', count: motorbikes.filter(b => b.status === 'rented').length },
-    { key: 'charging', label: 'Charging', count: motorbikes.filter(b => b.status === 'charging').length },
-    { key: 'maintenance', label: 'Maintenance', count: motorbikes.filter(b => b.status === 'maintenance').length },
-  ];
+  const renderListFooter = () => {
+    if (!loadingMore) {
+      return null;
+    }
+    return (
+      <View style={styles.listFooter}>
+        <ActivityIndicator size="small" color="#C9B6FF" />
+        <Text style={styles.listFooterText}>Đang tải thêm xe...</Text>
+      </View>
+    );
+  };
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      {loading ? (
+        <>
+          <ActivityIndicator size="large" color="#C9B6FF" />
+          <Text style={styles.loadingText}>Đang tải danh sách xe...</Text>
+        </>
+      ) : (
+        <>
+          <AntDesign name="inbox" size={32} color={colors.text.secondary} />
+          <Text style={styles.emptyStateTitle}>Không có xe phù hợp</Text>
+          <Text style={styles.emptyStateSubtitle}>
+            Thử điều chỉnh bộ lọc hoặc tìm kiếm khác.
+          </Text>
+        </>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ScreenHeader
-          title="Branch Motorbikes"
-          subtitle="District 2 Branch - 6 vehicles"
-          showBackButton={false}
-        />
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <AntDesign name="search" size={20} color={colors.text.secondary} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by name or plate..."
-              placeholderTextColor={colors.text.secondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <AntDesign name="close" size={20} color={colors.text.secondary} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Filter Buttons */}
-        <View style={styles.filterContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-            {filterButtons.map((filter) => (
-              <TouchableOpacity
-                key={filter.key}
-                style={[
-                  styles.filterButton,
-                  filterStatus === filter.key && styles.filterButtonActive,
-                ]}
-                onPress={() => setFilterStatus(filter.key as any)}
-              >
-                <Text style={[
-                  styles.filterButtonText,
-                  filterStatus === filter.key && styles.filterButtonTextActive,
-                ]}>
-                  {filter.label}
-                </Text>
-                <View style={[
-                  styles.filterCount,
-                  filterStatus === filter.key && styles.filterCountActive,
-                ]}>
-                  <Text style={[
-                    styles.filterCountText,
-                    filterStatus === filter.key && styles.filterCountTextActive,
-                  ]}>
-                    {filter.count}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <AntDesign name="check-circle" size={24} color="#67D16C" />
-            <Text style={styles.statNumber}>3</Text>
-            <Text style={styles.statLabel}>Available</Text>
-          </View>
-          <View style={styles.statCard}>
-            <AntDesign name="car" size={24} color="#FFB300" />
-            <Text style={styles.statNumber}>1</Text>
-            <Text style={styles.statLabel}>Rented</Text>
-          </View>
-          <View style={styles.statCard}>
-            <AntDesign name="thunderbolt" size={24} color="#C9B6FF" />
-            <Text style={styles.statNumber}>1</Text>
-            <Text style={styles.statLabel}>Charging</Text>
-          </View>
-          <View style={styles.statCard}>
-            <AntDesign name="tool" size={24} color="#FF6B6B" />
-            <Text style={styles.statNumber}>1</Text>
-            <Text style={styles.statLabel}>Maintenance</Text>
-          </View>
-        </View>
-
-        {/* Motorbikes List */}
-        <View style={styles.motorbikesContainer}>
-          <Text style={styles.sectionTitle}>
-            Motorbikes ({filteredMotorbikes.length})
-          </Text>
-          <FlatList
-            data={filteredMotorbikes}
-            renderItem={renderMotorbikeCard}
-            keyExtractor={(item) => item.id}
-            numColumns={1}
-            scrollEnabled={false}
-            contentContainerStyle={styles.motorbikesList}
+      <FlatList
+        data={filteredVehicles}
+        renderItem={renderVehicleCard}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={renderListHeader}
+        ListFooterComponent={renderListFooter}
+        ListEmptyComponent={renderEmptyState}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#C9B6FF"
           />
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseFilterModal}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Bộ lọc xe</Text>
+              <TouchableOpacity onPress={handleCloseFilterModal}>
+                <AntDesign name="close" size={18} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              contentContainerStyle={styles.modalContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.fieldRow}>
+                <View style={styles.labelWithIcon}>
+                  <AntDesign name="car" size={12} color="#C9B6FF" />
+                  <Text style={styles.fieldLabel}>Mẫu xe</Text>
+                </View>
+                <View style={styles.selectContainer}>
+                  <TouchableOpacity
+                    style={styles.selectTrigger}
+                    activeOpacity={0.8}
+                    onPress={() => setShowModelList((prev) => !prev)}
+                  >
+                    <Text style={styles.selectTriggerText}>
+                      {draftFilterModelId
+                        ? vehicleModels.find((m) => m.id === draftFilterModelId)
+                            ?.modelName || "Đã chọn mẫu xe"
+                        : "Tất cả mẫu xe"}
+                    </Text>
+                    <AntDesign
+                      name={showModelList ? "up" : "down"}
+                      size={12}
+                      color={colors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                  {showModelList && (
+                    <View style={styles.dropdownList}>
+                      <ScrollView style={{ maxHeight: 180 }}>
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdownItem,
+                            !draftFilterModelId && styles.dropdownItemActive,
+                          ]}
+                          onPress={() => {
+                            setDraftFilterModelId("");
+                            setShowModelList(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>
+                            Tất cả mẫu xe
+                          </Text>
+                        </TouchableOpacity>
+                        {vehicleModels.map((model) => (
+                          <TouchableOpacity
+                            key={model.id}
+                            style={[
+                              styles.dropdownItem,
+                              draftFilterModelId === model.id &&
+                                styles.dropdownItemActive,
+                            ]}
+                            onPress={() => {
+                              setDraftFilterModelId(model.id);
+                              setShowModelList(false);
+                            }}
+                          >
+                            <Text style={styles.dropdownItemText}>
+                              {model.modelName}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.fieldRow}>
+                <View style={styles.labelWithIcon}>
+                  <AntDesign name="skin" size={12} color="#C9B6FF" />
+                  <Text style={styles.fieldLabel}>Màu sắc</Text>
+                </View>
+                <TextInput
+                  placeholder="VD: Đỏ, Xanh..."
+                  placeholderTextColor={colors.text.secondary}
+                  style={styles.input}
+                  value={draftFilterColor}
+                  onChangeText={setDraftFilterColor}
+                />
+              </View>
+
+              <View style={styles.twoCol}>
+                <View style={styles.col}>
+                  <View style={styles.labelWithIcon}>
+                    <AntDesign name="dashboard" size={12} color="#C9B6FF" />
+                    <Text style={styles.fieldLabel}>Odo tối thiểu (km)</Text>
+                  </View>
+                  <TextInput
+                    placeholder="VD: 500"
+                    placeholderTextColor={colors.text.secondary}
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={draftFilterOdometerMin}
+                    onChangeText={setDraftFilterOdometerMin}
+                  />
+                </View>
+                <View style={styles.col}>
+                  <View style={styles.labelWithIcon}>
+                    <AntDesign name="thunderbolt" size={12} color="#C9B6FF" />
+                    <Text style={styles.fieldLabel}>Pin tối thiểu (%)</Text>
+                  </View>
+                  <TextInput
+                    placeholder="VD: 60"
+                    placeholderTextColor={colors.text.secondary}
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={draftFilterBatteryMin}
+                    onChangeText={setDraftFilterBatteryMin}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldRow}>
+                <View style={styles.labelWithIcon}>
+                  <AntDesign name="flag" size={12} color="#C9B6FF" />
+                  <Text style={styles.fieldLabel}>Trạng thái</Text>
+                </View>
+                <View style={styles.statusRow}>
+                  {["all", "Available", "Rented"].map((status) => {
+                    const active = draftFilterStatus === status;
+                    return (
+                      <TouchableOpacity
+                        key={status}
+                        style={[
+                          styles.statusChip,
+                          active && styles.statusChipActive,
+                        ]}
+                        onPress={() =>
+                          setDraftFilterStatus(status as VehicleStatusFilter)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.statusChipText,
+                            active && styles.statusChipTextActive,
+                          ]}
+                        >
+                          {status === "all" ? "Tất cả" : getStatusText(status)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.resetBtn]}
+                onPress={resetDraftFilters}
+              >
+                <Text style={styles.modalBtnText}>Đặt lại</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.applyBtn]}
+                onPress={applyDraftFilters}
+              >
+                <Text style={[styles.modalBtnText, { color: "#000" }]}>
+                  Áp dụng
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </ScrollView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -335,22 +769,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: {
-    paddingBottom: 40,
+  listContent: {
+    paddingBottom: 32,
+  },
+  listHeader: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    gap: 12,
   },
   searchContainer: {
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2A2A2A',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2A2A2A",
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#3A3A3A',
+    borderColor: "#3A3A3A",
   },
   searchInput: {
     flex: 1,
@@ -358,110 +797,119 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontSize: 14,
   },
-  filterContainer: {
-    marginBottom: 16,
-  },
-  filterScroll: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
   filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2A2A2A',
-    borderRadius: 20,
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#C9B6FF",
+    borderRadius: 999,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#3A3A3A',
+    borderColor: "#C9B6FF",
     gap: 6,
   },
-  filterButtonActive: {
-    backgroundColor: '#C9B6FF',
-    borderColor: '#C9B6FF',
-  },
   filterButtonText: {
-    color: colors.text.secondary,
-    fontSize: 12,
-    fontWeight: '500',
+    color: "#000",
+    fontSize: 13,
+    fontWeight: "700",
   },
-  filterButtonTextActive: {
-    color: '#000',
-    fontWeight: '700',
-  },
-  filterCount: {
-    backgroundColor: '#3A3A3A',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 20,
-    alignItems: 'center',
-  },
-  filterCountActive: {
-    backgroundColor: '#000',
-  },
-  filterCountText: {
-    color: colors.text.primary,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  filterCountTextActive: {
-    color: '#C9B6FF',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginBottom: 20,
-    gap: 8,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2E2E2E',
-  },
-  statNumber: {
-    color: colors.text.primary,
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  statLabel: {
-    color: colors.text.secondary,
-    fontSize: 10,
-    marginTop: 2,
-  },
-  motorbikesContainer: {
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
     paddingHorizontal: 16,
   },
   sectionTitle: {
     color: colors.text.primary,
     fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
+    fontWeight: "700",
   },
-  motorbikesList: {
-    gap: 12,
+  activeFiltersRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  filterChipText: {
+    color: "#000",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  chipStatus: {
+    backgroundColor: "#FFD666",
+  },
+  chipModel: {
+    backgroundColor: "#C9B6FF",
+  },
+  chipColor: {
+    backgroundColor: "#9CDBFF",
+  },
+  chipBattery: {
+    backgroundColor: "#67D16C",
+  },
+  chipOdo: {
+    backgroundColor: "#C9B6FF",
   },
   motorbikeCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#2E2E2E',
-    shadowColor: '#000',
+    borderColor: "#2E2E2E",
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
+    marginTop: 8,
+  },
+  heroWrapper: {
+    borderRadius: 16,
+    overflow: "hidden",
+    marginBottom: 12,
+    position: "relative",
+    backgroundColor: "#111",
+  },
+  vehicleImage: {
+    width: "100%",
+    height: 160,
+    resizeMode: "cover",
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  heroTopRow: {
+    position: "absolute",
+    top: 10,
+    left: 12,
+    right: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  heroBottomRow: {
+    position: "absolute",
+    bottom: 12,
+    left: 12,
+    right: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   motorbikeInfo: {
@@ -470,7 +918,7 @@ const styles = StyleSheet.create({
   motorbikeName: {
     color: colors.text.primary,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   motorbikePlate: {
     color: colors.text.secondary,
@@ -478,105 +926,335 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   statusText: {
-    color: '#000',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
+    color: colors.text.primary,
   },
-  motorbikeImage: {
-    width: '100%',
-    height: 120,
-    resizeMode: 'contain',
-    marginBottom: 12,
+  priceBadge: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+    backgroundColor: "#FFD666",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
   },
-  cardContent: {
-    marginBottom: 12,
+  priceValue: {
+    color: "#000",
+    fontWeight: "800",
+    fontSize: 16,
   },
-  batterySection: {
-    marginBottom: 12,
+  priceUnit: {
+    color: "#3F3F46",
+    fontSize: 11,
+    fontWeight: "600",
   },
-  batteryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
+  ratingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
   },
-  batteryLabel: {
+  ratingValue: {
+    color: "#FFD666",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  ratingLabel: {
+    color: "#fff",
+    fontSize: 11,
+  },
+  platePill: {
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  plateText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  chipRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  infoChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#2A2A2A",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  infoChipText: {
     color: colors.text.secondary,
     fontSize: 12,
-    fontWeight: '500',
   },
-  batteryLevel: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginLeft: 'auto',
+  metricRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
   },
-  batteryBar: {
-    height: 6,
-    backgroundColor: '#2A2A2A',
-    borderRadius: 3,
-    overflow: 'hidden',
+  metricCard: {
+    flex: 1,
+    backgroundColor: "#242424",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#2F2F2F",
+    gap: 6,
   },
-  batteryFill: {
-    height: '100%',
-    borderRadius: 3,
+  metricLabel: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  metricValue: {
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "700",
   },
   infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
     marginBottom: 8,
   },
   infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    flex: 1,
   },
   infoText: {
     color: colors.text.secondary,
     fontSize: 12,
-  },
-  lastChargedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  lastChargedText: {
-    color: colors.text.secondary,
-    fontSize: 11,
+    lineHeight: 18,
+    flex: 1,
   },
   cardActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2A2A2A",
     borderRadius: 8,
     paddingVertical: 8,
     gap: 4,
   },
   primaryAction: {
-    backgroundColor: '#C9B6FF',
-  },
-  chargingAction: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: "#C9B6FF",
   },
   actionText: {
     color: colors.text.primary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   primaryActionText: {
-    color: '#000',
+    color: "#000",
   },
-  chargingActionText: {
-    color: '#FFFFFF',
+  loadingState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 48,
+    gap: 12,
+  },
+  loadingText: {
+    color: colors.text.secondary,
+    fontSize: 13,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    gap: 8,
+  },
+  emptyStateTitle: {
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  emptyStateSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    textAlign: "center",
+    paddingHorizontal: 24,
+    lineHeight: 18,
+  },
+  listFooter: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+    gap: 8,
+  },
+  listFooterText: {
+    color: colors.text.secondary,
+    fontSize: 12,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: "#1E1E1E",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  modalContent: {
+    paddingBottom: 12,
+    gap: 16,
+  },
+  fieldRow: {
+    gap: 8,
+  },
+  labelWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  fieldLabel: {
+    color: colors.text.secondary,
+    fontSize: 12,
+  },
+  selectContainer: {
+    position: "relative",
+  },
+  selectTrigger: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#2A2A2A",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  selectTriggerText: {
+    color: colors.text.primary,
+    fontSize: 13,
+  },
+  dropdownList: {
+    position: "absolute",
+    top: 52,
+    left: 0,
+    right: 0,
+    backgroundColor: "#1F1F1F",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#333",
+    paddingVertical: 4,
+    zIndex: 100,
+  },
+  dropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  dropdownItemActive: {
+    backgroundColor: "#2E2E2E",
+  },
+  dropdownItemText: {
+    color: colors.text.primary,
+    fontSize: 13,
+  },
+  input: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: colors.text.primary,
+  },
+  twoCol: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  col: {
+    flex: 1,
+  },
+  statusRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  statusChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    backgroundColor: "#2A2A2A",
+  },
+  statusChipActive: {
+    backgroundColor: "#C9B6FF",
+    borderColor: "#C9B6FF",
+  },
+  statusChipText: {
+    color: colors.text.secondary,
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  statusChipTextActive: {
+    color: "#000",
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+  },
+  resetBtn: {
+    backgroundColor: "#2A2A2A",
+  },
+  applyBtn: {
+    backgroundColor: "#C9B6FF",
+    borderColor: "#C9B6FF",
+  },
+  modalBtnText: {
+    color: colors.text.primary,
+    fontWeight: "700",
   },
 });

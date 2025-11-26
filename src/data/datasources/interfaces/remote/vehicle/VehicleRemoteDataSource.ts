@@ -10,15 +10,15 @@ export interface VehicleRemoteDataSource {
     getById(id: string): Promise<VehicleDetailResponse | null>;
     getWithReferences(vehicleId: string, vehicleModelId: string): Promise<VehicleResponse | null>;
     getVehicles(
-        licensePlate: string,
-        color: string,
-        currentOdometerKm: number,
-        batteryHealthPercentage: number,
-        status: string,
-        branchId: string,
-        vehicleModelId: string,
-        pageSize: number,
-        pageNum: number
+        licensePlate?: string,
+        color?: string,
+        currentOdometerKm?: number,
+        batteryHealthPercentage?: number,
+        status?: string,
+        branchId?: string,
+        vehicleModelId?: string,
+        pageSize?: number,
+        pageNum?: number
     ): Promise<PaginatedVehicleResponse>;
     getTracking(vehicleId: string): Promise<VehicleTrackingResponse>;
 }

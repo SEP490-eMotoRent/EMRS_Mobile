@@ -56,15 +56,15 @@ export class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
   }
 
   async getVehicles(
-    licensePlate: string,
-    color: string,
-    currentOdometerKm: number,
-    batteryHealthPercentage: number,
-    status: string,
-    branchId: string,
-    vehicleModelId: string,
-    pageSize: number,
-    pageNum: number
+    licensePlate?: string,
+    color?: string,
+    currentOdometerKm?: number,
+    batteryHealthPercentage?: number,
+    status?: string,
+    branchId?: string,
+    vehicleModelId?: string,
+    pageSize: number = 10,
+    pageNum: number = 1
   ): Promise<PaginatedVehicleResponse> {
     try {
       const response = await this.axiosClient.get<
