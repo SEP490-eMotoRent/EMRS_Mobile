@@ -38,7 +38,7 @@ type StaffHomeScreenNavigationProp = StackNavigationProp<
   "Home"
 >;
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 5;
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CAROUSEL_WIDTH = SCREEN_WIDTH - 32;
@@ -83,7 +83,7 @@ export const StaffHomeScreen: React.FC = () => {
           undefined,
           undefined,
           undefined,
-          undefined,
+          "Available",
           user.branchId,
           undefined,
           PAGE_SIZE,
@@ -117,7 +117,7 @@ export const StaffHomeScreen: React.FC = () => {
     setRefreshing(false);
   };
   const featuredVehicles = useMemo(
-    () => vehicles.slice(0, Math.min(4, vehicles.length)),
+    () => vehicles.slice(0, Math.min(5, vehicles.length)),
     [vehicles]
   );
 
@@ -230,12 +230,14 @@ export const StaffHomeScreen: React.FC = () => {
 
         <View style={styles.metricRow}>
           <View style={styles.metricCard}>
-            <AntDesign
-              name="thunderbolt"
-              size={16}
-              color={getBatteryColor(batteryLevel)}
-            />
-            <Text style={styles.metricLabel}>Pin</Text>
+            <View style={styles.metricCardContent}>
+              <AntDesign
+                name="thunderbolt"
+                size={16}
+                color={getBatteryColor(batteryLevel)}
+              />
+              <Text style={styles.metricLabel}>Pin</Text>
+            </View>
             <Text
               style={[
                 styles.metricValue,
@@ -246,29 +248,20 @@ export const StaffHomeScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.metricCard}>
-            <AntDesign name="dashboard" size={16} color="#C9B6FF" />
-            <Text style={styles.metricLabel}>Số km</Text>
+            <View style={styles.metricCardContent}>
+              <AntDesign name="dashboard" size={16} color="#C9B6FF" />
+              <Text style={styles.metricLabel}>Số km</Text>
+            </View>
             <Text style={styles.metricValue}>
               {item.currentOdometerKm?.toLocaleString("vi-VN") || 0} km
             </Text>
           </View>
           <View style={styles.metricCard}>
-            <AntDesign name="idcard" size={16} color="#FFB300" />
-            <Text style={styles.metricLabel}>Lượt thuê</Text>
+            <View style={styles.metricCardContent}>
+              <AntDesign name="idcard" size={16} color="#FFB300" />
+              <Text style={styles.metricLabel}>Lượt thuê</Text>
+            </View>
             <Text style={styles.metricValue}>{reviewCount}</Text>
-          </View>
-        </View>
-
-        <View style={styles.infoRow}>
-          <View style={styles.infoItem}>
-            <AntDesign
-              name="environment"
-              size={14}
-              color={colors.text.secondary}
-            />
-            <Text style={styles.infoText}>
-              {item.branch?.address || "Không có địa chỉ chi nhánh"}
-            </Text>
           </View>
         </View>
 
@@ -333,9 +326,7 @@ export const StaffHomeScreen: React.FC = () => {
           <Text style={{ color: "#C9B6FF" }}>{user?.fullName || "Staff"}!</Text>
         </Text>
         <Text style={styles.welcomeSubtitle}>
-          {pagination.totalItems
-            ? `${pagination.totalItems} xe thuộc chi nhánh của bạn`
-            : "Theo dõi nhanh đội xe và trạng thái hoạt động hôm nay."}
+          Theo dõi nhanh đội xe và trạng thái hoạt động hôm nay.
         </Text>
       </View>
       <View style={styles.carouselContainer}>
@@ -454,7 +445,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     paddingHorizontal: 16,
     paddingBottom: 8,
-    gap: 12,
   },
   carouselContainer: {
     marginHorizontal: 16,
@@ -531,6 +521,7 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 8,
     gap: 10,
   },
   brandLogo: {
@@ -553,7 +544,6 @@ const styles = StyleSheet.create({
   welcomeSubtitle: {
     color: colors.text.secondary,
     fontSize: 13,
-    marginTop: 4,
   },
   headerRow: {
     flexDirection: "row",
@@ -593,6 +583,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
     marginTop: 8,
+    marginHorizontal: 16,
   },
   heroWrapper: {
     borderRadius: 16,
@@ -603,7 +594,7 @@ const styles = StyleSheet.create({
   },
   vehicleImage: {
     width: "100%",
-    height: 160,
+    height: 180,
     resizeMode: "cover",
   },
   heroOverlay: {
@@ -734,6 +725,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     marginBottom: 12,
+  },
+  metricCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   metricCard: {
     flex: 1,
