@@ -37,6 +37,7 @@ import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { useSharedValue } from "react-native-reanimated";
+import { BrandTitle } from "../../../../authentication/ui/atoms";
 
 type StaffHomeScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -59,7 +60,6 @@ const data = [
 export const StaffHomeScreen: React.FC = () => {
   const navigation = useNavigation<StaffHomeScreenNavigationProp>();
   const user = useAppSelector((state: any) => state.auth.user);
-  const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<VehicleStatusFilter>("all");
   const [filterColor, setFilterColor] = useState("");
   const [filterBatteryMin, setFilterBatteryMin] = useState("");
@@ -215,8 +215,6 @@ export const StaffHomeScreen: React.FC = () => {
     setShowModelList(false);
   };
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-
   const filteredVehicles = useMemo(() => {
     const colorQuery = filterColor.trim().toLowerCase();
     const batteryThreshold = filterBatteryMin ? Number(filterBatteryMin) : null;
@@ -227,14 +225,6 @@ export const StaffHomeScreen: React.FC = () => {
     return vehicles.filter((vehicle) => {
       const matchesModel =
         !filterModelId || vehicle.vehicleModel?.id === filterModelId;
-
-      const matchesSearch =
-        !normalizedQuery ||
-        vehicle.licensePlate?.toLowerCase().includes(normalizedQuery) ||
-        vehicle.vehicleModel?.modelName
-          ?.toLowerCase()
-          .includes(normalizedQuery) ||
-        vehicle.color?.toLowerCase().includes(normalizedQuery);
 
       const matchesStatus =
         filterStatus === "all" ||
@@ -252,7 +242,6 @@ export const StaffHomeScreen: React.FC = () => {
         (vehicle.currentOdometerKm ?? 0) >= odometerThreshold;
 
       return (
-        matchesSearch &&
         matchesStatus &&
         matchesColor &&
         matchesBattery &&
@@ -262,7 +251,6 @@ export const StaffHomeScreen: React.FC = () => {
     });
   }, [
     vehicles,
-    normalizedQuery,
     filterStatus,
     filterColor,
     filterBatteryMin,
@@ -462,40 +450,46 @@ export const StaffHomeScreen: React.FC = () => {
       animated: true,
     });
   };
-  const defaultDataWith6Colors = [
-    "#B0604D",
-    "#899F9C",
-    "#B3C680",
-  ];
+  const defaultDataWith6Colors = ["#B0604D", "#899F9C", "#B3C680"];
   const renderListHeader = () => (
     <View style={styles.listHeader}>
-      <ScreenHeader
-        title="Quản lý đội xe"
-        subtitle={`${pagination.totalItems || vehicles.length} xe • Trang ${
-          pagination.totalPages ? pagination.currentPage : 1
-        }/${Math.max(pagination.totalPages, 1)}`}
-        showBackButton={false}
-      />
-
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <AntDesign name="search" size={20} color={colors.text.secondary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Tìm theo tên, biển số..."
-            placeholderTextColor={colors.text.secondary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+      <View style={styles.headerTitle}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <Image
+            source={require("../../../../../../../assets/images/LOGO.jpg")}
+            style={{ width: 40, height: 40, borderRadius: 100, borderWidth: 1, borderColor: "#fff" }}
           />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <AntDesign name="close" size={20} color={colors.text.secondary} />
-            </TouchableOpacity>
-          )}
+          <BrandTitle
+            title="eMotoRent"
+            accessibilityLabel="eMotoRent brand title"
+            textStyle={{
+              fontSize: 20,
+              color: "#fff",
+            }}
+          />
         </View>
+        <View>
+          <Text
+            style={{
+              fontWeight: "bold",
+              fontSize: 20,
+              color: "#fff",
+            }}
+            numberOfLines={1}
+          >
+            Chào mừng trở lại, <Text style={{ color: "#C9B6FF" }}>{user?.fullName || "Staff"}!</Text>
+          </Text>
+        </View>
+        <Text style={{ color: "white" }}>
+          Quản lý đội xe của bạn...
+        </Text>
       </View>
-
-
       {/* Banner Carousel */}
       <View style={styles.carouselContainer}>
         <Carousel
@@ -862,6 +856,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     gap: 12,
   },
+  headerTitle: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    gap: 12,
+  },
   carouselContainer: {
     marginHorizontal: 16,
     marginBottom: 4,
@@ -933,26 +932,6 @@ const styles = StyleSheet.create({
   indicatorActive: {
     width: 24,
     backgroundColor: "#C9B6FF",
-  },
-  searchContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 4,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    color: colors.text.primary,
-    fontSize: 14,
   },
   filterButton: {
     flexDirection: "row",
