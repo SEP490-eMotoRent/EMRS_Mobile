@@ -1,3 +1,4 @@
+
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StatusBadge } from "../atoms/badges/StatusBadge";
@@ -14,6 +15,7 @@ export interface PastTrip {
     refundedAmount?: string;
     hadInsurance?: boolean;
     lateReturnFee?: string;
+    hasFeedback?: boolean;
 }
 
 interface PastTripCardProps {
@@ -22,6 +24,7 @@ interface PastTripCardProps {
     onRentAgain: () => void;
     onViewReceipt: () => void;
     onBookSimilar?: () => void;
+    onLeaveFeedback?: () => void;
 }
 
 const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
@@ -40,6 +43,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
     onRentAgain,
     onViewReceipt,
     onBookSimilar,
+    onLeaveFeedback,
 }) => {
     return (
         <TouchableOpacity 
@@ -81,12 +85,51 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 </View>
             </View>
             
-            {/* Rating - only for completed */}
-            {trip.status === "completed" && trip.rating !== undefined && (
-                <View style={styles.ratingRow}>
-                    <Text style={styles.ratingLabel}>Your rating</Text>
-                    <StarRating rating={trip.rating} />
-                </View>
+            {/* ✅ Feedback Section - Shows for all completed trips */}
+            {trip.status === "completed" && (
+                trip.hasFeedback ? (
+                    // Already has feedback - show rating with edit option
+                    <TouchableOpacity 
+                        style={styles.feedbackEditRow}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onLeaveFeedback?.();
+                        }}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.feedbackEditLeft}>
+                            <Text style={styles.ratingLabel}>Đánh giá của bạn</Text>
+                            <View style={styles.editHintRow}>
+                                <Text style={styles.editIcon}>✎</Text>
+                                <Text style={styles.editHint}>Nhấn để chỉnh sửa</Text>
+                            </View>
+                        </View>
+                        <View style={styles.feedbackEditRight}>
+                            <StarRating rating={trip.rating || 0} />
+                        </View>
+                    </TouchableOpacity>
+                ) : (
+                    // No feedback yet - show prompt
+                    <TouchableOpacity
+                        style={styles.feedbackPrompt}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onLeaveFeedback?.();
+                        }}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.feedbackPromptContent}>
+                            <Text style={styles.feedbackPromptIcon}>⭐</Text>
+                            <View style={styles.feedbackPromptText}>
+                                <Text style={styles.feedbackPromptTitle}>Đánh giá chuyến đi</Text>
+                                <Text style={styles.feedbackPromptSubtitle}>
+                                    Chia sẻ trải nghiệm của bạn
+                                </Text>
+                            </View>
+                        </View>
+                        <Text style={styles.feedbackPromptArrow}>›</Text>
+                    </TouchableOpacity>
+                )
             )}
             
             {/* Late return fee warning */}
@@ -104,7 +147,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
             <View style={styles.amountSection}>
                 <View style={styles.amountRow}>
                     <Text style={styles.amountLabel}>
-                        {trip.status === "cancelled" ? "Refunded amount" : "Total amount"}
+                        {trip.status === "cancelled" ? "Số tiền hoàn" : "Tổng tiền"}
                     </Text>
                     <Text style={[
                         styles.amountValue,
@@ -243,15 +286,80 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 12,
     },
-    ratingRow: {
+    // ✅ Feedback Edit Row (when feedback exists)
+    feedbackEditRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        backgroundColor: "rgba(251, 191, 36, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(251, 191, 36, 0.2)",
+        borderRadius: 12,
+        padding: 14,
         marginBottom: 12,
     },
+    feedbackEditLeft: {
+        flex: 1,
+        gap: 4,
+    },
     ratingLabel: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    editHintRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+    },
+    editIcon: {
+        color: "#fbbf24",
+        fontSize: 12,
+    },
+    editHint: {
+        color: "#fbbf24",
+        fontSize: 12,
+        opacity: 0.8,
+    },
+    feedbackEditRight: {
+        alignItems: "flex-end",
+    },
+    // ✅ Feedback Prompt (when no feedback)
+    feedbackPrompt: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "rgba(212, 197, 249, 0.1)",
+        borderWidth: 1,
+        borderColor: "rgba(212, 197, 249, 0.3)",
+        borderRadius: 12,
+        padding: 14,
+        marginBottom: 12,
+    },
+    feedbackPromptContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    feedbackPromptIcon: {
+        fontSize: 24,
+    },
+    feedbackPromptText: {
+        gap: 2,
+    },
+    feedbackPromptTitle: {
+        color: "#d4c5f9",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    feedbackPromptSubtitle: {
         color: "#999",
-        fontSize: 13,
+        fontSize: 12,
+    },
+    feedbackPromptArrow: {
+        color: "#d4c5f9",
+        fontSize: 24,
+        fontWeight: "300",
     },
     warningRow: {
         flexDirection: "row",
