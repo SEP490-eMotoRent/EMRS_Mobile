@@ -299,6 +299,7 @@ export type BatteryStackParamList = {
 
 export type StaffStackParamList = {
   Home: undefined;
+  AllVehicles: undefined;
   MotorbikeDetail: { motorbikeId: string } | undefined;
   Rental: undefined;
   Return: undefined;
