@@ -18,6 +18,7 @@ import { ListControls } from "../orgamism/ListControls";
 import { ListHeader } from "../orgamism/ListHeader";
 import { MotorcycleCard } from "../orgamism/MotorcycleCard";
 import { FilterState, FilterModal } from "../orgamism/FilterModal";
+import { DateHelper } from "../../../../../domain/helpers/DateHelper";
 
 // ✅ Vietnamese date formatter utility
 function formatDateRangeVietnamese(dateRange: string): string {
@@ -93,9 +94,9 @@ export const ListView: React.FC = () => {
   });
 
   const { location, dateRange, address } = route.params || {
-    location: "Thành phố Hồ Chí Minh, Việt Nam",
-    dateRange: "20 Thg 10 | 10:00 SA - 23 Thg 10 | 10:00 SA",
-    address: "Thành phố Hồ Chí Minh, Việt Nam",
+      location: "Thành phố Hồ Chí Minh, Việt Nam",
+      dateRange: DateHelper.getDefaultDateRange(),
+      address: "Thành phố Hồ Chí Minh, Việt Nam",
   };
 
   // ✅ Load initial data with filters
@@ -257,7 +258,7 @@ export const ListView: React.FC = () => {
           <>
             <ListHeader
               location={address}
-              dateRange={formatDateRangeVietnamese(dateRange)} // ✅ Vietnamese formatted
+              dateRange={formatDateRangeVietnamese(dateRange)}
               onSearchPress={handleSearchPress}
               onFilterPress={() => setFilterModalVisible(true)}
             />

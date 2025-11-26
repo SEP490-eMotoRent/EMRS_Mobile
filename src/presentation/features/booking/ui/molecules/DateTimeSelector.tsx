@@ -7,13 +7,13 @@ interface DateTimeSelectorProps {
     endDate: string;
     onDateRangeChange: (dateRange: string) => void;
     duration?: string;
-    // ✅ NEW: Branch info for booking modal
     branchName?: string;
     branchOpenTime?: string;
     branchCloseTime?: string;
+    startDateISO?: string | null;
+    endDateISO?: string | null;
 }
 
-// Helper to parse Vietnamese date format and get day of week
 const getDayOfWeek = (dateStr: string): string => {
     const monthMap: { [key: string]: number } = {
         "Tháng 1": 0, "Tháng 2": 1, "Tháng 3": 2, "Tháng 4": 3,
@@ -34,7 +34,6 @@ const getDayOfWeek = (dateStr: string): string => {
     return days[date.getDay()];
 };
 
-// Helper to format date in Vietnamese style (14 tháng 11)
 const formatDateDisplay = (dateStr: string): { dayOfWeek: string; date: string; time: string } => {
     const dayOfWeek = getDayOfWeek(dateStr);
     const match = dateStr.match(/Tháng (\d+)\s+(\d+)\s+(.+)/);
@@ -62,6 +61,8 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
     branchName,
     branchOpenTime,
     branchCloseTime,
+    startDateISO,
+    endDateISO,
 }) => {
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -73,10 +74,12 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
     const startFormatted = formatDateDisplay(startDate);
     const endFormatted = formatDateDisplay(endDate);
 
+    const initialPickupTime = startFormatted.time;
+    const initialReturnTime = endFormatted.time;
+
     return (
         <>
             <View style={styles.container}>
-                {/* Pickup Date Card */}
                 <TouchableOpacity 
                     style={styles.dateCard} 
                     onPress={() => setModalVisible(true)}
@@ -100,10 +103,8 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                     </View>
                 </TouchableOpacity>
 
-                {/* Spacer between cards */}
                 <View style={styles.cardSpacer} />
 
-                {/* Return Date Card */}
                 <TouchableOpacity 
                     style={styles.dateCard} 
                     onPress={() => setModalVisible(true)}
@@ -127,7 +128,6 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                     </View>
                 </TouchableOpacity>
 
-                {/* Duration Badge */}
                 {duration && (
                     <View style={styles.durationBadgeBottom}>
                         <View style={styles.badgeLarge}>
@@ -145,6 +145,10 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                 branchName={branchName}
                 branchOpenTime={branchOpenTime}
                 branchCloseTime={branchCloseTime}
+                initialStartDate={startDateISO || undefined}
+                initialEndDate={endDateISO || undefined}
+                initialPickupTime={initialPickupTime}
+                initialReturnTime={initialReturnTime}
             />
         </>
     );

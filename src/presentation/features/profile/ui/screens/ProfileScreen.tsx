@@ -15,13 +15,14 @@ import { ProfileStackParamList } from "../../../../shared/navigation/StackParame
 import { useAppDispatch } from "../../../authentication/store/hooks";
 import { removeAuth } from "../../../authentication/store/slices/authSlice";
 import { useRenterProfile } from "../../hooks/profile/useRenterProfile";
-import { useWallet } from "../../hooks/wallet/useWallet";
 import { useTransactions } from "../../hooks/transactions/useTransactions";
+import { useWallet } from "../../hooks/wallet/useWallet";
 import { ProfileHeader } from "../molecules/ProfileHeader";
 import { QuickSettings } from "../organisms/QuickSettings";
 import { TransactionList } from "../organisms/TransactionList";
 import { VerificationCard } from "../organisms/VerificationCard";
 import { WalletCard } from "../organisms/WalletCard";
+import { TransactionTypeHelper } from "../../../../../domain/helpers/TransactionTypeHelper";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -70,8 +71,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   };
   
   const handleViewAllTransactions = () => {
-    console.log("View all transactions");
-    // TODO: Navigate to full transactions list screen
+      navigation.navigate("AllTransactions");
   };
   
   const handleVerify = () => navigation.navigate("EditProfile");
@@ -149,13 +149,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
   // === MAP TRANSACTIONS TO UI FORMAT ===
   const transactions = transactionEntities.map(t => ({
-    title: t.transactionType,
-    date: new Date(t.createdAt).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit'
-    }),
-    amount: t.amount,
+      title: TransactionTypeHelper.toVietnamese(t.transactionType),
+      date: new Date(t.createdAt).toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      }),
+      amount: t.amount,
   }));
 
   // === RENDER ===
@@ -197,6 +197,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <TransactionList
           transactions={transactions}
           onViewAll={handleViewAllTransactions}
+          limit={5}
         />
         <VerificationCard
           verifications={verifications}
