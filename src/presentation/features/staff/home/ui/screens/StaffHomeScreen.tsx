@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -11,7 +17,12 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  Dimensions,
 } from "react-native";
+import Carousel, {
+  ICarouselInstance,
+  Pagination,
+} from "react-native-reanimated-carousel";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
@@ -25,6 +36,7 @@ import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleM
 import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
 import { useAppSelector } from "../../../../authentication/store/hooks";
+import { useSharedValue } from "react-native-reanimated";
 
 type StaffHomeScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -33,6 +45,16 @@ type StaffHomeScreenNavigationProp = StackNavigationProp<
 
 const PAGE_SIZE = 6;
 type VehicleStatusFilter = "all" | "Available" | "Rented";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CAROUSEL_WIDTH = SCREEN_WIDTH - 32;
+const CAROUSEL_HEIGHT = 180;
+
+const data = [
+  require("../../../../../../../assets/images/banner1.jpg"),
+  require("../../../../../../../assets/images/banner2.jpg"),
+  require("../../../../../../../assets/images/banner3.jpg"),
+];
 
 export const StaffHomeScreen: React.FC = () => {
   const navigation = useNavigation<StaffHomeScreenNavigationProp>();
@@ -56,11 +78,14 @@ export const StaffHomeScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const progress = useSharedValue<number>(0);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
   });
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const ref = React.useRef<ICarouselInstance>(null);
 
   const vehiclePlaceholder = require("../../../../../../../assets/images/motor.png");
 
@@ -427,6 +452,21 @@ export const StaffHomeScreen: React.FC = () => {
     );
   };
 
+  const onPressPagination = (index: number) => {
+    ref.current?.scrollTo({
+      /**
+       * Calculate the difference between the current index and the target index
+       * to ensure that the carousel scrolls to the nearest index
+       */
+      count: index - progress.value,
+      animated: true,
+    });
+  };
+  const defaultDataWith6Colors = [
+    "#B0604D",
+    "#899F9C",
+    "#B3C680",
+  ];
   const renderListHeader = () => (
     <View style={styles.listHeader}>
       <ScreenHeader
@@ -455,6 +495,51 @@ export const StaffHomeScreen: React.FC = () => {
         </View>
       </View>
 
+
+      {/* Banner Carousel */}
+      <View style={styles.carouselContainer}>
+        <Carousel
+          ref={ref}
+          width={CAROUSEL_WIDTH}
+          height={CAROUSEL_HEIGHT}
+          data={data}
+          onProgressChange={progress}
+          renderItem={({ item, index }) => (
+            <View style={styles.carouselItem}>
+              <Image
+                source={item}
+                style={styles.carouselImage}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+          autoPlay
+          autoPlayInterval={4000}
+          loop
+          pagingEnabled
+          snapEnabled
+          enabled
+        />
+        <Pagination.Basic<{ color: string }>
+          progress={progress}
+          data={defaultDataWith6Colors.map((color) => ({ color }))}
+          dotStyle={{
+            width: 25,
+            height: 4,
+            backgroundColor: "#fff",
+          }}
+          activeDotStyle={{
+            overflow: "hidden",
+            backgroundColor: "#C9B6FF",
+          }}
+          containerStyle={{
+            gap: 10,
+            marginTop: 10,
+          }}
+          horizontal
+          onPress={onPressPagination}
+        />
+      </View>
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>
           Xe trong kho ({filteredVehicles.length})
@@ -776,6 +861,78 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 8,
     gap: 12,
+  },
+  carouselContainer: {
+    marginHorizontal: 16,
+    marginBottom: 4,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  carouselItem: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: "hidden",
+    position: "relative",
+  },
+  carouselImage: {
+    width: "100%",
+    height: "100%",
+  },
+  carouselOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  carouselContent: {
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 20,
+  },
+  carouselTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  carouselSubtitle: {
+    color: "#E0E0E0",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  carouselIndicators: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 12,
+    paddingHorizontal: 16,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+  },
+  indicatorActive: {
+    width: 24,
+    backgroundColor: "#C9B6FF",
   },
   searchContainer: {
     paddingHorizontal: 16,
