@@ -1,7 +1,8 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { DateHelper } from "../../../../../../domain/helpers/DateHelper";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useRentalPricing } from "../../../hooks/useRentalPricing";
@@ -10,7 +11,6 @@ import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { BookingSummary } from "../../organisms/booking/BookingSummary";
-import { DateHelper } from "../../../../../../domain/helpers/DateHelper";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ConfirmRentalDuration'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRentalDuration'>;
@@ -140,6 +140,8 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     
     const [startDateISO, setStartDateISO] = useState<string | null>(initialData.startDateISO);
     const [endDateISO, setEndDateISO] = useState<string | null>(initialData.endDateISO);
+    
+    const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
 
     useEffect(() => {
         if (dateRange && initialDateRangeISO) {
@@ -363,6 +365,10 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         
         return Object.values(grouped);
     };
+
+    const toggleHolidayList = () => {
+        setIsHolidayListExpanded(!isHolidayListExpanded);
+    };
     
     return (
         <View style={styles.container}>
@@ -450,24 +456,40 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                                     {holidayDays.length} ngày lễ (+{getMaxMultiplierPercentage()}%)
                                 </Text>
                             </View>
-                            <Text style={styles.holidaySurchargeAmount}>
-                                +{holidaySurcharge.toLocaleString()}đ
-                            </Text>
+                            <View style={styles.holidayRightSection}>
+                                <Text style={styles.holidaySurchargeAmount}>
+                                    +{holidaySurcharge.toLocaleString()}đ
+                                </Text>
+                                <TouchableOpacity 
+                                    onPress={toggleHolidayList}
+                                    activeOpacity={0.7}
+                                    style={styles.holidayToggleButton}
+                                >
+                                    <Text style={styles.holidayToggleText}>
+                                        {isHolidayListExpanded ? 'Ẩn đi' : 'Xem thêm'}
+                                    </Text>
+                                    <Text style={styles.holidayToggleIcon}>
+                                        {isHolidayListExpanded ? '▲' : '▼'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                         
-                        <View style={styles.holidayList}>
-                            {getGroupedHolidays().map((item, index) => (
-                                <View key={index} style={styles.holidayListItem}>
-                                    <Text style={styles.holidayBullet}>•</Text>
-                                    <Text style={styles.holidayItemText}>
-                                        {item.name} {item.count > 1 ? `(${item.count} ngày)` : ''}
-                                    </Text>
-                                    <Text style={styles.holidayItemAmount}>
-                                        +{item.totalSurcharge.toLocaleString()}đ
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
+                        {isHolidayListExpanded && (
+                            <View style={styles.holidayList}>
+                                {getGroupedHolidays().map((item, index) => (
+                                    <View key={index} style={styles.holidayListItem}>
+                                        <Text style={styles.holidayBullet}>•</Text>
+                                        <Text style={styles.holidayItemText}>
+                                            {item.name} {item.count > 1 ? `(${item.count} ngày)` : ''}
+                                        </Text>
+                                        <Text style={styles.holidayItemAmount}>
+                                            +{item.totalSurcharge.toLocaleString()}đ
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
                     </View>
                 )}
                 
@@ -666,9 +688,27 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
     },
+    holidayRightSection: {
+        alignItems: "flex-end",
+    },
+    holidayToggleButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 4,
+    },
+    holidayToggleText: {
+        color: "#fca5a5",
+        fontSize: 12,
+        fontWeight: "500",
+        marginRight: 4,
+    },
+    holidayToggleIcon: {
+        color: "#fca5a5",
+        fontSize: 9,
+    },
     holidayList: {
-        marginTop: 12,
-        paddingTop: 12,
+        marginTop: 8,
+        paddingTop: 8,
         borderTopWidth: 1,
         borderTopColor: "#ef444440",
     },

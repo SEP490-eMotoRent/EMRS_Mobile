@@ -6,14 +6,6 @@ import { useGetAllFeedbacks } from '../../../hooks/useGetAllFeedbacks';
 import sl from '../../../../../../core/di/InjectionContainer';
 import { Feedback } from '../../../../../../domain/entities/booking/Feedback';
 
-const getMaskedRenterName = (renterId: string): string => {
-    if (!renterId || renterId.length < 4) {
-        return "Khách hàng eMotoRent";
-    }
-    const lastFour = renterId.slice(-4).toUpperCase();
-    return `Khách hàng •••${lastFour}`;
-};
-
 export const ReviewsSection: React.FC = () => {
     const getAllFeedbacksUseCase = useMemo(
         () => sl.get<GetAllFeedbacksUseCase>("GetAllFeedbacksUseCase"),
@@ -25,7 +17,7 @@ export const ReviewsSection: React.FC = () => {
     const mapFeedbackToReview = (feedback: Feedback) => {
         return {
             content: feedback.comment || "Khách hàng hài lòng với dịch vụ.",
-            author: getMaskedRenterName(feedback.renterId),
+            author: feedback.renterName || "Khách hàng eMotoRent",
             rating: feedback.rating,
         };
     };

@@ -12,10 +12,10 @@ import {
     Pressable,
     ScrollView,
 } from 'react-native';
-import { Feedback } from '../../../../../../domain/entities/booking/Feedback';
 import { CreateFeedbackUseCase } from '../../../../../../domain/usecases/feedback/CreateFeedbackUseCase';
 import { useCreateFeedback } from '../../../hooks/feedbacks/useCreateFeedback';
 import sl from '../../../../../../core/di/InjectionContainer';
+import { Feedback } from '../../../../../../domain/entities/booking/Feedback';
 
 interface FeedbackModalProps {
     visible: boolean;
@@ -138,6 +138,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
     const { createFeedback, loading, error, success, reset } = useCreateFeedback(createFeedbackUseCase);
 
+    // Priority: existingFeedback.renterName (from GET) > renterName prop (from profile)
+    const displayName = existingFeedback?.renterName || renterName;
+
     useEffect(() => {
         if (visible) {
             reset();
@@ -208,10 +211,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
             <View style={styles.authorSection}>
                 <View style={styles.authorAvatar}>
                     <Text style={styles.authorAvatarText}>
-                        {renterName.charAt(0).toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                     </Text>
                 </View>
-                <Text style={styles.authorName}>{renterName}</Text>
+                <Text style={styles.authorName}>{displayName}</Text>
             </View>
 
             <View style={styles.viewRatingSection}>

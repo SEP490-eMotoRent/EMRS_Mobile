@@ -1,5 +1,5 @@
-import { BaseEntity, CreateEntityInput, UpdateEntityInput } from "../shared/BaseEntity";
 import { Renter } from "../account/Renter";
+import { BaseEntity, UpdateEntityInput } from "../shared/BaseEntity";
 import { Booking } from "./Booking";
 
 export class Feedback implements BaseEntity {
@@ -16,7 +16,7 @@ export class Feedback implements BaseEntity {
 
     public renter?: Renter;
     public booking?: Booking;
-
+    public renterName?: string;
     constructor(
         id: string,
         rating: number,
@@ -28,6 +28,7 @@ export class Feedback implements BaseEntity {
         deletedAt: Date | null = null,
         isDeleted: boolean = false,
         renter?: Renter,
+                renterName?: string,
         booking?: Booking,
     ) {
         this.id = id;
@@ -35,6 +36,7 @@ export class Feedback implements BaseEntity {
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
         this.isDeleted = isDeleted;
+        this.renterName = renterName;
 
         this.rating = rating;
         this.comment = comment;

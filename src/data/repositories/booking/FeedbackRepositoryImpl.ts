@@ -1,4 +1,3 @@
-import { unwrapResponse } from "../../../core/network/APIResponse";
 import { CreateFeedbackInput, Feedback } from "../../../domain/entities/booking/Feedback";
 import { FeedbackRepository } from "../../../domain/repositories/booking/FeedbackRepository";
 import { FeedbackRemoteDataSource } from "../../datasources/interfaces/remote/booking/FeedbackRemoteDataSource";
@@ -17,25 +16,45 @@ export class FeedbackRepositoryImpl implements FeedbackRepository {
             comment: input.comment,
             bookingId: input.bookingId,
         });
-        const data = unwrapResponse(response);
-        return FeedbackMapper.toDomain(data);
+
+        if (!response.success || !response.data) {
+            throw new Error(response.message || "Failed to create feedback");
+        }
+
+        // POST /create returns FeedbackResponseDTO (with renterId)
+        return FeedbackMapper.fromResponseDTO(response.data);
     }
 
     async getFeedbackByBookingId(bookingId: string): Promise<Feedback[]> {
         const response = await this.remoteDataSource.getFeedbackByBookingId(bookingId);
-        const data = unwrapResponse(response);
-        return FeedbackMapper.toDomainList(data);
+
+        if (!response.success || !response.data) {
+            return [];
+        }
+
+        // GET returns FeedbackDetailDTO[] (with renterName)
+        return FeedbackMapper.fromDetailDTOList(response.data);
     }
 
     async getFeedbackByVehicleModelId(vehicleModelId: string): Promise<Feedback[]> {
         const response = await this.remoteDataSource.getFeedbackByVehicleModelId(vehicleModelId);
-        const data = unwrapResponse(response);
-        return FeedbackMapper.toDomainList(data);
+
+        if (!response.success || !response.data) {
+            return [];
+        }
+
+        // GET returns FeedbackDetailDTO[] (with renterName)
+        return FeedbackMapper.fromDetailDTOList(response.data);
     }
 
     async getAllFeedbacks(): Promise<Feedback[]> {
         const response = await this.remoteDataSource.getAllFeedbacks();
-        const data = unwrapResponse(response);
-        return FeedbackMapper.toDomainList(data);
+
+        if (!response.success || !response.data) {
+            return [];
+        }
+
+        // GET returns FeedbackDetailDTO[] (with renterName)
+        return FeedbackMapper.fromDetailDTOList(response.data);
     }
 }
