@@ -69,6 +69,13 @@ export const ApiEndpoints = {
     byRenterId: (renterId: string) => `/Transaction/renter/${renterId}`,
   },
 
+  feedback: {
+    create: "/Feedback/create",
+    byBookingId: (bookingId: string) => `/Feedback/booking/${bookingId}`,
+    byVehicleModelId: (vehicleModelId: string) => `/Feedback/vehicle/model/${vehicleModelId}`,
+    getAll: "/Feedback/all",
+  },
+
   renter: {
     list: "/renters",
     update: "/account/renter",

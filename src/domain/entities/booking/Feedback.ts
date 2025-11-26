@@ -41,7 +41,6 @@ export class Feedback implements BaseEntity {
         this.renterId = renterId;
         this.bookingId = bookingId;
 
-        // ✅ RELATIONS
         this.renter = renter;
         this.booking = booking;
     }
@@ -62,6 +61,10 @@ export class Feedback implements BaseEntity {
         this.isDeleted = false;
     }
 }
-
-export type CreateFeedbackInput = CreateEntityInput<Feedback>;
+export interface CreateFeedbackInput {
+    rating: number;
+    comment: string;
+    bookingId: string;
+}
+// export type CreateFeedbackInput = CreateEntityInput<Feedback>;
 export type UpdateFeedbackInput = UpdateEntityInput<Feedback>;

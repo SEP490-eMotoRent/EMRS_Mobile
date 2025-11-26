@@ -139,6 +139,14 @@ import { TransactionRepositoryImpl } from "../../data/repositories/financial/Tra
 import { TransactionRepository } from "../../domain/repositories/financial/TransactionRepository";
 import { GetMyTransactionsUseCase } from "../../domain/usecases/transaction/GetMyTransactionsUseCase";
 
+import { FeedbackRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/booking/FeedbackRemoteDataSourceImpl";
+import { FeedbackRepositoryImpl } from "../../data/repositories/booking/FeedbackRepositoryImpl";
+import { FeedbackRepository } from "../../domain/repositories/booking/FeedbackRepository";
+import { CreateFeedbackUseCase } from "../../domain/usecases/feedback/CreateFeedbackUseCase";
+import { GetAllFeedbacksUseCase } from "../../domain/usecases/feedback/GetAllFeedbacksUseCase";
+import { GetFeedbackByBookingIdUseCase } from "../../domain/usecases/feedback/GetFeedbackByBookingIdUseCase";
+import { GetFeedbackByVehicleModelIdUseCase } from "../../domain/usecases/feedback/GetFeedbackByVehicleModelIdUseCase";
+
 /**
  * Service Locator / Dependency Injection Container
  * Manages all service instances and their dependencies
@@ -371,6 +379,20 @@ class ServiceLocator {
     this.services.set("TransactionRepository", transactionRepository);
     const getMyTransactionsUseCase = new GetMyTransactionsUseCase(transactionRepository);
     this.services.set("GetMyTransactionsUseCase", getMyTransactionsUseCase);
+
+    // Feedback services
+    const feedbackRemoteDataSource = new FeedbackRemoteDataSourceImpl(axiosClient);
+    this.services.set("FeedbackRemoteDataSource", feedbackRemoteDataSource);
+    const feedbackRepository = new FeedbackRepositoryImpl(feedbackRemoteDataSource);
+    this.services.set("FeedbackRepository", feedbackRepository);
+    const createFeedbackUseCase = new CreateFeedbackUseCase(feedbackRepository);
+    this.services.set("CreateFeedbackUseCase", createFeedbackUseCase);
+    const getFeedbackByBookingIdUseCase = new GetFeedbackByBookingIdUseCase(feedbackRepository);
+    this.services.set("GetFeedbackByBookingIdUseCase", getFeedbackByBookingIdUseCase);
+    const getFeedbackByVehicleModelIdUseCase = new GetFeedbackByVehicleModelIdUseCase(feedbackRepository);
+    this.services.set("GetFeedbackByVehicleModelIdUseCase", getFeedbackByVehicleModelIdUseCase);
+    const getAllFeedbacksUseCase = new GetAllFeedbacksUseCase(feedbackRepository);
+    this.services.set("GetAllFeedbacksUseCase", getAllFeedbacksUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -653,6 +675,26 @@ class ServiceLocator {
 
   getGetMyTransactionsUseCase(): GetMyTransactionsUseCase {
       return this.get<GetMyTransactionsUseCase>('GetMyTransactionsUseCase');
+  }
+
+  getFeedbackRepository(): FeedbackRepository {
+    return this.get<FeedbackRepository>('FeedbackRepository');
+  }
+
+  getCreateFeedbackUseCase(): CreateFeedbackUseCase {
+      return this.get<CreateFeedbackUseCase>('CreateFeedbackUseCase');
+  }
+
+  getGetFeedbackByBookingIdUseCase(): GetFeedbackByBookingIdUseCase {
+      return this.get<GetFeedbackByBookingIdUseCase>('GetFeedbackByBookingIdUseCase');
+  }
+
+  getGetFeedbackByVehicleModelIdUseCase(): GetFeedbackByVehicleModelIdUseCase {
+      return this.get<GetFeedbackByVehicleModelIdUseCase>('GetFeedbackByVehicleModelIdUseCase');
+  }
+
+  getGetAllFeedbacksUseCase(): GetAllFeedbacksUseCase {
+      return this.get<GetAllFeedbacksUseCase>('GetAllFeedbacksUseCase');
   }
 }
 
