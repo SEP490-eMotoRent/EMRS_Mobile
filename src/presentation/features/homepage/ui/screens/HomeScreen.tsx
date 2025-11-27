@@ -21,6 +21,8 @@ type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 export const HomeScreen: React.FC = () => {
     const navigation = useNavigation<HomeScreenNavigationProp>();
     const [modalVisible, setModalVisible] = useState(false);
+    // ✅ NEW: State to store pre-filled address
+    const [prefilledAddress, setPrefilledAddress] = useState<string | null>(null);
 
     const bikes = [
         { 
@@ -72,6 +74,18 @@ export const HomeScreen: React.FC = () => {
         });
     };
 
+    // ✅ NEW: Handle city selection
+    const handleCitySelect = (cityAddress: string) => {
+        setPrefilledAddress(cityAddress);
+        setModalVisible(true);
+    };
+
+    // ✅ NEW: Handle modal close - reset pre-filled address
+    const handleModalClose = () => {
+        setModalVisible(false);
+        setPrefilledAddress(null);
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Sticky Search Bar */}
@@ -89,14 +103,17 @@ export const HomeScreen: React.FC = () => {
                 {/* <CategoryCardsSection />
                 <PromotionalBannersSection /> */}
                 <FeaturedBikesSection bikes={bikes} onViewAll={handleViewAllBikes} />
-                <PopularCitiesSection />
+                {/* ✅ UPDATED: Pass city select handler */}
+                <PopularCitiesSection onCityPress={handleCitySelect} />
                 <AdvantagesSection />
                 <ReviewsSection />
             </ScrollView>
 
+            {/* ✅ UPDATED: Pass initial address and custom close handler */}
             <BookingModal
                 visible={modalVisible}
-                onClose={() => setModalVisible(false)}
+                onClose={handleModalClose}
+                initialAddress={prefilledAddress}
             />
         </SafeAreaView>
     );

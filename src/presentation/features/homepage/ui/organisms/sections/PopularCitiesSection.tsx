@@ -6,7 +6,11 @@ interface City {
     image: string;
 }
 
-export const PopularCitiesSection: React.FC = () => {
+interface PopularCitiesSectionProps {
+    onCityPress?: (cityName: string) => void;
+}
+
+export const PopularCitiesSection: React.FC<PopularCitiesSectionProps> = ({ onCityPress }) => {
     const cities: City[] = [
         {
             name: 'Quận 1',
@@ -34,6 +38,13 @@ export const PopularCitiesSection: React.FC = () => {
         },
     ];
 
+    const handleCityPress = (cityName: string) => {
+        if (onCityPress) {
+            // ✅ Format: "Quận 1, Hồ Chí Minh"
+            onCityPress(`${cityName}, Hồ Chí Minh`);
+        }
+    };
+
     return (
         <View style={styles.section}>
             <Text style={styles.sectionTitle}>Địa điểm phổ biến</Text>
@@ -43,7 +54,12 @@ export const PopularCitiesSection: React.FC = () => {
                 contentContainerStyle={styles.scrollContent}
             >
                 {cities.map((city, index) => (
-                    <TouchableOpacity key={index} style={styles.cityCard} activeOpacity={0.7}>
+                    <TouchableOpacity 
+                        key={index} 
+                        style={styles.cityCard} 
+                        activeOpacity={0.7}
+                        onPress={() => handleCityPress(city.name)}
+                    >
                         <Image source={{ uri: city.image }} style={styles.cityImage} />
                         <Text style={styles.cityName}>{city.name}</Text>
                     </TouchableOpacity>
