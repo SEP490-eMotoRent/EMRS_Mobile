@@ -13,6 +13,10 @@ const onboarding1 = require('../../../../../../assets/images/onboarding1.png');
 const onboarding2 = require('../../../../../../assets/images/onboarding2.png');
 const onboarding3 = require('../../../../../../assets/images/onboarding3.png');
 const onboarding4 = require('../../../../../../assets/images/onboarding4.png');
+const banner1 = require('../../../../../../assets/images/banner1.jpg');
+const banner2 = require('../../../../../../assets/images/banner2.jpg');
+const banner4 = require('../../../../../../assets/images/banner4.jpg');
+
 
 interface HelloBodyProps {
     navigation: NativeStackNavigationProp<AuthStackParamList>;
@@ -32,7 +36,7 @@ export const HelloBody: React.FC<HelloBodyProps> = ({ navigation }) => {
                 <HorizontalSlideshow
                     height={slideshowHeight}
                     imageWidth={imageWidth}
-                    images={[onboarding1, onboarding2, onboarding3, onboarding4]}
+                    images={[banner1, banner2, banner4]}
                     direction="left"
                     speed={40}
                 />
