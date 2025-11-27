@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
         marginBottom: 0,
     },
     inputContainer: {
-        marginBottom: 20,
+        marginBottom: 16,
     },
     continueButton: {
         backgroundColor: '#000000',

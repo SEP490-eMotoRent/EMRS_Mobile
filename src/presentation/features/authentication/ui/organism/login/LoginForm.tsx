@@ -59,11 +59,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onContinue, loading = fals
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginTop: 40,
-        marginBottom: 20,
     },
     inputContainer: {
-        marginBottom: 28,
+        marginBottom: 16,
     },
     continueButton: {
         backgroundColor: '#000000',
