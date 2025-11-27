@@ -268,14 +268,6 @@ export const ListView: React.FC = () => {
               sortLabel={getSortLabel()}
               onSortPress={handleSortPress}
             />
-            {/* ✅ Pagination info - Vietnamese */}
-            {totalPages > 1 && (
-              <View style={styles.paginationInfo}>
-                <Text style={styles.paginationText}>
-                  Trang {currentPage} / {totalPages} • Hiển thị {sortedMotorcycles.length} / {totalItems} xe
-                </Text>
-              </View>
-            )}
           </>
         }
         ListEmptyComponent={renderEmptyComponent}
@@ -338,18 +330,6 @@ const styles = StyleSheet.create({
   },
   emptyListContent: {
     flexGrow: 1,
-  },
-  paginationInfo: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#1a1a1a",
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-  },
-  paginationText: {
-    color: "#999",
-    fontSize: 12,
-    textAlign: "center",
   },
   loadingFooter: {
     flexDirection: "row",

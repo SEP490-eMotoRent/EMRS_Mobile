@@ -1,47 +1,76 @@
 import React from 'react';
-import { Image, StyleSheet, View, Text } from 'react-native';
+import { Image, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Badge } from '../../atoms/badges/Badge';
 import { RatingBadge } from '../../atoms/badges/RatingBadge';
 import { SecondaryButton } from '../../atoms/buttons/SecondaryButton';
 import { Heading2 } from '../../atoms/typography/Heading2';
 import { Ionicons } from '@expo/vector-icons';
 
+// ✅ Updated to match Motorcycle from VehicleModelMapper
 export interface Bike {
     id: string;
     name: string;
-    category: string;
+    brand: string; // ✅ Added brand
+    category?: string; // ✅ Optional - might not come from API
     range: string;
-    speed: string;
+    speed?: string; // ✅ Optional - might not come from API
     price: number;
     originalPrice?: number;
-    rating: string;
-    location: string;
-    distance: string;
+    rating?: string; // ✅ Optional - might not come from API
+    location?: string; // ✅ Optional - might not come from API
+    distance: number; // ✅ Changed from string to number to match Motorcycle
     image: string;
+    features: string[]; // ✅ Added features array
+    countAvailable?: number; // ✅ Added availability count
 }
 
 interface BikeCardProps {
     bike: Bike;
+    onPress?: () => void; // ✅ NEW: Optional press handler
 }
 
-export const BikeCard: React.FC<BikeCardProps> = ({ bike }) => {
+export const BikeCard: React.FC<BikeCardProps> = ({ bike, onPress }) => {
     const hasDiscount = bike.originalPrice && bike.originalPrice > bike.price;
     const discountPercent = hasDiscount 
         ? Math.round(((bike.originalPrice! - bike.price) / bike.originalPrice!) * 100)
         : 0;
 
+    // ✅ Generate default location if not provided
+    const displayLocation = bike.location || `${bike.brand} - TP.HCM`;
+    
+    // ✅ Show "Mới" badge for premium brands or high availability
+    const showNewBadge = bike.category === 'Cao cấp' || 
+                        bike.brand.toLowerCase().includes('vinfast') ||
+                        (bike.countAvailable && bike.countAvailable >= 5);
+
     return (
-        <View style={styles.card}>
+        <TouchableOpacity 
+            style={styles.card} 
+            onPress={onPress}
+            activeOpacity={0.7}
+        >
             <View style={styles.imageContainer}>
                 <Image
                     source={{ uri: bike.image }}
                     style={styles.image}
                     resizeMode="cover"
                 />
-                <RatingBadge rating={bike.rating} />
-                {bike.category === 'Cao cấp' && (
+                {/* ✅ Show rating badge only if rating exists */}
+                {bike.rating && <RatingBadge rating={bike.rating} />}
+                
+                {/* ✅ Show new badge for premium/popular bikes */}
+                {showNewBadge && (
                     <View style={styles.newBadge}>
                         <Text style={styles.newBadgeText}>⭐ Mới</Text>
+                    </View>
+                )}
+
+                {/* ✅ Show availability badge if count exists */}
+                {bike.countAvailable !== undefined && bike.countAvailable > 0 && (
+                    <View style={styles.availabilityBadge}>
+                        <Text style={styles.availabilityText}>
+                            {bike.countAvailable} xe
+                        </Text>
                     </View>
                 )}
             </View>
@@ -52,9 +81,9 @@ export const BikeCard: React.FC<BikeCardProps> = ({ bike }) => {
                         <Heading2 style={styles.title}>{bike.name}</Heading2>
                         <View style={styles.locationRow}>
                             <Ionicons name="location-outline" size={14} color="#9CA3AF" />
-                            <Text style={styles.locationText}>{bike.location}</Text>
+                            <Text style={styles.locationText}>{displayLocation}</Text>
                         </View>
-                        <Text style={styles.distanceText}>Cách: {bike.distance}</Text>
+                        <Text style={styles.distanceText}>Cách: {bike.distance.toFixed(1)} km</Text>
                     </View>
                 </View>
 
@@ -79,7 +108,7 @@ export const BikeCard: React.FC<BikeCardProps> = ({ bike }) => {
                     </View>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
@@ -113,6 +142,20 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     newBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    availabilityBadge: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        backgroundColor: 'rgba(34, 197, 94, 0.9)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    availabilityText: {
         color: '#FFFFFF',
         fontSize: 11,
         fontWeight: '600',
