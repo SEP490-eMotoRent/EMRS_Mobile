@@ -18,7 +18,7 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { colors } from "../../../../../common/theme/colors";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { useNavigation } from "@react-navigation/native";
@@ -31,6 +31,7 @@ import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleM
 import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
 import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
 import { useAppSelector } from "../../../../authentication/store/hooks";
+import { PaginatedVehicleItem } from "../../../../../../data/models/vehicle/PaginatedVehicle";
 
 type StaffVehicleListNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -57,7 +58,7 @@ export const StaffVehicleListScreen: React.FC = () => {
   const [draftFilterStatus, setDraftFilterStatus] =
     useState<VehicleStatusFilter>("all");
   const [draftFilterModelId, setDraftFilterModelId] = useState("");
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<PaginatedVehicleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -66,9 +67,9 @@ export const StaffVehicleListScreen: React.FC = () => {
     totalPages: 1,
     totalItems: 0,
   });
-  const listRef = useRef<FlatList<Vehicle>>(null);
+  const listRef = useRef<FlatList<PaginatedVehicleItem>>(null);
 
-  const vehiclePlaceholder = require("../../../../../../../assets/images/motor.png");
+  const vehiclePlaceholder = require("../../../../../../../assets/images/default-motorcycle.png");
 
   const fetchVehicles = useCallback(
     async (page = 1, append = false, options?: { silent?: boolean }) => {
@@ -275,15 +276,15 @@ export const StaffVehicleListScreen: React.FC = () => {
     return "#FF6B6B";
   };
 
-  const renderVehicleCard = ({ item }: { item: Vehicle }) => {
+  const renderVehicleCard = ({ item }: { item: PaginatedVehicleItem }) => {
     const batteryLevel = item.batteryHealthPercentage || 0;
     const statusColor = getStatusColor(item.status);
     const imageSource =
       item.fileUrl && item.fileUrl.length > 0
         ? { uri: item.fileUrl[0] }
         : vehiclePlaceholder;
-    const pricePerDay = item.vehicleModel?.rentalPricing?.rentalPrice || 0;
-    const reviewCount = item.bookings?.length || 0;
+    const pricePerDay = item.rentalPricing?.rentalPrice || 0;
+    const reviewCount = item.rentalCount || 0;
     const ratingValue = (
       Math.min(4.9, Math.max(3.6, (batteryLevel || 80) / 18)) || 4.5
     ).toFixed(1);
@@ -341,9 +342,9 @@ export const StaffVehicleListScreen: React.FC = () => {
 
         <View style={styles.chipRow}>
           <View style={styles.infoChip}>
-            <AntDesign name="home" size={13} color="#C9B6FF" />
+            <MaterialIcons name="category" size={13} color="#C9B6FF" />
             <Text style={styles.infoChipText}>
-              {item.branch?.branchName || "Chưa có chi nhánh"}
+              {item.vehicleModel?.category || "Không xác định"}
             </Text>
           </View>
           <View style={styles.infoChip}>
@@ -356,12 +357,14 @@ export const StaffVehicleListScreen: React.FC = () => {
 
         <View style={styles.metricRow}>
           <View style={styles.metricCard}>
-            <AntDesign
-              name="thunderbolt"
-              size={16}
-              color={getBatteryColor(batteryLevel)}
-            />
-            <Text style={styles.metricLabel}>Pin</Text>
+            <View style={styles.metricCardContent}>
+              <AntDesign
+                name="thunderbolt"
+                size={16}
+                color={getBatteryColor(batteryLevel)}
+              />
+              <Text style={styles.metricLabel}>Pin</Text>
+            </View>
             <Text
               style={[
                 styles.metricValue,
@@ -372,15 +375,19 @@ export const StaffVehicleListScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.metricCard}>
-            <AntDesign name="dashboard" size={16} color="#C9B6FF" />
-            <Text style={styles.metricLabel}>Số km</Text>
+            <View style={styles.metricCardContent}>
+              <AntDesign name="dashboard" size={16} color="#C9B6FF" />
+              <Text style={styles.metricLabel}>Số km</Text>
+            </View>
             <Text style={styles.metricValue}>
               {item.currentOdometerKm?.toLocaleString("vi-VN") || 0} km
             </Text>
           </View>
           <View style={styles.metricCard}>
-            <AntDesign name="idcard" size={16} color="#FFB300" />
-            <Text style={styles.metricLabel}>Lượt thuê</Text>
+            <View style={styles.metricCardContent}>
+              <AntDesign name="idcard" size={16} color="#FFB300" />
+              <Text style={styles.metricLabel}>Lượt thuê</Text>
+            </View>
             <Text style={styles.metricValue}>{reviewCount}</Text>
           </View>
         </View>
@@ -393,7 +400,7 @@ export const StaffVehicleListScreen: React.FC = () => {
               color={colors.text.secondary}
             />
             <Text style={styles.infoText}>
-              {item.branch?.address || "Không có địa chỉ chi nhánh"}
+              {item.vehicleModel?.description || "Không xác định"}
             </Text>
           </View>
         </View>
@@ -836,6 +843,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
     marginTop: 8,
+    marginHorizontal: 16,
   },
   heroWrapper: {
     borderRadius: 16,
@@ -980,6 +988,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: "#2F2F2F",
+    gap: 6,
+  },
+  metricCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   metricLabel: {
@@ -1218,5 +1231,3 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
-
-

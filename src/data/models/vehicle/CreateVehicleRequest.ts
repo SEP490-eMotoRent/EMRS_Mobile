@@ -5,8 +5,6 @@ export interface CreateVehicleRequest {
     currentOdometerKm: number;
     batteryHealthPercentage: number;
     status: string;
-    lastMaintenanceDate?: string;
-    nextMaintenanceDue?: string;
     purchaseDate?: string;
     description: string;
     vehicleModelId: string;

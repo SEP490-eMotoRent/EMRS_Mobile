@@ -18,8 +18,6 @@ export class Vehicle implements BaseEntity {
     public currentOdometerKm: number;
     public batteryHealthPercentage: number;
     public status: string;
-    public lastMaintenanceDate?: Date;
-    public nextMaintenanceDue?: Date;
     public fileUrl?: string[];
     public purchaseDate?: Date;
     public description: string;
@@ -52,8 +50,6 @@ export class Vehicle implements BaseEntity {
         maintenanceSchedules: MaintenanceSchedule[] = [],
         repairRequests: RepairRequest[] = [],
         yearOfManufacture?: Date,
-        lastMaintenanceDate?: Date,
-        nextMaintenanceDue?: Date,
         fileUrl?: string[],
         purchaseDate?: Date,
         createdAt: Date = new Date(),
@@ -78,8 +74,6 @@ export class Vehicle implements BaseEntity {
         
         // Optional fields
         this.yearOfManufacture = yearOfManufacture;
-        this.lastMaintenanceDate = lastMaintenanceDate;
-        this.nextMaintenanceDue = nextMaintenanceDue;
         this.fileUrl = fileUrl;
         this.purchaseDate = purchaseDate;
 
@@ -93,10 +87,6 @@ export class Vehicle implements BaseEntity {
 
     isAvailable(): boolean {
         return this.status === 'Available';
-    }
-
-    isMaintenanceDue(): boolean {
-        return !!this.nextMaintenanceDue && new Date() >= this.nextMaintenanceDue;
     }
 
     updateOdometer(km: number): void {

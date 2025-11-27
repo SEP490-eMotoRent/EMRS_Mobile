@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,19 +7,23 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-} from 'react-native';
-import { colors } from '../../../../../common/theme/colors';
-import { AntDesign } from '@expo/vector-icons';
-import { ScreenHeader } from '../../../../../common/components/organisms/ScreenHeader';
-import { useNavigation } from '@react-navigation/native';
-import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useAppDispatch, useAppSelector } from '../../../../authentication/store/hooks';
-import { removeAuth } from '../../../../authentication/store/slices/authSlice';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
+} from "react-native";
+import { colors } from "../../../../../common/theme/colors";
+import { AntDesign } from "@expo/vector-icons";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { useNavigation } from "@react-navigation/native";
+import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { StackNavigationProp } from "@react-navigation/stack";
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "../../../../authentication/store/hooks";
+import { removeAuth } from "../../../../authentication/store/slices/authSlice";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
-type StaffProfileScreenNavigationProp = StackNavigationProp<StaffStackParamList>;
+type StaffProfileScreenNavigationProp =
+  StackNavigationProp<StaffStackParamList>;
 
 interface StaffStats {
   totalHandovers: number;
@@ -52,34 +56,30 @@ export const StaffProfileScreen: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
-      id: 'ticket',
-      title: 'Quản lý Ticket',
-      icon: 'audit',
-      color: '#FF6B6B',
-      onPress: () => navigation.navigate('TicketList'),
+      id: "ticket",
+      title: "Quản lý Ticket",
+      icon: "audit",
+      color: "#FF6B6B",
+      onPress: () => navigation.navigate("TicketList"),
     },
   ];
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(removeAuth());
-            Toast.show({
-              type: "success",
-              text1: "Đăng xuất thành công",
-              text2: "Chào mừng bạn đến với eMotoRent",
-            });
-          },
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: () => {
+          dispatch(removeAuth());
+          Toast.show({
+            type: "success",
+            text1: "Đăng xuất thành công",
+            text2: "Chào mừng bạn đến với eMotoRent",
+          });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -95,7 +95,7 @@ export const StaffProfileScreen: React.FC = () => {
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <Image
-              source={require('../../../../../../../assets/images/avatar.png')}
+              source={require("../../../../../../../assets/images/avatar.png")}
               style={styles.avatar}
             />
             <View style={styles.statusBadge}>
@@ -103,13 +103,17 @@ export const StaffProfileScreen: React.FC = () => {
               <Text style={styles.statusText}>Online</Text>
             </View>
           </View>
-          
+
           <View style={styles.profileInfo}>
-            <Text style={styles.staffName}>{user?.fullName || 'Staff Member'}</Text>
-            <Text style={styles.staffRole}>{user?.role || 'STAFF'}</Text>
+            <Text style={styles.staffName}>
+              {user?.fullName || "Staff Member"}
+            </Text>
+            <Text style={styles.staffRole}>{user?.role || "STAFF"}</Text>
             <View style={styles.branchRow}>
               <AntDesign name="home" size={12} color={colors.text.secondary} />
-              <Text style={styles.branchName}>{user?.branchName || 'Chưa có chi nhánh'}</Text>
+              <Text style={styles.branchName}>
+                {user?.branchName || "Chưa có chi nhánh"}
+              </Text>
             </View>
           </View>
         </View>
@@ -123,7 +127,7 @@ export const StaffProfileScreen: React.FC = () => {
               style={styles.toggleButton}
             >
               <AntDesign
-                name={showStats ? 'up' : 'down'}
+                name={showStats ? "up" : "down"}
                 size={16}
                 color={colors.text.secondary}
               />
@@ -133,7 +137,9 @@ export const StaffProfileScreen: React.FC = () => {
           {showStats && (
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.totalHandovers}</Text>
+                <Text style={styles.statNumber}>
+                  {staffStats.totalHandovers}
+                </Text>
                 <Text style={styles.statLabel}>Handovers</Text>
               </View>
               <View style={styles.statItem}>
@@ -153,33 +159,36 @@ export const StaffProfileScreen: React.FC = () => {
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.actionsCard}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderLeft}>
-              <AntDesign name="appstore" size={18} color="#C9B6FF" />
-              <Text style={styles.sectionTitle}>Tác vụ nhanh</Text>
-            </View>
-          </View>
-          {quickActions.map((action) => (
-            <TouchableOpacity
-              key={action.id}
-              style={styles.actionCard}
-              onPress={action.onPress}
-              activeOpacity={0.8}
-            >
-              <View style={styles.actionCardLeft}>
-                <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
-                  <AntDesign name={action.icon as any} size={24} color={action.color} />
-                </View>
-                <View style={styles.actionCardInfo}>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
-                  <Text style={styles.actionSubtitle}>Xem và quản lý các ticket</Text>
-                </View>
+        {quickActions.map((action) => (
+          <TouchableOpacity
+            key={action.id}
+            style={styles.actionCard}
+            onPress={action.onPress}
+            activeOpacity={0.8}
+          >
+            <View style={styles.actionCardLeft}>
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: action.color + "20" },
+                ]}
+              >
+                <AntDesign
+                  name={action.icon as any}
+                  size={24}
+                  color={action.color}
+                />
               </View>
-              <AntDesign name="right" size={16} color={colors.text.secondary} />
-            </TouchableOpacity>
-          ))}
-        </View>
+              <View style={styles.actionCardInfo}>
+                <Text style={styles.actionTitle}>{action.title}</Text>
+                <Text style={styles.actionSubtitle}>
+                  Xem và quản lý các ticket
+                </Text>
+              </View>
+            </View>
+            <AntDesign name="right" size={16} color={colors.text.secondary} />
+          </TouchableOpacity>
+        ))}
 
         {/* Sign Out Button */}
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
@@ -200,16 +209,16 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E1E1E',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
     borderRadius: 20,
     padding: 24,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2E2E2E',
-    shadowColor: '#000',
+    borderColor: "#2E2E2E",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -219,7 +228,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
     marginRight: 16,
   },
   avatar: {
@@ -227,33 +236,33 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     borderWidth: 3,
-    borderColor: '#C9B6FF',
-    backgroundColor: '#2A2A2A',
+    borderColor: "#C9B6FF",
+    backgroundColor: "#2A2A2A",
   },
   statusBadge: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 5,
     borderWidth: 2,
-    borderColor: '#1E1E1E',
+    borderColor: "#1E1E1E",
   },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#67D16C',
+    backgroundColor: "#67D16C",
   },
   statusText: {
-    color: '#67D16C',
+    color: "#67D16C",
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   profileInfo: {
     flex: 1,
@@ -261,118 +270,119 @@ const styles = StyleSheet.create({
   staffName: {
     color: colors.text.primary,
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 6,
     letterSpacing: 0.3,
   },
   staffRole: {
-    color: '#C9B6FF',
+    color: "#C9B6FF",
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   branchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   branchName: {
     color: colors.text.secondary,
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   statsCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2E2E2E',
+    borderColor: "#2E2E2E",
   },
   statsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   statsTitle: {
     color: colors.text.primary,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.3,
   },
   toggleButton: {
     padding: 4,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 16,
   },
   statItem: {
-    width: '45%',
-    backgroundColor: '#2A2A2A',
+    width: "45%",
+    backgroundColor: "#2A2A2A",
     borderRadius: 16,
     padding: 18,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: "#333333",
   },
   statNumber: {
-    color: '#C9B6FF',
+    color: "#C9B6FF",
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 6,
     letterSpacing: 0.5,
   },
   statLabel: {
     color: colors.text.secondary,
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
     letterSpacing: 0.2,
   },
   actionsCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2E2E2E',
+    borderColor: "#2E2E2E",
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   sectionTitle: {
     color: colors.text.primary,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.3,
   },
   actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#2A2A2A',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#2A2A2A",
     borderRadius: 16,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: "#333333",
     marginBottom: 12,
+    marginHorizontal: 16,
   },
   actionCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     gap: 16,
   },
@@ -380,8 +390,8 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionCardInfo: {
     flex: 1,
@@ -390,49 +400,49 @@ const styles = StyleSheet.create({
   actionTitle: {
     color: colors.text.primary,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 2,
   },
   actionSubtitle: {
     color: colors.text.secondary,
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   scheduleCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
   },
   scheduleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginBottom: 12,
   },
   scheduleText: {
     color: colors.text.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2A2A2A",
     marginHorizontal: 16,
     borderRadius: 16,
     padding: 18,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#3A3A3A',
+    borderColor: "#3A3A3A",
     marginBottom: 20,
   },
   signOutText: {
-    color: '#FF6B6B',
+    color: "#FF6B6B",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.3,
   },
 });

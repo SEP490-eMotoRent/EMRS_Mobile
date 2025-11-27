@@ -21,17 +21,17 @@ import Carousel, {
   Pagination,
 } from "react-native-reanimated-carousel";
 import { colors } from "../../../../../common/theme/colors";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../../core/di/InjectionContainer";
-import { Vehicle } from "../../../../../../domain/entities/vehicle/Vehicle";
 import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { useSharedValue } from "react-native-reanimated";
 import { BrandTitle } from "../../../../authentication/ui/atoms";
+import { PaginatedVehicleItem } from "../../../../../../data/models/vehicle/PaginatedVehicle";
 
 type StaffHomeScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -53,7 +53,7 @@ const data = [
 export const StaffHomeScreen: React.FC = () => {
   const navigation = useNavigation<StaffHomeScreenNavigationProp>();
   const user = useAppSelector((state: any) => state.auth.user);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<PaginatedVehicleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const progress = useSharedValue<number>(0);
@@ -65,7 +65,7 @@ export const StaffHomeScreen: React.FC = () => {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const ref = React.useRef<ICarouselInstance>(null);
 
-  const vehiclePlaceholder = require("../../../../../../../assets/images/motor.png");
+  const vehiclePlaceholder = require("../../../../../../../assets/images/default-motorcycle.png");
 
   const fetchVehicles = useCallback(
     async (options?: { silent?: boolean }) => {
@@ -149,15 +149,15 @@ export const StaffHomeScreen: React.FC = () => {
     return "#FF6B6B";
   };
 
-  const renderVehicleCard = ({ item }: { item: Vehicle }) => {
+  const renderVehicleCard = ({ item }: { item: PaginatedVehicleItem }) => {
     const batteryLevel = item.batteryHealthPercentage || 0;
     const statusColor = getStatusColor(item.status);
     const imageSource =
       item.fileUrl && item.fileUrl.length > 0
         ? { uri: item.fileUrl[0] }
         : vehiclePlaceholder;
-    const pricePerDay = item.vehicleModel?.rentalPricing?.rentalPrice || 0;
-    const reviewCount = item.bookings?.length || 0;
+    const pricePerDay = item.rentalPricing?.rentalPrice || 0;
+    const reviewCount = item.rentalCount || 0;
     const ratingValue = (
       Math.min(4.9, Math.max(3.6, (batteryLevel || 80) / 18)) || 4.5
     ).toFixed(1);
@@ -215,9 +215,9 @@ export const StaffHomeScreen: React.FC = () => {
 
         <View style={styles.chipRow}>
           <View style={styles.infoChip}>
-            <AntDesign name="home" size={13} color="#C9B6FF" />
+            <MaterialIcons name="category" size={13} color="#C9B6FF" />
             <Text style={styles.infoChipText}>
-              {item.branch?.branchName || "Chưa có chi nhánh"}
+              {item.vehicleModel?.category || "Không xác định"}
             </Text>
           </View>
           <View style={styles.infoChip}>

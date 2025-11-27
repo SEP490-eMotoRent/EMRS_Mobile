@@ -63,7 +63,7 @@ export class VehicleModelRepositoryImpl implements VehicleModelRepository {
 
     // Map LIST API response (VehicleModelResponse) to entity
     private mapListToEntity(dto: VehicleModelResponse): VehicleModel {
-        const pricingId = `pricing_${dto.vehicleModelId}`;
+        const pricingId = `pricing_${dto.id}`;
         const rentalPricing = new RentalPricing(
             pricingId,
             dto.rentalPrice, // Flat rentalPrice from list API
@@ -72,7 +72,7 @@ export class VehicleModelRepositoryImpl implements VehicleModelRepository {
         );
 
         return new VehicleModel(
-            dto.vehicleModelId,
+            dto.id,
             dto.modelName || "Unnamed Model",
             dto.category || "Unknown",
             dto.batteryCapacityKwh ?? 0,
@@ -99,7 +99,7 @@ export class VehicleModelRepositoryImpl implements VehicleModelRepository {
         );
 
         return new VehicleModel(
-            dto.vehicleModelId,
+            dto.id,
             dto.modelName || "Unnamed Model",
             dto.category || "Unknown",
             dto.batteryCapacityKwh ?? 0,

@@ -1,4 +1,5 @@
 import { RentalPricingResponse } from "../financial/rentalPricing/RentalPricingResponse";
+import { VehicleModelResponse } from "../vehicle_model/VehicleModelResponse";
 
 export interface VehicleResponse {
     id: string;
@@ -8,10 +9,10 @@ export interface VehicleResponse {
     currentOdometerKm: number;
     batteryHealthPercentage: number;
     status: string;
-    lastMaintenanceDate?: Date;
-    nextMaintenanceDue?: Date;
     fileUrl?: string[];
     purchaseDate?: Date;
     description: string;
+    rentalCount?: number;
     rentalPricing?: RentalPricingResponse;
+    vehicleModel?: VehicleModelResponse;
 }

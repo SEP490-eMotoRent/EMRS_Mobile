@@ -16,10 +16,6 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ScanFaceUseCase } from "../../../../../../domain/usecases/account/ScanFaceUseCase";
-import sl from "../../../../../../core/di/InjectionContainer";
-import * as ImagePicker from "expo-image-picker";
-import { manipulateAsync, FlipType, SaveFormat } from "expo-image-manipulator";
 
 type ScanFaceScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -75,7 +71,7 @@ export const ScanFaceScreen: React.FC = () => {
   const handleStartFacialScan = () => {
     navigation.navigate("FaceScanCamera");
   };
-  
+
   const handleScanID = () => {
     console.log("Scan ID Document");
   };
@@ -104,16 +100,34 @@ export const ScanFaceScreen: React.FC = () => {
     });
   };
 
+  const manualOptions = [
+    {
+      id: "id",
+      title: "Quét giấy tờ tuỳ thân",
+      subtitle: "CMND/CCCD rõ nét, không bị che khuất",
+      icon: "idcard",
+      accent: "#7C5DFA",
+      action: handleScanID,
+    }
+  ] as const;
+
+  const guidanceItems = [
+    { id: "light", icon: "bulb", text: "Ánh sáng đều, không ngược sáng" },
+    { id: "mask", icon: "close-circle", text: "Tháo khẩu trang và kính râm" },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Xác minh danh tính khách hàng</Text>
-        </View>
-
-        {/* Facial Scan Interface */}
-        <View style={styles.scanInterfaceSection}>
+        <View style={styles.scanCard}>
+          <View style={styles.cardHeaderRow}>
+            <View>
+              <Text style={styles.cardTitle}>Quét khuôn mặt trực tiếp</Text>
+              <Text style={styles.cardSubtitle}>
+                Đưa khuôn mặt vào khung, giữ thẳng và nhìn trực diện.
+              </Text>
+            </View>
+          </View>
           <View style={styles.scanFrame}>
             <Image
               source={{
@@ -130,46 +144,72 @@ export const ScanFaceScreen: React.FC = () => {
               />
             )}
           </View>
-          <Text style={styles.scanInstruction}>Đặt khuôn mặt trong khung</Text>
-
+          <View style={styles.guidelineRow}>
+            {guidanceItems.map((item) => (
+              <View key={item.id} style={styles.guidelineItem}>
+                <View style={styles.guidelineIcon}>
+                  <AntDesign
+                    name={item.icon as any}
+                    size={16}
+                    color="#7CFFCB"
+                  />
+                </View>
+                <Text style={styles.guidelineText}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
           <PrimaryButton
             title="Bắt đầu quét khuôn mặt"
             onPress={handleStartFacialScan}
             style={styles.scanButton}
           />
+          <Text style={styles.scanHint}>
+            Dữ liệu được mã hoá & lưu trữ an toàn.
+          </Text>
         </View>
 
-        {/* Manual Verification Options */}
-        <View style={styles.manualVerificationSection}>
-          <Text style={styles.sectionTitle}>Manual Verification Options</Text>
-
-          <TouchableOpacity style={styles.optionButton} onPress={handleScanID}>
-            <AntDesign name="idcard" size={16} color={colors.text.primary} />
-            <Text style={styles.optionText}>Scan ID Document</Text>
-            <AntDesign name="right" size={16} color={colors.text.secondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.optionButton}
-            onPress={handleEnterOTP}
-          >
-            <AntDesign name="message" size={16} color={colors.text.primary} />
-            <Text style={styles.optionText}>Enter OTP sent to customer</Text>
-            <AntDesign name="right" size={16} color={colors.text.secondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.optionButton}
-            onPress={handleCallManager}
-          >
-            <AntDesign name="phone" size={16} color={colors.text.primary} />
-            <Text style={styles.optionText}>Call Manager for override</Text>
-            <AntDesign name="right" size={16} color={colors.text.secondary} />
-          </TouchableOpacity>
+        <View style={styles.manualCard}>
+          <View style={styles.cardHeaderRow}>
+            <View>
+              <View style={styles.cardTitleContainer}>
+                <Text style={styles.cardTitle}>
+                  Phương án thủ công
+                </Text>
+                <AntDesign name="tool" size={20} color="#FFAA5B" />
+              </View>
+              <Text style={styles.cardSubtitle}>
+                Thực hiện khi khách không thể quét khuôn mặt.
+              </Text>
+            </View>
+          </View>
+          {manualOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              style={styles.manualOption}
+              onPress={option.action}
+            >
+              <View
+                style={[
+                  styles.optionIconWrap,
+                  { backgroundColor: option.accent },
+                ]}
+              >
+                <AntDesign
+                  name={option.icon as any}
+                  size={18}
+                  color="#0B0B0F"
+                />
+              </View>
+              <View style={styles.optionCopy}>
+                <Text style={styles.optionTitle}>{option.title}</Text>
+                <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+              </View>
+              <AntDesign name="right" size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
 
-      {/* Loading Modal while scanning */}
       <Modal transparent visible={loading} animationType="fade">
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
@@ -188,107 +228,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 100, // Space for bottom navigation
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    gap: 20,
   },
-  appHeader: {
+  scanCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    gap: 16,
+    marginTop: 10,
+  },
+  cardHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 20,
+    alignItems: "flex-start",
   },
-  appTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.text.primary,
-  },
-  menuButton: {
-    padding: 8,
-  },
-  header: {
-    paddingVertical: 20,
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.text.primary,
-    marginBottom: 8,
-  },
-  bookingId: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: 4,
-  },
-  customerName: {
-    fontSize: 16,
-    color: colors.text.primary,
-    fontWeight: "600",
-  },
-  customerInfoSection: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.text.primary,
-    marginBottom: 16,
-  },
-  customerCard: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 16,
-    padding: 20,
+  cardTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
   },
-  customerAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#444444",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 20,
-  },
-  avatarText: {
-    fontSize: 32,
-  },
-  customerDetails: {
-    flex: 1,
-  },
-  customerNameLarge: {
+  cardTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text.primary,
-    marginBottom: 4,
   },
-  customerStatus: {
-    fontSize: 14,
+  cardSubtitle: {
     color: colors.text.secondary,
-    marginBottom: 8,
-  },
-  customerPhone: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: 4,
-  },
-  customerVehicle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: 4,
-  },
-  pickupTime: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  scanInterfaceSection: {
-    alignItems: "center",
-    marginBottom: 32,
+    marginTop: 4,
   },
   scanFrame: {
-    width: 350,
-    height: 400,
+    width: "100%",
+    height: 360,
+    maxWidth: 360,
     borderWidth: 2,
     borderColor: colors.text.primary,
     borderRadius: 16,
@@ -298,24 +273,38 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A",
     overflow: "hidden",
   },
-  scanFrameInner: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: colors.text.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   cameraIconContainer: {
     width: "100%",
     height: "100%",
   },
-  scanInstruction: {
-    fontSize: 16,
+  guidelineRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  guidelineItem: {
+    flex: 1,
+    minWidth: 100,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#232838",
+  },
+  guidelineIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "rgba(124,255,203,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  guidelineText: {
     color: colors.text.primary,
-    marginBottom: 24,
-    textAlign: "center",
+    fontSize: 13,
+    lineHeight: 18,
   },
   scanButton: {
     backgroundColor: "#C9B6FF",
@@ -325,27 +314,48 @@ const styles = StyleSheet.create({
     minWidth: 200,
     alignItems: "center",
   },
-  scanButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+  scanHint: {
+    textAlign: "center",
+    color: "#9CA3AF",
+    fontSize: 12,
   },
-  manualVerificationSection: {
+  manualCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    gap: 14,
   },
-  optionButton: {
+  manualOption: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2A2A2A",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    gap: 14,
+    backgroundColor: "#171B26",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#1F2430",
   },
-  optionText: {
+  optionIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  optionCopy: {
     flex: 1,
+  },
+  optionTitle: {
     color: colors.text.primary,
-    fontSize: 16,
-    marginLeft: 12,
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  optionSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    marginTop: 4,
   },
   modalBackdrop: {
     position: "absolute",

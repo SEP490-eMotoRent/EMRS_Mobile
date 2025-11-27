@@ -21,8 +21,6 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             currentOdometerKm: vehicle.currentOdometerKm,
             batteryHealthPercentage: vehicle.batteryHealthPercentage,
             status: vehicle.status,
-            lastMaintenanceDate: vehicle.lastMaintenanceDate?.toISOString(),
-            nextMaintenanceDue: vehicle.nextMaintenanceDue?.toISOString(),
             purchaseDate: vehicle.purchaseDate?.toISOString(),
             description: vehicle.description,
             vehicleModelId: vehicle.vehicleModelId,
@@ -83,7 +81,7 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             pageSize: response.pageSize,
             totalItems: response.totalItems,
             totalPages: response.totalPages,
-            items: response.items.map((item) => this.mapToEntity(item)),
+            items: response.items,
         };
     }
 
@@ -142,12 +140,6 @@ export class VehicleRepositoryImpl implements VehicleRepository {
         const yearOfManufacture = model.yearOfManufacture 
             ? new Date(model.yearOfManufacture) 
             : undefined;
-        const lastMaintenanceDate = model.lastMaintenanceDate 
-            ? new Date(model.lastMaintenanceDate) 
-            : undefined;
-        const nextMaintenanceDue = model.nextMaintenanceDue 
-            ? new Date(model.nextMaintenanceDue) 
-            : undefined;
         const purchaseDate = model.purchaseDate 
             ? new Date(model.purchaseDate) 
             : undefined;
@@ -169,8 +161,6 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             [],
             [],
             yearOfManufacture,
-            lastMaintenanceDate,
-            nextMaintenanceDue,
             model?.fileUrl,
             purchaseDate,
             new Date(),
@@ -240,8 +230,6 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             [],
             [],
             [],
-            undefined,
-            undefined,
             undefined,
             model?.fileUrl,
             undefined,
