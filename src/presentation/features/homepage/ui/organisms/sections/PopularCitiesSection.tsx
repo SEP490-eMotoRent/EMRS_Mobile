@@ -3,7 +3,6 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 
 interface City {
     name: string;
-    vehicleCount: string;
     image: string;
 }
 
@@ -11,28 +10,27 @@ export const PopularCitiesSection: React.FC = () => {
     const cities: City[] = [
         {
             name: 'Quận 1',
-            vehicleCount: '150+ xe',
-            image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=200&h=200&fit=crop',
+            image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSL22ebAWW1x9jc1ohywLBAi5UCkZq3wSlKKw&s',
         },
         {
             name: 'Quận 3',
-            vehicleCount: '120+ xe',
-            image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&h=200&fit=crop',
+            image: 'https://owa.bestprice.vn/images/media/c2f9d615-43f7-4a0a-a58c-5510783b762f-61dfd65dc41c0.png',
         },
         {
-            name: 'Quận 7',
-            vehicleCount: '90+ xe',
-            image: 'https://images.unsplash.com/photo-1601581874831-8a79c50e3d4a?w=200&h=200&fit=crop',
-        },
-        {
-            name: 'Quận 2',
-            vehicleCount: '110+ xe',
-            image: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=200&h=200&fit=crop',
+            name: 'Tân Bình',
+            image: 'https://cdn.xanhsm.com/2025/05/93e733a3-tan-binh-o-dau-4.jpg',
         },
         {
             name: 'Bình Thạnh',
-            vehicleCount: '85+ xe',
-            image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop',
+            image: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=200&h=200&fit=crop',
+        },
+        {
+            name: 'Quận 7',
+            image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&h=200&fit=crop',
+        },
+        {
+            name: 'Quận 2',
+            image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRczEwzo3kIdtFr716BpdpglZn4_Tczrdqfhw&s',
         },
     ];
 
@@ -48,7 +46,6 @@ export const PopularCitiesSection: React.FC = () => {
                     <TouchableOpacity key={index} style={styles.cityCard} activeOpacity={0.7}>
                         <Image source={{ uri: city.image }} style={styles.cityImage} />
                         <Text style={styles.cityName}>{city.name}</Text>
-                        <Text style={styles.vehicleCount}>{city.vehicleCount}</Text>
                     </TouchableOpacity>
                 ))}
             </ScrollView>
@@ -87,11 +84,6 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 14,
         fontWeight: '600',
-        textAlign: 'center',
-    },
-    vehicleCount: {
-        color: '#9CA3AF',
-        fontSize: 12,
         textAlign: 'center',
     },
 });
