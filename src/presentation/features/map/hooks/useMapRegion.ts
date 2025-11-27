@@ -162,12 +162,12 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         };
     }, []);
 
-    return { 
-        region, 
-        setRegion, 
-        searchedLocation, 
-        resetSearch, 
-        geocoding, 
-        error 
+    return {
+        region,
+        setRegion,
+        searchedLocation,
+        resetSearch,
+        geocoding,
+        error
     };
 };

@@ -1,5 +1,5 @@
-import { BaseEntity, CreateEntityInput, UpdateEntityInput } from "../shared/BaseEntity";
 import { Renter } from "../account/Renter";
+import { BaseEntity, UpdateEntityInput } from "../shared/BaseEntity";
 import { Booking } from "./Booking";
 
 export class Feedback implements BaseEntity {
@@ -14,35 +14,35 @@ export class Feedback implements BaseEntity {
     public renterId: string;
     public bookingId: string;
 
-    // ✅ RELATIONS
-    public renter: Renter;
-    public booking: Booking;
-
+    public renter?: Renter;
+    public booking?: Booking;
+    public renterName?: string;
     constructor(
         id: string,
         rating: number,
         comment: string,
         renterId: string,
         bookingId: string,
-        renter: Renter,    // ✅ ADDED
-        booking: Booking,  // ✅ ADDED
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
-        isDeleted: boolean = false
+        isDeleted: boolean = false,
+        renter?: Renter,
+                renterName?: string,
+        booking?: Booking,
     ) {
         this.id = id;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
         this.isDeleted = isDeleted;
+        this.renterName = renterName;
 
         this.rating = rating;
         this.comment = comment;
         this.renterId = renterId;
         this.bookingId = bookingId;
 
-        // ✅ RELATIONS
         this.renter = renter;
         this.booking = booking;
     }
@@ -63,6 +63,10 @@ export class Feedback implements BaseEntity {
         this.isDeleted = false;
     }
 }
-
-export type CreateFeedbackInput = CreateEntityInput<Feedback>;
+export interface CreateFeedbackInput {
+    rating: number;
+    comment: string;
+    bookingId: string;
+}
+// export type CreateFeedbackInput = CreateEntityInput<Feedback>;
 export type UpdateFeedbackInput = UpdateEntityInput<Feedback>;

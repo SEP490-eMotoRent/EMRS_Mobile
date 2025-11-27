@@ -33,10 +33,11 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
+        marginBottom: 16,
     },
     separatorContainer: {
         alignItems: 'center',
-        marginVertical: 32,
+        marginVertical: 15,
     },
     separatorText: {
         color: colors.text.secondary,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../../common/theme/colors';
 
 interface SignInPromptProps {
@@ -22,8 +22,8 @@ export const SignInPrompt: React.FC<SignInPromptProps> = ({ onSignInPress }) => 
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: 48,
-        marginBottom: 10,
+        marginTop: 32,
+        marginBottom: 20,
     },
     text: {
         color: colors.text.secondary,

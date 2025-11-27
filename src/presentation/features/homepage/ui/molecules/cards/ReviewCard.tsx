@@ -1,54 +1,76 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { StarRating } from '../../atoms/StarRatings';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface ReviewCardProps {
-    title: string;
     content: string;
     author: string;
-    rating?: number;
+    rating: number;
 }
 
+const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
+    <View style={styles.starsContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+            <Text 
+                key={star} 
+                style={[
+                    styles.star,
+                    star <= rating ? styles.starFilled : styles.starEmpty
+                ]}
+            >
+                {star <= rating ? "★" : "☆"}
+            </Text>
+        ))}
+    </View>
+);
+
 export const ReviewCard: React.FC<ReviewCardProps> = ({
-    title,
     content,
     author,
-    rating = 5
-    }) => {
+    rating,
+}) => {
     return (
-        <View style={styles.reviewCard}>
-        <StarRating rating={rating} />
-        <Text style={styles.reviewTitle}>{title}</Text>
-        <Text style={styles.reviewContent}>{content}</Text>
-        <Text style={styles.reviewAuthor}>{author}</Text>
+        <View style={styles.card}>
+            <StarRating rating={rating} />
+            
+            <Text style={styles.content} numberOfLines={4}>
+                {content}
+            </Text>
+            
+            <Text style={styles.author}>{author}</Text>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    reviewCard: {
-        width: 320,
-        backgroundColor: 'rgba(31, 41, 55, 0.5)',
+    card: {
+        backgroundColor: '#1a1a1a',
         borderRadius: 16,
-        padding: 24,
+        padding: 20,
         marginRight: 16,
+        width: 280,
     },
-    reviewTitle: {
-        color: '#ffffff',
-        fontSize: 20,
-        fontWeight: '600',
-        marginTop: 16,
-        marginBottom: 12,
-    },
-    reviewContent: {
-        color: '#d1d5db',
-        fontSize: 14,
-        lineHeight: 20,
+    starsContainer: {
+        flexDirection: 'row',
+        gap: 4,
         marginBottom: 16,
     },
-    reviewAuthor: {
-        color: '#9ca3af',
+    star: {
+        fontSize: 20,
+    },
+    starFilled: {
+        color: '#fbbf24',
+    },
+    starEmpty: {
+        color: '#444',
+    },
+    content: {
+        color: '#ffffff',
+        fontSize: 15,
+        lineHeight: 22,
+        marginBottom: 16,
+    },
+    author: {
+        color: '#999999',
         fontSize: 14,
-        fontWeight: '500',
     },
 });

@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import * as Location from 'expo-location';
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -27,9 +27,14 @@ type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 interface BookingModalProps {
     visible: boolean;
     onClose: () => void;
+    initialAddress?: string | null; // ✅ NEW: Accept initial address
 }
 
-export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) => {
+export const BookingModal: React.FC<BookingModalProps> = ({ 
+    visible, 
+    onClose, 
+    initialAddress 
+}) => {
     const navigation = useNavigation<NavigationProp>();
     const { branches, loading, error } = useBranches();
     const [dateModalVisible, setDateModalVisible] = useState(false);
@@ -37,6 +42,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
 
     const [address, setAddress] = useState("1 Phạm Văn Hai, Tân Bình");
     const [selectedDates, setSelectedDates] = useState<string | null>(null);
+
+    // ✅ NEW: Pre-fill address when modal opens with initialAddress
+    useEffect(() => {
+        if (visible && initialAddress) {
+            setAddress(initialAddress);
+        }
+    }, [visible, initialAddress]);
 
     const handleConfirmDates = (range: string) => {
         setSelectedDates(range);
@@ -50,7 +62,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
     const handleGetCurrentLocation = async () => {
         setLoadingLocation(true);
         try {
-            // Request location permissions
             const { status } = await Location.requestForegroundPermissionsAsync();
             
             if (status !== 'granted') {
@@ -63,12 +74,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                 return;
             }
 
-            // Get current location
             const location = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Balanced,
             });
 
-            // Reverse geocode to get address
             const [geocode] = await Location.reverseGeocodeAsync({
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
@@ -107,7 +116,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
         
         const formatDate = (dateStr: string) => {
             const date = new Date(dateStr);
-            const months = ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"];
+            const months = ["Thg 1", "Thg 2", "Thg 3", "Thg 4", "Thg 5", "Thg 6",
+                            "Thg 7", "Thg 8", "Thg 9", "Thg 10", "Thg 11", "Thg 12"];
             return `${date.getDate()} ${months[date.getMonth()]}`;
         };
 
@@ -157,7 +167,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
             <View style={styles.overlay}>
                 <TouchableWithoutFeedback>
                 <View style={styles.sheet}>
-                    {/* Header with close button */}
                     <View style={styles.header}>
                         <View style={styles.dragHandle} />
                         <TouchableOpacity 
@@ -201,7 +210,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         <Text style={styles.chevronIcon}>›</Text>
                     </TouchableOpacity>
 
-                    {/* Divider */}
                     <View style={styles.divider} />
 
                     <View style={styles.branchHeader}>
@@ -211,7 +219,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         </Text>
                     </View>
 
-                    {/* GPS Location Button - Moved here */}
                     <TouchableOpacity
                         style={styles.gpsButton}
                         onPress={handleGetCurrentLocation}
@@ -227,7 +234,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         </Text>
                     </TouchableOpacity>
                     
-                    {/* Loading State */}
                     {loading && (
                         <View style={styles.loadingContainer}>
                             <ActivityIndicator size="small" color="#A78BFA" />
@@ -235,7 +241,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         </View>
                     )}
 
-                    {/* Error State */}
                     {error && (
                         <View style={styles.errorContainer}>
                             <Text style={styles.errorIcon}>⚠</Text>
@@ -243,7 +248,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         </View>
                     )}
 
-                    {/* Branches List */}
                     {!loading && !error && branches.map((branch) => (
                         <CityCard
                             key={branch.id}
@@ -253,7 +257,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
                         />
                     ))}
 
-                    {/* Empty State */}
                     {!loading && !error && branches.length === 0 && (
                         <View style={styles.emptyContainer}>
                             <Text style={styles.emptyIcon}>○</Text>
@@ -271,7 +274,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ visible, onClose }) 
             </TouchableWithoutFeedback>
         </Modal>
 
-        {/* DateTimeSearchModal */}
         <DateTimeSearchModal
             visible={dateModalVisible}
             onClose={() => setDateModalVisible(false)}

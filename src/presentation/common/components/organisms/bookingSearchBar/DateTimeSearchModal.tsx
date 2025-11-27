@@ -18,6 +18,14 @@ interface DateTimeSearchModalProps {
     onConfirm: (dateRange: string) => void;
 }
 
+// ✅ CRITICAL: Local date formatting to avoid UTC timezone bugs
+const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
     visible,
     onClose,
@@ -29,36 +37,31 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
 
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [currentTimeType, setCurrentTimeType] = useState<"pickup" | "return">("pickup");
-    const [pickupTime, setPickupTime] = useState("6:00 PM");
-    const [returnTime, setReturnTime] = useState("10:00 AM");
+    // ✅ FIXED: Vietnamese format
+    const [pickupTime, setPickupTime] = useState("6:00 CH");
+    const [returnTime, setReturnTime] = useState("10:00 SA");
 
-    // ✅ Clean hours only - no 30 minutes
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-    const periods = ["SA", "CH"]; // Sáng (AM), Chiều (PM)
+    const periods = ["SA", "CH"];
 
-    // ✅ Today's date - blocks past dates
+    // ✅ FIXED: Use local timezone
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
+    const todayStr = formatLocalDate(today);
 
-    // ✅ Max date - 12 months from today + rest of that month
-    // Example: Nov 14, 2025 → Allow until Nov 30, 2026 (not just Nov 13, 2026)
     const maxDate = new Date(today);
     maxDate.setMonth(maxDate.getMonth() + 12);
-    // Go to last day of that month
-    maxDate.setMonth(maxDate.getMonth() + 1, 0); // Sets to last day of the 12th month
-    const maxDateStr = maxDate.toISOString().split("T")[0];
+    maxDate.setMonth(maxDate.getMonth() + 1, 0);
+    const maxDateStr = formatLocalDate(maxDate);
 
     const onDayPress = (day: any) => {
         const selectedDay = new Date(day.dateString);
         
-        // ✅ Prevent selecting past dates
         if (selectedDay < today) {
             return;
         }
 
         if (!startDate || (startDate && endDate)) {
-            // First selection or reset - set as new start
             setStartDate(day.dateString);
             setEndDate(null);
             setSelectedDates({
@@ -70,21 +73,18 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                 },
             });
         } else {
-            // Second selection - create range
             const range: { [key: string]: any } = {};
             const firstDate = new Date(startDate);
             const secondDate = new Date(day.dateString);
             
-            // ✅ SMART: Automatically determine which is start and which is end
             const start = firstDate < secondDate ? firstDate : secondDate;
             const end = firstDate < secondDate ? secondDate : firstDate;
-            const startStr = start.toISOString().split("T")[0];
-            const endStr = end.toISOString().split("T")[0];
+            const startStr = formatLocalDate(start);
+            const endStr = formatLocalDate(end);
 
-            // ✅ Mark ALL dates in range, including across month boundaries
             let currentDate = new Date(start);
             while (currentDate <= end) {
-                const dateStr = currentDate.toISOString().split("T")[0];
+                const dateStr = formatLocalDate(currentDate);
                 range[dateStr] = { 
                     color: "#b8a4ff", 
                     textColor: "black",
@@ -92,7 +92,6 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                 currentDate.setDate(currentDate.getDate() + 1);
             }
 
-            // Mark start and end specifically
             range[startStr] = {
                 startingDay: true,
                 color: "#b8a4ff",
@@ -105,8 +104,8 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
             };
 
             setSelectedDates(range);
-            setStartDate(startStr);  // ✅ Update with correct start
-            setEndDate(endStr);      // ✅ Update with correct end
+            setStartDate(startStr);
+            setEndDate(endStr);
         }
     };
 
@@ -123,7 +122,7 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
     };
 
     const handleTimeConfirm = (hour: number, period: string) => {
-        const time = `${hour}:00 ${period === "SA" ? "SA" : "CH"}`;
+        const time = `${hour}:00 ${period}`;
         if (currentTimeType === "pickup") {
             setPickupTime(time);
         } else {
@@ -132,16 +131,14 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
         setShowTimePicker(false);
     };
 
-    // ✅ Mark past dates and dates beyond max as disabled
+    // ✅ FIXED: Use local timezone for disabled dates
     const markedDatesWithDisabled = { ...selectedDates };
     
-    // Disable all dates before today
     const currentDate = new Date(today);
-    currentDate.setDate(currentDate.getDate() - 1); // Start from yesterday
+    currentDate.setDate(currentDate.getDate() - 1);
     
-    // Go back 60 days to cover visible past dates in calendar
     for (let i = 0; i < 60; i++) {
-        const pastDateStr = currentDate.toISOString().split("T")[0];
+        const pastDateStr = formatLocalDate(currentDate);
         if (!markedDatesWithDisabled[pastDateStr]) {
             markedDatesWithDisabled[pastDateStr] = {
                 disabled: true,
@@ -162,7 +159,6 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                 <View style={styles.overlay}>
                     <TouchableWithoutFeedback>
                         <View style={styles.sheet}>
-                            {/* Header */}
                             <View style={styles.header}>
                                 <Text style={styles.headerTitle}>Chọn Ngày Nhận Và Trả</Text>
                                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -170,18 +166,16 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Calendar */}
                             <View style={styles.calendarContainer}>
                                 <CalendarList
                                     markingType="period"
                                     markedDates={markedDatesWithDisabled}
                                     onDayPress={onDayPress}
                                     pastScrollRange={0}
-                                    futureScrollRange={12} // ✅ 12 months
+                                    futureScrollRange={12}
                                     scrollEnabled={true}
                                     minDate={todayStr}
                                     maxDate={maxDateStr}
-                                    // ✅ Vietnamese month names
                                     monthFormat={'MMMM yyyy'}
                                     renderHeader={(date) => {
                                         const monthNames = [
@@ -208,7 +202,7 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                                         dayTextColor: "#fff",
                                         monthTextColor: "#fff",
                                         arrowColor: "#fff",
-                                        textDisabledColor: "#444", // ✅ Darker gray for disabled dates
+                                        textDisabledColor: "#222", // ✅ DARKER disabled color
                                         todayTextColor: "#b8a4ff",
                                         selectedDayBackgroundColor: "#b8a4ff",
                                         selectedDayTextColor: "#000",
@@ -217,7 +211,6 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                                 />
                             </View>
 
-                            {/* Overlay for Date & Time Display */}
                             <View style={styles.dateTimeOverlay}>
                                 <View style={styles.dateTimeContainer}>
                                     <ScrollView style={styles.dateTimeBoxScroll}>
@@ -240,7 +233,6 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                                 <PrimaryButton title="Xác Nhận" onPress={handleConfirm} />
                             </View>
 
-                            {/* Time Picker Modal */}
                             {showTimePicker && (
                                 <TimePickerModal
                                     onConfirm={handleTimeConfirm}
@@ -265,7 +257,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onConfirm, onCancel }
     const [selectedPeriod, setSelectedPeriod] = useState("SA");
 
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-    const periods = ["SA", "CH"]; // Sáng, Chiều
+    const periods = ["SA", "CH"];
 
     const ITEM_HEIGHT = 60;
 
@@ -296,7 +288,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onConfirm, onCancel }
                     showsVerticalScrollIndicator={false}
                     snapToInterval={ITEM_HEIGHT}
                     decelerationRate="fast"
-                    contentContainerStyle={{ paddingVertical: ITEM_HEIGHT }} // ✅ FIXED: Only 1x padding
+                    contentContainerStyle={{ paddingVertical: ITEM_HEIGHT }}
                     onMomentumScrollEnd={(event) => {
                         const yOffset = event.nativeEvent.contentOffset.y;
                         const index = Math.round(yOffset / ITEM_HEIGHT);
@@ -332,24 +324,19 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onConfirm, onCancel }
                 <Text style={styles.timePickerTitle}>Chọn Giờ</Text>
                 
                 <View style={styles.pickerWrapper}>
-                    {/* Selection indicator */}
                     <View style={styles.selectionIndicator} />
                     
                     <View style={styles.pickerContainer}>
-                        {/* Hour picker */}
                         {renderPickerColumn(hours, selectedHour, setSelectedHour, 70)}
                         
-                        {/* Static colon */}
                         <View style={styles.staticElementContainer}>
                             <Text style={styles.timeSeparator}>:</Text>
                         </View>
                         
-                        {/* Static 00 */}
                         <View style={styles.staticElementContainer}>
                             <Text style={styles.timeFixed}>00</Text>
                         </View>
                         
-                        {/* Period picker */}
                         {renderPickerColumn(periods, selectedPeriod, setSelectedPeriod, 90)}
                     </View>
                 </View>
@@ -485,11 +472,11 @@ const styles = StyleSheet.create({
         position: "relative",
         width: "100%",
         marginBottom: 30,
-        height: 180, // ✅ Fixed height
+        height: 180,
     },
     selectionIndicator: {
         position: "absolute",
-        top: 60, // ✅ Middle position (180 / 3 = 60)
+        top: 60,
         left: "10%",
         right: "10%",
         height: 60,
@@ -512,9 +499,8 @@ const styles = StyleSheet.create({
     pickerColumn: {
         width: 70,
         height: 180,
-        overflow: "hidden", // ✅ Prevent overflow
+        overflow: "hidden",
     },
-    // ✅ NEW: Container for static elements
     staticElementContainer: {
         height: 180,
         justifyContent: "center",

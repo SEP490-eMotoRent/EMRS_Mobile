@@ -12,6 +12,7 @@ import { CreateWithdrawalRequestScreen } from '../../../../features/profile/ui/s
 import { WithdrawalRequestDetailScreen } from '../../../../features/profile/ui/screens/Withdrawal/WithdrawalRequestDetailScreen';
 import { WithdrawalRequestListScreen } from '../../../../features/profile/ui/screens/Withdrawal/WithdrawalRequestListScreen';
 import { ProfileStackParamList } from '../../StackParameters/types';
+import { AllTransactionsScreen } from '../../../../features/profile/ui/screens/Transactions/AllTransactionsScreen';
 
 const Stack = createStackNavigator<ProfileStackParamList>();
 
@@ -33,6 +34,9 @@ export const ProfileNavigator: React.FC = () => {
             <Stack.Screen name="WalletTopUp" component={WalletTopUpScreen} />
             <Stack.Screen name="WalletVNPayWebView" component={WalletVNPayWebViewScreen} />
             <Stack.Screen name="WalletTopUpResult" component={WalletTopUpResultScreen} />
+
+            {/* All Transactions Screens */}
+            <Stack.Screen name="AllTransactions" component={AllTransactionsScreen} />
         </Stack.Navigator>
     );
 };

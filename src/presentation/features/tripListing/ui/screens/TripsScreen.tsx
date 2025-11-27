@@ -1,12 +1,14 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import sl from "../../../../../core/di/InjectionContainer";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
 import { CancelBookingUseCase } from "../../../../../domain/usecases/booking/CancelBookingUseCase";
 import { GetCurrentRenterBookingsUseCase } from "../../../../../domain/usecases/booking/GetCurrentRenterBookingsUseCase";
+import { GetFeedbackByBookingIdUseCase } from "../../../../../domain/usecases/feedback/GetFeedbackByBookingIdUseCase";
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { useRenterProfile } from "../../../profile/hooks/profile/useRenterProfile";
 import { useCancelBooking } from "../../hooks/useCancelBooking";
 import { useGetCurrentRenterBookings } from "../../hooks/useGetCurrentRenterBookings";
 import { FilterTags } from "../molecules/FilterTags";
@@ -15,11 +17,20 @@ import { TabButton } from "../molecules/TabButton";
 import { CurrentTrip, CurrentTripCard } from "../orgamisms/CurrentTripCard ";
 import { PastTrip, PastTripCard } from "../orgamisms/PastTripCard";
 import { TripsHeader } from "../orgamisms/TripsHeader";
+import { Feedback } from "../../../../../domain/entities/booking/Feedback";
+import { FeedbackModal } from "../orgamisms/modal/FeedbackModal";
 
 type TripsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'Trip'>;
 
 type TabType = "current" | "past";
 type PastFilterType = "completed" | "cancelled" | null;
+
+interface FeedbackModalState {
+    visible: boolean;
+    bookingId: string;
+    vehicleName: string;
+    existingFeedback: Feedback | null;
+}
 
 export const TripsScreen: React.FC = () => {
     const navigation = useNavigation<TripsScreenNavigationProp>();
@@ -27,6 +38,18 @@ export const TripsScreen: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("Mới nhất");
     const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
+
+    const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
+        visible: false,
+        bookingId: "",
+        vehicleName: "",
+        existingFeedback: null,
+    });
+
+    const [bookingFeedbacks, setBookingFeedbacks] = useState<Record<string, Feedback | null>>({});
+
+    const { renter } = useRenterProfile();
+    const currentRenterName = renter?.account?.fullname || renter?.email || "Bạn";
 
     const getCurrentRenterBookingsUseCase = useMemo(
         () => sl.get<GetCurrentRenterBookingsUseCase>("GetCurrentRenterBookingsUseCase"),
@@ -37,9 +60,41 @@ export const TripsScreen: React.FC = () => {
         () => sl.get<CancelBookingUseCase>("CancelBookingUseCase"),
         []
     );
+
+    const getFeedbackByBookingIdUseCase = useMemo(
+        () => sl.get<GetFeedbackByBookingIdUseCase>("GetFeedbackByBookingIdUseCase"),
+        []
+    );
     
     const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(getCurrentRenterBookingsUseCase);
     const { cancelBooking, cancelling } = useCancelBooking(cancelBookingUseCase);
+
+    const checkBookingFeedbacks = useCallback(async (bookingIds: string[]) => {
+        const feedbackMap: Record<string, Feedback | null> = {};
+        
+        await Promise.all(
+            bookingIds.map(async (bookingId) => {
+                try {
+                    const feedbacks = await getFeedbackByBookingIdUseCase.execute(bookingId);
+                    feedbackMap[bookingId] = feedbacks.length > 0 ? feedbacks[0] : null;
+                } catch {
+                    feedbackMap[bookingId] = null;
+                }
+            })
+        );
+        
+        setBookingFeedbacks(prev => ({ ...prev, ...feedbackMap }));
+    }, [getFeedbackByBookingIdUseCase]);
+
+    React.useEffect(() => {
+        const completedBookingIds = bookings
+            .filter(b => ["COMPLETED", "RETURNED"].includes(b.bookingStatus?.toUpperCase() || ""))
+            .map(b => b.id);
+        
+        if (completedBookingIds.length > 0) {
+            checkBookingFeedbacks(completedBookingIds);
+        }
+    }, [bookings, checkBookingFeedbacks]);
 
     const formatVnd = (amount?: number) => amount ? `${amount.toLocaleString('vi-VN')}đ` : undefined;
 
@@ -52,7 +107,6 @@ export const TripsScreen: React.FC = () => {
     const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         
-        // ✅ FILTER OUT: Returned/Completed/Cancelled bookings don't belong in "Current"
         if (["COMPLETED", "RETURNED", "CANCELLED"].includes(bookingStatus)) {
             return null;
         }
@@ -88,7 +142,6 @@ export const TripsScreen: React.FC = () => {
             const now = new Date();
             const end = booking.endDatetime ? new Date(booking.endDatetime) : null;
 
-            // Only calculate time remaining for active rentals
             if (status === "renting" && end) {
                 const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                 return daysLeft > 0 ? `${daysLeft} ngày còn lại` : "Sắp kết thúc";
@@ -118,7 +171,6 @@ export const TripsScreen: React.FC = () => {
     const mapBookingToPastTrip = (booking: Booking): PastTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         
-        // ✅ INCLUDE: Completed, Returned, and Cancelled
         if (!["COMPLETED", "RETURNED", "CANCELLED"].includes(bookingStatus)) {
             return null;
         }
@@ -136,10 +188,12 @@ export const TripsScreen: React.FC = () => {
             return "";
         };
 
-        // ✅ Map RETURNED → completed for display
         const displayStatus = (bookingStatus === "COMPLETED" || bookingStatus === "RETURNED") 
             ? "completed" 
             : "cancelled";
+
+        const feedback = bookingFeedbacks[booking.id];
+        const hasFeedback = feedback !== null && feedback !== undefined;
 
         return {
             id: booking.id,
@@ -148,7 +202,7 @@ export const TripsScreen: React.FC = () => {
             dates: `${startDate} - ${endDate}, ${year}`,
             duration: calculateDuration(),
             status: displayStatus,
-            rating: displayStatus === "completed" ? 5 : undefined,
+            rating: hasFeedback ? feedback.rating : undefined,
             totalAmount: formatVnd(booking.totalAmount),
             refundedAmount: bookingStatus === "CANCELLED" && booking.depositAmount
                 ? formatVnd(booking.depositAmount)
@@ -157,6 +211,7 @@ export const TripsScreen: React.FC = () => {
             lateReturnFee: booking.lateReturnFee && booking.lateReturnFee > 0
                 ? formatVnd(booking.lateReturnFee)
                 : undefined,
+            hasFeedback,
         };
     };
 
@@ -167,7 +222,7 @@ export const TripsScreen: React.FC = () => {
 
     const pastTrips = useMemo(() => 
         bookings.map(mapBookingToPastTrip).filter((t): t is PastTrip => t !== null),
-        [bookings]
+        [bookings, bookingFeedbacks]
     );
 
     const handleNotification = () => {
@@ -213,6 +268,34 @@ export const TripsScreen: React.FC = () => {
 
     const handleBookSimilar = (tripId: string) => {
         console.log("Đặt xe tương tự", tripId);
+    };
+
+    const handleLeaveFeedback = (bookingId: string, vehicleName: string) => {
+        const existingFeedback = bookingFeedbacks[bookingId] || null;
+        setFeedbackModal({
+            visible: true,
+            bookingId,
+            vehicleName,
+            existingFeedback,
+        });
+    };
+
+    const handleFeedbackSuccess = (newFeedback?: Feedback) => {
+        if (newFeedback) {
+            setBookingFeedbacks(prev => ({
+                ...prev,
+                [feedbackModal.bookingId]: newFeedback,
+            }));
+        }
+    };
+
+    const handleCloseFeedbackModal = () => {
+        setFeedbackModal({
+            visible: false,
+            bookingId: "",
+            vehicleName: "",
+            existingFeedback: null,
+        });
     };
 
     const filteredCurrentTrips = currentTrips.filter(trip =>
@@ -312,6 +395,7 @@ export const TripsScreen: React.FC = () => {
                             onRentAgain={() => handleRentAgain(item.id)}
                             onViewReceipt={() => handleViewReceipt(item.id)}
                             onBookSimilar={item.status === "cancelled" ? () => handleBookSimilar(item.id) : undefined}
+                            onLeaveFeedback={() => handleLeaveFeedback(item.id, item.vehicleName)}
                         />
                     </View>
                 )}
@@ -379,6 +463,16 @@ export const TripsScreen: React.FC = () => {
                     </View>
                 </View>
             )}
+
+            <FeedbackModal
+                visible={feedbackModal.visible}
+                onClose={handleCloseFeedbackModal}
+                bookingId={feedbackModal.bookingId}
+                vehicleName={feedbackModal.vehicleName}
+                existingFeedback={feedbackModal.existingFeedback}
+                renterName={currentRenterName}
+                onSuccess={handleFeedbackSuccess}
+            />
         </View>
     );
 };
