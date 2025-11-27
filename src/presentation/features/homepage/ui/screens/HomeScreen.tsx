@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchBar } from '../../../../common/components/atoms/inputs/SearchBar';
 import { BookingModal } from '../../../../common/components/organisms/bookingSearchBar/BookingModal';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { HomeStackParamList } from '../../../../shared/navigation/StackParameters/types';
 
-import { HeroSection } from '../organisms/hero/HeroSection';
-import { CategoryCardsSection } from '../organisms/sections/CategoryCardsSection';
-import { PromotionalBannersSection } from '../organisms/sections/PromotionalBannersSection';
-import { FeaturedBikesSection } from '../organisms/featuredBikes/FeaturedBikesSection';
-import { PopularCitiesSection } from '../organisms/sections/PopularCitiesSection';
-import { AdvantagesSection } from '../organisms/sections/AdvantagesSection';
-import { ReviewsSection } from '../organisms/sections/ReviewsSection';
 import { DateHelper } from '../../../../../domain/helpers/DateHelper';
+import { FeaturedBikesSection } from '../organisms/featuredBikes/FeaturedBikesSection';
+import { HeroSection } from '../organisms/hero/HeroSection';
+import { AdvantagesSection } from '../organisms/sections/AdvantagesSection';
+import { PopularCitiesSection } from '../organisms/sections/PopularCitiesSection';
+import { ReviewsSection } from '../organisms/sections/ReviewsSection';
+
+import { useVehicleModelsPaginated } from '../../../vehicleList/hooks/useVehicleModelsPaginated';
+import { VehicleModelMapper } from '../../../vehicleList/mappers/VehicleModelMapper';
+import { Bike } from '../molecules/cards/BikeCard';
 
 type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 
@@ -24,53 +26,49 @@ export const HomeScreen: React.FC = () => {
     // ✅ NEW: State to store pre-filled address
     const [prefilledAddress, setPrefilledAddress] = useState<string | null>(null);
 
-    const bikes = [
-        { 
-            id: '1',
-            name: 'VinFast Klara', 
-            category: 'Cao cấp', 
-            range: '80 km', 
-            speed: '50 km/h', 
-            price: 150000,
-            originalPrice: 180000,
-            rating: '4.9',
-            location: 'Quận 1, TP.HCM',
-            distance: '2.5 km',
-            image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400'
-        },
-        { 
-            id: '2',
-            name: 'Yadea S3', 
-            category: 'Phổ thông', 
-            range: '60 km', 
-            speed: '45 km/h', 
-            price: 120000,
-            originalPrice: 150000,
-            rating: '4.7',
-            location: 'Quận 3, TP.HCM',
-            distance: '3.2 km',
-            image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400'
-        },
-        { 
-            id: '3',
-            name: 'Pega Cap', 
-            category: 'Tiết kiệm', 
-            range: '50 km', 
-            speed: '40 km/h', 
-            price: 100000,
-            originalPrice: 120000,
-            rating: '4.5',
-            location: 'Quận 7, TP.HCM',
-            distance: '5.1 km',
-            image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400'
-        },
-    ];
+    // ✅ Use paginated hook for real vehicle data
+    const {
+        items,
+        loading,
+        error,
+        loadInitial,
+    } = useVehicleModelsPaginated();
+
+    // ✅ Load initial data on mount
+    useEffect(() => {
+        loadInitial({
+            startTime: undefined,
+            endTime: undefined,
+            branchId: undefined,
+        });
+    }, []);
+
+    // ✅ Map search items to motorcycles for display
+    const defaultDateRange = DateHelper.getDefaultDateRange();
+    const featuredBikes = useMemo(() => {
+        const motorcycles = VehicleModelMapper.fromSearchItems(items, [], defaultDateRange);
+        
+        // ✅ Shuffle array randomly using Fisher-Yates algorithm
+        const shuffled = [...motorcycles].sort(() => Math.random() - 0.5);
+        
+        // ✅ Take first 5 bikes after shuffling (random selection)
+        return shuffled.slice(0, 5);
+    }, [items, defaultDateRange]);
 
     const handleViewAllBikes = () => {
         navigation.navigate('ListView', {
             location: 'Ho Chi Minh City, Vietnam',
             dateRange: DateHelper.getDefaultDateRangeEnglish(),
             address: 'Ho Chi Minh City, Vietnam',
+        });
+    };
+
+    // ✅ NEW: Handle bike card press - navigate to VehicleDetails
+    const handleBikePress = (bike: Bike) => {
+        navigation.navigate('VehicleDetails', {
+            vehicleId: bike.id,
+            dateRange: defaultDateRange,
+            location: 'Ho Chi Minh City, Vietnam',
         });
     };
 
@@ -102,7 +100,13 @@ export const HomeScreen: React.FC = () => {
                 <HeroSection />
                 {/* <CategoryCardsSection />
                 <PromotionalBannersSection /> */}
-                <FeaturedBikesSection bikes={bikes} onViewAll={handleViewAllBikes} />
+                <FeaturedBikesSection 
+                    bikes={featuredBikes} 
+                    loading={loading}
+                    error={error}
+                    onViewAll={handleViewAllBikes}
+                    onBikePress={handleBikePress} // ✅ NEW: Pass bike press handler
+                />
                 {/* ✅ UPDATED: Pass city select handler */}
                 <PopularCitiesSection onCityPress={handleCitySelect} />
                 <AdvantagesSection />
