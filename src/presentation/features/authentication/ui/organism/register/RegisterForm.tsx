@@ -1,4 +1,3 @@
-// src/features/auth/components/organism/RegisterForm.tsx
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button } from '../../../../../common/components/atoms/buttons/Button';
@@ -79,7 +78,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onContinue, loading 
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginBottom: 10,
+        marginTop: 20,
+        marginBottom: 0,
     },
     inputContainer: {
         marginBottom: 16,

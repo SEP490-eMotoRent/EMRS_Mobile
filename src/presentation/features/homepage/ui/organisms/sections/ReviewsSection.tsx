@@ -1,41 +1,73 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ReviewCard } from '../../molecules/cards/ReviewCard';
+import { GetAllFeedbacksUseCase } from '../../../../../../domain/usecases/feedback/GetAllFeedbacksUseCase';
+import { useGetAllFeedbacks } from '../../../hooks/useGetAllFeedbacks';
+import sl from '../../../../../../core/di/InjectionContainer';
+import { Feedback } from '../../../../../../domain/entities/booking/Feedback';
 
 export const ReviewsSection: React.FC = () => {
-    const reviews = [
-        {
-        title: "Hoàn hảo cho đi lại trong thành phố",
-        content: "Thuê xe máy điện từ eMotoRent cho việc đi lại hàng ngày và thật tuyệt vời! Quy trình đặt xe mượt mà, xe được giao tận cửa. Rất khuyến khích cho bất kỳ ai tìm kiếm phương tiện thân thiện với môi trường!",
-        author: "Sarah L.",
-        rating: 5,
-        },
-        {
-        title: "Trải nghiệm tuyệt vời",
-        content: "Tính linh hoạt của eMotoRent là vô song. Tôi cần xe cho chuyến đi cuối tuần, gói tuần này sang tuần khác rất phù hợp. Không cam kết dài hạn, không rắc rối. Xe bảo trì tốt và vui khi lái!",
-        author: "Michael T.",
-        rating: 5,
-        },
-        {
-        title: "Dịch vụ thuê xe tốt nhất",
-        content: "Tôi đã thử nhiều dịch vụ thuê xe, nhưng eMotoRent nổi bật. Dịch vụ khách hàng xuất sắc, xe luôn trong tình trạng tốt, giá minh bạch. Chắc chắn sẽ sử dụng lại!",
-        author: "Jennifer R.",
-        rating: 5,
-        },
-    ];
+    const getAllFeedbacksUseCase = useMemo(
+        () => sl.get<GetAllFeedbacksUseCase>("GetAllFeedbacksUseCase"),
+        []
+    );
+
+    const { feedbacks, loading, error } = useGetAllFeedbacks(getAllFeedbacksUseCase);
+
+    const mapFeedbackToReview = (feedback: Feedback) => {
+        return {
+            content: feedback.comment || "Khách hàng hài lòng với dịch vụ.",
+            author: feedback.renterName || "Khách hàng eMotoRent",
+            rating: feedback.rating,
+        };
+    };
+
+    if (loading) {
+        return (
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Đánh giá</Text>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#7C4DFF" />
+                    <Text style={styles.loadingText}>Đang tải đánh giá...</Text>
+                </View>
+            </View>
+        );
+    }
+
+    // ✅ UPDATED: Both error and empty states show "Không có đánh giá nào"
+    if (error || feedbacks.length === 0) {
+        return (
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Đánh giá</Text>
+                <View style={styles.emptyContainer}>
+                    {/* ✅ UPDATED: Icon instead of emoji */}
+                    <View style={styles.iconContainer}>
+                        <Ionicons name="chatbox-ellipses-outline" size={48} color="#7C4DFF" />
+                    </View>
+                    <Text style={styles.emptyText}>Không có đánh giá nào</Text>
+                    <Text style={styles.emptySubtext}>
+                        Hãy là người đầu tiên đánh giá dịch vụ của chúng tôi!
+                    </Text>
+                </View>
+            </View>
+        );
+    }
+
+    const reviews = feedbacks.map(mapFeedbackToReview);
 
     return (
         <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Đánh giá</Text>
-        <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-        >
-            {reviews.map((review, index) => (
-            <ReviewCard key={index} {...review} />
-            ))}
-        </ScrollView>
+            <Text style={styles.sectionTitle}>Đánh giá</Text>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {reviews.map((review, index) => (
+                    <ReviewCard key={feedbacks[index]?.id || index} {...review} />
+                ))}
+            </ScrollView>
         </View>
     );
 };
@@ -53,5 +85,39 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingRight: 16,
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        paddingVertical: 40,
+    },
+    loadingText: {
+        color: '#999',
+        fontSize: 14,
+        marginTop: 12,
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        paddingVertical: 40,
+    },
+    // ✅ NEW: Container for icon with background
+    iconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(124, 77, 255, 0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
+    emptyText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    emptySubtext: {
+        color: '#999',
+        fontSize: 14,
+        textAlign: 'center',
     },
 });

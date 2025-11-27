@@ -7,19 +7,29 @@ import { Transaction } from '../temp';
 interface TransactionListProps {
     transactions: Transaction[];
     onViewAll: () => void;
+    limit?: number; // NEW: Optional limit for how many to show
 }
 
-export const TransactionList: React.FC<TransactionListProps> = ({ transactions, onViewAll }) => {
+export const TransactionList: React.FC<TransactionListProps> = ({ 
+    transactions, 
+    onViewAll,
+    limit 
+}) => {
+    // Slice transactions if limit is provided
+    const displayedTransactions = limit ? transactions.slice(0, limit) : transactions;
+    
     return (
         <View style={styles.transactionList}>
-        <Text style={styles.sectionTitle}>Giao Dịch Gần Đây</Text>
-        {transactions.map((t, i) => (
-            <TransactionItem key={i} {...t} />
-        ))}
-        <TouchableOpacity style={styles.viewAllButton} onPress={onViewAll}>
-            <Text style={styles.viewAllText}>Xem Tất Cả Giao Dịch</Text>
-            <Icon name="arrow" />
-        </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Giao Dịch Gần Đây</Text>
+            {displayedTransactions.map((t, i) => (
+                <TransactionItem key={i} {...t} />
+            ))}
+            {transactions.length > displayedTransactions.length && (
+                <TouchableOpacity style={styles.viewAllButton} onPress={onViewAll}>
+                    <Text style={styles.viewAllText}>Xem Tất Cả Giao Dịch</Text>
+                    <Icon name="arrow" />
+                </TouchableOpacity>
+            )}
         </View>
     );
 };
