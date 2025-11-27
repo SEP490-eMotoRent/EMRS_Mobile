@@ -34,38 +34,59 @@ export const RentalScreen: React.FC = () => {
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [bookings, setBookings] = useState<Booking[] | null>(null);
   const [rentedBookings, setRentedBookings] = useState<Booking[] | null>(null);
+  const [handoverSchedule, setHandoverSchedule] = useState<Booking[] | null>(null);
 
   useEffect(() => {
     fetchBookings(1);
   }, []);
 
   // Mock data for handover schedule
-  const handoverSchedule = [
-    {
-      id: "1",
-      time: "10:30 AM - 11:00 AM",
-      timeSubtext: "In 2 hours",
-      customerName: "John Nguyen",
-      bookingId: "#EMR240915001",
-      vehicleName: "VinFast Evo200",
-      rentalDuration: "7 days rental",
-      branch: "District 2 Branch",
-      arrivalStatus: "Arrives in 15 min",
-    },
-    {
-      id: "2",
-      time: "2:00 PM - 2:30 PM",
-      timeSubtext: "In 4 hours",
-      customerName: "Doraemon Nguyen",
-      bookingId: "#EMR240915002",
-      vehicleName: "Klara S",
-      rentalDuration: "3 days rental",
-      branch: "District 2 Branch",
-      arrivalStatus: "Scheduled",
-    },
-  ];
+  // const handoverSchedule = [
+  //   {
+  //     id: "1",
+  //     time: "10:30 AM - 11:00 AM",
+  //     timeSubtext: "In 2 hours",
+  //     customerName: "John Nguyen",
+  //     bookingId: "#EMR240915001",
+  //     vehicleName: "VinFast Evo200",
+  //     rentalDuration: "7 days rental",
+  //     branch: "District 2 Branch",
+  //     arrivalStatus: "Arrives in 15 min",
+  //   },
+  //   {
+  //     id: "2",
+  //     time: "2:00 PM - 2:30 PM",
+  //     timeSubtext: "In 4 hours",
+  //     customerName: "Doraemon Nguyen",
+  //     bookingId: "#EMR240915002",
+  //     vehicleName: "Klara S",
+  //     rentalDuration: "3 days rental",
+  //     branch: "District 2 Branch",
+  //     arrivalStatus: "Scheduled",
+  //   },
+  // ];
+
+  const fetchHandoverSchedule = async (page: number = pageNum) => {
+    setLoading(true);
+    try {
+      const getBookingListUseCase = new GetBookingListUseCase(
+        sl.get("BookingRepository")
+      );
+      const response = await getBookingListUseCase.execute(
+        "",
+        "",
+        "Booking",
+        new Date().toISOString(),
+        page,
+        pageSize
+      );
+      setHandoverSchedule(response.items);
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchBookings = async (page: number = pageNum) => {
     setLoading(true);
@@ -77,6 +98,7 @@ export const RentalScreen: React.FC = () => {
         "",
         "",
         "Renting",
+        undefined,
         page,
         pageSize
       );
@@ -133,12 +155,12 @@ export const RentalScreen: React.FC = () => {
           <Text style={styles.scheduleTitle}>Lịch giao xe hôm nay</Text>
           <View style={styles.scheduleBadge}>
             <Text style={styles.scheduleBadgeText}>
-              {handoverSchedule.length}
+              {handoverSchedule?.length || 0}
             </Text>
           </View>
         </View>
 
-        {handoverSchedule.map((item) => (
+        {handoverSchedule && handoverSchedule.map((item) => (
           <View key={item.id} style={styles.handoverCard}>
             <View style={styles.handoverHeader}>
               <View style={styles.timeSection}>
@@ -147,12 +169,12 @@ export const RentalScreen: React.FC = () => {
                   size={16}
                   color={colors.text.primary}
                 />
-                <Text style={styles.timeText}>{item.time}</Text>
-                <Text style={styles.timeSubtext}>{item.timeSubtext}</Text>
+                <Text style={styles.timeText}>{item.startDatetime?.toLocaleString("en-GB")}</Text>
+                <Text style={styles.timeSubtext}>{item.endDatetime?.toLocaleString("en-GB")}</Text>
               </View>
               <TouchableOpacity style={styles.arrivalButton}>
                 <Text style={styles.arrivalButtonText}>
-                  {item.arrivalStatus}
+                  {item.bookingStatus}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -160,9 +182,9 @@ export const RentalScreen: React.FC = () => {
             <View style={styles.customerSection}>
               <View style={styles.customerInfo}>
                 <AntDesign name="user" size={16} color={colors.text.primary} />
-                <Text style={styles.customerName}>{item.customerName}</Text>
+                <Text style={styles.customerName}>{item.renter?.account?.fullname}</Text>
                 <AntDesign name="check-circle" size={16} color="#4CAF50" />
-                <Text style={styles.bookingId}>{item.bookingId}</Text>
+                <Text style={styles.bookingId}>{item.bookingCode}</Text>
               </View>
             </View>
 
@@ -172,8 +194,8 @@ export const RentalScreen: React.FC = () => {
                 style={styles.vehicleImage}
               />
               <View style={styles.vehicleInfo}>
-                <Text style={styles.vehicleName}>{item.vehicleName}</Text>
-                <Text style={styles.rentalDuration}>{item.rentalDuration}</Text>
+                <Text style={styles.vehicleName}>{item.vehicle?.vehicleModel?.modelName}</Text>
+                <Text style={styles.rentalDuration}>{item.vehicle?.vehicleModel?.rentalPricing?.rentalPrice}</Text>
               </View>
             </View>
 
@@ -181,7 +203,7 @@ export const RentalScreen: React.FC = () => {
 
             <View style={styles.specsSection}>
               <Text style={styles.specsTitle}>Vehicle Specifications</Text>
-              <Text style={styles.branchText}>{item.branch}</Text>
+              <Text style={styles.branchText}>{item.handoverBranch?.branchName}</Text>
 
               <View style={styles.specsGrid}>
                 <View style={styles.specCard}>
@@ -221,7 +243,7 @@ export const RentalScreen: React.FC = () => {
 
             <PrimaryButton
               title="Xem chi tiết Booking"
-              onPress={() => navigation.navigate("BookingDetails", { bookingId: item.bookingId })}
+              onPress={() => navigation.navigate("BookingDetails", { bookingId: item.id })}
               style={styles.viewDetailsButton}
             />
           </View>
@@ -542,7 +564,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   scheduleBadgeText: {
-    color: "#FFFFFF",
+    color: "#000",
     fontSize: 12,
     fontWeight: "bold",
   },
@@ -723,7 +745,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   rentedBadgeText: {
-    color: "#FFFFFF",
+    color: "#000",
     fontSize: 12,
     fontWeight: "bold",
   },

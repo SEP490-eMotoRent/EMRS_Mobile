@@ -3,13 +3,13 @@ export interface AvailableColor {
 }
 
 export interface VehicleModelResponse {
-    vehicleModelId: string;
+    id: string;
     modelName: string;
     category: string;
     batteryCapacityKwh: number;
     maxRangeKm: number;
-    rentalPrice: number;
-    imageUrl: string;
-    originalRentalPrice: number;
-    availableColors: AvailableColor[];
+    rentalPrice?: number;
+    imageUrl?: string;
+    originalRentalPrice?: number;
+    availableColors?: AvailableColor[];
 }

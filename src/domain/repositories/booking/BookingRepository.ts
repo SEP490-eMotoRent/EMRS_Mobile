@@ -57,6 +57,7 @@ export interface BookingRepository {
     vehicleModelId: string,
     renterId: string,
     bookingStatus: string,
+    date: string,
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBooking>;

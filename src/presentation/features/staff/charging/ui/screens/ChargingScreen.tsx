@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
@@ -314,6 +315,24 @@ export const ChargingScreen: React.FC = () => {
           subtitle="Quản lý phiên sạc"
           showBackButton={false}
         />
+
+        {/* Banner Image */}
+        <View style={styles.bannerContainer}>
+          <Image
+            source={require("../../../../../../../assets/images/charging-banner.jpg")}
+            style={styles.bannerImage}
+            resizeMode="cover"
+          />
+          <View style={styles.bannerOverlay}>
+            <View style={styles.bannerContent}>
+              <AntDesign name="thunderbolt" size={32} color="#C9B6FF" />
+              <Text style={styles.bannerTitle}>Sạc xe điện</Text>
+              <Text style={styles.bannerSubtitle}>
+                Quản lý và theo dõi quá trình sạc xe
+              </Text>
+            </View>
+          </View>
+        </View>
 
         {/* Vehicle Search */}
         <View style={styles.card}>
@@ -717,6 +736,57 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
+  bannerContainer: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 20,
+    borderRadius: 20,
+    overflow: "hidden",
+    height: 180,
+    position: "relative",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  bannerImage: {
+    width: "100%",
+    height: "100%",
+  },
+  bannerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bannerContent: {
+    alignItems: "center",
+    gap: 8,
+  },
+  bannerTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  bannerSubtitle: {
+    color: "#E0E0E0",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+    paddingHorizontal: 20,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   card: {
     backgroundColor: "#1E1E1E",
     borderRadius: 16,
@@ -873,6 +943,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
     flex: 1,
+    marginBottom: 8,
   },
   inputHelper: {
     color: colors.text.secondary,

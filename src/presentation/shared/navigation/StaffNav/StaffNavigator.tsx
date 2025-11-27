@@ -22,6 +22,7 @@ import { ChargingScreen } from "../../../features/staff/charging/ui/screens";
 import {
   StaffHomeScreen,
   MotorbikeDetailScreen,
+  StaffVehicleListScreen,
 } from "../../../features/staff/home/ui/screens";
 import { StaffProfileScreen } from "../../../features/staff/profile/ui/screens";
 import { RentalScreen } from "../../../features/staff/rental/ui/screens";
@@ -142,6 +143,10 @@ export const StaffNavigator: React.FC = () => {
         <Stack.Screen
           name="RentedVehicleDetails"
           component={RentedVehicleDetailsScreen}
+        />
+        <Stack.Screen
+          name="AllVehicles"
+          component={StaffVehicleListScreen}
         />
         <Stack.Screen name="TicketList" component={TicketListScreen} />
         <Stack.Screen name="TicketDetail" component={TicketDetailScreen} />

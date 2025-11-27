@@ -6,7 +6,10 @@ import { NavigationContainer } from "@react-navigation/native";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import Toast from "react-native-toast-message";
-
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from 'react-native-reanimated';
 import MapboxGL from "@rnmapbox/maps";
 import { MapboxConfig } from "./src/core/config/MapboxConfig";
 
@@ -23,6 +26,10 @@ LogBox.ignoreLogs([
   "POSITION:",
 ]);
 MapboxGL.setAccessToken(MapboxConfig.accessToken);
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false, // Reanimated runs in strict mode by default
+});
 export default function App() {
   useEffect(() => {
     configureGoogleSignIn();

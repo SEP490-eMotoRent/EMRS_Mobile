@@ -10,15 +10,15 @@ export interface VehicleRepository {
     update(vehicle: Vehicle): Promise<void>;
     getWithReferences(vehicleId: string, vehicleModelId: string): Promise<Vehicle | null>;
     getVehicles(
-        licensePlate: string,
-        color: string,
-        currentOdometerKm: number,
-        batteryHealthPercentage: number,
-        status: string,
-        branchId: string,
-        vehicleModelId: string,
-        pageSize: number,
-        pageNum: number
+        licensePlate?: string,
+        color?: string,
+        currentOdometerKm?: number,
+        batteryHealthPercentage?: number,
+        status?: string,
+        branchId?: string,
+        vehicleModelId?: string,
+        pageSize?: number,
+        pageNum?: number
     ): Promise<PaginatedVehicleResponse>;
     getTracking(vehicleId: string): Promise<VehicleTrackingResponse>;
 }

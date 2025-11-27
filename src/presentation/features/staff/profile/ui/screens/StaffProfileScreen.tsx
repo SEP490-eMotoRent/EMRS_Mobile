@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,21 +6,24 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
   Alert,
-} from 'react-native';
-import { colors } from '../../../../../common/theme/colors';
-import { AntDesign } from '@expo/vector-icons';
-import { ScreenHeader } from '../../../../../common/components/organisms/ScreenHeader';
-import { useNavigation } from '@react-navigation/native';
-import { StaffStackParamList } from '../../../../../shared/navigation/StackParameters/types';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useAppDispatch, useAppSelector } from '../../../../authentication/store/hooks';
-import { removeAuth } from '../../../../authentication/store/slices/authSlice';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
+} from "react-native";
+import { colors } from "../../../../../common/theme/colors";
+import { AntDesign } from "@expo/vector-icons";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { useNavigation } from "@react-navigation/native";
+import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { StackNavigationProp } from "@react-navigation/stack";
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "../../../../authentication/store/hooks";
+import { removeAuth } from "../../../../authentication/store/slices/authSlice";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
-type StaffProfileScreenNavigationProp = StackNavigationProp<StaffStackParamList>;
+type StaffProfileScreenNavigationProp =
+  StackNavigationProp<StaffStackParamList>;
 
 interface StaffStats {
   totalHandovers: number;
@@ -41,7 +44,6 @@ export const StaffProfileScreen: React.FC = () => {
   const navigation = useNavigation<StaffProfileScreenNavigationProp>();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
-  const [showStats, setShowStats] = useState(false);
 
   // Mock staff data
   const staffStats: StaffStats = {
@@ -53,55 +55,30 @@ export const StaffProfileScreen: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
-      id: 'edit-profile',
-      title: 'Edit Profile',
-      icon: 'edit',
-      color: '#C9B6FF',
-      onPress: () => console.log('Edit Profile'),
-    },
-    {
-      id: 'notifications',
-      title: 'Notifications',
-      icon: 'bell',
-      color: '#67D16C',
-      onPress: () => console.log('Notifications'),
-    },
-    {
-      id: 'settings',
-      title: 'Settings',
-      icon: 'setting',
-      color: '#FFB300',
-      onPress: () => console.log('Settings'),
-    },
-    {
-      id: 'ticket',
-      title: 'Ticket',
-      icon: 'audit',
-      color: '#FF6B6B',
-      onPress: () => navigation.navigate('TicketList'),
+      id: "ticket",
+      title: "Quản lý Ticket",
+      icon: "audit",
+      color: "#FF6B6B",
+      onPress: () => navigation.navigate("TicketList"),
     },
   ];
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(removeAuth());
-            Toast.show({
-              type: "success",
-              text1: "Đăng xuất thành công",
-              text2: "Chào mừng bạn đến với eMotoRent",
-            });
-          },
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: () => {
+          dispatch(removeAuth());
+          Toast.show({
+            type: "success",
+            text1: "Đăng xuất thành công",
+            text2: "Chào mừng bạn đến với eMotoRent",
+          });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -117,7 +94,7 @@ export const StaffProfileScreen: React.FC = () => {
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <Image
-              source={require('../../../../../../../assets/images/avatar.png')}
+              source={require("../../../../../../../assets/images/avatar.png")}
               style={styles.avatar}
             />
             <View style={styles.statusBadge}>
@@ -125,77 +102,74 @@ export const StaffProfileScreen: React.FC = () => {
               <Text style={styles.statusText}>Online</Text>
             </View>
           </View>
-          
-          <View style={styles.profileInfo}>
-            <Text style={styles.staffName}>{user?.fullName || 'Staff Member'}</Text>
-            <Text style={styles.staffRole}>{user?.role || 'STAFF'}</Text>
-            <Text style={styles.branchName}>{user?.branchName}</Text>
-          </View>
 
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => console.log('Edit Profile')}
-          >
-            <AntDesign name="edit" size={16} color="#C9B6FF" />
-          </TouchableOpacity>
+          <View style={styles.profileInfo}>
+            <Text style={styles.staffName}>
+              {user?.fullName || "Staff Member"}
+            </Text>
+            <Text style={styles.staffRole}>{user?.role || "STAFF"}</Text>
+            <View style={styles.branchRow}>
+              <AntDesign name="home" size={12} color={colors.text.secondary} />
+              <Text style={styles.branchName}>
+                {user?.branchName || "Chưa có chi nhánh"}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Stats Overview */}
         <View style={styles.statsCard}>
-          <View style={styles.statsHeader}>
-            <Text style={styles.statsTitle}>Performance Overview</Text>
-            <TouchableOpacity
-              onPress={() => setShowStats(!showStats)}
-              style={styles.toggleButton}
-            >
-              <AntDesign
-                name={showStats ? 'up' : 'down'}
-                size={16}
-                color={colors.text.secondary}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {showStats && (
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.totalHandovers}</Text>
-                <Text style={styles.statLabel}>Handovers</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.totalReturns}</Text>
-                <Text style={styles.statLabel}>Returns</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.totalScans}</Text>
-                <Text style={styles.statLabel}>Scans</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.rating}</Text>
-                <Text style={styles.statLabel}>Rating</Text>
-              </View>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.totalHandovers}</Text>
+              <Text style={styles.statLabel}>Handovers</Text>
             </View>
-          )}
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.totalReturns}</Text>
+              <Text style={styles.statLabel}>Returns</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.totalScans}</Text>
+              <Text style={styles.statLabel}>Scans</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.rating}</Text>
+              <Text style={styles.statLabel}>Rating</Text>
+            </View>
+          </View>
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>Tác vụ</Text>
-          <View style={styles.actionsGrid}>
-            {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                style={styles.actionItem}
-                onPress={action.onPress}
+        {quickActions.map((action) => (
+          <TouchableOpacity
+            key={action.id}
+            style={styles.actionCard}
+            onPress={action.onPress}
+            activeOpacity={0.8}
+          >
+            <View style={styles.actionCardLeft}>
+              <View
+                style={[
+                  styles.actionIcon,
+                  { backgroundColor: action.color + "20" },
+                ]}
               >
-                <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-                  <AntDesign name={action.icon as any} size={20} color="#FFFFFF" />
-                </View>
-                <Text style={styles.actionText}>{action.title}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+                <AntDesign
+                  name={action.icon as any}
+                  size={24}
+                  color={action.color}
+                />
+              </View>
+              <View style={styles.actionCardInfo}>
+                <Text style={styles.actionTitle}>{action.title}</Text>
+                <Text style={styles.actionSubtitle}>
+                  Xem và quản lý các ticket
+                </Text>
+              </View>
+            </View>
+            <AntDesign name="right" size={16} color={colors.text.secondary} />
+          </TouchableOpacity>
+        ))}
 
         {/* Sign Out Button */}
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
@@ -216,194 +190,240 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E1E1E',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#2E2E2E",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
     marginRight: 16,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     borderWidth: 3,
-    borderColor: '#C9B6FF',
+    borderColor: "#C9B6FF",
+    backgroundColor: "#2A2A2A",
   },
   statusBadge: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    backgroundColor: "#1E1E1E",
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 2,
+    borderColor: "#1E1E1E",
   },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#67D16C',
+    backgroundColor: "#67D16C",
   },
   statusText: {
-    color: '#67D16C',
+    color: "#67D16C",
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   profileInfo: {
     flex: 1,
   },
   staffName: {
     color: colors.text.primary,
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   staffRole: {
-    color: '#C9B6FF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
+    color: "#C9B6FF",
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  branchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   branchName: {
     color: colors.text.secondary,
-    fontSize: 12,
-  },
-  editButton: {
-    backgroundColor: '#2A2A2A',
-    borderRadius: 20,
-    padding: 8,
+    fontSize: 13,
+    fontWeight: "500",
   },
   statsCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#2E2E2E",
   },
   statsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   statsTitle: {
     color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   toggleButton: {
     padding: 4,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 16,
   },
   statItem: {
-    width: '45%',
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    width: "45%",
+    backgroundColor: "#2A2A2A",
+    borderRadius: 16,
+    padding: 18,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#333333",
   },
   statNumber: {
-    color: '#C9B6FF',
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
+    color: "#C9B6FF",
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   statLabel: {
     color: colors.text.secondary,
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: "500",
+    letterSpacing: 0.2,
   },
   actionsCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#2E2E2E",
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
+  },
+  sectionHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   sectionTitle: {
     color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 16,
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
-  actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  actionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#2A2A2A",
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#333333",
+    marginBottom: 12,
+    marginHorizontal: 16,
+  },
+  actionCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
     gap: 16,
   },
-  actionItem: {
-    width: '45%',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
-  },
   actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  actionText: {
+  actionCardInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  actionTitle: {
     color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  actionSubtitle: {
+    color: colors.text.secondary,
     fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: "400",
   },
   scheduleCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: "#1E1E1E",
     marginHorizontal: 16,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
   },
   scheduleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginBottom: 12,
   },
   scheduleText: {
     color: colors.text.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2A2A2A",
     marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
-    gap: 8,
+    borderRadius: 16,
+    padding: 18,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    marginBottom: 20,
   },
   signOutText: {
-    color: '#FF6B6B',
+    color: "#FF6B6B",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });

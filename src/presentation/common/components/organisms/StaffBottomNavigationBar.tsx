@@ -1,47 +1,51 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors } from '../../theme/colors';
-import { AntDesign } from '@expo/vector-icons';
-import { TextLabel } from '../atoms/navigationBarIcons/TextLabel';
+import React from "react";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { colors } from "../../theme/colors";
+import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
+import { TextLabel } from "../atoms/navigationBarIcons/TextLabel";
 
-export type StaffNavRoute = 'home' | 'rental' | 'profile' | 'scanface' | 'charging';
+export type StaffNavRoute =
+  | "home"
+  | "rental"
+  | "profile"
+  | "scanface"
+  | "charging";
 
 interface StaffBottomNavigationBarProps {
   activeRoute: StaffNavRoute;
   onNavigate: (route: StaffNavRoute) => void;
 }
 
-export const StaffBottomNavigationBar: React.FC<StaffBottomNavigationBarProps> = ({
-  activeRoute,
-  onNavigate,
-}) => {
+export const StaffBottomNavigationBar: React.FC<
+  StaffBottomNavigationBarProps
+> = ({ activeRoute, onNavigate }) => {
   const navItems = [
     {
-      route: 'home' as StaffNavRoute,
-      icon: 'home',
-      label: 'Home',
+      route: "home" as StaffNavRoute,
+      icon: "home",
+      label: "Home",
     },
     {
-      route: 'rental' as StaffNavRoute,
-      icon: 'car',
-      label: 'Rental',
+      route: "rental" as StaffNavRoute,
+      icon: "motorcycle",
+      label: "Rental",
     },
     {
-      route: 'scanface' as StaffNavRoute,
-      icon: 'scan',
-      label: 'Scan Face',
+      route: "scanface" as StaffNavRoute,
+      icon: "scan",
+      label: "Scan Face",
       isCenter: true,
     },
     {
-      route: 'charging' as StaffNavRoute,
-      icon: 'thunderbolt',
-      label: 'Charging',
+      route: "charging" as StaffNavRoute,
+      icon: "thunderbolt",
+      label: "Charging",
     },
     {
-      route: 'profile' as StaffNavRoute,
-      icon: 'user',
-      label: 'Profile',
-    }
+      route: "profile" as StaffNavRoute,
+      icon: "user",
+      label: "Profile",
+    },
   ];
 
   return (
@@ -49,33 +53,48 @@ export const StaffBottomNavigationBar: React.FC<StaffBottomNavigationBarProps> =
       {navItems.map((item, index) => (
         <TouchableOpacity
           key={item.route}
-          style={[
-            styles.navItem,
-            item.isCenter && styles.centerNavItem,
-          ]}
+          style={[styles.navItem, item.isCenter && styles.centerNavItem]}
           onPress={() => onNavigate(item.route)}
           activeOpacity={0.7}
         >
           {item.isCenter ? (
             <View style={styles.centerButtonContainer}>
-              <View style={[
-                styles.centerButton,
-                activeRoute === item.route && styles.centerButtonActive
-              ]}>
+              <View
+                style={[
+                  styles.centerButton,
+                  activeRoute === item.route && styles.centerButtonActive,
+                ]}
+              >
                 <AntDesign
                   name={item.icon as any}
                   size={28}
-                  color={activeRoute === item.route ? '#FFFFFF' : '#FFFFFF'}
+                  color={activeRoute === item.route ? "#FFFFFF" : "#FFFFFF"}
                 />
               </View>
             </View>
           ) : (
             <>
-              <AntDesign
-                name={item.icon as any}
-                size={24}
-                color={activeRoute === item.route ? '#C9B6FF' : colors.text.secondary}
-              />
+              {item.icon === "motorcycle" ? (
+                <FontAwesome6
+                  name="motorcycle"
+                  size={24}
+                  color={
+                    activeRoute === item.route
+                      ? "#C9B6FF"
+                      : colors.text.secondary
+                  }
+                />
+              ) : (
+                <AntDesign
+                  name={item.icon as any}
+                  size={24}
+                  color={
+                    activeRoute === item.route
+                      ? "#C9B6FF"
+                      : colors.text.secondary
+                  }
+                />
+              )}
               <View
                 style={[
                   styles.labelContainer,
@@ -89,9 +108,13 @@ export const StaffBottomNavigationBar: React.FC<StaffBottomNavigationBarProps> =
                   ]}
                 />
                 <TextLabel
-                  color={activeRoute === item.route ? '#C9B6FF' : colors.text.secondary}
+                  color={
+                    activeRoute === item.route
+                      ? "#C9B6FF"
+                      : colors.text.secondary
+                  }
                   fontSize={10}
-                  fontWeight={activeRoute === item.route ? '600' : '400'}
+                  fontWeight={activeRoute === item.route ? "600" : "400"}
                 >
                   {item.label}
                 </TextLabel>
@@ -106,38 +129,38 @@ export const StaffBottomNavigationBar: React.FC<StaffBottomNavigationBarProps> =
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: '#333333',
+    borderTopColor: "#333333",
     paddingVertical: 8,
     paddingHorizontal: 16,
     paddingBottom: 24,
-    position: 'relative',
+    position: "relative",
   },
   navItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 8,
   },
   centerNavItem: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
     paddingBottom: 0,
   },
   centerButtonContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
   },
   centerButton: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#C9B6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#C9B6FF",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: -100, // Elevate above the nav bar
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -149,39 +172,38 @@ const styles = StyleSheet.create({
     borderColor: colors.background,
   },
   centerButtonActive: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: "#9C27B0",
     transform: [{ scale: 1.1 }],
   },
   labelContainer: {
     marginTop: 4,
-    position: 'relative',
+    position: "relative",
   },
   activeLabelContainer: {
     // Active state styling
   },
   labelBackground: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     borderRadius: 12,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   activeLabelBackground: {
-    backgroundColor: '#C9B6FF',
     opacity: 0.2,
   },
   label: {
     fontSize: 10,
     color: colors.text.secondary,
-    fontWeight: '500',
+    fontWeight: "500",
     paddingHorizontal: 8,
     paddingVertical: 2,
-    textAlign: 'center',
+    textAlign: "center",
   },
   activeLabel: {
-    color: '#C9B6FF',
-    fontWeight: '600',
+    color: "#C9B6FF",
+    fontWeight: "600",
   },
 });

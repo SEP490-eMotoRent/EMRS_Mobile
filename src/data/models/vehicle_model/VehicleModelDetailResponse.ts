@@ -22,7 +22,7 @@ export interface RentalPricingInfo {
 }
 
 export interface VehicleModelDetailResponse {
-    vehicleModelId: string;
+    id: string;
     modelName: string;
     category: string;
     batteryCapacityKwh: number;

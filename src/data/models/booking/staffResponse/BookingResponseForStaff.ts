@@ -46,7 +46,6 @@ export interface VehicleBookingResponse {
     batteryHealthPercentage: number;
     status: string;
     licensePlate: string;
-    nextMaintenanceDue?: Date;
     fileUrl?: string[];
     rentalPricing?: RentalPricingBookingResponse; // ✅ This is the rental price, not ID
     vehicleModel?: VehicleModelBookingResponse; // ✅ Nested
