@@ -86,8 +86,8 @@ export const HomeScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <HeroSection />
-                <CategoryCardsSection />
-                <PromotionalBannersSection />
+                {/* <CategoryCardsSection />
+                <PromotionalBannersSection /> */}
                 <FeaturedBikesSection bikes={bikes} onViewAll={handleViewAllBikes} />
                 <PopularCitiesSection />
                 <AdvantagesSection />

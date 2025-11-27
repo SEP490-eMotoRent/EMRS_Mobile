@@ -19,12 +19,19 @@ interface DateTimeBookingModalProps {
     branchName?: string;
     branchOpenTime?: string;
     branchCloseTime?: string;
-    // ✅ NEW: Initial dates for pre-population
-    initialStartDate?: string; // ISO format: "2024-11-28"
-    initialEndDate?: string;   // ISO format: "2024-12-05"
-    initialPickupTime?: string; // "10:00 SA"
-    initialReturnTime?: string; // "10:00 SA"
+    initialStartDate?: string;
+    initialEndDate?: string;
+    initialPickupTime?: string;
+    initialReturnTime?: string;
 }
+
+// ✅ CRITICAL: Local date formatting to avoid UTC timezone bugs
+const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
 export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     visible,
@@ -50,14 +57,15 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
     const periods = ["SA", "CH"];
 
+    // ✅ FIXED: Use local timezone
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
+    const todayStr = formatLocalDate(today);
 
     const maxDate = new Date(today);
     maxDate.setMonth(maxDate.getMonth() + 12);
     maxDate.setMonth(maxDate.getMonth() + 1, 0);
-    const maxDateStr = maxDate.toISOString().split("T")[0];
+    const maxDateStr = formatLocalDate(maxDate);
 
     const parseBranchTime = (timeStr: string): { hour: number; period: string } => {
         const match = timeStr.match(/(\d+):00\s*(SA|CH)/);
@@ -82,7 +90,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         return allHours;
     };
 
-    // ✅ NEW: Initialize selected dates when modal becomes visible
     useEffect(() => {
         if (visible && initialStartDate && initialEndDate) {
             console.log('📅 Pre-populating calendar with:', { initialStartDate, initialEndDate });
@@ -91,10 +98,9 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             const start = new Date(initialStartDate);
             const end = new Date(initialEndDate);
 
-            // Mark all dates in range
             let currentDate = new Date(start);
             while (currentDate <= end) {
-                const dateStr = currentDate.toISOString().split("T")[0];
+                const dateStr = formatLocalDate(currentDate);
                 range[dateStr] = { 
                     color: "#b8a4ff", 
                     textColor: "black",
@@ -102,7 +108,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                 currentDate.setDate(currentDate.getDate() + 1);
             }
 
-            // Mark start and end
             range[initialStartDate] = {
                 startingDay: true,
                 color: "#b8a4ff",
@@ -147,12 +152,12 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             
             const start = firstDate < secondDate ? firstDate : secondDate;
             const end = firstDate < secondDate ? secondDate : firstDate;
-            const startStr = start.toISOString().split("T")[0];
-            const endStr = end.toISOString().split("T")[0];
+            const startStr = formatLocalDate(start);
+            const endStr = formatLocalDate(end);
 
             let currentDate = new Date(start);
             while (currentDate <= end) {
-                const dateStr = currentDate.toISOString().split("T")[0];
+                const dateStr = formatLocalDate(currentDate);
                 range[dateStr] = { 
                     color: "#b8a4ff", 
                     textColor: "black",
@@ -199,13 +204,14 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         setShowTimePicker(false);
     };
 
+    // ✅ FIXED: Use local timezone for disabled dates
     const markedDatesWithDisabled = { ...selectedDates };
     
     const currentDate = new Date(today);
     currentDate.setDate(currentDate.getDate() - 1);
     
     for (let i = 0; i < 60; i++) {
-        const pastDateStr = currentDate.toISOString().split("T")[0];
+        const pastDateStr = formatLocalDate(currentDate);
         if (!markedDatesWithDisabled[pastDateStr]) {
             markedDatesWithDisabled[pastDateStr] = {
                 disabled: true,
@@ -279,7 +285,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                         dayTextColor: "#fff",
                                         monthTextColor: "#fff",
                                         arrowColor: "#fff",
-                                        textDisabledColor: "#444",
+                                        textDisabledColor: "#222", // ✅ DARKER disabled color
                                         todayTextColor: "#b8a4ff",
                                         selectedDayBackgroundColor: "#b8a4ff",
                                         selectedDayTextColor: "#000",
@@ -327,7 +333,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     );
 };
 
-// TimePickerModal component stays exactly the same...
 interface TimePickerModalProps {
     onConfirm: (hour: number, period: string) => void;
     onCancel: () => void;
