@@ -44,7 +44,6 @@ export const StaffProfileScreen: React.FC = () => {
   const navigation = useNavigation<StaffProfileScreenNavigationProp>();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
-  const [showStats, setShowStats] = useState(false);
 
   // Mock staff data
   const staffStats: StaffStats = {
@@ -120,42 +119,24 @@ export const StaffProfileScreen: React.FC = () => {
 
         {/* Stats Overview */}
         <View style={styles.statsCard}>
-          <View style={styles.statsHeader}>
-            <Text style={styles.statsTitle}>Performance Overview</Text>
-            <TouchableOpacity
-              onPress={() => setShowStats(!showStats)}
-              style={styles.toggleButton}
-            >
-              <AntDesign
-                name={showStats ? "up" : "down"}
-                size={16}
-                color={colors.text.secondary}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {showStats && (
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>
-                  {staffStats.totalHandovers}
-                </Text>
-                <Text style={styles.statLabel}>Handovers</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.totalReturns}</Text>
-                <Text style={styles.statLabel}>Returns</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.totalScans}</Text>
-                <Text style={styles.statLabel}>Scans</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{staffStats.rating}</Text>
-                <Text style={styles.statLabel}>Rating</Text>
-              </View>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.totalHandovers}</Text>
+              <Text style={styles.statLabel}>Handovers</Text>
             </View>
-          )}
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.totalReturns}</Text>
+              <Text style={styles.statLabel}>Returns</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.totalScans}</Text>
+              <Text style={styles.statLabel}>Scans</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{staffStats.rating}</Text>
+              <Text style={styles.statLabel}>Rating</Text>
+            </View>
+          </View>
         </View>
 
         {/* Quick Actions */}

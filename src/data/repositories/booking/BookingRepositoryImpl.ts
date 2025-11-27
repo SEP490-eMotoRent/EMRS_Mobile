@@ -138,6 +138,7 @@ export class BookingRepositoryImpl implements BookingRepository {
     vehicleModelId: string,
     renterId: string,
     bookingStatus: string,
+    date: string,
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBooking> {
@@ -146,6 +147,7 @@ export class BookingRepositoryImpl implements BookingRepository {
         vehicleModelId,
         renterId,
         bookingStatus,
+        date,
         pageNum,
         pageSize
       );
@@ -718,8 +720,6 @@ export class BookingRepositoryImpl implements BookingRepository {
       [],
       [],
       undefined,
-      undefined,
-      dto.nextMaintenanceDue ? new Date(dto.nextMaintenanceDue) : undefined,
       dto.fileUrl,
       undefined,
       new Date()

@@ -193,6 +193,7 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     vehicleModelId: string,
     renterId: string,
     bookingStatus: string,
+    date: string,
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBookingResponse> {
@@ -204,6 +205,7 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
           vehicleModelId,
           renterId,
           bookingStatus,
+          date,
           pageNum,
           pageSize,
         },

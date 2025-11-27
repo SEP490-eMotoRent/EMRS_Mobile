@@ -8,6 +8,7 @@ export class GetBookingListUseCase {
     vehicleModelId: string,
     renterId: string,
     bookingStatus: string,
+    date: string,
     pageNum: number,
     pageSize: number
   ): Promise<PaginatedBooking> {
@@ -15,6 +16,7 @@ export class GetBookingListUseCase {
         vehicleModelId,
         renterId,
         bookingStatus,
+        date,
         pageNum,
         pageSize
       );
