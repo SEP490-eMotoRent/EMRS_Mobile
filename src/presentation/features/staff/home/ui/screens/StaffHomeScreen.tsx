@@ -158,9 +158,6 @@ export const StaffHomeScreen: React.FC = () => {
         : vehiclePlaceholder;
     const pricePerDay = item.rentalPricing?.rentalPrice || 0;
     const reviewCount = item.rentalCount || 0;
-    const ratingValue = (
-      Math.min(4.9, Math.max(3.6, (batteryLevel || 80) / 18)) || 4.5
-    ).toFixed(1);
 
     return (
       <TouchableOpacity
@@ -192,14 +189,8 @@ export const StaffHomeScreen: React.FC = () => {
             </View>
           </View>
           <View style={styles.heroBottomRow}>
-            <View style={styles.ratingBadge}>
-              <AntDesign name="star" size={12} color="#FFD666" />
-              <Text style={styles.ratingValue}>{ratingValue}</Text>
-              <Text style={styles.ratingLabel}>
-                {reviewCount > 0 ? `${reviewCount} lượt thuê` : "Mới cập nhật"}
-              </Text>
-            </View>
             <View style={styles.platePill}>
+              <AntDesign name="idcard" size={13} color="#FFD666" />
               <Text style={styles.plateText}>{item.licensePlate}</Text>
             </View>
           </View>
@@ -258,7 +249,7 @@ export const StaffHomeScreen: React.FC = () => {
           </View>
           <View style={styles.metricCard}>
             <View style={styles.metricCardContent}>
-              <AntDesign name="idcard" size={16} color="#FFB300" />
+              <AntDesign name="bar-chart" size={16} color="#FFB300" />
               <Text style={styles.metricLabel}>Lượt thuê</Text>
             </View>
             <Text style={styles.metricValue}>{reviewCount}</Text>
@@ -675,25 +666,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
   },
-  ratingBadge: {
+  platePill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  ratingValue: {
-    color: "#FFD666",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  ratingLabel: {
-    color: "#fff",
-    fontSize: 11,
-  },
-  platePill: {
     backgroundColor: "rgba(0,0,0,0.55)",
     borderRadius: 999,
     paddingHorizontal: 12,
