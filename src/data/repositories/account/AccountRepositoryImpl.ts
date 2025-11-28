@@ -97,4 +97,12 @@ export class AccountRepositoryImpl implements AccountRepository {
         const request: GoogleLoginRequest = { idToken };
         return await this.remote.googleLogin(request);
     }
+
+    async verifyOtp(email: string, otpCode: string): Promise<ApiResponse<string>> {
+        return await this.remote.verifyOtp({ email, otpCode });
+    }
+
+    async resendOtp(email: string): Promise<ApiResponse<string>> {
+        return await this.remote.resendOtp({ email });
+    }
 }

@@ -3,6 +3,8 @@ import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { GoogleLoginRequest } from "../../../../models/account/accountDTO/GoogleLoginRequest";
 import { LoginRequest } from "../../../../models/account/accountDTO/LoginRequest";
 import { LoginResponseData } from "../../../../models/account/accountDTO/LoginResponse";
+import { ResendOtpRequest } from "../../../../models/account/accountDTO/otp/ResendOtpRequest";
+import { VerifyOtpRequest } from "../../../../models/account/accountDTO/otp/VerifyOtpRequest";
 import { RegisterUserRequest } from "../../../../models/account/accountDTO/RegisterUserRequest";
 
 export interface AccountRemoteDataSource {
@@ -11,4 +13,7 @@ export interface AccountRemoteDataSource {
     getAll(): Promise<RegisterUserRequest[]>;
     login(request: LoginRequest): Promise<ApiResponse<LoginResponseData>>;
     googleLogin(request: GoogleLoginRequest): Promise<ApiResponse<LoginResponseData>>;
+
+    verifyOtp(request: VerifyOtpRequest): Promise<ApiResponse<string>>;
+    resendOtp(request: ResendOtpRequest): Promise<ApiResponse<string>>;
 }

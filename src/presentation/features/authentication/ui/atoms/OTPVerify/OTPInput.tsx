@@ -18,13 +18,15 @@ export const OTPInput = forwardRef<TextInput, OTPInputProps>(({
     onKeyPress,
     editable = true,
 }, ref) => {
+    const isFilled = value !== '';
+
     return (
         <View style={styles.container}>
             <TextInput
                 ref={ref}
                 style={[
                     styles.input,
-                    value !== '' && styles.inputFilled,
+                    isFilled && styles.inputFilled,
                     !editable && styles.inputDisabled,
                 ]}
                 value={value}
@@ -35,18 +37,22 @@ export const OTPInput = forwardRef<TextInput, OTPInputProps>(({
                 selectTextOnFocus
                 editable={editable}
                 autoFocus={index === 0}
+                caretHidden
+                contextMenuHidden
             />
         </View>
     );
 });
 
+OTPInput.displayName = 'OTPInput';
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        marginHorizontal: 6,
+        maxWidth: 52,
     },
     input: {
-        height: 60,
+        height: 56,
         borderWidth: 2,
         borderColor: colors.input.border,
         borderRadius: 12,
@@ -57,8 +63,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     inputFilled: {
-        borderColor: '#b8a4ff',
-        backgroundColor: 'rgba(184, 164, 255, 0.1)',
+        borderColor: colors.button.primary,
+        backgroundColor: 'rgba(216, 180, 254, 0.15)', // button.primary with 15% opacity
     },
     inputDisabled: {
         opacity: 0.5,
