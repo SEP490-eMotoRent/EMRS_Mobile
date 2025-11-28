@@ -8,4 +8,7 @@ export interface AccountRepository {
     getByEmail(email: string): Promise<Account | null>;
     login(username: string, password: string): Promise<ApiResponse<LoginResponseData>>;
     googleLogin(idToken: string): Promise<ApiResponse<LoginResponseData>>;
+
+    verifyOtp(email: string, otpCode: string): Promise<ApiResponse<string>>;
+    resendOtp(email: string): Promise<ApiResponse<string>>;
 }

@@ -1,14 +1,25 @@
 // src/features/auth/components/organism/otp/OTPForm.tsx
-import React, { useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { 
+    ActivityIndicator, 
+    StyleSheet, 
+    Text, 
+    TextInput, 
+    View, 
+    ViewStyle 
+} from 'react-native';
 import { Button } from '../../../../../common/components/atoms/buttons/Button';
+import { colors } from '../../../../../common/theme/colors';
 import { OTPInput } from '../../atoms/OTPVerify/OTPInput';
 import { ResendCodeButton } from '../../atoms/OTPVerify/ResendCodeButton';
+
+const OTP_LENGTH = 6;
 
 interface OTPFormProps {
     onVerify: (code: string) => void;
     onResend: () => void;
     loading?: boolean;
+    resending?: boolean;
     email: string;
 }
 
@@ -16,12 +27,16 @@ export const OTPForm: React.FC<OTPFormProps> = ({
     onVerify, 
     onResend, 
     loading = false,
+    resending = false,
     email 
 }) => {
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
     const inputRefs = useRef<(TextInput | null)[]>([]);
 
-    const handleChangeText = (text: string, index: number) => {
+    const isCodeComplete = otp.every(digit => digit !== '');
+    const isDisabled = loading || resending;
+
+    const handleChangeText = useCallback((text: string, index: number) => {
         // Only allow numbers
         if (text && !/^\d+$/.test(text)) return;
 
@@ -30,43 +45,49 @@ export const OTPForm: React.FC<OTPFormProps> = ({
         setOtp(newOtp);
 
         // Auto-focus next input when typing
-        if (text && index < 5) {
+        if (text && index < OTP_LENGTH - 1) {
             inputRefs.current[index + 1]?.focus();
         }
 
-        // Auto-verify when all 6 digits are entered
-        if (text && index === 5) {
-            const fullCode = [...newOtp.slice(0, 5), text].join('');
-            if (fullCode.length === 6) {
+        // Auto-verify when all digits are entered
+        if (text && index === OTP_LENGTH - 1) {
+            const fullCode = [...newOtp.slice(0, OTP_LENGTH - 1), text].join('');
+            if (fullCode.length === OTP_LENGTH) {
                 setTimeout(() => onVerify(fullCode), 100);
             }
         }
-    };
+    }, [otp, onVerify]);
 
-    const handleKeyPress = (e: any, index: number) => {
-        // Handle backspace - go to previous input
+    const handleKeyPress = useCallback((e: any, index: number) => {
         if (e.nativeEvent.key === 'Backspace') {
             if (!otp[index] && index > 0) {
+                // Move to previous input and clear it
                 const newOtp = [...otp];
                 newOtp[index - 1] = '';
                 setOtp(newOtp);
                 inputRefs.current[index - 1]?.focus();
             } else if (otp[index]) {
+                // Clear current input
                 const newOtp = [...otp];
                 newOtp[index] = '';
                 setOtp(newOtp);
             }
         }
-    };
+    }, [otp]);
 
-    const handleVerify = () => {
+    const handleVerify = useCallback(() => {
         const code = otp.join('');
-        if (code.length === 6) {
+        if (code.length === OTP_LENGTH) {
             onVerify(code);
         }
-    };
+    }, [otp, onVerify]);
 
-    const isCodeComplete = otp.every(digit => digit !== '');
+    const handleResend = useCallback(() => {
+        // Clear OTP inputs when resending
+        setOtp(Array(OTP_LENGTH).fill(''));
+        inputRefs.current[0]?.focus();
+        onResend();
+    }, [onResend]);
 
     const verifyButtonStyle: ViewStyle = {
         ...styles.verifyButton,
@@ -77,7 +98,7 @@ export const OTPForm: React.FC<OTPFormProps> = ({
         <View style={styles.container}>
             <Text style={styles.title}>Xác minh email</Text>
             <Text style={styles.subtitle}>
-                Chúng tôi đã gửi mã 6 chữ số đến{'\n'}
+                Chúng tôi đã gửi mã {OTP_LENGTH} chữ số đến{'\n'}
                 <Text style={styles.email}>{email}</Text>
             </Text>
 
@@ -90,7 +111,7 @@ export const OTPForm: React.FC<OTPFormProps> = ({
                         index={index}
                         onChangeText={handleChangeText}
                         onKeyPress={handleKeyPress}
-                        editable={!loading}
+                        editable={!isDisabled}
                     />
                 ))}
             </View>
@@ -107,15 +128,23 @@ export const OTPForm: React.FC<OTPFormProps> = ({
             {loading && (
                 <ActivityIndicator 
                     size="small" 
-                    color="#b8a4ff" 
+                    color={colors.button.primary} 
                     style={styles.loader} 
                 />
             )}
 
             <View style={styles.resendContainer}>
                 <Text style={styles.resendText}>Chưa nhận được mã? </Text>
-                <ResendCodeButton onPress={onResend} disabled={loading} />
+                <ResendCodeButton 
+                    onPress={handleResend} 
+                    disabled={isDisabled}
+                    loading={resending}
+                />
             </View>
+
+            <Text style={styles.expiryHint}>
+                Mã xác minh có hiệu lực trong 10 phút
+            </Text>
         </View>
     );
 };
@@ -126,21 +155,21 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
     },
     title: {
-        color: '#fff',
+        color: colors.text.primary,
         fontSize: 28,
         fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: 10,
     },
     subtitle: {
-        color: '#888',
+        color: colors.text.secondary,
         fontSize: 16,
         textAlign: 'center',
         marginBottom: 30,
         lineHeight: 24,
     },
     email: {
-        color: '#b8a4ff',
+        color: colors.text.primaryLight,
         fontWeight: '600',
     },
     otpContainer: {
@@ -148,20 +177,21 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginBottom: 30,
         paddingHorizontal: 10,
+        gap: 8,
     },
     verifyButton: {
-        backgroundColor: '#b8a4ff',
+        backgroundColor: colors.button.primary,
         borderWidth: 0,
         height: 56,
         borderRadius: 28,
         marginTop: 10,
     },
     verifyButtonDisabled: {
-        backgroundColor: '#444',
+        backgroundColor: '#333333',
         opacity: 0.5,
     },
     verifyButtonText: {
-        color: '#000',
+        color: colors.button.text,
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -172,10 +202,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 24,
     },
     resendText: {
-        color: '#888',
+        color: colors.text.secondary,
         fontSize: 14,
+    },
+    expiryHint: {
+        color: colors.text.secondary,
+        fontSize: 12,
+        textAlign: 'center',
+        marginTop: 16,
+        opacity: 0.7,
     },
 });

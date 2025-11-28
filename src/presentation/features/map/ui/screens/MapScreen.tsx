@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
         zIndex: 98,
     },
     listViewContainerRaised: {
-        bottom: 420, // ✅ Adjusted for new bottom sheet height (360 + 60)
+        bottom: 420,
     },
     loadingOverlay: {
         position: "absolute",

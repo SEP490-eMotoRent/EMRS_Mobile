@@ -63,6 +63,8 @@ export const ApiEndpoints = {
     register: "/auth/register",
     login: "/auth/login",
     googleLogin: "/auth/google-login",
+    verifyOtp: "/auth/verify-otp",
+    resendOtp: "/auth/resend-otp",
   },
 
   transaction: {

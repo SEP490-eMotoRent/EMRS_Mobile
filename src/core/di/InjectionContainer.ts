@@ -147,6 +147,10 @@ import { GetAllFeedbacksUseCase } from "../../domain/usecases/feedback/GetAllFee
 import { GetFeedbackByBookingIdUseCase } from "../../domain/usecases/feedback/GetFeedbackByBookingIdUseCase";
 import { GetFeedbackByVehicleModelIdUseCase } from "../../domain/usecases/feedback/GetFeedbackByVehicleModelIdUseCase";
 
+//OTP
+import { ResendOtpUseCase } from "../../domain/usecases/account/OTP/ResendOtpUseCase";
+import { VerifyOtpUseCase } from "../../domain/usecases/account/OTP/VerifyOtpUseCase";
+
 /**
  * Service Locator / Dependency Injection Container
  * Manages all service instances and their dependencies
@@ -171,6 +175,12 @@ class ServiceLocator {
     this.services.set("GoogleSignInUseCase", googleSignInUseCase);
     const googleLoginUseCase = new GoogleLoginUseCase(accountRepository);
     this.services.set("GoogleLoginUseCase", googleLoginUseCase);
+
+    // OTP UseCases
+    const verifyOtpUseCase = new VerifyOtpUseCase(accountRepository);
+    this.services.set("VerifyOtpUseCase", verifyOtpUseCase);
+    const resendOtpUseCase = new ResendOtpUseCase(accountRepository);
+    this.services.set("ResendOtpUseCase", resendOtpUseCase);
 
     // Local data sources
     this.services.set("AccountLocalDataSource", new AccountLocalDataSourceImpl());
@@ -695,6 +705,14 @@ class ServiceLocator {
 
   getGetAllFeedbacksUseCase(): GetAllFeedbacksUseCase {
       return this.get<GetAllFeedbacksUseCase>('GetAllFeedbacksUseCase');
+  }
+
+  getVerifyOtpUseCase(): VerifyOtpUseCase {
+    return this.get<VerifyOtpUseCase>('VerifyOtpUseCase');
+  }
+
+  getResendOtpUseCase(): ResendOtpUseCase {
+      return this.get<ResendOtpUseCase>('ResendOtpUseCase');
   }
 }
 

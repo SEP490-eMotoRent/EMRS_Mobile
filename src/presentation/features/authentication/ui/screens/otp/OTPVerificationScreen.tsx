@@ -5,11 +5,13 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
+import sl from '../../../../../../core/di/InjectionContainer';
 import { BackButton } from '../../../../../common/components/atoms/buttons/BackButton';
 import { colors } from '../../../../../common/theme/colors';
 import { AuthStackParamList } from '../../../../../shared/navigation/StackParameters/types';
@@ -23,6 +25,7 @@ export const OTPVerificationScreen: React.FC = () => {
     const navigation = useNavigation<OTPVerificationScreenNavigationProp>();
     const route = useRoute<OTPVerificationScreenRouteProp>();
     const [loading, setLoading] = useState(false);
+    const [resending, setResending] = useState(false);
 
     const { email, userId } = route.params;
 
@@ -30,17 +33,26 @@ export const OTPVerificationScreen: React.FC = () => {
         try {
             setLoading(true);
 
-            // TODO: Call OTP verification API when backend is ready
-            console.log('Verifying OTP:', { code, userId, email });
+            const verifyOtpUseCase = sl.getVerifyOtpUseCase();
+            const response = await verifyOtpUseCase.execute(email, code);
 
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            if (response.success) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Xác minh thành công',
+                    text2: 'Bạn có thể đăng nhập ngay bây giờ!',
+                });
 
-            // SUCCESS: Just navigate to Login
-            navigation.navigate('Login');
-
+                // Navigate to Login after short delay for toast visibility
+                setTimeout(() => {
+                    navigation.navigate('Login');
+                }, 500);
+            }
         } catch (error: any) {
-            Alert.alert('Xác minh thất bại', error.message || 'Mã không hợp lệ');
+            Alert.alert(
+                'Xác minh thất bại', 
+                error.message || 'Mã OTP không hợp lệ hoặc đã hết hạn'
+            );
             console.error('OTP verification error:', error);
         } finally {
             setLoading(false);
@@ -49,36 +61,48 @@ export const OTPVerificationScreen: React.FC = () => {
 
     const handleResend = async () => {
         try {
-            // TODO: Call resend OTP API when backend is ready
-            console.log('Resending OTP to:', email);
-            
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            Alert.alert('Thành công', 'Mã xác minh đã được gửi!');
+            setResending(true);
+
+            const resendOtpUseCase = sl.getResendOtpUseCase();
+            const response = await resendOtpUseCase.execute(email);
+
+            if (response.success) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Đã gửi lại mã',
+                    text2: 'Vui lòng kiểm tra email của bạn',
+                });
+            }
         } catch (error: any) {
-            Alert.alert('Lỗi', 'Gửi lại mã thất bại');
+            Alert.alert(
+                'Gửi lại thất bại', 
+                error.message || 'Không thể gửi lại mã OTP'
+            );
             console.error('Resend OTP error:', error);
+        } finally {
+            setResending(false);
         }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardAvoidingView}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}>
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}>
                     
                     <BackButton onPress={() => navigation.goBack()} />
 
-                    <BrandTitle subtitle="" />
+                    <BrandTitle subtitle="Xác minh địa chỉ email của bạn" />
 
                     <OTPForm 
                         onVerify={handleVerify}
                         onResend={handleResend}
                         loading={loading}
+                        resending={resending}
                         email={email}
                     />
                 </ScrollView>
