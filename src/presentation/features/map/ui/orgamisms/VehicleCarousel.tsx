@@ -102,15 +102,15 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingLeft: (SCREEN_WIDTH - CARD_WIDTH) / 2,
         paddingRight: (SCREEN_WIDTH - CARD_WIDTH) / 2,
-        paddingTop: 8, // ✅ Small top padding
-        paddingBottom: 4, // ✅ Minimal bottom padding
+        paddingTop: 12, // ✅ Increased from 8 (more top padding)
+        paddingBottom: 8, // ✅ Increased from 4 (more bottom padding)
     },
     paginationContainer: {
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        paddingTop: 4, // ✅ Reduced (was 6)
-        paddingBottom: 8, // ✅ Standard bottom spacing
+        paddingTop: 6, // ✅ Increased from 4
+        paddingBottom: 12, // ✅ Increased from 8 (more bottom space)
     },
     paginationDot: {
         width: 6,

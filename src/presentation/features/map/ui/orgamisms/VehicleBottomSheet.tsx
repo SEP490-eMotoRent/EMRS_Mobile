@@ -1,18 +1,19 @@
-import React, { useEffect, useRef } from "react";
-import { 
-    StyleSheet, 
-    Text, 
-    View, 
-    TouchableOpacity, 
-    Animated, 
-    Dimensions 
-} from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
-import { VehicleCarousel } from "./VehicleCarousel";
+import React, { useEffect, useMemo, useRef } from "react";
+import {
+    Animated,
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
+import { calculateDistance, formatDistance } from "../../utils/distanceUtils";
 import { ElectricVehicle } from "../molecules/VehicleCard";
+import { VehicleCarousel } from "./VehicleCarousel";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const BOTTOM_SHEET_HEIGHT = 300;
+const BOTTOM_SHEET_HEIGHT = 360; // ✅ Increased from 300 to 360
 
 interface VehicleBottomSheetProps {
     visible: boolean;
@@ -22,6 +23,16 @@ interface VehicleBottomSheetProps {
     onBookVehicle: (vehicleId: string) => void;
     dateRange?: string;
     location?: string;
+    // ✅ NEW: Branch location for distance calculation
+    branchLocation?: {
+        latitude: number;
+        longitude: number;
+    };
+    // ✅ NEW: Searched location (user's search/current location)
+    searchedLocation?: {
+        latitude: number;
+        longitude: number;
+    };
 }
 
 export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
@@ -31,10 +42,30 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     onClose,
     onBookVehicle,
     dateRange,
-    location
+    location,
+    branchLocation,
+    searchedLocation,
 }) => {
     const translateY = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current;
     const animationInProgress = useRef(false);
+
+    // ✅ Calculate distance ONCE when branch is selected
+    const distanceKm = useMemo(() => {
+        if (!branchLocation || !searchedLocation) return null;
+        
+        return calculateDistance(
+            searchedLocation.latitude,
+            searchedLocation.longitude,
+            branchLocation.latitude,
+            branchLocation.longitude
+        );
+    }, [branchLocation, searchedLocation]);
+
+    // ✅ Format distance for display
+    const formattedDistance = useMemo(() => {
+        if (distanceKm === null) return null;
+        return formatDistance(distanceKm);
+    }, [distanceKm]);
 
     useEffect(() => {
         if (animationInProgress.current) return;
@@ -118,7 +149,16 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                         <View style={styles.headerContent}>
                             <View style={styles.titleSection}>
                                 <Text style={styles.icon}>🏍️</Text>
-                                <Text style={styles.title}>{getTitle()}</Text>
+                                <View style={styles.titleContainer}>
+                                    <Text style={styles.title}>{getTitle()}</Text>
+                                    {/* ✅ NEW: Distance indicator */}
+                                    {formattedDistance && (
+                                        <View style={styles.distanceBadge}>
+                                            <Text style={styles.distanceIcon}>📍</Text>
+                                            <Text style={styles.distanceText}>{formattedDistance}</Text>
+                                        </View>
+                                    )}
+                                </View>
                             </View>
                             
                             <TouchableOpacity 
@@ -177,7 +217,7 @@ const styles = StyleSheet.create({
     header: {
         paddingTop: 6,
         paddingHorizontal: 16,
-        paddingBottom: 8,
+        paddingBottom: 6, // ✅ Reduced from 8 to give carousel more space
     },
     handleBar: {
         width: 36,
@@ -196,14 +236,40 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 10,
+        flex: 1,
     },
     icon: {
         fontSize: 20,
+    },
+    titleContainer: {
+        flex: 1,
     },
     title: {
         fontSize: 16,
         fontWeight: "700",
         color: "#fff",
+        marginBottom: 4,
+    },
+    // ✅ NEW: Distance badge styles
+    distanceBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(124, 77, 255, 0.15)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 8,
+        alignSelf: "flex-start",
+        borderWidth: 1,
+        borderColor: "rgba(124, 77, 255, 0.3)",
+    },
+    distanceIcon: {
+        fontSize: 10,
+        marginRight: 4,
+    },
+    distanceText: {
+        fontSize: 11,
+        fontWeight: "600",
+        color: "#d4c5f9",
     },
     closeButton: {
         width: 32,
@@ -222,7 +288,7 @@ const styles = StyleSheet.create({
     },
     carouselContainer: {
         flex: 1,
-        paddingBottom: 8,
+        paddingBottom: 4, // ✅ Reduced from 8 to maximize carousel height
     },
     emptyState: {
         flex: 1,

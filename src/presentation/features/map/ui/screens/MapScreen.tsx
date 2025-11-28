@@ -70,6 +70,12 @@ export const MapScreen: React.FC = () => {
         );
     }, [branches]);
 
+    // ✅ Get selected branch for distance calculation
+    const selectedBranch = useMemo(() => {
+        if (!selectedBranchId) return null;
+        return validBranches.find(b => b.id === selectedBranchId) || null;
+    }, [selectedBranchId, validBranches]);
+
     const handleListViewPress = useCallback(() => {
         navigation.navigate('ListView', { location, dateRange, address });
     }, [navigation, location, dateRange, address]);
@@ -189,12 +195,22 @@ export const MapScreen: React.FC = () => {
                 currentFilters={filters}
             />
 
+            {/* ✅ UPDATED: Pass branch and searched locations */}
             <VehicleBottomSheet
                 visible={bottomSheetVisible}
                 vehicles={selectedVehicles}
                 markerType="price"
                 onClose={handleBottomSheetClose}
                 onBookVehicle={handleBookVehicle}
+                branchLocation={
+                    selectedBranch 
+                        ? {
+                            latitude: selectedBranch.latitude,
+                            longitude: selectedBranch.longitude,
+                          }
+                        : undefined
+                }
+                searchedLocation={searchedLocation || undefined}
             />
 
             {vehiclesLoading && bottomSheetVisible && (
@@ -261,7 +277,7 @@ const styles = StyleSheet.create({
         zIndex: 98,
     },
     listViewContainerRaised: {
-        bottom: 360,
+        bottom: 420, // ✅ Adjusted for new bottom sheet height (360 + 60)
     },
     loadingOverlay: {
         position: "absolute",
