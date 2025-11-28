@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { VerificationItem } from '../molecules/VerificationItem';
-import { Verification } from '../temp'; // ← This is the strict one
+import { Verification } from '../temp';
+import { Icon } from '../atoms/Icons/Icons';
 
-// Incoming from helper: includes 'expired'
 type IncomingVerification = {
     title: string;
     status: 'verified' | 'valid' | 'needed' | 'expired';
@@ -19,14 +19,20 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
     verifications, 
     onVerify
 }) => {
+    // Filter out phone verification - we only check "not null" so it's pointless
+    const filteredVerifications = verifications.filter(
+        v => !v.title.toLowerCase().includes('phone') && 
+             !v.title.toLowerCase().includes('điện thoại')
+    );
+
     // Convert 'expired' → 'needed' to satisfy VerificationItem
-    const safeVerifications: Verification[] = verifications.map(v => ({
+    const safeVerifications: Verification[] = filteredVerifications.map(v => ({
         label: v.title,
-        status: v.status === 'expired' ? 'needed' : v.status, // ← CRITICAL
-        validUntil: v.status === 'valid' ? '31 Thg 12, 2025' : undefined, // optional
+        status: v.status === 'expired' ? 'needed' : v.status,
+        validUntil: v.status === 'valid' ? '31 Thg 12, 2025' : undefined,
     }));
 
-    const allVerified = verifications.every(
+    const allVerified = filteredVerifications.every(
         v => v.status === 'verified' || v.status === 'valid'
     );
 
@@ -42,7 +48,7 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
 
             {!allVerified && (
                 <View style={styles.verificationWarning}>
-                    <Text style={styles.warningIcon}>⚠️</Text>
+                    <Icon name="warning" size={18} color="#FBBF24" />
                     <Text style={styles.warningText}>
                         Chưa xác thực hoàn toàn. Vui lòng hoàn tất xác thực để sử dụng đầy đủ tính năng.
                     </Text>
@@ -73,15 +79,12 @@ const styles = StyleSheet.create({
     },
     verificationWarning: {
         flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#7f1d1d',
         padding: 12,
         borderRadius: 8,
         marginTop: 12,
         gap: 8,
-    },
-    warningIcon: {
-        color: '#fca5a5',
-        fontSize: 16,
     },
     warningText: {
         color: '#fca5a5',

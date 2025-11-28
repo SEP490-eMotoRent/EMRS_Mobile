@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
+    Dimensions,
+    Image,
+    Modal,
     SafeAreaView,
     ScrollView,
     StyleSheet,
-    View,
-    Modal,
-    Image,
     TouchableOpacity,
     TouchableWithoutFeedback,
-    Dimensions,
+    View,
 } from 'react-native';
 import { DocumentResponse } from '../../../../../data/models/account/renter/RenterResponse';
 import { Button } from '../atoms/Button';
@@ -33,7 +33,6 @@ interface EditProfileTemplateProps {
     profileImageUri?: string | string[];
     fullName: string;
     email: string;
-    countryCode: string;
     phoneNumber: string;
     dateOfBirth: string;
     address: string;
@@ -68,7 +67,6 @@ interface EditProfileTemplateProps {
     onChangePhoto: () => void;
     onFullNameChange: (text: string) => void;
     onEmailChange: (text: string) => void;
-    onCountryCodePress: () => void;
     onPhoneNumberChange: (text: string) => void;
     onDatePress: () => void;
     onAddressChange: (text: string) => void;
@@ -135,13 +133,11 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                     <PersonalInfoSection
                         fullName={props.fullName}
                         email={props.email}
-                        countryCode={props.countryCode}
                         phoneNumber={props.phoneNumber}
                         dateOfBirth={props.dateOfBirth}
                         address={props.address}
                         onFullNameChange={props.onFullNameChange}
                         onEmailChange={props.onEmailChange}
-                        onCountryCodePress={props.onCountryCodePress}
                         onPhoneNumberChange={props.onPhoneNumberChange}
                         onDatePress={props.onDatePress}
                         onAddressChange={props.onAddressChange}
