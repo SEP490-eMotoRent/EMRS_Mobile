@@ -308,6 +308,7 @@ export type StaffStackParamList = {
   ScanFace: undefined;
   FaceScanCamera: undefined;
   ScanResult: { renter: ScanFaceResponse };
+  ScanCitizenResult: { renter: ScanFaceResponse };
   CustomerRentals: { renterId: string };
   SelectVehicle: {
     bookingId: string;

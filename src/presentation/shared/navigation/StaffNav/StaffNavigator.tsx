@@ -37,6 +37,7 @@ import {
 import {
   ScanFaceScreen,
   ScanResultScreen,
+  ScanCitizenResultScreen,
 } from "../../../features/staff/scan/ui/screens";
 import TrackingGPSScreen from "../../../features/staff/tracking/ui/screens/TrackingGPSScreen";
 import { BookingReturnListScreen } from "../../../features/staff/return/ui/screens/BookingReturnListScreen";
@@ -87,6 +88,10 @@ export const StaffNavigator: React.FC = () => {
           )}
         </Stack.Screen>
         <Stack.Screen name="ScanResult" component={ScanResultScreen} />
+        <Stack.Screen
+          name="ScanCitizenResult"
+          component={ScanCitizenResultScreen}
+        />
         <Stack.Screen
           name="CustomerRentals"
           component={CustomerRentalsScreen}

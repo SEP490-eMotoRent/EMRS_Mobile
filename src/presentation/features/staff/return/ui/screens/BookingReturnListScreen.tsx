@@ -85,6 +85,7 @@ export const BookingReturnListScreen: React.FC = () => {
         filterVehicleModelId || (undefined as any),
         renterId,
         filterStatus || (undefined as any),
+        undefined,
         page,
         pageSize
       );

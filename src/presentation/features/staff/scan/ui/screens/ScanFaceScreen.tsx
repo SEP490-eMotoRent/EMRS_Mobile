@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,14 +8,19 @@ import {
   Image,
   ActivityIndicator,
   Modal,
+  Platform,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Camera, CameraView } from "expo-camera";
+import Toast from "react-native-toast-message";
+import { GetByCitizenIdUseCase } from "../../../../../../domain/usecases/account/GetByCitizenIdUseCase";
+import sl from "../../../../../../core/di/InjectionContainer";
 
 type ScanFaceScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -25,6 +30,10 @@ type ScanFaceScreenNavigationProp = StackNavigationProp<
 export const ScanFaceScreen: React.FC = () => {
   const navigation = useNavigation<ScanFaceScreenNavigationProp>();
   const [loading, setLoading] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const [flashMode, setFlashMode] = useState("off");
   const [loaded, setLoaded] = useState(false);
 
   // const handleStartFacialScan = async () => {
@@ -68,22 +77,21 @@ export const ScanFaceScreen: React.FC = () => {
   //     setLoading(false);
   //   }
   // };
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
+  }, []);
+
   const handleStartFacialScan = () => {
     navigation.navigate("FaceScanCamera");
-  };
-
-  const handleScanID = () => {
-    console.log("Scan ID Document");
-  };
-
-  const handleEnterOTP = () => {
-    console.log("Enter OTP sent to customer");
   };
 
   const handleCallManager = () => {
     navigation.navigate("ScanResult", {
       renter: {
-        id: "019a9afd-4826-7221-9342-cfdb46a9153d",
+        id: "019ac77a-4ff9-75be-b526-b1ea3b877d8f",
         email: "test@test.com",
         phone: "1234567890",
         address: "1234567890",
@@ -107,14 +115,54 @@ export const ScanFaceScreen: React.FC = () => {
       subtitle: "CMND/CCCD rõ nét, không bị che khuất",
       icon: "idcard",
       accent: "#7C5DFA",
-      action: handleScanID,
-    }
+      action: () => setShowScanner(true),
+    },
   ] as const;
 
   const guidanceItems = [
     { id: "light", icon: "bulb", text: "Ánh sáng đều, không ngược sáng" },
     { id: "mask", icon: "close-circle", text: "Tháo khẩu trang và kính râm" },
   ];
+
+  const handleBarCodeScanned = async ({ type, data }) => {
+    try {
+      setScanned(true);
+      // Parse QR code data
+      const citizenId = parseQRCodeData(data);
+      setShowScanner(false);
+
+      const getByCitizenIdUseCase = new GetByCitizenIdUseCase(sl.get("RenterRepository"));
+      const response = await getByCitizenIdUseCase.execute(citizenId);
+      if (response.success) {
+        navigation.navigate("ScanCitizenResult", { renter: response.data });
+      }
+      // navigation.navigate("ScanResult", { idCardData });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Có lỗi xảy ra khi xử lý mã QR",
+        text2: error.message,
+      });
+      setScanned(false);
+    }
+  };
+
+  const parseQRCodeData = (qrData) => {
+    try {
+      // Example QR format: số CCCD|Họ tên|Ngày sinh|Giới tính|Địa chỉ
+      const [idCard, idNumberOld, fullName, yob, sex, address] =
+        qrData.split("|");
+
+      return idCard;
+    } catch (error) {
+      console.error("Error parsing QR data:", error);
+      throw new Error("Invalid QR code format");
+    }
+  };
+
+  const toggleFlash = () => {
+    setFlashMode(flashMode === "torch" ? "off" : "torch");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -172,9 +220,7 @@ export const ScanFaceScreen: React.FC = () => {
           <View style={styles.cardHeaderRow}>
             <View>
               <View style={styles.cardTitleContainer}>
-                <Text style={styles.cardTitle}>
-                  Phương án thủ công
-                </Text>
+                <Text style={styles.cardTitle}>Phương án thủ công</Text>
                 <AntDesign name="tool" size={20} color="#FFAA5B" />
               </View>
               <Text style={styles.cardSubtitle}>
@@ -207,6 +253,11 @@ export const ScanFaceScreen: React.FC = () => {
               <AntDesign name="right" size={16} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
+          <PrimaryButton
+            title="Quét mã QR CCCD"
+            onPress={handleCallManager}
+            style={styles.scanButton}
+          />
         </View>
       </ScrollView>
 
@@ -217,6 +268,80 @@ export const ScanFaceScreen: React.FC = () => {
             <Text style={styles.modalTitle}>Đang quét khuôn mặt</Text>
           </View>
         </View>
+      </Modal>
+
+      {/* QR Scanner Modal */}
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        onRequestClose={() => setShowScanner(false)}
+      >
+        <SafeAreaView style={styles.scannerContainer}>
+          <View style={styles.scannerHeader}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => setShowScanner(false)}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.scannerTitle}>Quét mã QR CCCD</Text>
+            <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
+              <MaterialIcons
+                name={flashMode === "torch" ? "flash-on" : "flash-off"}
+                size={24}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {hasPermission === null ? (
+            <Text style={styles.guideText}>
+              Đang yêu cầu quyền truy cập camera...
+            </Text>
+          ) : hasPermission === false ? (
+            <View style={styles.permissionContainer}>
+              <Text style={styles.guideText}>
+                Không có quyền truy cập camera
+              </Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => setShowScanner(false)}
+              >
+                <Text style={styles.buttonText}>Quay lại</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.scannerContainer}>
+              <CameraView
+                style={StyleSheet.absoluteFillObject}
+                enableTorch={flashMode === "torch"}
+                barcodeScannerSettings={{
+                  barcodeTypes: ["qr"],
+                }}
+                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+              />
+              <View style={styles.overlay}>
+                <View style={styles.scanArea} />
+              </View>
+
+              <View style={styles.guideContainer}>
+                <Text style={styles.guideText}>
+                  Đặt mã QR trên CCCD vào khung hình
+                </Text>
+              </View>
+
+              {scanned && (
+                <TouchableOpacity
+                  style={styles.rescanButton}
+                  onPress={() => setScanned(false)}
+                >
+                  <MaterialIcons name="refresh" size={24} color="#FFFFFF" />
+                  <Text style={styles.rescanText}>Quét lại</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -381,5 +506,103 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: colors.text.primary,
+  },
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: "#000000",
+  },
+  scannerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: Platform.OS === "ios" ? 20 : 40,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scannerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  flashButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scanArea: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: "#FF6B6B",
+    backgroundColor: "transparent",
+  },
+  guideContainer: {
+    position: "absolute",
+    bottom: 120,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  guideText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    textAlign: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  rescanButton: {
+    position: "absolute",
+    bottom: 40,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FF6B6B",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  rescanText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  button: {
+    backgroundColor: "#FF6B6B",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

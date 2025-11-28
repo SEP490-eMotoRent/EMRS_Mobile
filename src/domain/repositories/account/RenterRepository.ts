@@ -5,6 +5,8 @@ import { ScanFaceResponse } from "../../../data/models/account/renter/ScanFaceRe
 import { ApiResponse } from "../../../core/network/APIResponse";
 import { UpdateRenterRequest } from "../../../data/models/account/renter/update/UpdateRenterRequest";
 import { UpdateRenterResponse } from "../../../data/models/account/renter/update/RenterAccountUpdateResponse";
+import { GetRenterByCitizenIdRequest } from "../../../data/models/account/renter/GetRenterByCitizenIdRequest";
+import { GetRenterByCitizenIdResponse } from "../../../data/models/account/renter/GetRenterByCitizenIdResponse";
 
 export interface RenterRepository {
     create(renter: Renter): Promise<void>;
@@ -13,4 +15,5 @@ export interface RenterRepository {
     getCurrentRenterRaw(): Promise<RenterResponse>; // ADD THIS
     update(request: UpdateRenterRequest): Promise<UpdateRenterResponse>;
     scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>>;
+    getByCitizenId(citizenId: string): Promise<ApiResponse<GetRenterByCitizenIdResponse>>;
 }
