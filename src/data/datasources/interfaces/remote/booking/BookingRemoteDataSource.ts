@@ -5,6 +5,8 @@ import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBo
 import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
 import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingResponse } from "../../../../models/booking/BookingResponse";
+import { AssignVehicleResponse } from "../../../../models/booking/AssignVehicleResponse";
+import { ApiResponse } from "../../../../../core/network/APIResponse";
 
 /**
  * Remote data source interface for booking operations
@@ -55,7 +57,7 @@ export interface BookingRemoteDataSource {
   /**
    * Assign vehicle to booking
    */
-  assignVehicle(vehicleId: string, bookingId: string): Promise<void>;
+  assignVehicle(vehicleId: string, bookingId: string): Promise<ApiResponse<AssignVehicleResponse>>;
 
   /**
    * Cancel a booking

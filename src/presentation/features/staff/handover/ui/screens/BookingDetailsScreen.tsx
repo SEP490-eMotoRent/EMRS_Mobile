@@ -187,7 +187,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const hasRentalReceipt = rentalReceipts?.[0]?.id ? true : false;
   const contractInfo = useMemo(
     () => ({
-      number: contract?.contractNumber || "(chưa cấp)",
+      id: contract?.id || "",
       status: contract?.contractStatus || "-",
       url: contract?.contractPdfUrl || "",
     }),
@@ -496,6 +496,7 @@ export const BookingDetailsScreen: React.FC = () => {
         )}
 
         {/* Return Summary */}
+        {booking?.bookingStatus === "Completed" && (
         <View style={styles.section}>
           <SectionHeader title="Tóm tắt trả xe" icon="profile" />
           <View style={styles.summaryCard}>
@@ -601,6 +602,7 @@ export const BookingDetailsScreen: React.FC = () => {
             )}
           </View>
         </View>
+        )}
 
         {hasRentalReceipt && (
           <View style={styles.section}>
@@ -646,8 +648,8 @@ export const BookingDetailsScreen: React.FC = () => {
           <View style={styles.section}>
             <SectionHeader title="Hợp đồng thuê" icon="file-text" />
             <InfoCard style={styles.contractCard}>
-              <InfoItem label="Số hợp đồng:" value={contractInfo.number} />
-              <InfoItem label="Trạng thái:" value={contractInfo.status} />
+              <InfoItem label="Mã hợp đồng:" value={`#${contractInfo.id.slice(-8).toUpperCase()}`} />
+              <InfoItem label="Trạng thái:" value={contractInfo.status === "Signed" ? "Đã ký" : "Chưa ký"} />
               {/* Sign contract CTA if eligible */}
               {canSignContract && (
                 <TouchableOpacity
@@ -695,16 +697,6 @@ export const BookingDetailsScreen: React.FC = () => {
             </InfoCard>
           </View>
         )}
-
-        {/* Total Cost */}
-        <View style={styles.section}>
-          <SectionHeader title="Tổng chi phí" icon="wallet" />
-          <InfoCard>
-            <InfoItem label="Thuê xe VinFast Evo200:" value="450,000 VND" />
-            <InfoItem label="Bảo hiểm Premium:" value="50,000 VND" />
-            <InfoItem label="Phí dịch vụ:" value="25,000 VND" />
-          </InfoCard>
-        </View>
 
         {booking?.bookingStatus === "Booked" &&
           !hasRentalReceipt &&

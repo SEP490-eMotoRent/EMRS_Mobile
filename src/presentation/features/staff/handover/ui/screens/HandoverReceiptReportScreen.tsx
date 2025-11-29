@@ -46,7 +46,7 @@ const formatDateTime = (value?: Date | string | null) => {
   const dateValue = typeof value === "string" ? new Date(value) : value;
 
   if (dateValue instanceof Date && !Number.isNaN(dateValue.getTime())) {
-    return dateValue.toLocaleString("vi-VN");
+    return dateValue.toLocaleString("en-GB");
   }
 
   return "-";

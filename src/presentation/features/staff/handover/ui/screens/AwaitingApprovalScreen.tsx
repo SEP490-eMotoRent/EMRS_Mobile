@@ -26,129 +26,219 @@ export const AwaitingApprovalScreen: React.FC = () => {
   const status = (route.params as any)?.status as
     | ("pending" | "approved" | "denied")
     | undefined;
+
+  const handleBackToHome = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Rental" }],
+    });
+  };
+
+  const getStatusConfig = () => {
+    if (!status || status === "pending") {
+      return {
+        icon: "clock-circle",
+        iconColor: "#FFD700",
+        bgColor: "rgba(255,211,102,0.15)",
+        title: "Đang chờ phê duyệt",
+        subtitle: "Báo cáo đã được gửi tới khách hàng",
+        description: "Đang chờ khách hàng xác nhận...",
+        cardStyle: styles.cardPending,
+      };
+    }
+    if (status === "approved") {
+      return {
+        icon: "check-circle",
+        iconColor: "#67D16C",
+        bgColor: "rgba(103,209,108,0.15)",
+        title: "Đã được phê duyệt",
+        subtitle: "Khách hàng đã xác nhận báo cáo",
+        description: "Chữ ký số đã được ghi nhận\nThời gian: 10:52 AM",
+        cardStyle: styles.cardApproved,
+      };
+    }
+    return {
+      icon: "close-circle",
+      iconColor: "#FF6B6B",
+      bgColor: "rgba(255,107,107,0.15)",
+      title: "Đã bị từ chối",
+      subtitle: "Khách hàng không đồng ý với báo cáo",
+      description: "Cần kiểm tra lại xe\nThời gian: 10:52 AM",
+      cardStyle: styles.cardDenied,
+    };
+  };
+
+  const statusConfig = getStatusConfig();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <ScreenHeader
-          title={
-            <Text style={styles.title}>Awaiting Customer{"\n"}Approval</Text>
-          }
-          subtitle={"John Nguyen"}
+          title="Chờ phê duyệt"
+          subtitle="John Nguyen"
           onBack={() => navigation.goBack()}
         />
 
         {/* Status card */}
-        {(!status || status === "pending") && (
-          <View style={[styles.primaryCard, styles.cardNeutral]}>
-            <View style={[styles.clockCircle, styles.neutralCircle]}>
-              <AntDesign
-                name="clock-circle"
-                size={22}
-                color={colors.text.primary}
-              />
-            </View>
-            <Text style={styles.primaryCardTitle}>Report sent to customer</Text>
-            <Text style={styles.primaryCardSub}>Waiting for approval...</Text>
+        <View style={[styles.statusCard, statusConfig.cardStyle]}>
+          <View style={[styles.statusIconContainer, { backgroundColor: statusConfig.bgColor }]}>
+            <AntDesign
+              name={statusConfig.icon as any}
+              size={48}
+              color={statusConfig.iconColor}
+            />
           </View>
-        )}
-        {status === "approved" && (
-          <View style={[styles.primaryCard, styles.cardApproved]}>
-            <View style={[styles.clockCircle, styles.approvedCircle]}>
-              <AntDesign name="check-circle" size={22} color="#0F0" />
+          <Text style={styles.statusTitle}>{statusConfig.title}</Text>
+          <Text style={styles.statusSubtitle}>{statusConfig.subtitle}</Text>
+          <Text style={styles.statusDescription}>{statusConfig.description}</Text>
+          
+          {(!status || status === "pending") && (
+            <View style={styles.pendingIndicator}>
+              <View style={styles.pendingDot} />
+              <Text style={styles.pendingText}>Đang xử lý...</Text>
             </View>
-            <Text style={styles.primaryCardTitle}>
-              Customer Approved Report
-            </Text>
-            <Text style={styles.primaryCardSub}>
-              Digital signature recorded{"\n"}Approval time: 10:52 AM
-            </Text>
-          </View>
-        )}
-        {status === "denied" && (
-          <View style={[styles.primaryCard, styles.cardDenied]}>
-            <View style={[styles.clockCircle, styles.deniedCircle]}>
-              <AntDesign name="close-circle" size={22} color="#FF5252" />
-            </View>
-            <Text style={styles.primaryCardTitle}>Customer Denied Report</Text>
-            <Text style={styles.primaryCardSub}>
-              Digital signature recorded{"\n"}Approval time: 10:52 AM
-            </Text>
-          </View>
-        )}
+          )}
+        </View>
 
         {/* Report Summary */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeader}>Report Summary</Text>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryBox}>
-              <Text style={styles.summaryLabel}>Vehicle</Text>
-              <Text style={styles.summaryValue}>
-                VinFast Evo200{"\n"}59X1-12345
-              </Text>
-            </View>
-            <View style={styles.summaryBox}>
-              <Text style={styles.summaryLabel}>Start time</Text>
-              <Text style={styles.summaryValue}>10:30 AM</Text>
+        <View style={styles.summaryCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="file-text" size={18} color="#7CFFCB" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>Tóm tắt báo cáo</Text>
             </View>
           </View>
-          <View style={styles.summaryRow}>
+          <View style={styles.summaryGrid}>
             <View style={styles.summaryBox}>
-              <Text style={styles.summaryLabel}>Checklist</Text>
-              <Text style={styles.summaryValue}>Exceelent</Text>
+              <View style={styles.summaryBoxIcon}>
+                <AntDesign name="car" size={16} color="#C9B6FF" />
+              </View>
+              <Text style={styles.summaryLabel}>Xe</Text>
+              <Text style={styles.summaryValue}>
+                VinFast Evo200
+              </Text>
+              <Text style={styles.summarySubvalue}>59X1-12345</Text>
             </View>
             <View style={styles.summaryBox}>
-              <Text style={styles.summaryLabel}>Photos</Text>
-              <Text style={styles.summaryValue}>4 angles captured</Text>
+              <View style={styles.summaryBoxIcon}>
+                <AntDesign name="clock-circle" size={16} color="#FFD666" />
+              </View>
+              <Text style={styles.summaryLabel}>Thời gian bắt đầu</Text>
+              <Text style={styles.summaryValue}>10:30 AM</Text>
+            </View>
+            <View style={styles.summaryBox}>
+              <View style={styles.summaryBoxIcon}>
+                <AntDesign name="check-square" size={16} color="#67D16C" />
+              </View>
+              <Text style={styles.summaryLabel}>Danh sách kiểm tra</Text>
+              <Text style={styles.summaryValue}>Tuyệt vời</Text>
+            </View>
+            <View style={styles.summaryBox}>
+              <View style={styles.summaryBoxIcon}>
+                <AntDesign name="camera" size={16} color="#7DB3FF" />
+              </View>
+              <Text style={styles.summaryLabel}>Ảnh</Text>
+              <Text style={styles.summaryValue}>4 góc đã chụp</Text>
             </View>
           </View>
         </View>
 
         {/* Live Updates */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeader}>Live Updates</Text>
-          {[
-            "Vehicle Selected",
-            "Inspection",
-            "Report generated",
-            "Approval pending...",
-          ].map((label, idx) => (
-            <View key={idx} style={styles.liveRow}>
-              <Text style={styles.liveText}>{label}</Text>
-              {idx < 3 ? (
-                <AntDesign name="check-circle" size={18} color="#67D16C" />
-              ) : (
-                <View />
-              )}
+        <View style={styles.updatesCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="sync" size={18} color="#FFD666" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>Cập nhật trạng thái</Text>
             </View>
-          ))}
+          </View>
+          <View style={styles.timelineContainer}>
+            {[
+              { label: "Đã chọn xe", completed: true },
+              { label: "Đã kiểm tra", completed: true },
+              { label: "Đã tạo báo cáo", completed: true },
+              { label: "Đang chờ phê duyệt...", completed: false },
+            ].map((item, idx) => (
+              <View key={idx} style={styles.timelineItem}>
+                <View style={styles.timelineLine}>
+                  {idx > 0 && <View style={[styles.timelineConnector, item.completed && styles.timelineConnectorActive]} />}
+                  <View style={[styles.timelineDot, item.completed ? styles.timelineDotCompleted : styles.timelineDotPending]}>
+                    {item.completed ? (
+                      <AntDesign name="check" size={12} color="#FFFFFF" />
+                    ) : (
+                      <View style={styles.timelineDotInner} />
+                    )}
+                  </View>
+                  {idx < 3 && <View style={[styles.timelineConnector, item.completed && styles.timelineConnectorActive]} />}
+                </View>
+                <View style={styles.timelineContent}>
+                  <Text style={[styles.timelineText, item.completed && styles.timelineTextCompleted]}>
+                    {item.label}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
 
-        {/* Refresh and actions */}
-        <TouchableOpacity style={styles.refreshBtn}>
-          <Text style={styles.refreshText}>Refresh Status</Text>
-        </TouchableOpacity>
-        {(!status || status === "pending") && (
+        {/* Actions */}
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity style={styles.refreshBtn}>
+            <View style={styles.refreshBtnContent}>
+              <AntDesign name="reload" size={16} color="#7CFFCB" />
+              <Text style={styles.refreshText}>Làm mới trạng thái</Text>
+            </View>
+          </TouchableOpacity>
+
+          {(!status || status === "pending") && (
+            <TouchableOpacity
+              style={[styles.stateBtn, styles.pendingBtn]}
+              disabled
+            >
+              <View style={styles.stateBtnContent}>
+                <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
+                <Text style={styles.stateBtnTextPending}>Đang chờ...</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          
+          {status === "approved" && (
+            <TouchableOpacity
+              style={[styles.stateBtn, styles.approvedBtn]}
+              onPress={() => navigation.navigate("HandoverDocument")}
+            >
+              <View style={styles.stateBtnContent}>
+                <AntDesign name="check-circle" size={18} color="#0B0B0F" />
+                <Text style={styles.stateBtnText}>Hoàn tất bàn giao</Text>
+                <AntDesign name="right" size={14} color="#0B0B0F" />
+              </View>
+            </TouchableOpacity>
+          )}
+          
+          {status === "denied" && (
+            <TouchableOpacity style={[styles.stateBtn, styles.deniedBtn]}>
+              <View style={styles.stateBtnContent}>
+                <AntDesign name="reload" size={18} color="#FFFFFF" />
+                <Text style={styles.stateBtnTextDenied}>Kiểm tra lại</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {/* Back to Home Button */}
           <TouchableOpacity
-            style={[styles.stateBtn, styles.neutralBtn]}
-            disabled
+            style={styles.homeBtn}
+            onPress={handleBackToHome}
           >
-            <Text style={styles.stateBtnText}>Waiting</Text>
+            <View style={styles.homeBtnContent}>
+              <AntDesign name="home" size={18} color={colors.text.primary} />
+              <Text style={styles.homeBtnText}>Về trang chủ</Text>
+            </View>
           </TouchableOpacity>
-        )}
-        {status === "approved" && (
-          <TouchableOpacity
-            style={[styles.stateBtn, styles.approvedBtn]}
-            onPress={() => navigation.navigate("HandoverDocument")}
-          >
-            <Text style={styles.stateBtnText}>Approved: Complete Handover</Text>
-          </TouchableOpacity>
-        )}
-        {status === "denied" && (
-          <TouchableOpacity style={[styles.stateBtn, styles.deniedBtn]}>
-            <Text style={styles.stateBtnText}>Denied! Inspection Again</Text>
-          </TouchableOpacity>
-        )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -159,117 +249,307 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: { paddingBottom: 40 },
-  titleRow: {
+  scrollContent: { 
+    paddingBottom: 40,
+  },
+  statusCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    marginHorizontal: 16,
+    padding: 24,
+    marginBottom: 16,
+    marginTop: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardPending: {
+    borderColor: "rgba(255,211,102,0.3)",
+  },
+  cardApproved: {
+    borderColor: "rgba(103,209,108,0.3)",
+    backgroundColor: "rgba(11,47,26,0.3)",
+  },
+  cardDenied: {
+    borderColor: "rgba(255,107,107,0.3)",
+    backgroundColor: "rgba(58,30,30,0.3)",
+  },
+  statusIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  statusTitle: {
+    color: colors.text.primary,
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  statusSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  statusDescription: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  pendingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 16,
+    backgroundColor: "rgba(255,211,102,0.15)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  pendingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FFD700",
+  },
+  pendingText: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  summaryCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    marginHorizontal: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+  },
+  cardHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  title: { color: colors.text.primary, fontSize: 18, fontWeight: "700" },
-  subtext: { color: colors.text.secondary, fontSize: 12, marginTop: 6 },
-  titleRight: { flexDirection: "row", alignItems: "center" },
-  iconBtn: { padding: 8 },
-  staffBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#C9B6FF",
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cardHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(124,255,203,0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
-  staffText: { color: "#000", fontWeight: "700", fontSize: 12 },
-
-  primaryCard: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    padding: 16,
-    marginBottom: 12,
-    alignItems: "center",
+  cardHeaderTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
   },
-  cardNeutral: {},
-  cardApproved: { backgroundColor: "#0B2F1A" },
-  cardDenied: { backgroundColor: "#3A1E1E" },
-  clockCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#2A2A2A",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
   },
-  statusIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  neutralCircle: { backgroundColor: "#2A2A2A" },
-  approvedCircle: { backgroundColor: "#1E5F2D" },
-  deniedCircle: { backgroundColor: "#5A2A2A" },
-  primaryCardTitle: { color: colors.text.primary, fontWeight: "600" },
-  primaryCardSub: { color: colors.text.secondary, marginTop: 4 },
-
-  card: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    padding: 12,
-    marginBottom: 12,
-  },
-  cardHeader: { color: colors.text.secondary, fontSize: 12, marginBottom: 10 },
-  summaryRow: { flexDirection: "row", gap: 10, marginBottom: 10 },
   summaryBox: {
     flex: 1,
-    backgroundColor: "#2A2A2A",
-    borderRadius: 10,
-    padding: 12,
+    minWidth: "47%",
+    backgroundColor: "#1B1F2A",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#232838",
+    alignItems: "center",
   },
-  summaryLabel: { color: colors.text.secondary, fontSize: 12, marginBottom: 6 },
-  summaryValue: { color: colors.text.primary, fontSize: 12, fontWeight: "600" },
-
-  liveRow: {
+  summaryBoxIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(201,182,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  summaryLabel: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  summaryValue: {
+    color: colors.text.primary,
+    fontSize: 15,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  summarySubvalue: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    textAlign: "center",
+  },
+  updatesCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    marginHorizontal: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+  },
+  timelineContainer: {
+    gap: 16,
+  },
+  timelineItem: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  timelineLine: {
+    alignItems: "center",
+    width: 24,
+  },
+  timelineConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: "#2F3545",
+    minHeight: 20,
+  },
+  timelineConnectorActive: {
+    backgroundColor: "#67D16C",
+  },
+  timelineDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+  },
+  timelineDotCompleted: {
+    backgroundColor: "#67D16C",
+    borderColor: "#67D16C",
+  },
+  timelineDotPending: {
+    backgroundColor: "transparent",
+    borderColor: "#FFD700",
+  },
+  timelineDotInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FFD700",
+  },
+  timelineContent: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  timelineText: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  timelineTextCompleted: {
+    color: colors.text.primary,
+    fontWeight: "600",
+  },
+  actionsContainer: {
+    gap: 12,
+    marginTop: 8,
+  },
+  refreshBtn: {
+    marginHorizontal: 16,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#232838",
+  },
+  refreshBtnContent: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#2A2A2A",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  liveText: { color: colors.text.primary },
-  pendingDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: "#3A3A3A",
-  },
-
-  refreshBtn: {
-    alignSelf: "center",
+    justifyContent: "center",
+    gap: 8,
     paddingVertical: 14,
-    paddingHorizontal: 16,
   },
-  refreshText: { color: colors.text.secondary },
-
+  refreshText: {
+    color: "#7CFFCB",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   stateBtn: {
     marginHorizontal: 16,
-    alignItems: "center",
-    paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  stateBtnText: { color: "#000", fontWeight: "700" },
-  neutralBtn: { backgroundColor: "#E6E9EF" },
-  approvedBtn: { backgroundColor: "#67D16C" },
-  deniedBtn: {
-    backgroundColor: "#FF8A80",
+  stateBtnContent: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
+    gap: 10,
+    paddingVertical: 18,
+  },
+  pendingBtn: {
+    backgroundColor: "#2F3545",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  stateBtnTextPending: {
+    color: "#9CA3AF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  approvedBtn: {
+    backgroundColor: "#67D16C",
+  },
+  stateBtnText: {
+    color: "#0B0B0F",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  deniedBtn: {
+    backgroundColor: "#FF6B6B",
+  },
+  stateBtnTextDenied: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  homeBtn: {
+    marginHorizontal: 16,
+    backgroundColor: "transparent",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#232838",
+    marginBottom: 20,
+  },
+  homeBtnContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+  },
+  homeBtnText: {
+    color: colors.text.primary,
+    fontSize: 15,
+    fontWeight: "600",
   },
 });

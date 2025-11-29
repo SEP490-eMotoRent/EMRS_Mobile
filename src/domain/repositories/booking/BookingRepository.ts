@@ -1,6 +1,8 @@
 import { Booking } from "../../entities/booking/Booking";
 import { PaginatedBooking } from "../../../data/models/booking/PaginatedBooking";
 import { VNPayCallback } from "../../../data/models/booking/vnpay/VNPayCallback";
+import { AssignVehicleResponse } from "../../../data/models/booking/AssignVehicleResponse";
+import { ApiResponse } from "../../../core/network/APIResponse";
 
 /**
  * Result type for VNPay booking creation
@@ -65,7 +67,7 @@ export interface BookingRepository {
   /**
    * Assign vehicle to booking
    */
-  assignVehicle(vehicleId: string, bookingId: string): Promise<void>;
+  assignVehicle(vehicleId: string, bookingId: string): Promise<ApiResponse<AssignVehicleResponse>>;
 
   /**
    * Cancel a booking
