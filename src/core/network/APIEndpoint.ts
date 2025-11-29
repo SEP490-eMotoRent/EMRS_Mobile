@@ -84,6 +84,7 @@ export const ApiEndpoints = {
     current: "/account/renter",
     detail: (renterId: string) => `/account/renter/${renterId}`,
     scanFace: "/account/renter/scan",
+    getByCitizenId: (citizenId: string) => `/account/renter/search/citizen?citizenId=${citizenId}`,
     document: {
       upload: "/api/Document",
       update: (documentId: string) => `/api/Document/${documentId}`,

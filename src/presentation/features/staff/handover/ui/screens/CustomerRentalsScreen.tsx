@@ -85,6 +85,7 @@ export const CustomerRentalsScreen: React.FC = () => {
         filterVehicleModelId || (undefined as any),
         renterId,
         filterStatus,
+        undefined,
         page,
         pageSize
       );

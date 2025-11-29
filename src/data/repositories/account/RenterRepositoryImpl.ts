@@ -13,6 +13,7 @@ import { ScanFaceResponse } from "../../models/account/renter/ScanFaceResponse";
 import { ApiResponse } from "../../../core/network/APIResponse";
 import { UpdateRenterRequest } from "../../models/account/renter/update/UpdateRenterRequest";
 import { UpdateRenterResponse } from "../../models/account/renter/update/RenterAccountUpdateResponse";
+import { GetRenterByCitizenIdResponse } from "../../models/account/renter/GetRenterByCitizenIdResponse";
 
 export class RenterRepositoryImpl implements RenterRepository {
     constructor(
@@ -81,6 +82,14 @@ export class RenterRepositoryImpl implements RenterRepository {
     async scanFace(request: ScanFaceRequest): Promise<ApiResponse<ScanFaceResponse>> {
         try {
             return await this.remote.scanFace(request);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async getByCitizenId(citizenId: string): Promise<ApiResponse<GetRenterByCitizenIdResponse>> {
+        try {
+            return await this.remote.getByCitizenId(citizenId);
         } catch (error) {
             throw error;
         }
