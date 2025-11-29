@@ -10,11 +10,11 @@ interface DateInputProps {
     editable?: boolean;
 }
 
-export const DateInput: React.FC<DateInputProps> = ({ 
-    label, 
-    value, 
+export const DateInput: React.FC<DateInputProps> = ({
+    label,
+    value,
     onPress,
-    editable = true 
+    editable = true
 }) => {
     const handlePress = () => {
         if (editable && onPress) {

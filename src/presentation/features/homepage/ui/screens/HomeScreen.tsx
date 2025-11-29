@@ -65,10 +65,13 @@ export const HomeScreen: React.FC = () => {
 
     // ✅ NEW: Handle bike card press - navigate to VehicleDetails
     const handleBikePress = (bike: Bike) => {
-        navigation.navigate('VehicleDetails', {
+        navigation.navigate('Browse', {
+            screen: 'VehicleDetails',
+            params: {
             vehicleId: bike.id,
             dateRange: defaultDateRange,
             location: 'Ho Chi Minh City, Vietnam',
+            }
         });
     };
 
