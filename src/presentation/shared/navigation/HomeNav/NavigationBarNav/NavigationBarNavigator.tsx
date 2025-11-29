@@ -5,6 +5,7 @@ import { HomeNavigator } from '../HomeNav/HomeNavigator';
 import { ProfileNavigator } from '../Profile/ProfileNavigator';
 import { TripNavigator } from '../Trip/TripNavigator';
 import { BatteryNavigator } from '../Battery/BatteryNavigator';
+import { GpsSharingNavigator } from '../GpsSharing/GpsSharingNavigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -18,6 +19,7 @@ export const NavigationBarNavigator: React.FC = () => {
             <Tab.Screen name="HomeTab" component={HomeNavigator} />
             <Tab.Screen name="TripTab" component={TripNavigator} />
             <Tab.Screen name="BatteryTab" component={BatteryNavigator} />
+            <Tab.Screen name="ShareGpsTab" component={GpsSharingNavigator} />
             <Tab.Screen name="ProfileTab" component={ProfileNavigator} />
         </Tab.Navigator>
     );
