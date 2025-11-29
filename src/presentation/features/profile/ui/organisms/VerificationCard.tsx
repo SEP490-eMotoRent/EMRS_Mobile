@@ -21,8 +21,9 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
 }) => {
     // Filter out phone verification - we only check "not null" so it's pointless
     const filteredVerifications = verifications.filter(
-        v => !v.title.toLowerCase().includes('phone') && 
-             !v.title.toLowerCase().includes('điện thoại')
+        v => !v.title.toLowerCase().includes('phone') &&
+            !v.title.toLowerCase().includes('điện thoại') &&
+            !v.title.toLowerCase().includes('số điện thoại')
     );
 
     // Convert 'expired' → 'needed' to satisfy VerificationItem
@@ -56,7 +57,7 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
             )}
 
             <TouchableOpacity style={styles.verificationButton} onPress={onVerify}>
-                <Text style={styles.verificationButtonText}>Xác Thực</Text>
+                <Text style={styles.verificationButtonText}>Quản Lý Xác Thực</Text>
             </TouchableOpacity>
         </View>
     );

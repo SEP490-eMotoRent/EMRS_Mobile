@@ -21,6 +21,7 @@ export type IconName =
     | 'plus'
     | 'arrow'
     | 'check'
+    | 'checkmark'
     | 'cross'
     | 'bell'
     | 'card'
@@ -37,7 +38,9 @@ export type IconName =
     | 'close'
     | 'image'
     | 'trash'
-    | 'warning';
+    | 'warning'
+    | 'info'
+    | 'time';
 
 interface IconProps {
     name: IconName;
@@ -67,6 +70,7 @@ export const Icon: React.FC<IconProps> = ({
         plus: { family: 'ionicons', name: 'add' },
         arrow: { family: 'ionicons', name: 'chevron-forward' },
         check: { family: 'ionicons', name: 'checkmark' },
+        checkmark: { family: 'ionicons', name: 'checkmark' },
         cross: { family: 'ionicons', name: 'close' },
         bell: { family: 'ionicons', name: 'notifications-outline' },
         card: { family: 'ionicons', name: 'card-outline' },
@@ -83,6 +87,8 @@ export const Icon: React.FC<IconProps> = ({
         image: { family: 'ionicons', name: 'image-outline' },
         trash: { family: 'ionicons', name: 'trash-outline' },
         warning: { family: 'fontawesome5', name: 'exclamation-triangle' },
+        info: { family: 'ionicons', name: 'information-circle-outline' },
+        time: { family: 'ionicons', name: 'time-outline' },
     };
 
     const iconConfig = vectorIcons[name];
