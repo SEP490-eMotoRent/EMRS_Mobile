@@ -16,8 +16,6 @@ import { Button } from '../atoms/Button';
 import { Icon } from '../atoms/Icons/Icons';
 import { Text } from '../atoms/Text';
 import { ProfilePhoto } from '../molecules/ProfilePhoto';
-import { TextInput } from '../molecules/TextInput';
-import { DocumentSection } from '../organisms/ProfileOrganism/DocumentSection';
 import { PersonalInfoSection } from '../organisms/ProfileOrganism/PersonalInfoSection';
 
 // Helper: Normalize URI (handles string | string[] | undefined)
@@ -149,7 +147,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                     </Text> */}
 
                     {/* Citizen ID */}
-                    <DocumentSection
+                    {/* <DocumentSection
                         title="Căn Cước Công Dân (CCCD)"
                         iconName="id"
                         documentNumber={props.citizenId}
@@ -170,10 +168,10 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                         onExpiryDatePress={props.onCitizenExpiryDatePress}
                         onIssuingAuthorityChange={props.onCitizenAuthorityChange}
                         ocrProcessing={props.citizenOCRProcessing}
-                    />
+                    /> */}
 
                     {/* Driver's License */}
-                    <DocumentSection
+                    {/* <DocumentSection
                         title="Giấy Phép Lái Xe"
                         iconName="license"
                         documentNumber={props.licenseNumber}
@@ -204,7 +202,7 @@ export const EditProfileTemplate: React.FC<EditProfileTemplateProps> = (props) =
                                 />
                             </>
                         }
-                    />
+                    /> */}
 
                     {/* Security Section */}
                     <Text variant="title" style={styles.sectionTitle}>
