@@ -88,26 +88,6 @@ export const ScanFaceScreen: React.FC = () => {
     navigation.navigate("FaceScanCamera");
   };
 
-  const handleCallManager = () => {
-    navigation.navigate("ScanResult", {
-      renter: {
-        id: "019ac77a-4ff9-75be-b526-b1ea3b877d8f",
-        email: "test@test.com",
-        phone: "1234567890",
-        address: "1234567890",
-        dateOfBirth: "1234567890",
-        avatarUrl: "https://via.placeholder.com/150",
-        faceScanUrl: "https://via.placeholder.com/150",
-        account: {
-          id: "019a7d00-e789-738a-93db-af9acccb4acf",
-          username: "test",
-          role: "test",
-          fullname: "test",
-        },
-      },
-    });
-  };
-
   const manualOptions = [
     {
       id: "id",
@@ -253,11 +233,6 @@ export const ScanFaceScreen: React.FC = () => {
               <AntDesign name="right" size={16} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
-          <PrimaryButton
-            title="Quét mã QR CCCD"
-            onPress={handleCallManager}
-            style={styles.scanButton}
-          />
         </View>
       </ScrollView>
 

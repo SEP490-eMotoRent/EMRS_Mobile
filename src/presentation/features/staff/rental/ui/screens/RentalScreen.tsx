@@ -127,32 +127,53 @@ export const RentalScreen: React.FC = () => {
     <View style={styles.tabContent}>
       {/* Customer Authentication Section */}
       <View style={styles.authSection}>
-        <InfoCard>
-          <View style={styles.authContent}>
-            <View style={styles.authLeft}>
-              <View style={styles.smileyIcon}>
-                <Text style={styles.smileyText}>😊</Text>
+        <View style={styles.authCard}>
+          <View style={styles.authCardHeader}>
+            <View style={styles.authCardHeaderLeft}>
+              <View style={styles.authIconContainer}>
+                <AntDesign name="scan" size={20} color="#7CFFCB" />
+              </View>
+              <View>
+                <Text style={styles.authTitle}>Xác thực khách hàng</Text>
+                <Text style={styles.authSubtitle}>Quét khuôn mặt để tìm booking</Text>
               </View>
             </View>
-            <View style={styles.authRight}>
-              <TouchableOpacity style={styles.scanButton}>
-                <AntDesign name="camera" size={16} color="#000" />
-                <Text style={styles.scanButtonText}>Scan Renter Face</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-          <Text style={styles.authTitle}>Xác thực khách hàng</Text>
-          <Text style={styles.authDescription}>
-            Sử dụng camera để xác thực khuôn mặt khách hàng để tìm kiếm bookings
-            của họ
-          </Text>
-        </InfoCard>
+          <View style={styles.authCardContent}>
+            <View style={styles.authDescriptionContainer}>
+              <AntDesign name="info-circle" size={14} color="#C9B6FF" />
+              <Text style={styles.authDescription}>
+                Sử dụng camera để xác thực khuôn mặt khách hàng và tìm kiếm bookings của họ
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.scanButton}
+              onPress={() => navigation.navigate("ScanFace")}
+            >
+              <View style={styles.scanButtonContent}>
+                <AntDesign name="camera" size={18} color="#0B0B0F" />
+                <Text style={styles.scanButtonText}>Quét khuôn mặt</Text>
+                <AntDesign name="right" size={14} color="#0B0B0F" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* Today's Vehicle Delivery Schedule */}
       <View style={styles.scheduleSection}>
         <View style={styles.scheduleHeader}>
-          <Text style={styles.scheduleTitle}>Lịch giao xe hôm nay</Text>
+          <View style={styles.scheduleHeaderLeft}>
+            <View style={styles.scheduleIconContainer}>
+              <AntDesign name="calendar" size={18} color="#FFD666" />
+            </View>
+            <View>
+              <Text style={styles.scheduleTitle}>Lịch giao xe hôm nay</Text>
+              <Text style={styles.scheduleSubtitle}>
+                {handoverSchedule?.length || 0} booking{handoverSchedule?.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          </View>
           <View style={styles.scheduleBadge}>
             <Text style={styles.scheduleBadgeText}>
               {handoverSchedule?.length || 0}
@@ -160,7 +181,18 @@ export const RentalScreen: React.FC = () => {
           </View>
         </View>
 
-        {handoverSchedule && handoverSchedule.map((item) => (
+        {!handoverSchedule || handoverSchedule.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyStateIcon}>
+              <AntDesign name="calendar" size={48} color={colors.text.secondary} />
+            </View>
+            <Text style={styles.emptyStateTitle}>Chưa có lịch giao xe</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              Hôm nay không có booking nào cần giao xe
+            </Text>
+          </View>
+        ) : (
+          handoverSchedule.map((item) => (
           <View key={item.id} style={styles.handoverCard}>
             <View style={styles.handoverHeader}>
               <View style={styles.timeSection}>
@@ -241,13 +273,19 @@ export const RentalScreen: React.FC = () => {
               </View>
             </View>
 
-            <PrimaryButton
-              title="Xem chi tiết Booking"
-              onPress={() => navigation.navigate("BookingDetails", { bookingId: item.id })}
+            <TouchableOpacity
               style={styles.viewDetailsButton}
-            />
+              onPress={() => navigation.navigate("BookingDetails", { bookingId: item.id })}
+            >
+              <View style={styles.viewDetailsButtonContent}>
+                <AntDesign name="file-text" size={16} color="#0B0B0F" />
+                <Text style={styles.viewDetailsButtonText}>Xem chi tiết Booking</Text>
+                <AntDesign name="right" size={14} color="#0B0B0F" />
+              </View>
+            </TouchableOpacity>
           </View>
-        ))}
+          ))
+        )}
       </View>
     </View>
   );
@@ -256,31 +294,60 @@ export const RentalScreen: React.FC = () => {
     <View style={styles.tabContent}>
       {/* Search Section */}
       <View style={styles.searchSection}>
-        <Text style={styles.searchTitle}>Nhập Biển số xe</Text>
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Biển số xe (e.g., 73-MD6999.99)"
-            placeholderTextColor={colors.text.secondary}
-            value={searchPlate}
-            onChangeText={setSearchPlate}
-          />
-          <TouchableOpacity style={styles.searchButton}>
-            <FontAwesome name="search" size={20} color="#000" />
-          </TouchableOpacity>
-        </View>
+          <View style={styles.searchHeader}>
+            <View style={styles.searchIconContainer}>
+              <AntDesign name="search" size={18} color="#7DB3FF" />
+            </View>
+            <Text style={styles.searchTitle}>Tìm kiếm theo biển số</Text>
+          </View>
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <AntDesign name="idcard" size={16} color={colors.text.secondary} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Nhập biển số xe (VD: 73-MD6999.99)"
+                placeholderTextColor={colors.text.secondary}
+                value={searchPlate}
+                onChangeText={setSearchPlate}
+              />
+            </View>
+            <TouchableOpacity style={styles.searchButton}>
+              <AntDesign name="search" size={18} color="#0B0B0F" />
+            </TouchableOpacity>
+          </View>
       </View>
 
       {/* Rented Vehicles List */}
       <View style={styles.rentedSection}>
         <View style={styles.rentedHeader}>
-          <Text style={styles.rentedTitle}>Danh sách Xe đang cho thuê</Text>
+          <View style={styles.rentedHeaderLeft}>
+            <View style={styles.rentedIconContainer}>
+              <AntDesign name="car" size={18} color="#7CFFCB" />
+            </View>
+            <View>
+              <Text style={styles.rentedTitle}>Xe đang cho thuê</Text>
+              <Text style={styles.rentedSubtitle}>
+                {rentedBookings?.length || 0} xe đang được thuê
+              </Text>
+            </View>
+          </View>
           <View style={styles.rentedBadge}>
-            <Text style={styles.rentedBadgeText}>{rentedBookings?.length}</Text>
+            <Text style={styles.rentedBadgeText}>{rentedBookings?.length || 0}</Text>
           </View>
         </View>
 
-        {rentedBookings && rentedBookings.map((booking) => (
+        {!rentedBookings || rentedBookings.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyStateIcon}>
+              <AntDesign name="car" size={48} color={colors.text.secondary} />
+            </View>
+            <Text style={styles.emptyStateTitle}>Chưa có xe đang cho thuê</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              Hiện tại không có xe nào đang được khách hàng thuê
+            </Text>
+          </View>
+        ) : (
+          rentedBookings.map((booking) => (
           <View key={booking.id} style={styles.rentedCard}>
             <View style={styles.rentedCardHeader}>
               <View style={styles.customerInfo}>
@@ -398,7 +465,8 @@ export const RentalScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
-        ))}
+          ))
+        )}
       </View>
     </View>
   );
@@ -417,29 +485,60 @@ export const RentalScreen: React.FC = () => {
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === "handover" && styles.activeTab]}
-            onPress={() => setActiveTab("handover")}
+            onPress={() => {
+              setActiveTab("handover");
+              if (!handoverSchedule) {
+                fetchHandoverSchedule(1);
+              }
+            }}
           >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "handover" && styles.activeTabText,
-              ]}
-            >
-              Lịch giao xe
-            </Text>
+            <View style={styles.tabButtonContent}>
+              <AntDesign 
+                name="calendar" 
+                size={16} 
+                color={activeTab === "handover" ? "#0B0B0F" : colors.text.secondary} 
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "handover" && styles.activeTabText,
+                ]}
+              >
+                Lịch giao xe
+              </Text>
+              {handoverSchedule && handoverSchedule.length > 0 && (
+                <View style={[styles.tabBadge, activeTab === "handover" && styles.tabBadgeActive]}>
+                  <Text style={[styles.tabBadgeText, activeTab === "handover" && styles.tabBadgeTextActive]}>
+                    {handoverSchedule.length}
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === "rented" && styles.activeTab]}
-            onPress={() => setActiveTab("rented")}
+            onPress={() => {
+              setActiveTab("rented");
+              if (!rentedBookings) {
+                fetchBookings(1);
+              }
+            }}
           >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "rented" && styles.activeTabText,
-              ]}
-            >
-              Xe đang cho thuê
-            </Text>
+            <View style={styles.tabButtonContent}>
+              <AntDesign 
+                name="car" 
+                size={16} 
+                color={activeTab === "rented" ? "#0B0B0F" : colors.text.secondary} 
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "rented" && styles.activeTabText,
+                ]}
+              >
+                Xe đang cho thuê
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -461,29 +560,61 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: "row",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    marginBottom: 16,
-    padding: 4,
+    backgroundColor: "#11131A",
+    borderRadius: 16,
+    marginBottom: 20,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    gap: 6,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     alignItems: "center",
   },
   activeTab: {
     backgroundColor: "#C9B6FF",
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  tabButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   tabText: {
     color: colors.text.secondary,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   activeTabText: {
-    color: "#000",
-    fontWeight: "600",
+    color: "#0B0B0F",
+    fontWeight: "700",
+  },
+  tabBadge: {
+    backgroundColor: "rgba(0,0,0,0.2)",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: "center",
+  },
+  tabBadgeActive: {
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  tabBadgeText: {
+    color: colors.text.secondary,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  tabBadgeTextActive: {
+    color: "#0B0B0F",
   },
   tabContent: {
     flex: 1,
@@ -491,55 +622,84 @@ const styles = StyleSheet.create({
   authSection: {
     marginBottom: 24,
   },
-  authContent: {
-    flexDirection: "row",
-    alignItems: "center",
+  authCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  authCardHeader: {
     marginBottom: 16,
   },
-  authLeft: {
-    flex: 1,
-  },
-  smileyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    borderColor: colors.text.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-  smileyText: {
-    fontSize: 32,
-  },
-  authRight: {
-    flex: 1,
-    alignItems: "flex-end",
-  },
-  scanButton: {
+  authCardHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#C9B6FF",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    gap: 12,
   },
-  scanButtonText: {
-    color: "#000",
-    fontSize: 12,
-    fontWeight: "600",
-    marginLeft: 8,
+  authIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "rgba(124,255,203,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   authTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text.primary,
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  authSubtitle: {
+    fontSize: 13,
+    color: colors.text.secondary,
+  },
+  authCardContent: {
+    gap: 16,
+  },
+  authDescriptionContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "rgba(201,182,255,0.1)",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(201,182,255,0.2)",
   },
   authDescription: {
-    fontSize: 14,
+    flex: 1,
+    fontSize: 13,
     color: colors.text.secondary,
-    lineHeight: 20,
+    lineHeight: 18,
+  },
+  scanButton: {
+    backgroundColor: "#C9B6FF",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  scanButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 16,
+  },
+  scanButtonText: {
+    color: "#0B0B0F",
+    fontSize: 16,
+    fontWeight: "700",
   },
   scheduleSection: {
     marginBottom: 24,
@@ -547,32 +707,59 @@ const styles = StyleSheet.create({
   scheduleHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
+  },
+  scheduleHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  scheduleIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,211,102,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   scheduleTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text.primary,
-    marginRight: 8,
+    marginBottom: 4,
+  },
+  scheduleSubtitle: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
   scheduleBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#C9B6FF",
+    backgroundColor: "#FFD666",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    minWidth: 32,
     alignItems: "center",
     justifyContent: "center",
   },
   scheduleBadgeText: {
-    color: "#000",
-    fontSize: 12,
-    fontWeight: "bold",
+    color: "#0B0B0F",
+    fontSize: 14,
+    fontWeight: "700",
   },
   handoverCard: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   handoverHeader: {
     flexDirection: "row",
@@ -583,58 +770,73 @@ const styles = StyleSheet.create({
   timeSection: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+    backgroundColor: "#1B1F2A",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#232838",
   },
   timeText: {
     color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "700",
   },
   timeSubtext: {
     color: colors.text.secondary,
-    fontSize: 12,
-    marginLeft: 8,
+    fontSize: 11,
   },
   arrivalButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "rgba(255,107,107,0.15)",
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 8,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,107,107,0.3)",
   },
   arrivalButtonText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "600",
+    color: "#FF6B6B",
+    fontSize: 11,
+    fontWeight: "700",
   },
   customerSection: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   customerInfo: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
   },
   customerName: {
     color: colors.text.primary,
     fontSize: 16,
-    fontWeight: "600",
-    marginRight: 8,
-    marginBottom: 4,
+    fontWeight: "700",
   },
   bookingId: {
     color: colors.text.secondary,
     fontSize: 12,
-    marginLeft: 8,
+    backgroundColor: "#1B1F2A",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   vehicleSection: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
+    backgroundColor: "#1B1F2A",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#232838",
   },
   vehicleImage: {
-    width: 40,
-    height: 40,
-    backgroundColor: "#444444",
-    borderRadius: 8,
+    width: 60,
+    height: 60,
+    backgroundColor: "#2F3545",
+    borderRadius: 12,
     marginRight: 12,
   },
   vehicleInfo: {
@@ -642,17 +844,17 @@ const styles = StyleSheet.create({
   },
   vehicleName: {
     color: colors.text.primary,
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 4,
   },
   rentalDuration: {
     color: colors.text.secondary,
     fontSize: 12,
-    marginTop: 2,
   },
   separator: {
     height: 1,
-    backgroundColor: "#444444",
+    backgroundColor: "#1F2430",
     marginVertical: 16,
   },
   specsSection: {
@@ -661,68 +863,119 @@ const styles = StyleSheet.create({
   specsTitle: {
     color: colors.text.primary,
     fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontWeight: "700",
+    marginBottom: 12,
   },
   branchText: {
     color: colors.text.secondary,
     fontSize: 12,
-    marginBottom: 8,
+    marginBottom: 12,
+    backgroundColor: "#1B1F2A",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: "flex-start",
   },
   specsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 10,
   },
   specCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: "#1B1F2A",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
     minWidth: "48%",
+    borderWidth: 1,
+    borderColor: "#232838",
+    gap: 8,
   },
   specText: {
     color: colors.text.secondary,
-    fontSize: 10,
-    marginLeft: 6,
+    fontSize: 11,
     flex: 1,
+    fontWeight: "500",
   },
   viewDetailsButton: {
     backgroundColor: "#C9B6FF",
-    paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  viewDetailsButtonContent: {
+    flexDirection: "row",
     alignItems: "center",
-    marginVertical: 4,
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 16,
+  },
+  viewDetailsButtonText: {
+    color: "#0B0B0F",
+    fontSize: 15,
+    fontWeight: "700",
   },
   searchSection: {
     marginBottom: 24,
   },
+  searchHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
+  searchIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(125,179,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   searchTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text.primary,
-    marginBottom: 12,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
+    backgroundColor: "#11131A",
+    borderRadius: 16,
     paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    gap: 12,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     paddingVertical: 12,
   },
   searchInput: {
     flex: 1,
     color: colors.text.primary,
     fontSize: 14,
+    fontWeight: "500",
   },
   searchButton: {
     backgroundColor: "#C9B6FF",
-    borderRadius: 20,
-    padding: 8,
-    marginLeft: 8,
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   rentedSection: {
     marginBottom: 24,
@@ -730,30 +983,59 @@ const styles = StyleSheet.create({
   rentedHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
+  },
+  rentedHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  rentedIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(124,255,203,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   rentedTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text.primary,
-    marginRight: 8,
+    marginBottom: 4,
+  },
+  rentedSubtitle: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
   rentedBadge: {
-    backgroundColor: "#C9B6FF",
+    backgroundColor: "#7CFFCB",
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    minWidth: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
   rentedBadgeText: {
-    color: "#000",
-    fontSize: 12,
-    fontWeight: "bold",
+    color: "#0B0B0F",
+    fontSize: 14,
+    fontWeight: "700",
   },
   rentedCard: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   rentedCardHeader: {
     flexDirection: "row",
@@ -850,8 +1132,39 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   startReturnText: {
-    color: "#000",
+    color: "#0B0B0F",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
+  },
+  emptyState: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    padding: 40,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    borderStyle: "dashed",
+  },
+  emptyStateIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#1B1F2A",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text.primary,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });

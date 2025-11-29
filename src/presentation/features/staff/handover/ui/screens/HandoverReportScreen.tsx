@@ -17,7 +17,6 @@ import { ScreenHeader } from "../../../../../common/components/organisms/ScreenH
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
-import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import sl from "../../../../../../core/di/InjectionContainer";
 import Toast from "react-native-toast-message";
 

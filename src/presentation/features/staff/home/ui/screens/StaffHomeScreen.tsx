@@ -48,6 +48,7 @@ const data = [
   require("../../../../../../../assets/images/banner1.jpg"),
   require("../../../../../../../assets/images/banner2.jpg"),
   require("../../../../../../../assets/images/banner3.jpg"),
+  require("../../../../../../../assets/images/banner4.jpg"),
 ];
 
 export const StaffHomeScreen: React.FC = () => {
@@ -297,7 +298,7 @@ export const StaffHomeScreen: React.FC = () => {
       animated: true,
     });
   };
-  const defaultDataWith6Colors = ["#B0604D", "#899F9C", "#B3C680"];
+  const defaultDataWith6Colors = ["#B0604D", "#899F9C", "#B3C680", "#C9B6FF"];
   const renderListHeader = () => (
     <View style={styles.listHeader}>
       <View style={styles.headerTitle}>

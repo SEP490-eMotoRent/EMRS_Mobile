@@ -1,3 +1,4 @@
+import { ApiResponse } from "../../../core/network/APIResponse";
 import { Account } from "../../../domain/entities/account/Account";
 import { Renter } from "../../../domain/entities/account/Renter";
 import { Booking } from "../../../domain/entities/booking/Booking";
@@ -13,6 +14,7 @@ import {
   VNPayBookingResult,
 } from "../../../domain/repositories/booking/BookingRepository";
 import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/booking/BookingRemoteDataSource";
+import { AssignVehicleResponse } from "../../models/booking/AssignVehicleResponse";
 import { BookingResponse } from "../../models/booking/BookingResponse";
 import {
   BookingResponseForRenter,
@@ -168,8 +170,11 @@ export class BookingRepositoryImpl implements BookingRepository {
     };
   }
 
-  async assignVehicle(vehicleId: string, bookingId: string): Promise<void> {
-    await this.remote.assignVehicle(vehicleId, bookingId);
+  async assignVehicle(
+    vehicleId: string,
+    bookingId: string
+  ): Promise<ApiResponse<AssignVehicleResponse>> {
+    return await this.remote.assignVehicle(vehicleId, bookingId);
   }
 
   // =========================================================================
@@ -576,7 +581,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       [],
       [],
       [],
-      [],
+      []
     );
   }
 

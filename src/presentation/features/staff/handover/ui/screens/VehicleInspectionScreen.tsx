@@ -375,7 +375,14 @@ export const VehicleInspectionScreen: React.FC = () => {
           sl.get("BookingRepository")
         );
 
-        await assignVehicleToBookingUseCase.execute(vehicleId, bookingId);
+        const assignVehicleResponse = await assignVehicleToBookingUseCase.execute(vehicleId, bookingId);
+        if (!assignVehicleResponse.success) {
+          Toast.show({
+            text1: assignVehicleResponse.message,
+            type: "error",
+          });
+          return;
+        }
 
         const createReceiptUseCase = new CreateReceiptUseCase(
           sl.get("ReceiptRepository")
@@ -431,7 +438,29 @@ export const VehicleInspectionScreen: React.FC = () => {
 
         {/* Required Photos */}
         <View style={styles.photosCard}>
-          <Text style={styles.cardHeader}>Ảnh bắt buộc</Text>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="camera" size={18} color="#7CFFCB" />
+              </View>
+              <View>
+                <Text style={styles.cardHeaderTitle}>Ảnh bắt buộc</Text>
+                <Text style={styles.cardHeaderSubtitle}>
+                  {getPhotosCount()}/4 ảnh đã chụp
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.photoStatusBadge, getPhotosCount() === 4 ? styles.photoStatusBadgeComplete : styles.photoStatusBadgeIncomplete]}>
+              <AntDesign 
+                name={getPhotosCount() === 4 ? "check-circle" : "clock-circle"} 
+                size={12} 
+                color={getPhotosCount() === 4 ? "#FFFFFF" : "#FFD700"} 
+              />
+              <Text style={[styles.photoStatusText, getPhotosCount() === 4 && styles.photoStatusTextComplete]}>
+                {getPhotosCount() === 4 ? "Hoàn thành" : "Thiếu ảnh"}
+              </Text>
+            </View>
+          </View>
           <View style={styles.photosGrid}>
             <PhotoTile
               uri={photos.front}
@@ -467,9 +496,30 @@ export const VehicleInspectionScreen: React.FC = () => {
           style={styles.checklistContainer}
           collapsable={false}
         >
-          <Text style={styles.checklistTitle}>Danh sách kiểm tra</Text>
+          <View style={styles.checklistHeaderRow}>
+            <View style={styles.checklistHeaderLeft}>
+              <View style={styles.checklistHeaderIcon}>
+                <AntDesign name="check-square" size={18} color="#C9B6FF" />
+              </View>
+              <View>
+                <Text style={styles.checklistTitle}>Danh sách kiểm tra</Text>
+                <Text style={styles.checklistSubtitle}>
+                  {getCompletedCount()}/{getTotalCount()} mục đã hoàn thành
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.completionBadge, { backgroundColor: getCompletionPercentage() >= 80 ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
+              <Text style={[styles.completionPercentage, { color: getCompletionPercentage() >= 80 ? "#67D16C" : "#FFD700" }]}>
+                {getCompletionPercentage()}%
+              </Text>
+            </View>
+          </View>
           {sections.map((section) => {
             const isOpen = !!expanded[section.key];
+            const sectionCompleted = section.items.filter(item => checklistItems[item.key]).length;
+            const sectionTotal = section.items.length;
+            const sectionProgress = sectionTotal > 0 ? Math.round((sectionCompleted / sectionTotal) * 100) : 0;
+            
             return (
               <View key={section.key} style={styles.categoryCard}>
                 <TouchableOpacity
@@ -482,12 +532,31 @@ export const VehicleInspectionScreen: React.FC = () => {
                   }
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.categoryTitle}>{section.title}</Text>
-                  <AntDesign
-                    name={isOpen ? "up" : "down"}
-                    size={16}
-                    color={colors.text.secondary}
-                  />
+                  <View style={styles.categoryHeaderLeft}>
+                    <View style={[styles.categoryIcon, { backgroundColor: sectionProgress === 100 ? "rgba(103,209,108,0.15)" : "rgba(201,182,255,0.15)" }]}>
+                      <AntDesign 
+                        name={sectionProgress === 100 ? "check-circle" : "file-text"} 
+                        size={16} 
+                        color={sectionProgress === 100 ? "#67D16C" : "#C9B6FF"} 
+                      />
+                    </View>
+                    <View style={styles.categoryTitleContainer}>
+                      <Text style={styles.categoryTitle}>{section.title}</Text>
+                      <Text style={styles.categoryProgress}>
+                        {sectionCompleted}/{sectionTotal} hoàn thành
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.categoryHeaderRight}>
+                    <View style={[styles.categoryProgressBar, { width: 60 }]}>
+                      <View style={[styles.categoryProgressFill, { width: `${sectionProgress}%`, backgroundColor: sectionProgress === 100 ? "#67D16C" : "#C9B6FF" }]} />
+                    </View>
+                    <AntDesign
+                      name={isOpen ? "up" : "down"}
+                      size={16}
+                      color={colors.text.secondary}
+                    />
+                  </View>
                 </TouchableOpacity>
 
                 {isOpen && (
@@ -495,7 +564,7 @@ export const VehicleInspectionScreen: React.FC = () => {
                     {section.items.map((item, idx) => (
                       <TouchableOpacity
                         key={idx}
-                        style={styles.itemCard}
+                        style={[styles.itemCard, checklistItems[item.key] && styles.itemCardChecked]}
                         onPress={() => toggleChecklistItem(item.key)}
                         activeOpacity={0.8}
                       >
@@ -506,21 +575,17 @@ export const VehicleInspectionScreen: React.FC = () => {
                           ]}
                         >
                           {checklistItems[item.key] && (
-                            <AntDesign name="check" size={12} color="#FFFFFF" />
+                            <AntDesign name="check" size={14} color="#FFFFFF" />
                           )}
                         </View>
-                        <Text style={styles.itemText}>{item.label}</Text>
+                        <Text style={[styles.itemText, checklistItems[item.key] && styles.itemTextChecked]}>
+                          {item.label}
+                        </Text>
+                        {checklistItems[item.key] && (
+                          <AntDesign name="check-circle" size={16} color="#67D16C" />
+                        )}
                       </TouchableOpacity>
                     ))}
-
-                    <TouchableOpacity style={styles.addIssueRow}>
-                      <AntDesign
-                        name="exclamation-circle"
-                        size={14}
-                        color="#C9B6FF"
-                      />
-                      <Text style={styles.addIssueText}>Thêm vấn đề</Text>
-                    </TouchableOpacity>
                   </View>
                 )}
               </View>
@@ -530,11 +595,21 @@ export const VehicleInspectionScreen: React.FC = () => {
 
         {/* Inspection Inputs */}
         <View style={styles.inputCard}>
-          <Text style={styles.cardHeader}>Thông tin kiểm tra</Text>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="file-text" size={18} color="#FFD666" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>Thông tin kiểm tra</Text>
+            </View>
+          </View>
 
           {/* Notes Input */}
           <View style={styles.inputRow}>
-            <Text style={styles.inputLabel}>Ghi chú</Text>
+            <View style={styles.inputLabelRow}>
+              <AntDesign name="edit" size={14} color="#7CFFCB" />
+              <Text style={styles.inputLabel}>Ghi chú</Text>
+            </View>
             <TextInput
               style={styles.textArea}
               placeholder="Nhập ghi chú về tình trạng xe..."
@@ -547,35 +622,48 @@ export const VehicleInspectionScreen: React.FC = () => {
             />
           </View>
 
-          {/* Odometer Input */}
-          <View style={styles.inputRow}>
-            <Text style={styles.inputLabel}>Số km bắt đầu</Text>
-            <View style={styles.inputWithUnit}>
-              <TextInput
-                style={styles.numberInput}
-                placeholder="Nhập số km"
-                placeholderTextColor={colors.text.secondary}
-                value={startOdometerKm}
-                onChangeText={setStartOdometerKm}
-                keyboardType="numeric"
-              />
-              <Text style={styles.inputUnit}>km</Text>
+          {/* Metrics Row */}
+          <View style={styles.metricsRow}>
+            {/* Odometer Input */}
+            <View style={styles.metricInput}>
+              <View style={styles.inputLabelRow}>
+                <AntDesign name="dashboard" size={14} color="#7DB3FF" />
+                <Text style={styles.inputLabel}>Số km</Text>
+              </View>
+              <View style={styles.inputWithUnit}>
+                <TextInput
+                  style={styles.numberInput}
+                  placeholder="0"
+                  placeholderTextColor={colors.text.secondary}
+                  value={startOdometerKm}
+                  onChangeText={setStartOdometerKm}
+                  keyboardType="numeric"
+                />
+                <View style={styles.unitBadge}>
+                  <Text style={styles.inputUnit}>km</Text>
+                </View>
+              </View>
             </View>
-          </View>
 
-          {/* Battery Percentage Input */}
-          <View style={styles.inputRow}>
-            <Text style={styles.inputLabel}>Pin bắt đầu</Text>
-            <View style={styles.inputWithUnit}>
-              <TextInput
-                style={styles.numberInput}
-                placeholder="Nhập % pin"
-                placeholderTextColor={colors.text.secondary}
-                value={startBatteryPercentage}
-                onChangeText={setStartBatteryPercentage}
-                keyboardType="numeric"
-              />
-              <Text style={styles.inputUnit}>%</Text>
+            {/* Battery Percentage Input */}
+            <View style={styles.metricInput}>
+              <View style={styles.inputLabelRow}>
+                <AntDesign name="thunderbolt" size={14} color={getBatteryCondition().color} />
+                <Text style={styles.inputLabel}>Pin</Text>
+              </View>
+              <View style={styles.inputWithUnit}>
+                <TextInput
+                  style={styles.numberInput}
+                  placeholder="0"
+                  placeholderTextColor={colors.text.secondary}
+                  value={startBatteryPercentage}
+                  onChangeText={setStartBatteryPercentage}
+                  keyboardType="numeric"
+                />
+                <View style={[styles.unitBadge, { backgroundColor: getBatteryCondition().color === "#67D16C" ? "rgba(103,209,108,0.15)" : getBatteryCondition().color === "#FFD700" ? "rgba(255,211,102,0.15)" : "rgba(255,68,68,0.15)" }]}>
+                  <Text style={[styles.inputUnit, { color: getBatteryCondition().color }]}>%</Text>
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -584,23 +672,22 @@ export const VehicleInspectionScreen: React.FC = () => {
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.statusItem}>
+              <View style={[styles.statusIconContainer, { backgroundColor: "rgba(103,209,108,0.15)" }]}>
+                <AntDesign name="check-circle" size={20} color="#67D16C" />
+              </View>
               <Text style={styles.statusNumber}>
                 {getCompletedCount()} / {getTotalCount()}
               </Text>
-              <Text style={styles.statusCaption}>kiểm tra hoàn thành</Text>
+              <Text style={styles.statusCaption}>Kiểm tra hoàn thành</Text>
             </View>
             <View style={styles.statusItem}>
-              <Text
-                style={[
-                  styles.statusNumber,
-                  { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" },
-                ]}
-              >
-                {getIssuesCount()}
-              </Text>
-              <Text style={styles.statusCaption}>vấn đề</Text>
-            </View>
-            <View style={styles.statusItem}>
+              <View style={[styles.statusIconContainer, { backgroundColor: getPhotosCount() === 4 ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
+                <AntDesign 
+                  name={getPhotosCount() === 4 ? "check-circle" : "clock-circle"} 
+                  size={20} 
+                  color={getPhotosCount() === 4 ? "#67D16C" : "#FFD700"} 
+                />
+              </View>
               <Text
                 style={[
                   styles.statusNumber,
@@ -609,23 +696,32 @@ export const VehicleInspectionScreen: React.FC = () => {
               >
                 {getPhotosCount()}/4
               </Text>
-              <Text style={styles.statusCaption}>ảnh</Text>
+              <Text style={styles.statusCaption}>Ảnh</Text>
             </View>
           </View>
 
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
-              <Text style={styles.readyLabel}>
-                {isReadyForHandover() ? "Sẵn sàng bàn giao" : "Chưa sẵn sàng"}
-              </Text>
-              <Text
-                style={[
-                  styles.progressPercentage,
-                  { color: isReadyForHandover() ? "#67D16C" : "#FFD700" },
-                ]}
-              >
-                {getCompletionPercentage()}%
-              </Text>
+              <View style={styles.readyLabelContainer}>
+                <AntDesign 
+                  name={isReadyForHandover() ? "check-circle" : "clock-circle"} 
+                  size={16} 
+                  color={isReadyForHandover() ? "#67D16C" : "#FFD700"} 
+                />
+                <Text style={[styles.readyLabel, { color: isReadyForHandover() ? "#67D16C" : "#FFD700" }]}>
+                  {isReadyForHandover() ? "Sẵn sàng bàn giao" : "Chưa sẵn sàng"}
+                </Text>
+              </View>
+              <View style={[styles.progressBadge, { backgroundColor: isReadyForHandover() ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
+                <Text
+                  style={[
+                    styles.progressPercentage,
+                    { color: isReadyForHandover() ? "#67D16C" : "#FFD700" },
+                  ]}
+                >
+                  {getCompletionPercentage()}%
+                </Text>
+              </View>
             </View>
             <View style={styles.readyProgress}>
               <View
@@ -654,63 +750,98 @@ export const VehicleInspectionScreen: React.FC = () => {
 
         {/* Inspection Summary */}
         <View style={styles.summaryCard}>
-          <Text style={styles.cardHeader}>Tóm tắt kiểm tra</Text>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tình trạng tổng thể</Text>
-            <Text
-              style={[
-                styles.summaryValue,
-                { color: getOverallCondition().color },
-              ]}
-            >
-              {getOverallCondition().text}
-            </Text>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="profile" size={18} color="#7CFFCB" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>Tóm tắt kiểm tra</Text>
+            </View>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tình trạng pin</Text>
-            <Text
-              style={[
-                styles.summaryValue,
-                { color: getBatteryCondition().color },
-              ]}
-            >
-              {getBatteryCondition().text}
-            </Text>
+            <View style={styles.summaryLabelContainer}>
+              <AntDesign name="star" size={14} color="#FFD666" />
+              <Text style={styles.summaryLabel}>Tình trạng tổng thể</Text>
+            </View>
+            <View style={[styles.summaryValueBadge, { backgroundColor: `${getOverallCondition().color}15` }]}>
+              <Text
+                style={[
+                  styles.summaryValue,
+                  { color: getOverallCondition().color },
+                ]}
+              >
+                {getOverallCondition().text}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Ảnh xe</Text>
-            <Text
-              style={[styles.summaryValue, { color: getPhotosStatus().color }]}
-            >
-              {getPhotosStatus().text}
-            </Text>
+            <View style={styles.summaryLabelContainer}>
+              <AntDesign name="thunderbolt" size={14} color={getBatteryCondition().color} />
+              <Text style={styles.summaryLabel}>Tình trạng pin</Text>
+            </View>
+            <View style={[styles.summaryValueBadge, { backgroundColor: `${getBatteryCondition().color}15` }]}>
+              <Text
+                style={[
+                  styles.summaryValue,
+                  { color: getBatteryCondition().color },
+                ]}
+              >
+                {getBatteryCondition().text}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Vấn đề phát hiện</Text>
-            <Text
-              style={[
-                styles.summaryValue,
-                { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" },
-              ]}
-            >
-              {getIssuesCount()} vấn đề cần xử lý
-            </Text>
+            <View style={styles.summaryLabelContainer}>
+              <AntDesign name="camera" size={14} color={getPhotosStatus().color} />
+              <Text style={styles.summaryLabel}>Ảnh xe</Text>
+            </View>
+            <View style={[styles.summaryValueBadge, { backgroundColor: `${getPhotosStatus().color}15` }]}>
+              <Text
+                style={[styles.summaryValue, { color: getPhotosStatus().color }]}
+              >
+                {getPhotosStatus().text}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Trạng thái bàn giao</Text>
-            <View style={styles.statusBadge}>
+            <View style={styles.summaryLabelContainer}>
+              <AntDesign name="exclamation-circle" size={14} color={getIssuesCount() > 0 ? "#FF4444" : "#67D16C"} />
+              <Text style={styles.summaryLabel}>Vấn đề phát hiện</Text>
+            </View>
+            <View style={[styles.summaryValueBadge, { backgroundColor: getIssuesCount() > 0 ? "rgba(255,68,68,0.15)" : "rgba(103,209,108,0.15)" }]}>
+              <Text
+                style={[
+                  styles.summaryValue,
+                  { color: getIssuesCount() > 0 ? "#FF4444" : "#67D16C" },
+                ]}
+              >
+                {getIssuesCount()} vấn đề
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.summaryRow, styles.summaryRowLast]}>
+            <View style={styles.summaryLabelContainer}>
+              <AntDesign name={isReadyForHandover() ? "check-circle" : "clock-circle"} size={14} color={isReadyForHandover() ? "#67D16C" : "#FFD700"} />
+              <Text style={styles.summaryLabel}>Trạng thái bàn giao</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: isReadyForHandover() ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
+              <AntDesign 
+                name={isReadyForHandover() ? "check" : "clock-circle"} 
+                size={12} 
+                color={isReadyForHandover() ? "#67D16C" : "#FFD700"} 
+              />
               <Text
                 style={[
                   styles.statusBadgeText,
                   { color: isReadyForHandover() ? "#67D16C" : "#FFD700" },
                 ]}
               >
-                {isReadyForHandover() ? "✓ Sẵn sàng" : "⚠ Chưa sẵn sàng"}
+                {isReadyForHandover() ? "Sẵn sàng" : "Chưa sẵn sàng"}
               </Text>
             </View>
           </View>
@@ -726,21 +857,27 @@ export const VehicleInspectionScreen: React.FC = () => {
           onPress={handleCompleteInspection}
           disabled={!isReadyForHandover() || isSubmitting}
         >
-          <Text
-            style={[
-              styles.primaryCtaText,
-              (!isReadyForHandover() || isSubmitting) &&
-                styles.primaryCtaTextDisabled,
-            ]}
-          >
-            {isSubmitting
-              ? "Đang gửi..."
-              : isReadyForHandover()
-              ? "Hoàn thành kiểm tra"
-              : "Chưa sẵn sàng"}
-          </Text>
+          <View style={styles.primaryCtaContent}>
+            {isSubmitting ? (
+              <>
+                <AntDesign name="loading" size={18} color="#0B0B0F" />
+                <Text style={styles.primaryCtaText}>Đang gửi...</Text>
+              </>
+            ) : isReadyForHandover() ? (
+              <>
+                <AntDesign name="check-circle" size={18} color="#0B0B0F" />
+                <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
+              </>
+            ) : (
+              <>
+                <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
+                <Text style={styles.primaryCtaTextDisabled}>Chưa sẵn sàng</Text>
+              </>
+            )}
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tertiaryCta}>
+          <AntDesign name="save" size={16} color={colors.text.secondary} />
           <Text style={styles.tertiaryCtaText}>Lưu & Tiếp tục sau</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -777,42 +914,105 @@ const styles = StyleSheet.create({
   staffText: { color: "#000", fontWeight: "700", fontSize: 12 },
 
   photosCard: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
+    backgroundColor: "#11131A",
+    borderRadius: 20,
     marginHorizontal: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 16,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#1F2430",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 3,
   },
-  cardHeader: { color: colors.text.secondary, fontSize: 12, marginBottom: 10 },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cardHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(124,255,203,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardHeaderTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  cardHeaderSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  photoStatusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  photoStatusBadgeComplete: {
+    backgroundColor: "rgba(103,209,108,0.15)",
+  },
+  photoStatusBadgeIncomplete: {
+    backgroundColor: "rgba(255,211,102,0.15)",
+  },
+  photoStatusText: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  photoStatusTextComplete: {
+    color: "#FFFFFF",
+  },
   photosGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
     width: "48%",
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
-    height: 120,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 16,
+    height: 140,
     overflow: "hidden",
     position: "relative",
+    borderWidth: 2,
+    borderColor: "#232838",
+    borderStyle: "dashed",
   },
-  tilePrimary: { height: 120 },
+  tilePrimary: { 
+    height: 140,
+    borderColor: "#7CFFCB",
+    borderStyle: "solid",
+  },
   tileImage: { width: "100%", height: "100%", resizeMode: "cover" },
-  placeholderInner: { flex: 1, alignItems: "center", justifyContent: "center" },
+  placeholderInner: { 
+    flex: 1, 
+    alignItems: "center", 
+    justifyContent: "center",
+    gap: 8,
+  },
   placeholderTitle: {
-    color: colors.text.secondary,
-    marginTop: 10,
-    textTransform: "lowercase",
+    color: colors.text.primary,
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: "600",
   },
   placeholderSubtitle: {
     color: colors.text.secondary,
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 11,
+    marginTop: 2,
   },
   retakeBadge: {
     position: "absolute",
@@ -833,11 +1033,13 @@ const styles = StyleSheet.create({
   },
 
   categoryCard: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
+    backgroundColor: "#11131A",
+    borderRadius: 16,
     marginHorizontal: 16,
     marginBottom: 12,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#1F2430",
   },
   categoryHeader: {
     flexDirection: "row",
@@ -845,10 +1047,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
+  categoryHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  categoryIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  categoryTitleContainer: {
+    flex: 1,
+  },
   categoryTitle: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text.primary,
+    marginBottom: 4,
+  },
+  categoryProgress: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  categoryHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  categoryProgressBar: {
+    height: 4,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  categoryProgressFill: {
+    height: 4,
+    borderRadius: 2,
   },
   itemsContainer: {
     paddingHorizontal: 16,
@@ -858,66 +1096,103 @@ const styles = StyleSheet.create({
   itemCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 12,
+    padding: 14,
     gap: 12,
+    borderWidth: 1,
+    borderColor: "#232838",
+  },
+  itemCardChecked: {
+    backgroundColor: "rgba(103,209,108,0.1)",
+    borderColor: "rgba(103,209,108,0.3)",
   },
   checkboxCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.text.secondary,
+    borderColor: "#3A3A3A",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#1B1F2A",
   },
   checkboxChecked: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
+    backgroundColor: "#67D16C",
+    borderColor: "#67D16C",
   },
   itemText: {
     flex: 1,
     fontSize: 14,
     color: colors.text.primary,
+    fontWeight: "500",
+  },
+  itemTextChecked: {
+    color: "#67D16C",
+    fontWeight: "600",
   },
   addIssueRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingVertical: 6,
-    marginTop: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 8,
+    backgroundColor: "rgba(201,182,255,0.1)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(201,182,255,0.2)",
   },
-  addIssueText: { color: "#C9B6FF", fontSize: 14 },
+  addIssueIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: "rgba(201,182,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addIssueText: { 
+    color: "#C9B6FF", 
+    fontSize: 14,
+    fontWeight: "600",
+  },
 
   statusCard: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
+    backgroundColor: "#11131A",
+    borderRadius: 20,
     marginHorizontal: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#1F2430",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 3,
   },
   statusHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 20,
+    gap: 8,
   },
   statusItem: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 16,
     padding: 16,
     alignItems: "center",
     flex: 1,
-    marginHorizontal: 4,
     borderWidth: 1,
-    borderColor: "#3A3A3A",
+    borderColor: "#232838",
+    gap: 8,
+  },
+  statusIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   statusNumber: {
     color: colors.text.primary,
@@ -932,18 +1207,27 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   progressSection: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   progressHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  readyLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   readyLabel: {
-    color: colors.text.primary,
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  progressBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   progressPercentage: {
     fontSize: 16,
@@ -979,123 +1263,193 @@ const styles = StyleSheet.create({
   timeText: { color: colors.text.secondary, fontSize: 12 },
 
   summaryCard: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
+    backgroundColor: "#11131A",
+    borderRadius: 20,
     marginHorizontal: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#1F2430",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 3,
   },
   summaryRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 8,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#2A2A2A",
+    borderBottomColor: "#1F2430",
+  },
+  summaryRowLast: {
+    borderBottomWidth: 0,
+  },
+  summaryLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
   },
   summaryLabel: {
     color: colors.text.secondary,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "500",
-    flex: 1,
+  },
+  summaryValueBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   summaryValue: {
-    color: colors.text.primary,
-    fontSize: 13,
-    fontWeight: "600",
-    textAlign: "right",
+    fontSize: 14,
+    fontWeight: "700",
   },
   statusBadge: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   statusBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "700",
   },
 
   primaryCta: {
     marginHorizontal: 16,
     backgroundColor: "#C9B6FF",
-    alignItems: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginTop: 8,
     shadowColor: "#C9B6FF",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: "hidden",
   },
   primaryCtaDisabled: {
-    backgroundColor: "#3A3A3A",
+    backgroundColor: "#2F3545",
     shadowOpacity: 0,
     elevation: 0,
   },
+  primaryCtaContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 18,
+  },
   primaryCtaText: {
-    color: "#000",
+    color: "#0B0B0F",
     fontWeight: "700",
     fontSize: 16,
   },
   primaryCtaTextDisabled: {
-    color: "#666666",
+    color: "#9CA3AF",
   },
   tertiaryCta: {
     marginHorizontal: 16,
     backgroundColor: "transparent",
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    borderRadius: 10,
-    marginTop: 8,
-    marginBottom: 12,
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginTop: 12,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#444444",
+    borderColor: "#232838",
   },
-  tertiaryCtaText: { color: colors.text.secondary, fontWeight: "600" },
+  tertiaryCtaText: { 
+    color: colors.text.secondary, 
+    fontWeight: "600",
+    fontSize: 14,
+  },
   checklistContainer: {
     backgroundColor: "transparent",
+    marginTop: 12,
   },
-  checklistTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.text.primary,
+  checklistHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
     marginHorizontal: 16,
   },
+  checklistHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  checklistHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(201,182,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checklistTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  checklistSubtitle: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  completionBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  completionPercentage: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
   inputCard: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
+    backgroundColor: "#11131A",
+    borderRadius: 20,
     marginHorizontal: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 16,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#1F2430",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 3,
   },
   inputRow: {
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  inputLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
   },
   inputLabel: {
     color: colors.text.primary,
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 8,
+  },
+  metricsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  metricInput: {
+    flex: 1,
   },
   inputWithUnit: {
     flexDirection: "row",
@@ -1103,28 +1457,37 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   textArea: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 12,
+    padding: 14,
     color: colors.text.primary,
     fontSize: 14,
-    minHeight: 80,
+    minHeight: 100,
     borderWidth: 1,
-    borderColor: "#3A3A3A",
+    borderColor: "#232838",
   },
   numberInput: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 12,
+    padding: 14,
     color: colors.text.primary,
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: "600",
     borderWidth: 1,
-    borderColor: "#3A3A3A",
+    borderColor: "#232838",
     flex: 1,
   },
+  unitBadge: {
+    backgroundColor: "rgba(124,255,203,0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    minWidth: 40,
+    alignItems: "center",
+  },
   inputUnit: {
-    color: colors.text.secondary,
+    color: "#7CFFCB",
     fontSize: 14,
-    marginLeft: 8,
+    fontWeight: "700",
   },
 });

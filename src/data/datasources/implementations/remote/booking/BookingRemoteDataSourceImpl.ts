@@ -12,6 +12,7 @@ import { BookingForStaffResponse } from "../../../../models/booking/staffRespons
 import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/BookingRemoteDataSource";
 import { BookingResponse } from "../../../../models/booking/BookingResponse";
+import { AssignVehicleResponse } from "../../../../models/booking/AssignVehicleResponse";
 
 export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
@@ -223,11 +224,16 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async assignVehicle(vehicleId: string, bookingId: string): Promise<void> {
+    async assignVehicle(vehicleId: string, bookingId: string): Promise<ApiResponse<AssignVehicleResponse>> {
     try {
       const endpoint = ApiEndpoints.booking.assignVehicle(vehicleId, bookingId);
-      const response = await this.axiosClient.put<ApiResponse<void>>(endpoint);
-      return unwrapResponse(response.data);
+      const response = await this.axiosClient.put<ApiResponse<AssignVehicleResponse>>(endpoint);
+      return {
+        success: true,
+        message: "Vehicle assigned to booking successfully",
+        data: response.data.data,
+        code: response.status,
+      };
     } catch (error: any) {
       console.error("Failed to assign vehicle to booking:", error);
       throw error;
