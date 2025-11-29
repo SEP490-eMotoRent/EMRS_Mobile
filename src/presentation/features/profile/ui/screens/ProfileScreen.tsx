@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DocumentVerificationHelper } from "../../../../../domain/helpers/DocumentVerificationHelper";
+import { TransactionTypeHelper } from "../../../../../domain/helpers/TransactionTypeHelper";
 import { ProfileStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { useAppDispatch } from "../../../authentication/store/hooks";
 import { removeAuth } from "../../../authentication/store/slices/authSlice";
@@ -22,7 +23,6 @@ import { QuickSettings } from "../organisms/QuickSettings";
 import { TransactionList } from "../organisms/TransactionList";
 import { VerificationCard } from "../organisms/VerificationCard";
 import { WalletCard } from "../organisms/WalletCard";
-import { TransactionTypeHelper } from "../../../../../domain/helpers/TransactionTypeHelper";
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -74,7 +74,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       navigation.navigate("AllTransactions");
   };
   
-  const handleVerify = () => navigation.navigate("EditProfile");
+  const handleVerify = () => navigation.navigate("DocumentManagement");
   const handleInsuranceClaims = () => navigation.navigate("InsuranceClaims");
 
   const handleSignOut = () => {

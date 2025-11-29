@@ -4,12 +4,12 @@ import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { DocumentResponse } from '../../../../../data/models/account/renter/RenterResponse';
 import { useCreateDocument } from '../../hooks/documents/useCreateDocument';
 import { useDeleteDocument } from '../../hooks/documents/useDeleteDocument';
+import { useDocumentOCR } from '../../hooks/documents/useDocumentOCR';
 import { useUpdateDocument } from '../../hooks/documents/useUpdateDocument';
 import { useRenterProfile } from '../../hooks/profile/useRenterProfile';
 import { useUpdateRenterProfile } from '../../hooks/profile/useUpdateRenterProfile';
-import { EditProfileTemplate } from '../templates/EditProfileTemplate';
 import { DatePickerModal } from '../organisms/DatePickerModal';
-import { useDocumentOCR } from '../../hooks/documents/useDocumentOCR';
+import { EditProfileTemplate } from '../templates/EditProfileTemplate';
 
 // Helper: Normalize URI to string (handles string | string[] | undefined)
 const normalizeUri = (uri: string | string[] | undefined): string | undefined => {
@@ -59,7 +59,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
     // Form state
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
-    const [countryCode] = useState('+84');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [dateOfBirth, setDateOfBirth] = useState('');
     const [address, setAddress] = useState('');
@@ -630,7 +629,9 @@ export const EditProfileScreen = ({ navigation }: any) => {
 
             const request: any = {
                 Email: email.trim(),
-                phone: `${countryCode}${phoneNumber.replace(/\s/g, '')}`,
+                phone: phoneNumber.startsWith('0') 
+                    ? `+84${phoneNumber.substring(1).replace(/\s/g, '')}` 
+                    : `+84${phoneNumber.replace(/\s/g, '')}`,
                 Address: address.trim(),
                 DateOfBirth: formattedDate,
                 Fullname: fullName.trim(),
@@ -686,7 +687,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 profileImageUri={profileImageUri}
                 fullName={fullName}
                 email={email}
-                countryCode={countryCode}
                 phoneNumber={phoneNumber}
                 dateOfBirth={dateOfBirth}
                 address={address}
@@ -715,7 +715,6 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 onChangePhoto={pickImage}
                 onFullNameChange={setFullName}
                 onEmailChange={setEmail}
-                onCountryCodePress={() => {}}
                 onPhoneNumberChange={setPhoneNumber}
                 onDatePress={handleDateOfBirthPress}
                 onAddressChange={setAddress}

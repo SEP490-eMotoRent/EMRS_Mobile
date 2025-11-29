@@ -3,6 +3,8 @@ import { Text, StyleSheet, TextStyle } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 export type IconName = 
     | 'back' 
@@ -19,6 +21,7 @@ export type IconName =
     | 'plus'
     | 'arrow'
     | 'check'
+    | 'checkmark'
     | 'cross'
     | 'bell'
     | 'card'
@@ -34,23 +37,24 @@ export type IconName =
     | 'flash-off'
     | 'close'
     | 'image'
-    | 'trash';  // ✅ NEW
+    | 'trash'
+    | 'warning'
+    | 'info'
+    | 'time';
 
 interface IconProps {
     name: IconName;
     size?: number;
     color?: string;
-    useVectorIcons?: boolean;
 }
 
 export const Icon: React.FC<IconProps> = ({ 
     name, 
     size = 24, 
     color = '#FFFFFF',
-    useVectorIcons = true 
 }) => {
-    // Vector icon mapping
-    const vectorIcons: Record<IconName, { family: 'material' | 'community' | 'ionicons', name: string }> = {
+    // Vector icon mapping - using the best icon from each library
+    const vectorIcons: Record<IconName, { family: 'material' | 'community' | 'ionicons' | 'fontawesome' | 'fontawesome5', name: string }> = {
         back: { family: 'ionicons', name: 'arrow-back' },
         camera: { family: 'ionicons', name: 'camera-outline' },
         calendar: { family: 'ionicons', name: 'calendar-outline' },
@@ -66,6 +70,7 @@ export const Icon: React.FC<IconProps> = ({
         plus: { family: 'ionicons', name: 'add' },
         arrow: { family: 'ionicons', name: 'chevron-forward' },
         check: { family: 'ionicons', name: 'checkmark' },
+        checkmark: { family: 'ionicons', name: 'checkmark' },
         cross: { family: 'ionicons', name: 'close' },
         bell: { family: 'ionicons', name: 'notifications-outline' },
         card: { family: 'ionicons', name: 'card-outline' },
@@ -80,64 +85,27 @@ export const Icon: React.FC<IconProps> = ({
         'flash-off': { family: 'ionicons', name: 'flash-off' },
         close: { family: 'ionicons', name: 'close' },
         image: { family: 'ionicons', name: 'image-outline' },
-        trash: { family: 'ionicons', name: 'trash-outline' },  // ✅ NEW
+        trash: { family: 'ionicons', name: 'trash-outline' },
+        warning: { family: 'fontawesome5', name: 'exclamation-triangle' },
+        info: { family: 'ionicons', name: 'information-circle-outline' },
+        time: { family: 'ionicons', name: 'time-outline' },
     };
 
-    // Emoji fallback mapping
-    const emojiIcons: Record<IconName, string> = {
-        back: '←',
-        camera: '📷',
-        calendar: '📅',
-        id: '🆔',
-        license: '📄',
-        lock: '🔒',
-        chevron: '›',
-        shield: '🛡️',
-        dropdown: '▼',
-        edit: '✎',
-        wallet: '💳',
-        minus: '−',
-        plus: '+',
-        arrow: '›',
-        check: '✓',
-        cross: '✗',
-        bell: '🔔',
-        card: '💳',
-        location: '📍',
-        language: '🌐',
-        gift: '🎁',
-        document: '📄',
-        help: '❓',
-        terms: '📋',
-        logout: '⎋',
-        flash: '⚡',
-        'flash-off': '🔦',
-        close: '✕',
-        image: '🖼️',
-        trash: '🗑️',  // ✅ NEW
-    };
-
-    if (useVectorIcons) {
-        const iconConfig = vectorIcons[name];
-        
-        switch (iconConfig.family) {
-            case 'material':
-                return <MaterialIcons name={iconConfig.name} size={size} color={color} />;
-            case 'community':
-                return <MaterialCommunityIcons name={iconConfig.name} size={size} color={color} />;
-            case 'ionicons':
-            default:
-                return <Ionicons name={iconConfig.name} size={size} color={color} />;
-        }
+    const iconConfig = vectorIcons[name];
+    
+    switch (iconConfig.family) {
+        case 'material':
+            return <MaterialIcons name={iconConfig.name} size={size} color={color} />;
+        case 'community':
+            return <MaterialCommunityIcons name={iconConfig.name} size={size} color={color} />;
+        case 'fontawesome':
+            return <FontAwesome name={iconConfig.name} size={size} color={color} />;
+        case 'fontawesome5':
+            return <FontAwesome5 name={iconConfig.name} size={size} color={color} />;
+        case 'ionicons':
+        default:
+            return <Ionicons name={iconConfig.name} size={size} color={color} />;
     }
-
-    // Fallback to emoji icons
-    const iconStyle: TextStyle = {
-        color,
-        fontSize: size,
-    };
-
-    return <Text style={[styles.icon, iconStyle]}>{emojiIcons[name] || '?'}</Text>;
 };
 
 const styles = StyleSheet.create({

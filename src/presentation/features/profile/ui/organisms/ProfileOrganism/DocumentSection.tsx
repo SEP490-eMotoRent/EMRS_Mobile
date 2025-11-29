@@ -77,6 +77,19 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     const numberLabel = title === "Căn Cước Công Dân (CCCD)" ? "Số CCCD*" : "Số Bằng Lái*";
     const uploadLabel = title === "Căn Cước Công Dân (CCCD)" ? "CCCD" : "Bằng Lái";
 
+    // Format dates for display
+    const displayIssueDate = hasDocument && existingDocument.issueDate
+        ? new Date(existingDocument.issueDate).toLocaleDateString('vi-VN')
+        : issueDate || '';
+    
+    const displayExpiryDate = hasDocument && existingDocument.expiryDate
+        ? new Date(existingDocument.expiryDate).toLocaleDateString('vi-VN')
+        : expiryDate || '';
+    
+    const displayAuthority = hasDocument 
+        ? existingDocument.issuingAuthority 
+        : issuingAuthority || '';
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -126,54 +139,34 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 />
             </View>
 
-            {/* Show editable fields for NEW documents, read-only for existing */}
-            {hasDocument ? (
-                <View style={styles.documentInfo}>
-                    <View style={styles.infoRow}>
-                        <RNText style={styles.infoLabel}>Ngày Phát Hành:</RNText>
-                        <RNText style={styles.infoValue}>
-                            {new Date(existingDocument.issueDate).toLocaleDateString('vi-VN')}
-                        </RNText>
-                    </View>
-                    <View style={styles.infoRow}>
-                        <RNText style={styles.infoLabel}>Ngày Hết Hạn:</RNText>
-                        <RNText style={styles.infoValue}>
-                            {new Date(existingDocument.expiryDate).toLocaleDateString('vi-VN')}
-                        </RNText>
-                    </View>
-                    <View style={styles.infoRow}>
-                        <RNText style={styles.infoLabel}>Cơ Quan Cấp:</RNText>
-                        <RNText style={styles.infoValue} numberOfLines={2} ellipsizeMode="tail">
-                            {existingDocument.issuingAuthority}
-                        </RNText>
-                    </View>
-                </View>
-            ) : (
-                <View style={styles.editableFields}>
-                    {onIssueDatePress && (
-                        <DateInput
-                            label="Ngày Phát Hành"
-                            value={issueDate || ''}
-                            onPress={onIssueDatePress}
-                        />
-                    )}
-                    {onExpiryDatePress && (
-                        <DateInput
-                            label="Ngày Hết Hạn"
-                            value={expiryDate || ''}
-                            onPress={onExpiryDatePress}
-                        />
-                    )}
-                    {onIssuingAuthorityChange && (
-                        <TextInput
-                            label="Cơ Quan Cấp"
-                            value={issuingAuthority || ''}
-                            onChangeText={onIssuingAuthorityChange}
-                            placeholder="Nhập cơ quan cấp"
-                        />
-                    )}
-                </View>
-            )}
+            {/* ✅ ALWAYS show input fields (disabled if existing document) */}
+            <View style={hasDocument ? styles.disabledInput : styles.editableFields}>
+                {onIssueDatePress && (
+                    <DateInput
+                        label="Ngày Phát Hành"
+                        value={displayIssueDate}
+                        onPress={hasDocument ? undefined : onIssueDatePress}
+                        editable={!hasDocument}
+                    />
+                )}
+                {onExpiryDatePress && (
+                    <DateInput
+                        label="Ngày Hết Hạn"
+                        value={displayExpiryDate}
+                        onPress={hasDocument ? undefined : onExpiryDatePress}
+                        editable={!hasDocument}
+                    />
+                )}
+                {onIssuingAuthorityChange && (
+                    <TextInput
+                        label="Cơ Quan Cấp"
+                        value={displayAuthority}
+                        onChangeText={onIssuingAuthorityChange}
+                        placeholder="Nhập cơ quan cấp"
+                        editable={!hasDocument}
+                    />
+                )}
+            </View>
 
             {additionalFields}
 
@@ -340,33 +333,9 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '500',
     },
-    documentInfo: {
-        backgroundColor: '#F3F4F6',
-        borderRadius: 8,
-        padding: 12,
-        marginTop: 8,
-        gap: 8,
-    },
     editableFields: {
         gap: 12,
         marginTop: 8,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-    },
-    infoLabel: {
-        fontSize: 14,
-        color: '#6B7280',
-        flex: 1,
-    },
-    infoValue: {
-        fontSize: 14,
-        color: '#111827',
-        fontWeight: '500',
-        flex: 2,
-        textAlign: 'right',
     },
     uploadLabel: {
         marginTop: 8,

@@ -261,6 +261,9 @@ export type TripStackParamList = {
 export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
+  DocumentManagement: undefined;
+  CitizenIDVerification: undefined;
+  DriverLicenseVerification: undefined;
   DocumentCapture: {
     documentType: 'citizen' | 'license';
     side: 'front' | 'back';
