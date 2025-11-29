@@ -55,6 +55,16 @@ export type BrowseStackParamList = {
     dateRange: string;
     location?: string;
   };
+
+    // Document Management Screens
+  DocumentManagement: undefined;
+  CitizenIDVerification: undefined;
+  DriverLicenseVerification: undefined;
+  DocumentCapture: {
+    documentType: 'citizen' | 'license';
+    side: 'front' | 'back';
+    onPhotoTaken: (uri: string, side: 'front' | 'back') => void;
+  };
 };
 
 export type BookingStackParamList = {

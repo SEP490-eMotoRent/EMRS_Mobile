@@ -10,29 +10,27 @@ import {
   View,
 } from "react-native";
 import {
-  BrowseStackParamList,
-  HomeStackParamList,
+  BrowseStackParamList
 } from "../../../../shared/navigation/StackParameters/types";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import sl from "../../../../../core/di/InjectionContainer";
 import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
+import { useRenterProfile } from "../../../../features/profile/hooks/profile/useRenterProfile";
 import { useVehicleBranches } from "../../hooks/useVehicleBranches";
 import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
 import { BookingButtonWithPrice } from "../atoms/buttons/BookingButtonWithPrice";
-import { ConditionSection } from "../organisms/ConditionSection";
 import { ImageGallery } from "../organisms/ImageGallery";
 import { PickupLocationSection } from "../organisms/PickupLocationSection";
 
 type RoutePropType = RouteProp<BrowseStackParamList, "VehicleDetails">;
-type NavProp = StackNavigationProp<HomeStackParamList>;
+type NavProp = StackNavigationProp<BrowseStackParamList>;
 
 export const VehicleDetailsScreen: React.FC = () => {
   const route = useRoute<RoutePropType>();
   const navigation = useNavigation<NavProp>();
   
-  // ✅ UPDATED: Extract dateRange and location from route params
   const { vehicleId, dateRange, location } = route.params;
 
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
@@ -55,10 +53,42 @@ export const VehicleDetailsScreen: React.FC = () => {
     error: branchesError,
   } = useVehicleBranches(vehicleId, branchUseCase);
 
-  // Auto-select first branch when branches load
+  const { renterResponse } = useRenterProfile();
+
+  const checkDocumentsComplete = () => {
+    if (!renterResponse) return { complete: false, missing: ['Căn Cước Công Dân', 'Giấy Phép Lái Xe'] };
+
+    const citizenDoc = renterResponse.documents.find(
+      doc => doc.documentType === 'Citizen'
+    );
+    const licenseDoc = renterResponse.documents.find(
+      doc => doc.documentType === 'Driving' || 
+            doc.documentType === 'License' || 
+            doc.documentType === 'DriverLicense'
+    );
+
+    const missing: string[] = [];
+    if (!citizenDoc) missing.push('Căn Cước Công Dân');
+    if (!licenseDoc) missing.push('Giấy Phép Lái Xe');
+
+    return {
+      complete: missing.length === 0,
+      hasCitizen: !!citizenDoc,
+      hasLicense: !!licenseDoc,
+      missing,
+    };
+  };
+
+  const documentsStatus = checkDocumentsComplete();
+
   React.useEffect(() => {
     if (branches.length > 0 && !selectedBranchId) {
-      setSelectedBranchId(branches[0].id);
+      const firstAvailableBranch = branches.find(b => (b.vehicleCount ?? 0) > 0);
+      if (firstAvailableBranch) {
+        setSelectedBranchId(firstAvailableBranch.id);
+      } else {
+        setSelectedBranchId(branches[0].id);
+      }
     }
   }, [branches, selectedBranchId]);
 
@@ -82,27 +112,47 @@ export const VehicleDetailsScreen: React.FC = () => {
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
   const securityDeposit = data.depositAmount > 0 ? data.depositAmount : 2000000;
 
+  const hasAvailableVehicles = selectedBranch && (selectedBranch.vehicleCount ?? 0) > 0;
+  const isBookingDisabled = !selectedBranchId || !hasAvailableVehicles || !documentsStatus.complete;
+
   const handleBooking = () => {
     if (!selectedBranchId || !selectedBranch) {
       return;
     }
 
-    navigation.navigate("Booking", {
-      screen: "ConfirmRentalDuration",
-      params: {
-        vehicleId,
-        vehicleName: data.name,
-        vehicleImageUrl: data.imageUrl,
-        branchId: selectedBranchId,
-        branchName: selectedBranch.name,
-        pricePerDay: data.pricePerDay,
-        securityDeposit: securityDeposit,
-        branchOpenTime: selectedBranch.openingTime,
-        branchCloseTime: selectedBranch.closingTime,
-        vehicleCategory: data.category || "ECONOMY",
-        dateRange: dateRange,
-      },
-    });
+    if (!hasAvailableVehicles) {
+      console.warn('⚠️ Cannot book - no vehicles available at selected branch');
+      return;
+    }
+
+    if (!documentsStatus.complete) {
+      console.warn('⚠️ Cannot book - documents incomplete');
+      return;
+    }
+
+    const parentNav = navigation.getParent();
+    if (parentNav) {
+      parentNav.navigate("Booking", {
+        screen: "ConfirmRentalDuration",
+        params: {
+          vehicleId,
+          vehicleName: data.name,
+          vehicleImageUrl: data.imageUrl,
+          branchId: selectedBranchId,
+          branchName: selectedBranch.name,
+          pricePerDay: data.pricePerDay,
+          securityDeposit: securityDeposit,
+          branchOpenTime: selectedBranch.openingTime,
+          branchCloseTime: selectedBranch.closingTime,
+          vehicleCategory: data.category || "ECONOMY",
+          dateRange: dateRange,
+        },
+      });
+    }
+  };
+
+  const handleGoToDocuments = () => {
+    navigation.navigate('DocumentManagement');
   };
 
   return (
@@ -125,7 +175,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           <Text style={styles.vehicleName}>{data.name}</Text>
         </View>
 
-        {/* ✅ Specs as vertical list - "Đặc Điểm" */}
+        {/* Specs as vertical list - "Đặc Điểm" */}
         <View style={styles.specsSection}>
           <Text style={styles.sectionTitle}>Đặc Điểm</Text>
           
@@ -174,7 +224,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ✅ Security Deposit Card */}
+        {/* Security Deposit Card */}
         <View style={styles.depositCard}>
           <View style={styles.depositHeader}>
             <Text style={styles.depositIcon}>💰</Text>
@@ -185,7 +235,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* ✅ Description with Vietnamese buttons */}
+        {/* Description with Vietnamese buttons */}
         {data.description && data.description !== "No description." && (
           <View style={styles.descriptionContainer}>
             <View style={styles.descriptionHeader}>
@@ -209,7 +259,63 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         )}
 
-        {/* ✅ Pickup Location */}
+        {/* ✅ ALWAYS SHOW: Document Verification Section */}
+        <View style={[
+          styles.documentsWarning,
+          documentsStatus.complete && styles.documentsWarningComplete
+        ]}>
+          <View style={styles.documentsWarningHeader}>
+            <Text style={styles.documentsWarningIcon}>📄</Text>
+            <View style={styles.documentsWarningTextContainer}>
+              <Text style={[
+                styles.documentsWarningTitle,
+                documentsStatus.complete && styles.documentsWarningTitleComplete
+              ]}>
+                {documentsStatus.complete ? 'Giấy Tờ Đã Xác Thực' : 'Yêu Cầu Giấy Tờ'}
+              </Text>
+              <Text style={styles.documentsWarningMessage}>
+                {documentsStatus.complete 
+                  ? 'Bạn đã tải đầy đủ giấy tờ cần thiết để đặt xe.'
+                  : 'Bạn cần tải lên đầy đủ giấy tờ để đặt xe:'}
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.documentsList}>
+            <View style={styles.documentItem}>
+              <Text style={documentsStatus.hasCitizen ? styles.documentCheckComplete : styles.documentCheckMissing}>
+                {documentsStatus.hasCitizen ? '✓' : '✗'}
+              </Text>
+              <Text style={documentsStatus.hasCitizen ? styles.documentTextComplete : styles.documentTextMissing}>
+                Căn Cước Công Dân (CCCD)
+              </Text>
+            </View>
+            
+            <View style={styles.documentItem}>
+              <Text style={documentsStatus.hasLicense ? styles.documentCheckComplete : styles.documentCheckMissing}>
+                {documentsStatus.hasLicense ? '✓' : '✗'}
+              </Text>
+              <Text style={documentsStatus.hasLicense ? styles.documentTextComplete : styles.documentTextMissing}>
+                Giấy Phép Lái Xe
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={[
+              styles.uploadDocumentsButton,
+              documentsStatus.complete && styles.uploadDocumentsButtonComplete
+            ]}
+            onPress={handleGoToDocuments}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.uploadDocumentsButtonText}>
+              {documentsStatus.complete ? 'Quản Lý Giấy Tờ' : 'Tải Lên Giấy Tờ'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Pickup Location */}
         <PickupLocationSection
           branches={branches}
           branchesError={branchesError}
@@ -217,21 +323,25 @@ export const VehicleDetailsScreen: React.FC = () => {
           onBranchSelect={setSelectedBranchId}
         />
 
-        {/* ✅ Conditions at the bottom */}
-        <ConditionSection
-          requirements={[
-            "Yêu cầu CMND/CCCD",
-            "Yêu cầu Giấy phép lái xe",
-            "Khách hàng phải đặt cọc",
-          ]}
-        />
+        {/* Warning message when no vehicles available */}
+        {selectedBranch && (selectedBranch.vehicleCount ?? 0) === 0 && (
+          <View style={styles.unavailableWarning}>
+            <Text style={styles.unavailableIcon}>⚠️</Text>
+            <View style={styles.unavailableTextContainer}>
+              <Text style={styles.unavailableTitle}>Xe Không Có Sẵn</Text>
+              <Text style={styles.unavailableMessage}>
+                Chi nhánh này hiện đã hết xe này. Vui lòng chọn chi nhánh khác.
+              </Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       <BookingButtonWithPrice
         pricePerDay={data.pricePerDay}
         dateRange={dateRange}
         onPress={handleBooking}
-        disabled={!selectedBranchId}
+        disabled={isBookingDisabled}
       />
     </SafeAreaView>
   );
@@ -246,7 +356,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 100, // ✅ Space for booking button + safe area
+    paddingBottom: 100,
   },
   center: {
     flex: 1,
@@ -272,7 +382,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
   },
-  // ✅ Vertical specs list
   specsSection: {
     backgroundColor: "#1a1a1a",
     padding: 20,
@@ -380,5 +489,116 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     fontSize: 14,
     lineHeight: 20,
+  },
+  unavailableWarning: {
+    flexDirection: "row",
+    backgroundColor: "#2a1a1a",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#4a2a2a",
+    alignItems: "flex-start",
+  },
+  unavailableIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  unavailableTextContainer: {
+    flex: 1,
+  },
+  unavailableTitle: {
+    color: "#ff6b6b",
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  unavailableMessage: {
+    color: "#ff9999",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  // Document verification section styles
+  documentsWarning: {
+    backgroundColor: "#1a1a2a",
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#3a3a4a",
+  },
+  documentsWarningComplete: {
+    backgroundColor: "#1a2a1a",
+    borderColor: "#2a4a2a",
+  },
+  documentsWarningHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  documentsWarningIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  documentsWarningTextContainer: {
+    flex: 1,
+  },
+  documentsWarningTitle: {
+    color: "#a78bfa",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  documentsWarningTitleComplete: {
+    color: "#10b981",
+  },
+  documentsWarningMessage: {
+    color: "#c4b5fd",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  documentsList: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  documentItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  documentCheckComplete: {
+    fontSize: 18,
+    color: "#10b981",
+    fontWeight: "700",
+  },
+  documentCheckMissing: {
+    fontSize: 18,
+    color: "#ef4444",
+    fontWeight: "700",
+  },
+  documentTextComplete: {
+    color: "#10b981",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  documentTextMissing: {
+    color: "#ff9999",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  uploadDocumentsButton: {
+    backgroundColor: "#a78bfa",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  uploadDocumentsButtonComplete: {
+    backgroundColor: "#10b981",
+  },
+  uploadDocumentsButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

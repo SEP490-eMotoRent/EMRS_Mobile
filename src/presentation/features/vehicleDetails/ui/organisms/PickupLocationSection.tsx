@@ -1,4 +1,3 @@
-// presentation/features/vehicleDetails/ui/organisms/PickupLocationSection.tsx
 import { FontAwesome } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -61,37 +60,61 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                 {/* Dropdown List */}
                 {showDropdown && (
                     <View style={styles.dropdownList}>
-                        {branches.map((branch) => (
-                            <TouchableOpacity
-                                key={branch.id}
-                                style={[
-                                    styles.dropdownItem,
-                                    branch.id === selectedBranchId && styles.dropdownItemSelected
-                                ]}
-                                onPress={() => {
-                                    onBranchSelect(branch.id);
-                                    setShowDropdown(false);
-                                }}
-                                activeOpacity={0.7}
-                            >
-                                <View style={styles.dropdownItemHeader}>
+                        {branches.map((branch) => {
+                            const isAvailable = (branch.vehicleCount ?? 0) > 0;
+                            const isSelected = branch.id === selectedBranchId;
+                            
+                            return (
+                                <TouchableOpacity
+                                    key={branch.id}
+                                    style={[
+                                        styles.dropdownItem,
+                                        isSelected && styles.dropdownItemSelected,
+                                        !isAvailable && styles.dropdownItemUnavailable, // ✅ NEW
+                                    ]}
+                                    onPress={() => {
+                                        onBranchSelect(branch.id);
+                                        setShowDropdown(false);
+                                    }}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={styles.dropdownItemHeader}>
+                                        <Text style={[
+                                            styles.dropdownItemText,
+                                            isSelected && styles.dropdownItemTextSelected,
+                                            !isAvailable && styles.dropdownItemTextUnavailable, // ✅ NEW
+                                        ]}>
+                                            {branch.name}
+                                        </Text>
+                                        {branch.vehicleCount !== undefined && (
+                                            <View style={[
+                                                styles.dropdownVehicleCount,
+                                                !isAvailable && styles.dropdownVehicleCountUnavailable, // ✅ NEW
+                                            ]}>
+                                                <Text style={[
+                                                    styles.dropdownVehicleCountText,
+                                                    !isAvailable && styles.dropdownVehicleCountTextUnavailable, // ✅ NEW
+                                                ]}>
+                                                    {branch.vehicleCount} xe
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
                                     <Text style={[
-                                        styles.dropdownItemText,
-                                        branch.id === selectedBranchId && styles.dropdownItemTextSelected
+                                        styles.dropdownItemAddress,
+                                        !isAvailable && styles.dropdownItemAddressUnavailable, // ✅ NEW
                                     ]}>
-                                        {branch.name}
+                                        {branch.address}
                                     </Text>
-                                    {branch.vehicleCount !== undefined && (
-                                        <View style={styles.dropdownVehicleCount}>
-                                            <Text style={styles.dropdownVehicleCountText}>
-                                                {branch.vehicleCount} xe
-                                            </Text>
-                                        </View>
+                                    {/* ✅ NEW: Unavailable indicator */}
+                                    {!isAvailable && (
+                                        <Text style={styles.unavailableLabel}>
+                                            Không có sẵn
+                                        </Text>
                                     )}
-                                </View>
-                                <Text style={styles.dropdownItemAddress}>{branch.address}</Text>
-                            </TouchableOpacity>
-                        ))}
+                                </TouchableOpacity>
+                            );
+                        })}
                     </View>
                 )}
             </View>
@@ -140,8 +163,14 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                 <View style={styles.branchHeader}>
                     <Text style={styles.branchName}>{selectedBranch.name}</Text>
                     {selectedBranch.vehicleCount !== undefined && (
-                        <View style={styles.vehicleCountBadge}>
-                            <Text style={styles.vehicleCountText}>
+                        <View style={[
+                            styles.vehicleCountBadge,
+                            (selectedBranch.vehicleCount ?? 0) === 0 && styles.vehicleCountBadgeUnavailable, // ✅ NEW
+                        ]}>
+                            <Text style={[
+                                styles.vehicleCountText,
+                                (selectedBranch.vehicleCount ?? 0) === 0 && styles.vehicleCountTextUnavailable, // ✅ NEW
+                            ]}>
                                 {selectedBranch.vehicleCount} xe
                             </Text>
                         </View>
@@ -209,6 +238,10 @@ const styles = StyleSheet.create({
     dropdownItemSelected: {
         backgroundColor: "#1a1a1a",
     },
+    // ✅ NEW: Unavailable item styling
+    dropdownItemUnavailable: {
+        opacity: 0.6,
+    },
     dropdownItemHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -224,20 +257,46 @@ const styles = StyleSheet.create({
     dropdownItemTextSelected: {
         color: "#a78bfa",
     },
+    // ✅ NEW: Unavailable text styling
+    dropdownItemTextUnavailable: {
+        color: "#666",
+    },
     dropdownVehicleCount: {
         backgroundColor: "#333",
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
     },
+    // ✅ NEW: Unavailable badge styling
+    dropdownVehicleCountUnavailable: {
+        backgroundColor: "#2a2a2a",
+        borderWidth: 1,
+        borderColor: "#3a3a3a",
+    },
     dropdownVehicleCountText: {
         color: "#22c55e",
         fontSize: 11,
         fontWeight: "600",
     },
+    // ✅ NEW: Unavailable count text styling
+    dropdownVehicleCountTextUnavailable: {
+        color: "#666",
+    },
     dropdownItemAddress: {
         color: "#999",
         fontSize: 12,
+    },
+    // ✅ NEW: Unavailable address styling
+    dropdownItemAddressUnavailable: {
+        color: "#555",
+    },
+    // ✅ NEW: Unavailable label
+    unavailableLabel: {
+        color: "#ff6b6b",
+        fontSize: 11,
+        fontWeight: "600",
+        marginTop: 4,
+        fontStyle: "italic",
     },
     mapContainer: {
         width: "100%",
@@ -280,39 +339,47 @@ const styles = StyleSheet.create({
     },
     branchCard: {
         backgroundColor: "#000",
-        padding: 20, // ✅ Increased from 16
+        padding: 20,
         borderRadius: 16,
-        borderWidth: 1, // ✅ Added border
-        borderColor: "#222", // ✅ Subtle border
+        borderWidth: 1,
+        borderColor: "#222",
     },
     branchHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 16, // ✅ Increased spacing
+        marginBottom: 16,
     },
     branchName: {
         color: "#fff",
-        fontSize: 18, // ✅ Larger font
+        fontSize: 18,
         fontWeight: "700",
         flex: 1,
     },
-    // ✅ NEW: Styled vehicle count badge
     vehicleCountBadge: {
-        backgroundColor: "rgba(34, 197, 94, 0.15)", // Green tint
+        backgroundColor: "rgba(34, 197, 94, 0.15)",
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
         borderWidth: 1,
         borderColor: "rgba(34, 197, 94, 0.3)",
     },
+    // ✅ NEW: Unavailable badge styling in branch card
+    vehicleCountBadgeUnavailable: {
+        backgroundColor: "rgba(255, 107, 107, 0.15)",
+        borderColor: "rgba(255, 107, 107, 0.3)",
+    },
     vehicleCountText: {
-        color: "#22c55e", // Green
+        color: "#22c55e",
         fontSize: 13,
         fontWeight: "700",
     },
+    // ✅ NEW: Unavailable text styling in branch card
+    vehicleCountTextUnavailable: {
+        color: "#ff6b6b",
+    },
     badgeContainer: {
-        marginTop: 12, // ✅ Increased from 8
+        marginTop: 12,
         alignSelf: "flex-start",
     },
     errorText: {
