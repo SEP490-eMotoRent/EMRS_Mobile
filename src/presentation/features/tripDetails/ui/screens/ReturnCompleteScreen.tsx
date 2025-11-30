@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,9 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { AntDesign } from "@expo/vector-icons";
 import { colors } from "../../../../common/theme/colors";
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { GetBookingByIdUseCase } from "../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import sl from "../../../../../core/di/InjectionContainer";
+import { Booking } from "../../../../../domain/entities/booking/Booking";
 
 type NavProp = StackNavigationProp<TripStackParamList, "ReturnComplete">;
 type RouteP = RouteProp<TripStackParamList, "ReturnComplete">;
@@ -20,19 +23,27 @@ type RouteP = RouteProp<TripStackParamList, "ReturnComplete">;
 export const ReturnCompleteScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<RouteP>();
+  const { bookingId, refundAmount } = route.params;
+  const [booking, setBooking] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    fetchBooking();
+  }, [bookingId]);
+
+  const fetchBooking = async () => {
+    const bookingUseCase = new GetBookingByIdUseCase(
+      sl.get("BookingRepository")
+    );
+    const booking = await bookingUseCase.execute(bookingId);
+    setBooking(booking);
+  };
 
   const formatVnd = (n: number) =>
     new Intl.NumberFormat("vi-VN").format(n) + "đ";
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString("vi-VN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return date.toLocaleString("en-GB");
   };
 
   return (
@@ -45,11 +56,9 @@ export const ReturnCompleteScreen: React.FC = () => {
               <AntDesign name="check" size={32} color="#22C55E" />
             </View>
           </View>
-          <Text style={styles.successMessage}>
-            Xe đã được trả thành công
-          </Text>
+          <Text style={styles.successMessage}>Xe đã được trả thành công</Text>
           <Text style={styles.timestamp}>
-            {formatDate(new Date().toISOString())}
+            {formatDate(booking?.actualReturnDatetime?.toString())}
           </Text>
         </View>
 
@@ -61,9 +70,12 @@ export const ReturnCompleteScreen: React.FC = () => {
               <AntDesign name="user" size={24} color={colors.text.secondary} />
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>Nguyễn Văn A</Text>
+              <Text style={styles.userName}>
+                {booking?.renter?.account?.fullname}
+              </Text>
               <Text style={styles.vehicleInfo}>
-                VinFast Evo200 - 59X1-12345
+                {booking?.vehicleModel?.modelName} -{" "}
+                {booking?.vehicle?.licensePlate}
               </Text>
             </View>
           </View>
@@ -99,7 +111,7 @@ export const ReturnCompleteScreen: React.FC = () => {
 
           <View style={styles.financialRow}>
             <Text style={styles.financialLabel}>Hoàn tiền</Text>
-            <Text style={styles.refundAmount}>{formatVnd(156000)}</Text>
+            <Text style={styles.refundAmount}>{formatVnd(refundAmount)}</Text>
           </View>
 
           <View style={styles.financialRow}>
@@ -129,16 +141,6 @@ export const ReturnCompleteScreen: React.FC = () => {
               </Text>
             </View>
           </View>
-
-          <View style={styles.stepsRow}>
-            <Text style={styles.stepsLabel}>Đơn đang thuê</Text>
-            <Text style={styles.stepsValue}>0</Text>
-          </View>
-
-          <View style={styles.stepsRow}>
-            <Text style={styles.stepsLabel}>Đặt xe tiếp theo</Text>
-            <Text style={styles.stepsValue}>22/09, 14:30</Text>
-          </View>
         </View>
 
         <View style={styles.feedbackBanner}>
@@ -147,13 +149,14 @@ export const ReturnCompleteScreen: React.FC = () => {
           </Text>
           <View style={styles.feedbackRatingRow}>
             <AntDesign name="star" size={12} color="#FBBF24" />
-            <Text style={styles.feedbackRatingText}>
-              Đánh giá: 4.90
-            </Text>
+            <Text style={styles.feedbackRatingText}>Đánh giá: 4.90</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.secondaryButton}>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate("BookingDetails", { bookingId })}
+        >
           <AntDesign name="file-text" size={18} color={colors.text.primary} />
           <Text style={styles.secondaryButtonText}>Xem chi tiết đặt xe</Text>
         </TouchableOpacity>

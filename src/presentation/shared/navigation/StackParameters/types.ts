@@ -262,7 +262,10 @@ export type TripStackParamList = {
     vehicleId?: string;
     licensePlate?: string;
   };
-  ReturnComplete: undefined;
+  ReturnComplete: {
+    bookingId: string;
+    refundAmount: number;
+  };
   RentedVehicleDetails: {
     vehicleId: string;
   };

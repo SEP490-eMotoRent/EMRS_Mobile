@@ -310,6 +310,65 @@ export const BookingDetailsScreen: React.FC = () => {
           <RefreshControl refreshing={loading} onRefresh={fetchBooking} />
         }
       >
+        {/* Payment Ready Banner - Show when return files exist and status is Renting */}
+        {booking?.bookingStatus === "Renting" && (
+          rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 &&
+          // rentalReceipts?.[0]?.checkListFile &&
+          <TouchableOpacity
+            style={styles.paymentReadyBanner}
+            onPress={openReturnReport}
+            activeOpacity={0.9}
+          >
+            <View style={styles.paymentReadyContent}>
+              <View style={styles.paymentReadyLeft}>
+                <View style={styles.paymentReadyIconContainer}>
+                  <AntDesign name="wallet" size={24} color="#FFD666" />
+                </View>
+                <View style={styles.paymentReadyTextContainer}>
+                  <Text style={styles.paymentReadyTitle}>
+                    Sẵn sàng thanh toán
+                  </Text>
+                  <Text style={styles.paymentReadySubtitle}>
+                    Xem biên bản trả xe và hoàn tất thanh toán
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.paymentReadyRight}>
+                <View style={styles.paymentReadyBadge}>
+                  <AntDesign name="check-circle" size={16} color="#67D16C" />
+                  <Text style={styles.paymentReadyBadgeText}>Mới</Text>
+                </View>
+                <AntDesign
+                  name="arrow-right"
+                  size={20}
+                  color="#FFD666"
+                  style={styles.paymentReadyArrow}
+                />
+              </View>
+            </View>
+            <View style={styles.paymentReadyFooter}>
+              <View style={styles.paymentReadyInfoRow}>
+                <AntDesign
+                  name="picture"
+                  size={14}
+                  color={colors.text.secondary}
+                />
+                <Text style={styles.paymentReadyInfoText}>
+                  {rentalReceipts[0].returnVehicleImageFiles.length} ảnh xe trả
+                </Text>
+              </View>
+              <View style={styles.paymentReadyInfoRow}>
+                <AntDesign
+                  name="file-text"
+                  size={14}
+                  color={colors.text.secondary}
+                />
+                <Text style={styles.paymentReadyInfoText}>Đã có checklist</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {/* Customer Information */}
         <View style={styles.section}>
           <SectionHeader title="Thông tin Khách hàng" icon="user" />
@@ -372,7 +431,7 @@ export const BookingDetailsScreen: React.FC = () => {
             {/* Vehicle Model */}
             <View style={styles.iconRow}>
               <View style={styles.iconLeft}>
-                <AntDesign name="idcard" size={14} color="#FFD666" />
+                <AntDesign name="idcard" size={14} color="#7DB3FF" />
                 <Text style={styles.iconLabel}>Mã xe thuê</Text>
               </View>
               <Text style={styles.iconValue}>
@@ -394,7 +453,7 @@ export const BookingDetailsScreen: React.FC = () => {
             {/* Location */}
             <View style={styles.iconRow}>
               <View style={styles.iconLeft}>
-                <AntDesign name="environment" size={14} color="#FFD666" />
+                <AntDesign name="environment" size={14} color="#7DB3FF" />
                 <Text style={styles.iconLabel}>Địa điểm thuê</Text>
               </View>
               <Text style={styles.iconValue}>
@@ -671,17 +730,19 @@ export const BookingDetailsScreen: React.FC = () => {
                     : "Xem biên bản bàn giao"}
                 </Text>
               </TouchableOpacity>
-              {rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.returnReportBtn]}
-                  onPress={openReturnReport}
-                >
-                  <AntDesign name="file-text" size={18} color="#000" />
-                  <Text style={styles.returnReportBtnText}>
-                    Xem biên bản trả xe
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {booking?.bookingStatus === "Completed" &&
+                rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
+                  // rentalReceipts?.[0]?.checkListReturnFile &&
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.returnReportBtn]}
+                    onPress={openReturnReport}
+                  >
+                    <AntDesign name="file-text" size={18} color="#000" />
+                    <Text style={styles.returnReportBtnText}>
+                      Xem biên bản trả xe
+                    </Text>
+                  </TouchableOpacity>
+                )}
             </InfoCard>
           </View>
         )}
@@ -1951,5 +2012,99 @@ const styles = StyleSheet.create({
     color: "#C9B6FF",
     fontSize: 12,
     fontWeight: "600",
+  },
+  // Payment Ready Banner Styles
+  paymentReadyBanner: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    backgroundColor: "#1A1D26",
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: "#FFD666",
+    shadowColor: "#FFD666",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  paymentReadyContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  paymentReadyLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    flex: 1,
+  },
+  paymentReadyIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,214,102,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,214,102,0.3)",
+  },
+  paymentReadyTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  paymentReadyTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text.primary,
+    letterSpacing: 0.3,
+  },
+  paymentReadySubtitle: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    lineHeight: 18,
+  },
+  paymentReadyRight: {
+    alignItems: "flex-end",
+    gap: 8,
+  },
+  paymentReadyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(103,209,108,0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(103,209,108,0.3)",
+  },
+  paymentReadyBadgeText: {
+    color: "#67D16C",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  paymentReadyArrow: {
+    marginTop: 4,
+  },
+  paymentReadyFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,214,102,0.2)",
+  },
+  paymentReadyInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  paymentReadyInfoText: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    fontWeight: "500",
   },
 });

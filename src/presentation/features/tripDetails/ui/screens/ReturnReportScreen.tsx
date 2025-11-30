@@ -128,7 +128,10 @@ export const ReturnReportScreen: React.FC = () => {
         text1: "Trả xe thành công",
         type: "success",
       });
-      navigation.navigate("ReturnComplete");
+      navigation.navigate("ReturnComplete", {
+        bookingId,
+        refundAmount: finalizeReturnData.paymentResult.refundAmount,
+      });
     } catch (error: any) {
       Toast.show({
         text1: `Không thể hoàn tất trả xe: ${error.message}`,
@@ -144,7 +147,10 @@ export const ReturnReportScreen: React.FC = () => {
   };
 
   const handleRequestRecheck = () => {
-    navigation.navigate("ReturnComplete");
+    navigation.navigate("ReturnComplete", {
+      bookingId,
+      refundAmount: 300000,
+    });
   };
 
   const openImageModal = (index: number) => {
@@ -330,15 +336,15 @@ export const ReturnReportScreen: React.FC = () => {
           <Text style={styles.cardHeader}>Đồng hồ công tơ mét</Text>
           <View style={styles.kvRow}>
             <Text style={styles.kvKey}>Bắt đầu</Text>
-            <Text style={styles.kvVal}>1.234 km</Text>
+            <Text style={styles.kvVal}>{rentalReceipt?.startOdometerKm} km</Text>
           </View>
           <View style={styles.kvRow}>
             <Text style={styles.kvKey}>Kết thúc</Text>
-            <Text style={styles.kvVal}>1.390 km</Text>
+            <Text style={styles.kvVal}>{rentalReceipt?.endOdometerKm} km</Text>
           </View>
           <View style={styles.kvRow}>
             <Text style={styles.kvKey}>Quãng đường</Text>
-            <Text style={styles.kvVal}>156 km</Text>
+            <Text style={styles.kvVal}>{rentalReceipt?.endOdometerKm - rentalReceipt?.startOdometerKm} km</Text>
           </View>
           <View style={styles.kvRow}>
             <Text style={styles.kvKey}>Vượt quá</Text>
@@ -442,7 +448,6 @@ export const ReturnReportScreen: React.FC = () => {
           </>
         )}
       </ScrollView>
-
       {/* Image Modal */}
       <Modal
         visible={modalVisible}
