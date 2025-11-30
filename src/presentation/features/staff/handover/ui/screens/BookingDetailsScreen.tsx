@@ -37,6 +37,7 @@ import { SummaryResponse } from "../../../../../../data/models/rentalReturn/Summ
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetListRentalReceipt";
 import { GpsSharingInviteUseCase } from "../../../../../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
+import Toast from "react-native-toast-message";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -272,15 +273,23 @@ export const BookingDetailsScreen: React.FC = () => {
       // Example:
       const gpsSharingInviteUseCase = await new GpsSharingInviteUseCase(sl.get("GpsSharingRepository"))
       const response = await gpsSharingInviteUseCase.execute({ vehicleId: booking.vehicle.id });
-      console.log("response", response);
       if (response.success) {
-        // navigation.navigate("TrackingGPS", {
-        //   vehicleId: booking.vehicle.id,
-        //   licensePlate: booking.vehicle.licensePlate,
-        // });
+        Toast.show({
+          type: "success",
+          text1: "Thành công",
+          text2: "Đã chia sẻ GPS invite",
+        });
+        navigation.navigate("TrackingGPS", {
+          vehicleId: booking.vehicle.id,
+          licensePlate: booking.vehicle.licensePlate,
+        });
       }
     } catch (error) {
-      console.error("Error sharing GPS invite:", error);
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: error?.message || "Không thể chia sẻ GPS invite",
+      });
     }
   };
 

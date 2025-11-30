@@ -44,8 +44,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       );
       const bookings = await getCurrentRenterBookingsUseCase.execute();
       const rentingBooking = bookings.find((b) => b.bookingStatus === "Renting");
-      if (rentingBooking?.vehicle?.id) {
-        setCurrentVehicleId(rentingBooking.vehicle.id);
+      if (rentingBooking?.vehicleId) {
+        setCurrentVehicleId(rentingBooking.vehicleId);
       }
     } catch (error) {
       console.error("Error fetching current vehicle:", error);
@@ -60,6 +60,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         return "Chờ xác nhận";
       case "Active":
         return "Đang hoạt động";
+      case "Expired":
+        return "Đã hết hạn";
       default:
         return status;
     }
@@ -73,6 +75,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         return "#FFD54F";
       case "Active":
         return "#81C784";
+      case "Expired":
+        return "#9E9E9E";
       default:
         return "#81C784";
     }
@@ -86,6 +90,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         return "rgba(255,213,79,0.15)";
       case "Active":
         return "rgba(129,199,132,0.15)";
+      case "Expired":
+        return "rgba(158,158,158,0.15)";
       default:
         return "rgba(129,199,132,0.15)";
     }
@@ -99,6 +105,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         return "rgba(255,213,79,0.3)";
       case "Active":
         return "rgba(129,199,132,0.3)";
+      case "Expired":
+        return "rgba(158,158,158,0.3)";
       default:
         return "rgba(129,199,132,0.3)";
     }
@@ -194,13 +202,38 @@ export const GpsSharingSessionListScreen: React.FC = () => {
     });
   };
 
+  const handleSessionPress = (item: any) => {
+    if (item.status === "Active") {
+      navigation.navigate("GpsSharingTracking", {
+        sessionId: item.sessionId,
+        ownerVehicleId: item.ownerVehicleId,
+        ownerVehicleLicensePlate: item.ownerVehicleLicensePlate,
+        guestVehicleId: item.guestVehicleId,
+        guestVehicleLicensePlate: item.guestVehicleLicensePlate,
+        ownerRenterName: item.ownerRenterName,
+        guestRenterName: item.guestRenterName,
+      });
+    }
+  };
+
   const renderSessionItem = ({ item }: { item: any }) => {
     const statusColor = getStatusColor(item.status);
     const statusBgColor = getStatusBgColor(item.status);
     const statusBorderColor = getStatusBorderColor(item.status);
 
+    const isActive = item.status === "Active";
+
     return (
-      <TouchableOpacity style={[styles.sessionCard, { backgroundColor: "#1A1D26" }]} activeOpacity={0.85}>
+      <TouchableOpacity 
+        style={[
+          styles.sessionCard, 
+          { backgroundColor: "#1A1D26" },
+          isActive && styles.sessionCardActive
+        ]} 
+        activeOpacity={isActive ? 0.85 : 1}
+        onPress={() => handleSessionPress(item)}
+        disabled={!isActive}
+      >
         {/* Card Header with Gradient Effect */}
         <View style={[styles.cardHeaderGradient, { borderBottomColor: statusBorderColor }]}>
           <View style={styles.sessionCardHeader}>
@@ -294,6 +327,14 @@ export const GpsSharingSessionListScreen: React.FC = () => {
               )}
             </View>
           </View>
+
+          {/* Active Indicator */}
+          {isActive && (
+            <View style={styles.activeIndicator}>
+              <AntDesign name="environment" size={14} color="#81C784" />
+              <Text style={styles.activeIndicatorText}>Nhấn để xem vị trí trên bản đồ</Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -486,6 +527,26 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 6,
     overflow: "hidden",
+  },
+  sessionCardActive: {
+    borderColor: "rgba(129,199,132,0.5)",
+    borderWidth: 1.5,
+  },
+  activeIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(129,199,132,0.1)",
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  activeIndicatorText: {
+    fontSize: 11,
+    color: "#81C784",
+    fontWeight: "600",
   },
   cardHeaderGradient: {
     backgroundColor: "rgba(125,179,255,0.05)",
