@@ -151,6 +151,13 @@ import { GetFeedbackByVehicleModelIdUseCase } from "../../domain/usecases/feedba
 import { ResendOtpUseCase } from "../../domain/usecases/account/OTP/ResendOtpUseCase";
 import { VerifyOtpUseCase } from "../../domain/usecases/account/OTP/VerifyOtpUseCase";
 
+// Gps Sharing imports
+import { GpsSharingRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/gpsSharing/GpsSharingRemoteDataSourceImpl";
+import { GpsSharingRepositoryImpl } from "../../data/repositories/gpsSharing/GpsSharingRepositoryImpl";
+import { GpsSharingRepository } from "../../domain/repositories/gpsSharing/GpsSharingRepository";
+import { GpsSharingInviteUseCase } from "../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
+
+
 /**
  * Service Locator / Dependency Injection Container
  * Manages all service instances and their dependencies
@@ -289,6 +296,14 @@ class ServiceLocator {
     this.services.set("GetAllInsurancePackagesUseCase", getAllInsurancePackagesUseCase);
     const getInsurancePackageByIdUseCase = new GetInsurancePackageByIdUseCase(insurancePackageRepository);
     this.services.set("GetInsurancePackageByIdUseCase", getInsurancePackageByIdUseCase);
+
+    // Gps Sharing services
+    const gpsSharingRemoteDataSource = new GpsSharingRemoteDataSourceImpl(axiosClient);
+    this.services.set("GpsSharingRemoteDataSource", gpsSharingRemoteDataSource);
+    const gpsSharingRepository = new GpsSharingRepositoryImpl(gpsSharingRemoteDataSource);
+    this.services.set("GpsSharingRepository", gpsSharingRepository);
+    const gpsSharingInviteUseCase = new GpsSharingInviteUseCase(gpsSharingRepository);
+    this.services.set("GpsSharingInviteUseCase", gpsSharingInviteUseCase);
 
     // Geocoding services
     const geocodingDataSource = new MapboxGeocodingDataSourceImpl();

@@ -174,4 +174,12 @@ export const ApiEndpoints = {
     getChargingRate: "/Charging/get-charging-rate",
     create: "/Charging/create",
   },
+
+  //GPS Sharing endpoints
+  gpsSharing: {
+    invite: "/GPSSharing/invite",
+    join: "/GPSSharing/join",
+    getSession: (sessionId: string) => `/GPSSharing/session/${sessionId}`,
+    getSessions: "/GPSSharing/all-sessions",
+  },
 };

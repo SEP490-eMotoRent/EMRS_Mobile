@@ -36,6 +36,7 @@ import { RentalReturnSummaryUseCase } from "../../../../../../domain/usecases/re
 import { SummaryResponse } from "../../../../../../data/models/rentalReturn/SummaryResponse";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetListRentalReceipt";
+import { GpsSharingInviteUseCase } from "../../../../../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -251,6 +252,36 @@ export const BookingDetailsScreen: React.FC = () => {
         },
       },
     });
+  };
+
+  const handleShareGPSInvite = async () => {
+    if (!booking?.vehicle?.id) {
+      return;
+    }
+
+    try {
+      // TODO: Implement GPS sharing API call
+      // This could generate a shareable link or send an invite to staff
+      // For now, we'll show a placeholder action
+      console.log("Sharing GPS invite for vehicle:", booking.vehicle.id);
+      
+      // You can implement:
+      // 1. Generate shareable link
+      // 2. Send invite to staff members
+      // 3. Open share dialog with link
+      // Example:
+      const gpsSharingInviteUseCase = await new GpsSharingInviteUseCase(sl.get("GpsSharingRepository"))
+      const response = await gpsSharingInviteUseCase.execute({ vehicleId: booking.vehicle.id });
+      console.log("response", response);
+      if (response.success) {
+        // navigation.navigate("TrackingGPS", {
+        //   vehicleId: booking.vehicle.id,
+        //   licensePlate: booking.vehicle.licensePlate,
+        // });
+      }
+    } catch (error) {
+      console.error("Error sharing GPS invite:", error);
+    }
   };
 
   return (
@@ -769,6 +800,19 @@ export const BookingDetailsScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         )}
+        {booking?.bookingStatus === "Renting" &&
+          user?.role === "RENTER" &&
+          booking?.renter?.id === user.id && (
+            <View style={styles.editRow}>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.shareGpsBtn]}
+                onPress={handleShareGPSInvite}
+              >
+                <AntDesign name="export" size={16} color="#000" />
+                <Text style={styles.actionBtnText}>Share GPS Invite</Text>
+              </TouchableOpacity>
+            </View>
+          )}
       </ScrollView>
 
       {/* Contract WebView Modal */}
@@ -1266,6 +1310,7 @@ const styles = StyleSheet.create({
   updateBtn: { backgroundColor: "#C9B6FF" },
   changeBtn: { backgroundColor: "#FFD666" },
   gpsBtn: { backgroundColor: "#7DB3FF" },
+  shareGpsBtn: { backgroundColor: "#7CFFCB" },
   receiptBtn: { backgroundColor: "#C9B6FF", marginHorizontal: 16 },
   actionBtnText: { color: "#000", fontWeight: "700" },
   contractCreateRow: {
