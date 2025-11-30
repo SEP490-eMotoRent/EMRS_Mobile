@@ -180,6 +180,6 @@ export const ApiEndpoints = {
     invite: "/GPSSharing/invite",
     join: "/GPSSharing/join",
     getSession: (sessionId: string) => `/GPSSharing/session/${sessionId}`,
-    getSessions: "/GPSSharing/all-sessions",
+    getSessions: "/GPSSharing/sessions",
   },
 };

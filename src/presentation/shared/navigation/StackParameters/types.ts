@@ -343,7 +343,8 @@ export type StaffStackParamList = {
     startOdometerKm: number;
     startBatteryPercentage: number;
     bookingId: string;
-    vehicleFiles: string[];
+    handOverVehicleImageFiles: string[];
+    returnVehicleImageFiles: string[];
     checkListFile: string;
   };
   HandoverReceiptReport: {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -37,11 +37,45 @@ export const HandoverReportScreen: React.FC = () => {
     startOdometerKm,
     startBatteryPercentage,
     bookingId,
-    vehicleFiles,
+    handOverVehicleImageFiles,
+    returnVehicleImageFiles,
     checkListFile,
   } = route.params || {};
   const [isLoading, setIsLoading] = useState(false);
 
+  // Handle array data from response
+  const handOverImages = useMemo(() => {
+    if (Array.isArray(handOverVehicleImageFiles)) return handOverVehicleImageFiles;
+    if (handOverVehicleImageFiles) return [handOverVehicleImageFiles];
+    return [];
+  }, [handOverVehicleImageFiles]);
+
+  const checklistImages = useMemo(() => {
+    if (Array.isArray(checkListFile)) return checkListFile;
+    if (checkListFile) return [checkListFile];
+    return [];
+  }, [checkListFile]);
+
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getImageLabel = (index: number, total: number) => {
+    const labels = ["Mặt trước", "Mặt sau", "Bên trái", "Bên phải"];
+    return labels[index] || `Ảnh ${index + 1}`;
+  };
   const generateConstract = async () => {
     try {
       setIsLoading(true);
@@ -68,189 +102,195 @@ export const HandoverReportScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <ScreenHeader
           title="Báo cáo bàn giao"
           subtitle="Sẵn sàng gửi"
           onBack={() => navigation.goBack()}
         />
 
-        {/* Customer Information */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeader}>Thông tin khách hàng</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Tên</Text>
-            <View style={styles.valueRight}>
-              <Text style={styles.infoValue}>John Nguyen</Text>
-              <AntDesign
-                name="check-circle"
-                size={14}
-                color="#67D16C"
-                style={styles.valueIcon}
-              />
-            </View>
+        {/* Status Banner */}
+        <View style={styles.statusBanner}>
+          <View style={styles.statusIconContainer}>
+            <AntDesign name="check-circle" size={24} color="#67D16C" />
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Đặt chỗ</Text>
-            <Text style={styles.infoValue}>#EMR240915001</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Ngày đặt chỗ</Text>
-            <Text style={styles.infoValue}>06/09/2025</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Thời gian bàn giao</Text>
-            <Text style={styles.infoValue}>06/09/2025 - 12:05</Text>
+          <View style={styles.statusContent}>
+            <Text style={styles.statusTitle}>Báo cáo đã hoàn tất</Text>
+            <Text style={styles.statusSubtitle}>
+              Tất cả thông tin đã được ghi nhận và sẵn sàng gửi
+            </Text>
           </View>
         </View>
 
-        {/* Vehicle Specifications */}
+        {/* Vehicle Status Cards */}
+        <View style={styles.metricsRow}>
+          <View style={[styles.metricCard, styles.batteryCard]}>
+            <View style={styles.metricIconContainer}>
+              <MaterialIcons name="battery-charging-full" size={24} color="#67D16C" />
+            </View>
+            <View style={styles.metricContent}>
+              <Text style={styles.metricLabel}>Mức pin</Text>
+              <Text style={styles.metricValue}>{startBatteryPercentage || 0}%</Text>
+            </View>
+          </View>
+          <View style={[styles.metricCard, styles.odometerCard]}>
+            <View style={styles.metricIconContainer}>
+              <MaterialIcons name="speed" size={24} color="#7DB3FF" />
+            </View>
+            <View style={styles.metricContent}>
+              <Text style={styles.metricLabel}>Số km</Text>
+              <Text style={styles.metricValue}>{startOdometerKm || 0} km</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Booking Information */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Chi tiết kiểm tra</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Mã đặt chỗ</Text>
-            <Text style={styles.infoValue}>{bookingId || "N/A"}</Text>
+          <View style={styles.cardHeaderContainer}>
+            <View style={styles.cardHeaderIcon}>
+              <AntDesign name="file-text" size={18} color="#C9B6FF" />
+            </View>
+            <Text style={styles.cardHeader}>Thông tin đặt chỗ</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Mức pin</Text>
-            <Text style={styles.infoValue}>{startBatteryPercentage || 0}%</Text>
+            <View style={styles.infoLeft}>
+              <MaterialIcons name="confirmation-number" size={16} color={colors.text.secondary} />
+              <Text style={styles.infoLabel}>Mã đặt chỗ</Text>
+            </View>
+            <Text style={styles.infoValue}>#{bookingId?.substring(0, 8) || "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Số km</Text>
-            <Text style={styles.infoValue}>{startOdometerKm || 0} km</Text>
+            <View style={styles.infoLeft}>
+              <AntDesign name="idcard" size={16} color={colors.text.secondary} />
+              <Text style={styles.infoLabel}>Mã báo cáo</Text>
+            </View>
+            <Text style={styles.infoValue}>#{receiptId?.substring(0, 8) || "N/A"}</Text>
           </View>
           {notes && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Ghi chú</Text>
-              <Text style={styles.infoValue}>{notes}</Text>
+            <View style={[styles.infoRow, styles.notesRow]}>
+              <View style={styles.infoLeft}>
+                <AntDesign name="file-text" size={16} color={colors.text.secondary} />
+                <Text style={styles.infoLabel}>Ghi chú</Text>
+              </View>
+              <Text style={[styles.infoValue, styles.notesValue]}>{notes}</Text>
             </View>
           )}
         </View>
 
-        {/* Inspection Results */}
-        {/* <View style={styles.card}>
-          <Text style={styles.cardHeader}>Inspection Results</Text>
-          {[
-            ["Body & Paint", "No issues"],
-            ["Wheels & Tires", "Excellent condition"],
-            ["Lights & Signals", "All functional"],
-            ["Controls", "Calibrated and tested"],
-            ["Safety Equipment", "All provided"],
-            ["Cleanliness Assessment", "Excellent Clean"],
-            ["Battery & Power System", "Full Battery"],
-          ].map(([k, v]) => (
-            <View key={k} style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{k}</Text>
-              <View style={styles.valueRight}>
-                <Text style={styles.okText}>{v}</Text>
-                <AntDesign
-                  name="check-circle"
-                  size={14}
-                  color="#67D16C"
-                  style={styles.valueIcon}
-                />
-              </View>
-            </View>
-          ))}
-        </View> */}
-
-        {/* Photo Gallery */}
-        {vehicleFiles && vehicleFiles.length > 0 && (
+        {/* Vehicle Images Gallery */}
+        {handOverImages.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardHeader}>Thư viện ảnh</Text>
-            <View style={styles.galleryRow}>
-              {vehicleFiles.slice(0, 2).map((imageUrl, index) => {
-                const labels = ["Mặt trước", "Mặt sau"];
-                return (
-                  <View key={index} style={styles.galleryItem}>
-                    <Image
-                      source={{ uri: imageUrl }}
-                      style={styles.galleryImage}
-                      resizeMode="cover"
-                    />
-                    <Text style={styles.galleryLabel}>{labels[index]}</Text>
-                  </View>
-                );
-              })}
-            </View>
-            {vehicleFiles.length > 2 && (
-              <View style={styles.galleryRow}>
-                {vehicleFiles.slice(2, 4).map((imageUrl, index) => {
-                  const labels = ["Bên trái", "Bên phải"];
-                  return (
-                    <View key={index + 2} style={styles.galleryItem}>
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.galleryImage}
-                        resizeMode="cover"
-                      />
-                      <Text style={styles.galleryLabel}>{labels[index]}</Text>
-                    </View>
-                  );
-                })}
+            <View style={styles.cardHeaderContainer}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="camera" size={18} color="#C9B6FF" />
               </View>
-            )}
-
-            {/* Checklist File */}
-            {checkListFile && (
-              <View style={styles.galleryRow}>
-                <View style={[styles.galleryItem, { width: "100%" }]}>
+              <Text style={styles.cardHeader}>Ảnh xe bàn giao</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{handOverImages.length}</Text>
+              </View>
+            </View>
+            <View style={styles.galleryGrid}>
+              {handOverImages.map((imageUrl, index) => (
+                <View key={index} style={styles.galleryItem}>
                   <Image
-                    source={{ uri: checkListFile }}
-                    style={styles.checklistImage}
+                    source={{ uri: imageUrl }}
+                    style={styles.galleryImage}
                     resizeMode="cover"
                   />
-                  <Text style={styles.galleryLabel}>Danh sách kiểm tra</Text>
+                  <View style={styles.galleryOverlay}>
+                    <Text style={styles.galleryLabel}>
+                      {getImageLabel(index, handOverImages.length)}
+                    </Text>
+                  </View>
                 </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Checklist Images */}
+        {checklistImages.length > 0 && (
+          <View style={styles.card}>
+            <View style={styles.cardHeaderContainer}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="check-circle" size={18} color="#67D16C" />
               </View>
-            )}
+              <Text style={styles.cardHeader}>Danh sách kiểm tra</Text>
+            </View>
+            {checklistImages.map((imageUrl, index) => (
+              <View key={index} style={styles.checklistContainer}>
+                <Image
+                  source={{ uri: imageUrl }}
+                  style={styles.checklistImage}
+                  resizeMode="cover"
+                />
+                {checklistImages.length > 1 && (
+                  <Text style={styles.checklistLabel}>
+                    Trang {index + 1}/{checklistImages.length}
+                  </Text>
+                )}
+              </View>
+            ))}
           </View>
         )}
 
         {/* Report Verification */}
         <View style={styles.card}>
-          <Text style={styles.cardHeader}>Xác minh báo cáo</Text>
-          <View style={styles.metaRow}>
-            <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Nhân viên</Text>
-              <Text style={styles.metaValue}>{user?.fullName}</Text>
+          <View style={styles.cardHeaderContainer}>
+            <View style={styles.cardHeaderIcon}>
+              <AntDesign name="user" size={18} color="#C9B6FF" />
             </View>
-            <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Thời gian kiểm tra</Text>
-              <Text style={styles.metaValue}>15 phút</Text>
-            </View>
+            <Text style={styles.cardHeader}>Xác minh báo cáo</Text>
           </View>
-          <View style={styles.metaRow}>
-            <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Địa điểm</Text>
-              <Text style={styles.metaValue}>Chi nhánh {user?.branchName}</Text>
+          <View style={styles.verificationRow}>
+            <View style={styles.verificationItem}>
+              <View style={styles.verificationIcon}>
+                <AntDesign name="user" size={20} color="#C9B6FF" />
+              </View>
+              <View style={styles.verificationContent}>
+                <Text style={styles.verificationLabel}>Nhân viên</Text>
+                <Text style={styles.verificationValue}>{user?.fullName || "N/A"}</Text>
+              </View>
             </View>
-            <View style={styles.metaBox}>
-              <Text style={styles.metaLabel}>Mã báo cáo</Text>
-              <Text style={styles.metaValue}>{receiptId || "N/A"}</Text>
+            <View style={styles.verificationItem}>
+              <View style={styles.verificationIcon}>
+                <AntDesign name="environment" size={20} color="#C9B6FF" />
+              </View>
+              <View style={styles.verificationContent}>
+                <Text style={styles.verificationLabel}>Chi nhánh</Text>
+                <Text style={styles.verificationValue}>{user?.branchName || "N/A"}</Text>
+              </View>
             </View>
           </View>
         </View>
 
         {/* Bottom CTA */}
-        <TouchableOpacity
-          style={[styles.sendCta, isLoading && styles.sendCtaDisabled]}
-          onPress={generateConstract}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="#000" />
-          ) : (
-            <AntDesign name="send" size={16} color="#000" />
-          )}
-          <Text style={styles.sendCtaText}>
-            {isLoading ? "Đang gửi..." : "Gửi cho khách hàng"}
-          </Text>
-        </TouchableOpacity>
-        <Text style={styles.noteText}>
-          Khách hàng sẽ nhận được thông báo để phê duyệt. Báo cáo sẽ hết hạn sau
-          30 phút nếu không được xem xét.
-        </Text>
+        <View style={styles.ctaContainer}>
+          <TouchableOpacity
+            style={[styles.sendCta, isLoading && styles.sendCtaDisabled]}
+            onPress={generateConstract}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <>
+                <AntDesign name="send" size={18} color="#000" />
+                <Text style={styles.sendCtaText}>Gửi cho khách hàng</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <View style={styles.infoBox}>
+            <AntDesign name="info-circle" size={14} color={colors.text.secondary} />
+            <Text style={styles.noteText}>
+              Khách hàng sẽ nhận được thông báo để phê duyệt. Báo cáo sẽ hết hạn sau 30 phút nếu không được xem xét.
+            </Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -261,154 +301,302 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: { paddingBottom: 40 },
-  titleRow: {
+  scrollContent: { 
+    paddingBottom: 40,
+  },
+  statusBanner: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  title: { color: colors.text.primary, fontSize: 16, fontWeight: "700" },
-  subtitle: { color: colors.text.secondary, fontSize: 12 },
-  titleRight: { flexDirection: "row", alignItems: "center" },
-  iconBtn: { padding: 8 },
-  staffBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#C9B6FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  staffText: { color: "#000", fontWeight: "700", fontSize: 12 },
-
-  card: {
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "rgba(103, 209, 108, 0.1)",
     borderRadius: 16,
     marginHorizontal: 16,
+    marginTop: 12,
     padding: 16,
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(103, 209, 108, 0.2)",
+  },
+  statusIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(103, 209, 108, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  statusContent: {
+    flex: 1,
+  },
+  statusTitle: {
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  statusSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  metricsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
+  metricCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  batteryCard: {
+    backgroundColor: "rgba(103, 209, 108, 0.1)",
+    borderColor: "rgba(103, 209, 108, 0.2)",
+  },
+  odometerCard: {
+    backgroundColor: "rgba(125, 179, 255, 0.1)",
+    borderColor: "rgba(125, 179, 255, 0.2)",
+  },
+  metricIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  metricContent: {
+    flex: 1,
+  },
+  metricLabel: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  metricValue: {
+    color: colors.text.primary,
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  card: {
+    backgroundColor: "#1A1D26",
+    borderRadius: 20,
+    marginHorizontal: 16,
+    padding: 20,
+    marginBottom: 16,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: "#2E2E2E",
+    borderColor: "#2A2D36",
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  cardHeaderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  cardHeaderIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(201, 182, 255, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
   },
   cardHeader: {
     color: colors.text.primary,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700",
-    marginBottom: 12,
-    paddingLeft: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: "#C9B6FF",
+    flex: 1,
+  },
+  badge: {
+    backgroundColor: "rgba(201, 182, 255, 0.2)",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  badgeText: {
+    color: "#C9B6FF",
+    fontSize: 12,
+    fontWeight: "700",
   },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#2A2D36",
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#3A3A3A",
+    borderColor: "#3A3D46",
   },
-  infoLabel: { color: colors.text.secondary, fontSize: 13, fontWeight: "500" },
-  infoValue: { color: colors.text.primary, fontSize: 13, fontWeight: "600" },
-  valueRight: { flexDirection: "row", alignItems: "center" },
-  valueIcon: { marginLeft: 8 },
-  okText: { color: "#67D16C", fontWeight: "700" },
-
-  galleryRow: {
+  infoLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  infoLabel: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  infoValue: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "right",
+    flex: 1,
+  },
+  notesRow: {
+    alignItems: "flex-start",
+  },
+  notesValue: {
+    textAlign: "left",
+    marginTop: 4,
+  },
+  galleryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 12,
-    gap: 8,
+    gap: 12,
   },
   galleryItem: {
     width: "48%",
-    backgroundColor: "#2A2A2A",
     borderRadius: 12,
-    padding: 12,
-    alignItems: "center",
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#3A3A3A",
+    borderColor: "#2A2D36",
+    position: "relative",
   },
   galleryImage: {
     width: "100%",
-    height: 120,
-    resizeMode: "cover",
-    borderRadius: 8,
+    height: 140,
+    backgroundColor: "#2A2D36",
+  },
+  galleryOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  galleryLabel: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  checklistContainer: {
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#2A2D36",
+    marginBottom: 12,
+    backgroundColor: "#2A2D36",
+    height: 1500,
   },
   checklistImage: {
     width: "100%",
-    height: 1200,
-    resizeMode: "cover",
-    borderRadius: 8,
+    height: "100%",
+    backgroundColor: "#2A2D36",
   },
-  galleryLabel: {
+  checklistLabel: {
     color: colors.text.secondary,
     fontSize: 12,
-    marginTop: 8,
+    textAlign: "center",
+    paddingVertical: 8,
     fontWeight: "600",
   },
-  tipText: { color: colors.text.secondary, fontSize: 12, textAlign: "right" },
-
-  metaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  verificationRow: {
     gap: 12,
-    marginBottom: 8,
   },
-  metaBox: {
-    flex: 1,
-    backgroundColor: "#2A2A2A",
+  verificationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2A2D36",
     borderRadius: 12,
-    padding: 14,
+    padding: 16,
     borderWidth: 1,
-    borderColor: "#3A3A3A",
+    borderColor: "#3A3D46",
   },
-  metaLabel: {
+  verificationIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(201, 182, 255, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  verificationContent: {
+    flex: 1,
+  },
+  verificationLabel: {
     color: colors.text.secondary,
     fontSize: 12,
-    marginBottom: 6,
     fontWeight: "500",
+    marginBottom: 4,
   },
-  metaValue: { color: colors.text.primary, fontSize: 13, fontWeight: "600" },
-
+  verificationValue: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  ctaContainer: {
+    marginTop: 8,
+  },
   sendCta: {
     marginHorizontal: 16,
     backgroundColor: "#C9B6FF",
     alignItems: "center",
-    paddingVertical: 16,
-    borderRadius: 14,
-    marginTop: 8,
+    paddingVertical: 18,
+    borderRadius: 16,
     flexDirection: "row",
     justifyContent: "center",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    gap: 10,
+    shadowColor: "#C9B6FF",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
-  sendCtaText: { color: "#000", fontWeight: "800", fontSize: 16 },
+  sendCtaText: {
+    color: "#000",
+    fontWeight: "800",
+    fontSize: 16,
+  },
   sendCtaDisabled: {
     opacity: 0.6,
+  },
+  infoBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "rgba(201, 182, 255, 0.1)",
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "rgba(201, 182, 255, 0.2)",
+    gap: 10,
   },
   noteText: {
     color: colors.text.secondary,
     fontSize: 12,
-    textAlign: "center",
-    marginTop: 12,
-    marginHorizontal: 16,
-    lineHeight: 16,
+    lineHeight: 18,
+    flex: 1,
   },
 });

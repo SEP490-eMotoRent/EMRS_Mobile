@@ -240,7 +240,7 @@ export const ScanFaceScreen: React.FC = () => {
             onPress={() =>
               navigation.navigate("ScanCitizenResult", {
                 renter: {
-                  id: "019ad3b1-58ef-77f9-86a1-88ea70c7e670",
+                  id: "019ad54c-7180-726b-b212-488d91de195d",
                   email: "john.doe@example.com",
                   phone: "1234567890",
                   address: "123 Main St, Anytown, USA",

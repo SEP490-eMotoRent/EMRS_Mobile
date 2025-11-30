@@ -30,7 +30,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [invitationCode, setInvitationCode] = useState("");
   const [joining, setJoining] = useState(false);
-  const [currentVehicleId, setCurrentVehicleId] = useState<string | null>(null);
+  const [currentBookingId, setCurrentBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSessions();
@@ -44,8 +44,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       );
       const bookings = await getCurrentRenterBookingsUseCase.execute();
       const rentingBooking = bookings.find((b) => b.bookingStatus === "Renting");
-      if (rentingBooking?.vehicleId) {
-        setCurrentVehicleId(rentingBooking.vehicleId);
+      if (rentingBooking?.id) {
+        setCurrentBookingId(rentingBooking.id);
       }
     } catch (error) {
       console.error("Error fetching current vehicle:", error);
@@ -145,7 +145,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       return;
     }
 
-    if (!currentVehicleId) {
+    if (!currentBookingId) {
       Toast.show({
         type: "error",
         text1: "Lỗi",
@@ -159,7 +159,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       const joinUseCase = new GpsSharingJoinUseCase(sl.get("GpsSharingRepository"));
       const response = await joinUseCase.execute({
         invitationCode: invitationCode.trim().toUpperCase(),
-        guestVehicleId: currentVehicleId,
+        guestBookingId: currentBookingId,
       });
 
       if (response.success) {
@@ -451,7 +451,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
               </View>
             </View>
 
-            {currentVehicleId ? (
+            {currentBookingId ? (
               <View style={styles.infoBox}>
                 <AntDesign name="check-circle" size={16} color="#81C784" />
                 <Text style={styles.infoBoxText}>
@@ -482,10 +482,10 @@ export const GpsSharingSessionListScreen: React.FC = () => {
                 style={[
                   styles.modalButton,
                   styles.modalButtonJoin,
-                  (!currentVehicleId || joining) && styles.modalButtonDisabled,
+                  (!currentBookingId || joining) && styles.modalButtonDisabled,
                 ]}
                 onPress={handleJoinSession}
-                disabled={!currentVehicleId || joining}
+                disabled={!currentBookingId || joining}
               >
                 {joining ? (
                   <ActivityIndicator size="small" color="#000" />

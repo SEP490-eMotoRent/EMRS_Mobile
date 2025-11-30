@@ -54,7 +54,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Bottom sheet snap points
-  const snapPoints = useMemo(() => ["40%", "60%"], []);
+  const snapPoints = useMemo(() => ["10%", "60%"], []);
 
   // MQTT configuration for owner vehicle from sessionDetail
   const OWNER_DEVICE_ID = sessionDetail?.ownerInfo?.vehicle?.tempTrackingPayload?.deviceId;
@@ -401,7 +401,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
       >
         <BottomSheetView style={styles.bottomSheetContent}>
           {/* Title */}
-          <Text style={styles.bottomSheetTitle}>Chia sẻ GPS</Text>
+          <Text style={styles.bottomSheetTitle}>Thông tin chia sẻ GPS</Text>
 
           {/* Owner Info Section */}
           {sessionDetail?.ownerInfo && (
@@ -623,14 +623,13 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
   },
   bottomSheetIndicator: {
-    backgroundColor: "#2A2D36",
+    backgroundColor: "#fff",
     width: 40,
     height: 4,
   },
   bottomSheetContent: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 8,
     paddingBottom: 20,
   },
   bottomSheetTitle: {

@@ -265,23 +265,26 @@ export const BookingDetailsScreen: React.FC = () => {
       // This could generate a shareable link or send an invite to staff
       // For now, we'll show a placeholder action
       console.log("Sharing GPS invite for vehicle:", booking.vehicle.id);
-      
+
       // You can implement:
       // 1. Generate shareable link
       // 2. Send invite to staff members
       // 3. Open share dialog with link
       // Example:
-      const gpsSharingInviteUseCase = await new GpsSharingInviteUseCase(sl.get("GpsSharingRepository"))
-      const response = await gpsSharingInviteUseCase.execute({ vehicleId: booking.vehicle.id });
+      const gpsSharingInviteUseCase = await new GpsSharingInviteUseCase(
+        sl.get("GpsSharingRepository")
+      );
+      const response = await gpsSharingInviteUseCase.execute({
+        bookingId: booking.id,
+      });
       if (response.success) {
         Toast.show({
           type: "success",
           text1: "Thành công",
           text2: "Đã chia sẻ GPS invite",
         });
-        navigation.navigate("TrackingGPS", {
-          vehicleId: booking.vehicle.id,
-          licensePlate: booking.vehicle.licensePlate,
+        navigation.jumpTo("ShareGpsTab", {
+          screen: "SessionList",
         });
       }
     } catch (error) {
@@ -536,112 +539,112 @@ export const BookingDetailsScreen: React.FC = () => {
         )}
 
         {/* Return Summary */}
-        {booking?.bookingStatus === "Completed" && (
-        <View style={styles.section}>
-          <SectionHeader title="Tóm tắt trả xe" icon="profile" />
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryHeaderRow}>
-              <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
-              <View style={styles.summaryPill}>
-                <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
+        {booking?.bookingStatus === "Returned" && (
+          <View style={styles.section}>
+            <SectionHeader title="Tóm tắt trả xe" icon="profile" />
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryHeaderRow}>
+                <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
+                <View style={styles.summaryPill}>
+                  <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Phí thuê xe</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.baseRentalFee || 0)}
-              </Text>
-            </View>
-            {summary?.totalChargingFee !== 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí sạc pin</Text>
+                <Text style={styles.summaryKey}>Phí thuê xe</Text>
                 <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.totalChargingFee || 0)}
+                  {formatVnd(summary?.baseRentalFee || 0)}
                 </Text>
               </View>
-            )}
-            {summary?.feesBreakdown?.damageFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí hư hỏng</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.damageFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.cleaningFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí vệ sinh</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.crossBranchFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.excessKmFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.lateReturnFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Trả muộn</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
-                </Text>
-              </View>
-            )}
+              {summary?.totalChargingFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí sạc pin</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.totalChargingFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.damageFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí hư hỏng</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.damageFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.cleaningFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí vệ sinh</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.crossBranchFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.excessKmFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.lateReturnFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Trả muộn</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
+                  </Text>
+                </View>
+              )}
 
-            <View style={styles.divider} />
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Tổng phụ phí</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.totalAmount || 0)}
-              </Text>
-            </View>
+              <View style={styles.divider} />
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Tổng phụ phí</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.totalAmount || 0)}
+                </Text>
+              </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Tiền cọc</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.depositAmount || 0)}
-              </Text>
-            </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Tiền cọc</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.depositAmount || 0)}
+                </Text>
+              </View>
 
-            <View style={styles.divider} />
-            <View style={[styles.summaryRow]}>
-              <Text style={styles.summaryTotalLabel}>
-                {summary?.refundAmount >= 0
-                  ? "Số tiền hoàn lại"
-                  : "Số tiền cần thanh toán thêm"}
-              </Text>
-              <Text
-                style={[
-                  styles.summaryTotalValue,
-                  {
-                    color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
-                  },
-                ]}
-              >
-                {formatVnd(Math.abs(summary?.refundAmount || 0))}
-              </Text>
+              <View style={styles.divider} />
+              <View style={[styles.summaryRow]}>
+                <Text style={styles.summaryTotalLabel}>
+                  {summary?.refundAmount >= 0
+                    ? "Số tiền hoàn lại"
+                    : "Số tiền cần thanh toán thêm"}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryTotalValue,
+                    {
+                      color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
+                    },
+                  ]}
+                >
+                  {formatVnd(Math.abs(summary?.refundAmount || 0))}
+                </Text>
+              </View>
+              {summary?.refundAmount < 0 && (
+                <Text style={styles.paymentNote}>
+                  Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
+                </Text>
+              )}
             </View>
-            {summary?.refundAmount < 0 && (
-              <Text style={styles.paymentNote}>
-                Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
-              </Text>
-            )}
           </View>
-        </View>
         )}
 
         {hasRentalReceipt && (
@@ -688,8 +691,14 @@ export const BookingDetailsScreen: React.FC = () => {
           <View style={styles.section}>
             <SectionHeader title="Hợp đồng thuê" icon="file-text" />
             <InfoCard style={styles.contractCard}>
-              <InfoItem label="Mã hợp đồng:" value={`#${contractInfo.id.slice(-8).toUpperCase()}`} />
-              <InfoItem label="Trạng thái:" value={contractInfo.status === "Signed" ? "Đã ký" : "Chưa ký"} />
+              <InfoItem
+                label="Mã hợp đồng:"
+                value={`#${contractInfo.id.slice(-8).toUpperCase()}`}
+              />
+              <InfoItem
+                label="Trạng thái:"
+                value={contractInfo.status === "Signed" ? "Đã ký" : "Chưa ký"}
+              />
               {/* Sign contract CTA if eligible */}
               {canSignContract && (
                 <TouchableOpacity
@@ -1039,12 +1048,18 @@ export const BookingDetailsScreen: React.FC = () => {
                           </Text>
                         </View>
                         <View style={styles.receiptCardInfo}>
-                          <Text style={styles.receiptCardId}>Mã: {receiptId}</Text>
+                          <Text style={styles.receiptCardId}>
+                            Mã: {receiptId}
+                          </Text>
                         </View>
                       </View>
                       {isConfirmed && (
                         <View style={styles.confirmedBadge}>
-                          <AntDesign name="check-circle" size={14} color="#67D16C" />
+                          <AntDesign
+                            name="check-circle"
+                            size={14}
+                            color="#67D16C"
+                          />
                           <Text style={styles.confirmedText}>Đã xác nhận</Text>
                         </View>
                       )}
@@ -1090,7 +1105,11 @@ export const BookingDetailsScreen: React.FC = () => {
                       </View>
                       <View style={styles.receiptMetricItem}>
                         <View style={styles.receiptMetricIcon}>
-                          <AntDesign name="thunderbolt" size={12} color="#fff" />
+                          <AntDesign
+                            name="thunderbolt"
+                            size={12}
+                            color="#fff"
+                          />
                         </View>
                         <Text style={styles.receiptMetricLabel}>Pin</Text>
                         <Text style={styles.receiptMetricValue}>

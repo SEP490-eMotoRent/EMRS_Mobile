@@ -1,3 +1,3 @@
 export interface InviteRequest {
-    vehicleId: string;
+    bookingId: string;
 }
