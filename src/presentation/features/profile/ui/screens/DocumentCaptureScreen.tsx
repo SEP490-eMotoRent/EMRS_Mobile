@@ -15,9 +15,9 @@ interface DocumentCaptureScreenProps {
     };
 }
 
-export const DocumentCaptureScreen: React.FC<DocumentCaptureScreenProps> = ({ 
-    navigation, 
-    route 
+export const DocumentCaptureScreen: React.FC<DocumentCaptureScreenProps> = ({
+    navigation,
+    route
 }) => {
     const { documentType, side, onPhotoTaken } = route.params;
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
@@ -61,8 +61,8 @@ export const DocumentCaptureScreen: React.FC<DocumentCaptureScreenProps> = ({
                 'Are you sure you want to discard this photo?',
                 [
                     { text: 'Cancel', style: 'cancel' },
-                    { 
-                        text: 'Discard', 
+                    {
+                        text: 'Discard',
                         style: 'destructive',
                         onPress: () => navigation.goBack()
                     },

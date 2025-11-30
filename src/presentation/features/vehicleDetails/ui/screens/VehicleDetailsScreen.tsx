@@ -1,4 +1,4 @@
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { CompositeNavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useMemo, useState } from "react";
 import {
@@ -10,7 +10,8 @@ import {
   View,
 } from "react-native";
 import {
-  BrowseStackParamList
+  BrowseStackParamList,
+  HomeStackParamList
 } from "../../../../shared/navigation/StackParameters/types";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,7 +26,10 @@ import { ImageGallery } from "../organisms/ImageGallery";
 import { PickupLocationSection } from "../organisms/PickupLocationSection";
 
 type RoutePropType = RouteProp<BrowseStackParamList, "VehicleDetails">;
-type NavProp = StackNavigationProp<BrowseStackParamList>;
+type NavProp = CompositeNavigationProp<
+  StackNavigationProp<BrowseStackParamList, "VehicleDetails">,
+  StackNavigationProp<HomeStackParamList>
+>;
 
 export const VehicleDetailsScreen: React.FC = () => {
   const route = useRoute<RoutePropType>();
@@ -130,25 +134,22 @@ export const VehicleDetailsScreen: React.FC = () => {
       return;
     }
 
-    const parentNav = navigation.getParent();
-    if (parentNav) {
-      parentNav.navigate("Booking", {
-        screen: "ConfirmRentalDuration",
-        params: {
-          vehicleId,
-          vehicleName: data.name,
-          vehicleImageUrl: data.imageUrl,
-          branchId: selectedBranchId,
-          branchName: selectedBranch.name,
-          pricePerDay: data.pricePerDay,
-          securityDeposit: securityDeposit,
-          branchOpenTime: selectedBranch.openingTime,
-          branchCloseTime: selectedBranch.closingTime,
-          vehicleCategory: data.category || "ECONOMY",
-          dateRange: dateRange,
-        },
-      });
-    }
+    navigation.navigate("Booking", {
+      screen: "ConfirmRentalDuration",
+      params: {
+        vehicleId,
+        vehicleName: data.name,
+        vehicleImageUrl: data.imageUrl,
+        branchId: selectedBranchId,
+        branchName: selectedBranch.name,
+        pricePerDay: data.pricePerDay,
+        securityDeposit: securityDeposit,
+        branchOpenTime: selectedBranch.openingTime,
+        branchCloseTime: selectedBranch.closingTime,
+        vehicleCategory: data.category || "ECONOMY",
+        dateRange: dateRange,
+      },
+    });
   };
 
   const handleGoToDocuments = () => {
