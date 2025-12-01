@@ -1,5 +1,13 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { 
+    TouchableOpacity, 
+    Text, 
+    StyleSheet, 
+    ViewStyle, 
+    TextStyle,
+    ActivityIndicator,
+    View
+} from 'react-native';
 import { colors } from '../../../../common/theme/colors';
 
 interface PrimaryButtonProps {
@@ -7,7 +15,8 @@ interface PrimaryButtonProps {
     onPress?: () => void;
     style?: ViewStyle;
     textStyle?: TextStyle;
-    disabled?: boolean; // ✅ Added
+    disabled?: boolean;
+    loading?: boolean; // ✅ Added loading prop
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -15,26 +24,38 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     onPress,
     style,
     textStyle,
-    disabled = false, // ✅ Added with default value
+    disabled = false,
+    loading = false,
 }) => {
+    const isDisabled = disabled || loading;
+
     return (
         <TouchableOpacity
             style={[
                 styles.button, 
                 style,
-                disabled && styles.buttonDisabled // ✅ Added disabled style
+                isDisabled && styles.buttonDisabled
             ]}
             onPress={onPress}
             activeOpacity={0.8}
-            disabled={disabled} // ✅ Added disabled prop
+            disabled={isDisabled}
         >
-            <Text style={[
-                styles.text, 
-                textStyle,
-                disabled && styles.textDisabled // ✅ Added disabled text style
-            ]}>
-                {title}
-            </Text>
+            {loading ? (
+                // ✅ Show spinner when loading
+                <ActivityIndicator 
+                    size="small" 
+                    color={colors.button.text} 
+                />
+            ) : (
+                // ✅ Show text when not loading
+                <Text style={[
+                    styles.text, 
+                    textStyle,
+                    isDisabled && styles.textDisabled
+                ]}>
+                    {title}
+                </Text>
+            )}
         </TouchableOpacity>
     );
 };
@@ -47,13 +68,13 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
+        minHeight: 56, // ✅ Added to maintain height when loading
     },
     text: {
         color: colors.button.text,
         fontSize: 16,
         fontWeight: '600',
     },
-    // ✅ Added disabled styles
     buttonDisabled: {
         backgroundColor: '#333',
         opacity: 0.5,
