@@ -3,7 +3,7 @@ export interface AvailableColor {
 }
 
 export interface VehicleModelResponse {
-    id: string;
+    vehicleModelId: string;
     modelName: string;
     category: string;
     batteryCapacityKwh: number;

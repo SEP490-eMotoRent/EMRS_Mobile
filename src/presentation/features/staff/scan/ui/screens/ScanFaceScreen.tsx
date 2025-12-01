@@ -111,7 +111,9 @@ export const ScanFaceScreen: React.FC = () => {
       const citizenId = parseQRCodeData(data);
       setShowScanner(false);
 
-      const getByCitizenIdUseCase = new GetByCitizenIdUseCase(sl.get("RenterRepository"));
+      const getByCitizenIdUseCase = new GetByCitizenIdUseCase(
+        sl.get("RenterRepository")
+      );
       const response = await getByCitizenIdUseCase.execute(citizenId);
       if (response.success) {
         navigation.navigate("ScanCitizenResult", { renter: response.data });
@@ -233,6 +235,28 @@ export const ScanFaceScreen: React.FC = () => {
               <AntDesign name="right" size={16} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
+          <PrimaryButton
+            title="Quát khuôn mặt"
+            onPress={() =>
+              navigation.navigate("ScanCitizenResult", {
+                renter: {
+                  id: "019ad548-22f9-76f0-a942-38180cb3d90c",
+                  email: "john.doe@example.com",
+                  phone: "1234567890",
+                  address: "123 Main St, Anytown, USA",
+                  dateOfBirth: "1990-01-01",
+                  avatarUrl: "https://example.com/avatar.jpg",
+                  faceScanUrl: "https://example.com/face-scan.jpg",
+                  account: {
+                    id: "1",
+                    username: "john.doe",
+                    role: "user",
+                    fullname: "John Doe",
+                  },
+                },
+              })
+            }
+          />
         </View>
       </ScrollView>
 

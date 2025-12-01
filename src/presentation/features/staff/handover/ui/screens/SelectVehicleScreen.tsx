@@ -77,7 +77,6 @@ export const SelectVehicleScreen: React.FC = () => {
     const response = await getAllVehicleModelsUseCase.execute();
     setVehicleModels(response);
   };
-
   const fetchVehicles = async (page: number = pageNum) => {
     setLoading(true);
     try {
@@ -539,7 +538,7 @@ export const SelectVehicleScreen: React.FC = () => {
                   <View style={styles.dropdownList}>
                     <ScrollView style={{ maxHeight: 160 }}>
                       <TouchableOpacity
-                        key={"all"}
+                        key={vehicleModel?.id}
                         style={[
                           styles.dropdownItem,
                           !filterVehicleModelId && styles.dropdownItemSelected,

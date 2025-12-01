@@ -118,7 +118,6 @@ export const ManualInspectionScreen: React.FC = () => {
   ]);
 
   const checklistRef = useRef<View>(null);
-  const [vehicleExpanded, setVehicleExpanded] = useState(false);
 
   const toggleCategory = (categoryId: string) => {
     setCategories((prev) =>
@@ -211,179 +210,200 @@ export const ManualInspectionScreen: React.FC = () => {
 
         {/* Overall Progress */}
         <View style={styles.progressSection}>
-          <Text style={styles.progressLabel}>Tiến độ</Text>
+          <View style={styles.progressHeader}>
+            <View style={styles.progressHeaderLeft}>
+              <View style={styles.progressHeaderIcon}>
+                <AntDesign name="check-square" size={18} color="#C9B6FF" />
+              </View>
+              <View>
+                <Text style={styles.progressLabel}>Tiến độ kiểm tra</Text>
+                <Text style={styles.progressSubtitle}>
+                  {checkedItems}/{totalItems} mục đã hoàn thành
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.completionBadge, { backgroundColor: checkedItems === totalItems ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
+              <Text style={[styles.completionPercentage, { color: checkedItems === totalItems ? "#67D16C" : "#FFD700" }]}>
+                {totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0}%
+              </Text>
+            </View>
+          </View>
           <View style={styles.progressBarContainer}>
             <View
               style={[
                 styles.progressBar,
-                { width: `${(checkedItems / totalItems) * 100}%` },
+                { 
+                  width: `${totalItems > 0 ? (checkedItems / totalItems) * 100 : 0}%`,
+                  backgroundColor: checkedItems === totalItems ? "#67D16C" : "#C9B6FF",
+                },
               ]}
             />
           </View>
-          <Text style={styles.progressText}>
-            {checkedItems}/{totalItems} mục đã kiểm tra
-          </Text>
         </View>
-
-        {/* Vehicle Information Card */}
-        <TouchableOpacity
-          style={styles.vehicleCard}
-          onPress={() => setVehicleExpanded(!vehicleExpanded)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.vehicleCardContent}>
-            <View>
-              <Text style={styles.vehicleModel}>VinFast Evo200</Text>
-              <Text style={styles.vehiclePlate}>59X1-12345</Text>
-            </View>
-            <AntDesign
-              name={vehicleExpanded ? "up" : "down"}
-              size={16}
-              color={colors.text.secondary}
-            />
-          </View>
-        </TouchableOpacity>
 
         {/* Vehicle Status Inputs */}
         <View style={styles.statusInputsCard}>
-          <Text style={styles.statusInputsTitle}>Trạng thái xe</Text>
-
-          {/* Battery Percentage Input */}
-          <View style={styles.inputGroup}>
-            <View style={styles.inputHeader}>
-              <Entypo name="battery" size={18} color="#4CAF50" />
-              <Text style={styles.inputLabel}>Phần trăm pin</Text>
-            </View>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIconContainer}>
-                <AntDesign
-                  name="edit"
-                  size={16}
-                  color={colors.text.secondary}
-                />
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="file-text" size={18} color="#FFD666" />
               </View>
-              <TextInput
-                style={styles.input}
-                value={endBatteryPercentage}
-                onChangeText={setEndBatteryPercentage}
-                keyboardType="numeric"
-                placeholder="Nhập % pin"
-                placeholderTextColor={colors.text.secondary}
-              />
-              <Text style={styles.inputUnit}>%</Text>
-            </View>
-            <View style={styles.inputHelper}>
-              <AntDesign
-                name="clock-circle"
-                size={12}
-                color={colors.text.secondary}
-              />
-              <Text style={styles.inputHelperText}>
-                Giá trị hiện tại: {endBatteryPercentage}%
-              </Text>
+              <Text style={styles.cardHeaderTitle}>Thông tin kiểm tra</Text>
             </View>
           </View>
 
-          {/* Odometer Input */}
-          <View style={styles.inputGroup}>
-            <View style={styles.inputHeader}>
-              <Entypo name="gauge" size={18} color="#C9B6FF" />
-              <Text style={styles.inputLabel}>Số km cuối (km)</Text>
-            </View>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIconContainer}>
-                <AntDesign
-                  name="edit"
-                  size={16}
-                  color={colors.text.secondary}
-                />
+          {/* Metrics Row */}
+          <View style={styles.metricsRow}>
+            {/* Battery Percentage Input */}
+            <View style={styles.metricInput}>
+              <View style={styles.inputLabelRow}>
+                <AntDesign name="thunderbolt" size={14} color="#67D16C" />
+                <Text style={styles.inputLabel}>Pin</Text>
               </View>
-              <TextInput
-                style={styles.input}
-                value={endOdometerKm}
-                onChangeText={setEndOdometerKm}
-                keyboardType="numeric"
-                placeholder="Nhập số km"
-                placeholderTextColor={colors.text.secondary}
-              />
-              <Text style={styles.inputUnit}>km</Text>
+              <View style={styles.inputWithUnit}>
+                <TextInput
+                  style={styles.numberInput}
+                  placeholder="0"
+                  placeholderTextColor={colors.text.secondary}
+                  value={endBatteryPercentage}
+                  onChangeText={setEndBatteryPercentage}
+                  keyboardType="numeric"
+                />
+                <View style={[styles.unitBadge, { backgroundColor: "rgba(103,209,108,0.15)" }]}>
+                  <Text style={[styles.inputUnit, { color: "#67D16C" }]}>%</Text>
+                </View>
+              </View>
             </View>
-            <View style={styles.inputHelper}>
-              <AntDesign
-                name="info-circle"
-                size={12}
-                color={colors.text.secondary}
-              />
-              <Text style={styles.inputHelperText}>
-                Số km cuối cùng khi trả xe
-              </Text>
+
+            {/* Odometer Input */}
+            <View style={styles.metricInput}>
+              <View style={styles.inputLabelRow}>
+                <AntDesign name="dashboard" size={14} color="#7DB3FF" />
+                <Text style={styles.inputLabel}>Số km</Text>
+              </View>
+              <View style={styles.inputWithUnit}>
+                <TextInput
+                  style={styles.numberInput}
+                  placeholder="0"
+                  placeholderTextColor={colors.text.secondary}
+                  value={endOdometerKm}
+                  onChangeText={setEndOdometerKm}
+                  keyboardType="numeric"
+                />
+                <View style={styles.unitBadge}>
+                  <Text style={styles.inputUnit}>km</Text>
+                </View>
+              </View>
             </View>
           </View>
         </View>
 
         {/* Inspection Categories */}
-        {categories.map((category) => (
-          <View key={category.id} style={styles.categoryCard}>
-            <TouchableOpacity
-              style={styles.categoryHeader}
-              onPress={() => toggleCategory(category.id)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.categoryTitle}>
-                {category.title}{" "}
-                <Text style={styles.categoryCount}>
-                  ({getCategoryCheckedCount(category)}/{category.items.length}{" "}
-                  mục)
-                </Text>
-              </Text>
-              <AntDesign
-                name={category.expanded ? "up" : "down"}
-                size={16}
-                color={colors.text.secondary}
-              />
-            </TouchableOpacity>
-
-            {category.expanded && (
-              <View
-                ref={checklistRef}
-                style={styles.itemsContainer}
-                collapsable={false}
-              >
-                {category.items.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.itemCard}
-                    onPress={() => toggleItem(category.id, item.id)}
-                    activeOpacity={0.8}
-                  >
-                    <View
-                      style={[
-                        styles.checkboxCircle,
-                        item.checked && styles.checkboxChecked,
-                      ]}
-                    >
-                      {item.checked && (
-                        <AntDesign name="check" size={12} color="#FFFFFF" />
-                      )}
+        <View
+          ref={checklistRef}
+          style={styles.checklistContainer}
+          collapsable={false}
+        >
+          {categories.map((category) => {
+            const categoryChecked = getCategoryCheckedCount(category);
+            const categoryTotal = category.items.length;
+            const categoryProgress = categoryTotal > 0 ? Math.round((categoryChecked / categoryTotal) * 100) : 0;
+            
+            return (
+              <View key={category.id} style={styles.categoryCard}>
+                <TouchableOpacity
+                  style={styles.categoryHeader}
+                  onPress={() => toggleCategory(category.id)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.categoryHeaderLeft}>
+                    <View style={[styles.categoryIcon, { backgroundColor: categoryProgress === 100 ? "rgba(103,209,108,0.15)" : "rgba(201,182,255,0.15)" }]}>
+                      <AntDesign 
+                        name={categoryProgress === 100 ? "check-circle" : "file-text"} 
+                        size={16} 
+                        color={categoryProgress === 100 ? "#67D16C" : "#C9B6FF"} 
+                      />
                     </View>
-                    <Text style={styles.itemText}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
+                    <View style={styles.categoryTitleContainer}>
+                      <Text style={styles.categoryTitle}>{category.title}</Text>
+                      <Text style={styles.categoryProgress}>
+                        {categoryChecked}/{categoryTotal} hoàn thành
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.categoryHeaderRight}>
+                    <View style={[styles.categoryProgressBar, { width: 60 }]}>
+                      <View style={[styles.categoryProgressFill, { width: `${categoryProgress}%`, backgroundColor: categoryProgress === 100 ? "#67D16C" : "#C9B6FF" }]} />
+                    </View>
+                    <AntDesign
+                      name={category.expanded ? "up" : "down"}
+                      size={16}
+                      color={colors.text.secondary}
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                {category.expanded && (
+                  <View style={styles.itemsContainer}>
+                    {category.items.map((item) => (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[styles.itemCard, item.checked && styles.itemCardChecked]}
+                        onPress={() => toggleItem(category.id, item.id)}
+                        activeOpacity={0.8}
+                      >
+                        <View
+                          style={[
+                            styles.checkboxCircle,
+                            item.checked && styles.checkboxChecked,
+                          ]}
+                        >
+                          {item.checked && (
+                            <AntDesign name="check" size={14} color="#FFFFFF" />
+                          )}
+                        </View>
+                        <Text style={[styles.itemText, item.checked && styles.itemTextChecked]}>
+                          {item.label}
+                        </Text>
+                        {item.checked && (
+                          <AntDesign name="check-circle" size={16} color="#67D16C" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-        ))}
+            );
+          })}
+        </View>
 
         {/* Complete Button */}
         <TouchableOpacity
           style={[
-            styles.completeButton,
-            checkedItems === totalItems && styles.completeButtonActive,
+            styles.primaryCta,
+            (checkedItems !== totalItems || isSubmitting) && styles.primaryCtaDisabled,
           ]}
           onPress={handleCompleteInspection}
-          disabled={checkedItems !== totalItems}
+          disabled={checkedItems !== totalItems || isSubmitting}
         >
-          <Text style={styles.completeButtonText}>Hoàn thành kiểm tra</Text>
+          <View style={styles.primaryCtaContent}>
+            {isSubmitting ? (
+              <>
+                <AntDesign name="loading" size={18} color="#0B0B0F" />
+                <Text style={styles.primaryCtaText}>Đang gửi...</Text>
+              </>
+            ) : checkedItems === totalItems ? (
+              <>
+                <AntDesign name="check-circle" size={18} color="#0B0B0F" />
+                <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
+              </>
+            ) : (
+              <>
+                <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
+                <Text style={styles.primaryCtaTextDisabled}>Chưa hoàn thành</Text>
+              </>
+            )}
+          </View>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -399,127 +419,167 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   progressSection: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
     marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 20,
-  },
-  progressLabel: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: 8,
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: "#2A2A2A",
-    borderRadius: 4,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  progressBar: {
-    height: "100%",
-    backgroundColor: "#C9B6FF",
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 14,
-    color: colors.text.primary,
-    fontWeight: "500",
-  },
-  vehicleCard: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-  },
-  vehicleCardContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  vehicleModel: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: colors.text.primary,
-    marginBottom: 4,
-  },
-  vehiclePlate: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  statusInputsCard: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 16,
-    marginHorizontal: 16,
+    marginTop: 12,
     marginBottom: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#444444",
+    borderColor: "#1F2430",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  statusInputsTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.text.primary,
-    marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 24,
-  },
-  inputHeader: {
+  progressHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
-    gap: 8,
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.text.primary,
-  },
-  inputContainer: {
+  progressHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#444444",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
     gap: 12,
+    flex: 1,
   },
-  inputIconContainer: {
+  progressHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(201,182,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
-  input: {
-    flex: 1,
-    fontSize: 16,
+  progressLabel: {
+    fontSize: 18,
+    fontWeight: "700",
     color: colors.text.primary,
-    fontWeight: "500",
+    marginBottom: 4,
   },
-  inputUnit: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.text.secondary,
-    minWidth: 32,
-    textAlign: "right",
-  },
-  inputHelper: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-    gap: 6,
-  },
-  inputHelperText: {
+  progressSubtitle: {
     fontSize: 12,
     color: colors.text.secondary,
   },
-  categoryCard: {
-    backgroundColor: "#2A2A2A",
+  completionBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
+  },
+  completionPercentage: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  progressBarContainer: {
+    height: 10,
+    backgroundColor: "#3A3A3A",
+    borderRadius: 5,
+    overflow: "hidden",
+  },
+  progressBar: {
+    height: "100%",
+    borderRadius: 5,
+  },
+  statusInputsCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    marginHorizontal: 16,
+    padding: 20,
+    marginBottom: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cardHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,214,102,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardHeaderTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  metricsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  metricInput: {
+    flex: 1,
+  },
+  inputLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  inputLabel: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  inputWithUnit: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  numberInput: {
+    backgroundColor: "#1B1F2A",
+    borderRadius: 12,
+    padding: 14,
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "600",
+    borderWidth: 1,
+    borderColor: "#232838",
+    flex: 1,
+  },
+  unitBadge: {
+    backgroundColor: "rgba(124,255,203,0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    minWidth: 40,
+    alignItems: "center",
+  },
+  inputUnit: {
+    color: "#7CFFCB",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  checklistContainer: {
+    backgroundColor: "transparent",
+    marginTop: 12,
+  },
+  categoryCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 16,
     marginHorizontal: 16,
     marginBottom: 12,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#1F2430",
   },
   categoryHeader: {
     flexDirection: "row",
@@ -527,15 +587,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
+  categoryHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  categoryIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  categoryTitleContainer: {
+    flex: 1,
+  },
   categoryTitle: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text.primary,
+    marginBottom: 4,
   },
-  categoryCount: {
-    fontSize: 14,
-    fontWeight: "normal",
+  categoryProgress: {
+    fontSize: 12,
     color: colors.text.secondary,
+  },
+  categoryHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  categoryProgressBar: {
+    height: 4,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  categoryProgressFill: {
+    height: 4,
+    borderRadius: 2,
   },
   itemsContainer: {
     paddingHorizontal: 16,
@@ -545,45 +636,71 @@ const styles = StyleSheet.create({
   itemCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 12,
+    padding: 14,
     gap: 12,
+    borderWidth: 1,
+    borderColor: "#232838",
+  },
+  itemCardChecked: {
+    backgroundColor: "rgba(103,209,108,0.1)",
+    borderColor: "rgba(103,209,108,0.3)",
   },
   checkboxCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.text.secondary,
+    borderColor: "#3A3A3A",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#1B1F2A",
   },
   checkboxChecked: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
+    backgroundColor: "#67D16C",
+    borderColor: "#67D16C",
   },
   itemText: {
     flex: 1,
     fontSize: 14,
     color: colors.text.primary,
+    fontWeight: "500",
   },
-  completeButton: {
-    backgroundColor: "#2A2A2A",
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    alignItems: "center",
+  itemTextChecked: {
+    color: "#67D16C",
+    fontWeight: "600",
+  },
+  primaryCta: {
     marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  completeButtonActive: {
     backgroundColor: "#C9B6FF",
+    borderRadius: 16,
+    marginTop: 8,
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: "hidden",
   },
-  completeButtonText: {
-    color: colors.text.dark,
-    fontSize: 18,
-    fontWeight: "bold",
+  primaryCtaDisabled: {
+    backgroundColor: "#2F3545",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  primaryCtaContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 18,
+  },
+  primaryCtaText: {
+    color: "#0B0B0F",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  primaryCtaTextDisabled: {
+    color: "#9CA3AF",
   },
 });

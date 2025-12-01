@@ -4,6 +4,7 @@ import { ApiResponse } from "../../../core/network/APIResponse";
 import { JoinRequest } from "../../models/gpsSharing/JoinRequest";
 import { GpsSharingRepository } from "../../../domain/repositories/gpsSharing/GpsSharingRepository";
 import { InviteResponse } from "../../models/gpsSharing/InviteResponse";
+import { SessionDetailResponse } from "../../models/gpsSharing/SessionDetailResponse";
 
 export class GpsSharingRepositoryImpl implements GpsSharingRepository {
         constructor(private remoteDataSource: GpsSharingRemoteDataSource) {}
@@ -16,7 +17,7 @@ export class GpsSharingRepositoryImpl implements GpsSharingRepository {
         return await this.remoteDataSource.join(request);
     }
 
-    async getSession(sessionId: string): Promise<ApiResponse<any>> {
+    async getSession(sessionId: string): Promise<ApiResponse<SessionDetailResponse>> {
         return await this.remoteDataSource.getSession(sessionId);
     }
 

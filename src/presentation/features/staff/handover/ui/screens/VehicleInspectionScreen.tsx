@@ -361,8 +361,11 @@ export const VehicleInspectionScreen: React.FC = () => {
             type: "success",
           });
           navigation.reset({
-            index: 0,
-            routes: [{ name: "BookingDetails", params: { bookingId } }],
+            index: 1,
+            routes: [
+              { name: "Rental" },
+              { name: "BookingDetails", params: { bookingId } },
+            ],
           });
         } else {
           Toast.show({
@@ -416,7 +419,8 @@ export const VehicleInspectionScreen: React.FC = () => {
           startOdometerKm: receiptData.startOdometerKm,
           startBatteryPercentage: receiptData.startBatteryPercentage,
           bookingId: receiptData.bookingId,
-          vehicleFiles: receiptData.vehicleFiles,
+          handOverVehicleImageFiles: receiptData.handOverVehicleImageFiles,
+          returnVehicleImageFiles: receiptData.returnVehicleImageFiles,
           checkListFile: receiptData.checkListFile,
         });
       }
