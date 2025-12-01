@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import { CompositeNavigationProp, useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
 import {
@@ -8,23 +8,22 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
 import { LoginUseCase } from "../../../../../../domain/usecases/account/LoginUseCase";
 import { colors } from "../../../../../common/theme/colors";
-import { RootStackParamList, AuthStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { AuthStackParamList, RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useAppDispatch } from "../../../store/hooks";
 import { addAuth } from "../../../store/slices/authSlice";
 import { BrandTitle } from "../../atoms/BrandTitle";
+import { EmailPromptModal } from "../../atoms/OTPVerify/EmailPromptModal";
 import { PrivacyNotice } from "../../atoms/PrivacyNotice";
 import { SignUpPrompt } from "../../atoms/register/SignUpPrompt";
 import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
 import { LoginForm } from "../../organism/login/LoginForm";
-import Toast from "react-native-toast-message";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { CompositeNavigationProp } from "@react-navigation/native";
-import { EmailPromptModal } from "../../atoms/OTPVerify/EmailPromptModal";
 
 type LoginScreenNavigationProp = CompositeNavigationProp<
   StackNavigationProp<AuthStackParamList, 'Login'>,
@@ -189,6 +188,10 @@ export const LoginScreen: React.FC = () => {
     console.log("Privacy policy");
   };
 
+  const handleForgotPassword = () => {
+    navigation.navigate('ForgotPassword');
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
@@ -202,8 +205,12 @@ export const LoginScreen: React.FC = () => {
         >
           <BrandTitle subtitle="Đăng nhập vào tài khoản eMotoRent của bạn" />
 
-          <LoginForm onContinue={handleContinue} loading={loading} />
-
+          <LoginForm 
+            onContinue={handleContinue} 
+            onForgotPassword={handleForgotPassword}
+            loading={loading} 
+          />
+          
           <SocialAuthGroup onGooglePress={handleGoogleSignIn} />
 
           <SignUpPrompt onSignUpPress={handleSignUpNow} />

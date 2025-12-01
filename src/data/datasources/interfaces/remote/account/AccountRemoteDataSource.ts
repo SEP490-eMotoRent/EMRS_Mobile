@@ -6,6 +6,7 @@ import { LoginResponseData } from "../../../../models/account/accountDTO/LoginRe
 import { ResendOtpRequest } from "../../../../models/account/accountDTO/otp/ResendOtpRequest";
 import { VerifyOtpRequest } from "../../../../models/account/accountDTO/otp/VerifyOtpRequest";
 import { RegisterUserRequest } from "../../../../models/account/accountDTO/RegisterUserRequest";
+import { ChangePasswordRequest } from "../../../../models/account/password/ChangePasswordRequest";
 
 export interface AccountRemoteDataSource {
     getByEmail(email: string): Promise<RegisterUserRequest | null>;
@@ -16,4 +17,5 @@ export interface AccountRemoteDataSource {
 
     verifyOtp(request: VerifyOtpRequest): Promise<ApiResponse<string>>;
     resendOtp(request: ResendOtpRequest): Promise<ApiResponse<string>>;
+    changePassword(request: ChangePasswordRequest): Promise<ApiResponse<string>>;
 }
