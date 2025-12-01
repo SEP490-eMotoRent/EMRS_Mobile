@@ -21,6 +21,8 @@ import { AntDesign } from "@expo/vector-icons";
 import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 import { colors } from "../../../../common/theme/colors";
 import Toast from "react-native-toast-message";
+import { GetSessionByRenterIdUseCase } from "../../../../../domain/usecases/gpsSharing/GetSessionByRenterIdUseCase";
+import { Booking } from "../../../../../domain/entities/booking/Booking";
 
 export const GpsSharingSessionListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -30,14 +32,14 @@ export const GpsSharingSessionListScreen: React.FC = () => {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [invitationCode, setInvitationCode] = useState("");
   const [joining, setJoining] = useState(false);
-  const [currentBookingId, setCurrentBookingId] = useState<string | null>(null);
+  const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
+    fetchCurrentBooking();
     fetchSessions();
-    fetchCurrentVehicle();
   }, []);
 
-  const fetchCurrentVehicle = async () => {
+  const fetchCurrentBooking = async () => {
     try {
       const getCurrentRenterBookingsUseCase = new GetCurrentRenterBookingsUseCase(
         sl.get("BookingRepository")
@@ -45,10 +47,10 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       const bookings = await getCurrentRenterBookingsUseCase.execute();
       const rentingBooking = bookings.find((b) => b.bookingStatus === "Renting");
       if (rentingBooking?.id) {
-        setCurrentBookingId(rentingBooking.id);
+        setCurrentBooking(rentingBooking);
       }
     } catch (error) {
-      console.error("Error fetching current vehicle:", error);
+      console.error("Error fetching current booking:", error);
     }
   };
 
@@ -113,11 +115,15 @@ export const GpsSharingSessionListScreen: React.FC = () => {
   };
   const fetchSessions = async () => {
     try {
+      if (!currentBooking?.renterId) {
+        return;
+      }
+      console.log("currentBooking", currentBooking);
       setLoading(true);
-      const getSessionsUseCase = new GetGpsSharingSessionsUseCase(
+      const getSessionByRenterIdUseCase = new GetSessionByRenterIdUseCase(
         sl.get("GpsSharingRepository")
       );
-      const response = await getSessionsUseCase.execute();
+      const response = await getSessionByRenterIdUseCase.execute(currentBooking.renterId);
       if (response.success && response.data) {
         setSessions(response.data);
       }
@@ -132,7 +138,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
   const onRefresh = () => {
     setRefreshing(true);
     fetchSessions();
-    fetchCurrentVehicle();
+    fetchCurrentBooking();
   };
 
   const handleJoinSession = async () => {
@@ -145,7 +151,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       return;
     }
 
-    if (!currentBookingId) {
+    if (!currentBooking?.id) {
       Toast.show({
         type: "error",
         text1: "Lỗi",
@@ -159,7 +165,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       const joinUseCase = new GpsSharingJoinUseCase(sl.get("GpsSharingRepository"));
       const response = await joinUseCase.execute({
         invitationCode: invitationCode.trim().toUpperCase(),
-        guestBookingId: currentBookingId,
+        guestBookingId: currentBooking?.id,
       });
 
       if (response.success) {
@@ -451,7 +457,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
               </View>
             </View>
 
-            {currentBookingId ? (
+            {currentBooking?.id ? (
               <View style={styles.infoBox}>
                 <AntDesign name="check-circle" size={16} color="#81C784" />
                 <Text style={styles.infoBoxText}>
@@ -482,10 +488,10 @@ export const GpsSharingSessionListScreen: React.FC = () => {
                 style={[
                   styles.modalButton,
                   styles.modalButtonJoin,
-                  (!currentBookingId || joining) && styles.modalButtonDisabled,
+                  (!currentBooking?.id || joining) && styles.modalButtonDisabled,
                 ]}
                 onPress={handleJoinSession}
-                disabled={!currentBookingId || joining}
+                disabled={!currentBooking?.id || joining}
               >
                 {joining ? (
                   <ActivityIndicator size="small" color="#000" />

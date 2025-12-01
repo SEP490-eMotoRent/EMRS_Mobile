@@ -13,6 +13,7 @@ import { ReturnCompleteScreen } from '../../../../features/tripDetails/ui/screen
 import { CreateTicketScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/CreateTicketScreen';
 import { TicketListScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/TicketListScreen';
 import { TicketDetailScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/TicketDetailScreen';
+import { ChargingListBookingScreen } from '../../../../features/charging/ui/screens';
 
 const Stack = createStackNavigator<TripStackParamList>();
 
@@ -237,6 +238,14 @@ export const TripNavigator: React.FC = () => {
       <Stack.Screen
         name="RentedVehicleDetails"
         component={RentedVehicleDetailsScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="ChargingListBooking"
+        component={ChargingListBookingScreen}
         options={{
           headerShown: false,
           gestureEnabled: true,

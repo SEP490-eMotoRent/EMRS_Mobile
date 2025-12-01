@@ -195,6 +195,10 @@ export type BookingStackParamList = {
 
 export type TripStackParamList = {
   Trip: undefined;
+  ChargingListBooking: {
+    bookingId: string;
+    licensePlate?: string;
+  };
   BookingDetails: {
     bookingId: string;
   };
@@ -359,6 +363,10 @@ export type StaffStackParamList = {
   HandoverComplete: undefined;
   BookingDetails: { bookingId?: string; booking?: any };
   Charging: undefined;
+  ChargingListBooking: {
+    bookingId: string;
+    licensePlate?: string;
+  };
   Profile: undefined;
   VehicleConfirmation: {
     bookingId: string;
