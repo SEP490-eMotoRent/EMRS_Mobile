@@ -37,6 +37,7 @@ export class RentalReturnRepositoryImpl implements RentalReturnRepository {
   ): Promise<ApiResponse<CreateReceiptResponse>> {
     const request: CreateReceiptRequest = {
       bookingId: input.bookingId,
+      actualReturnDatetime: input.actualReturnDatetime,
       endOdometerKm: input.endOdometerKm,
       endBatteryPercentage: input.endBatteryPercentage,
       notes: input.notes,
@@ -46,7 +47,6 @@ export class RentalReturnRepositoryImpl implements RentalReturnRepository {
         type: "image/png",
         name: `checklist_${Date.now()}.png`,
       } as any,
-      additionalFees: input.additionalFees,
     };
 
     return await this.remote.createReceipt(request);

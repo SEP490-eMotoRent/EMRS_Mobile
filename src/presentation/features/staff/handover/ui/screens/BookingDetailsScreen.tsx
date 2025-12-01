@@ -438,16 +438,20 @@ export const BookingDetailsScreen: React.FC = () => {
 
           <InfoCard>
             {/* Vehicle Model */}
-            <View style={styles.iconRow}>
-              <View style={styles.iconLeft}>
-                <AntDesign name="idcard" size={14} color="#7DB3FF" />
-                <Text style={styles.iconLabel}>Mã xe thuê</Text>
-              </View>
-              <Text style={styles.iconValue}>
-                #{booking?.vehicle?.id.slice(-12) || "-"}
-              </Text>
-            </View>
-            <View style={styles.divider} />
+            {booking?.vehicle?.id && (
+              <>
+                <View style={styles.iconRow}>
+                  <View style={styles.iconLeft}>
+                    <AntDesign name="idcard" size={14} color="#7DB3FF" />
+                    <Text style={styles.iconLabel}>Mã xe thuê</Text>
+                  </View>
+                  <Text style={styles.iconValue}>
+                    #{booking?.vehicle?.id.slice(-12) || "-"}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
             <View style={styles.iconRow}>
               <View style={styles.iconLeft}>
                 <AntDesign name="car" size={14} color="#FFD666" />

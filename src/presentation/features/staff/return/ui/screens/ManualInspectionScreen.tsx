@@ -18,6 +18,10 @@ import { StepProgressBar } from "../atoms";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
 import Toast from "react-native-toast-message";
+import { RentalReturnCreateReceiptUseCase } from "../../../../../../domain/usecases/rentalReturn/CreateReceiptUseCase";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { CreateReceiptResponse } from "../../../../../../data/models/rentalReturn/CreateReceiptResponse";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 
 type ManualInspectionScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -50,6 +54,10 @@ export const ManualInspectionScreen: React.FC = () => {
   const [endOdometerKm, setEndOdometerKm] = useState("");
   const [endBatteryPercentage, setEndBatteryPercentage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inspectionCompleted, setInspectionCompleted] = useState(false);
+  const [returnReceiptData, setReturnReceiptData] =
+    useState<CreateReceiptResponse | null>(null);
+  const [checklistUri, setChecklistUri] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<InspectionCategory[]>([
     {
@@ -169,21 +177,41 @@ export const ManualInspectionScreen: React.FC = () => {
         return;
       }
 
-      let checklistUri: string | null = null;
+      let capturedChecklistUri: string | null = null;
       if (checklistRef.current) {
-        checklistUri = await captureRef(checklistRef.current, {
+        capturedChecklistUri = await captureRef(checklistRef.current, {
           format: "png",
           quality: 0.8,
           result: "tmpfile", // tạo file thật để upload
         });
+        setChecklistUri(capturedChecklistUri);
       }
 
-      navigation.navigate("AdditionalFees", {
+      const createReturnReceiptUseCase = new RentalReturnCreateReceiptUseCase(
+        sl.get("RentalReturnRepository")
+      );
+
+      const returnReceiptResponse = await createReturnReceiptUseCase.execute({
+        notes: "Kiểm tra thủ công",
+        actualReturnDatetime: new Date().toISOString(),
         endOdometerKm: parseInt(endOdometerKm),
         endBatteryPercentage: parseInt(endBatteryPercentage),
-        bookingId: bookingId,
+        bookingId,
         returnImageUrls: photos,
-        checkListImage: checklistUri,
+        checkListImage: capturedChecklistUri,
+      });
+
+      const receiptData: CreateReceiptResponse = unwrapResponse(
+        returnReceiptResponse
+      );
+
+      setReturnReceiptData(receiptData);
+      setInspectionCompleted(true);
+
+      Toast.show({
+        text1: "Kiểm tra đã hoàn thành",
+        text2: "Chọn bước tiếp theo",
+        type: "success",
       });
     } catch (error) {
       Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
@@ -222,9 +250,29 @@ export const ManualInspectionScreen: React.FC = () => {
                 </Text>
               </View>
             </View>
-            <View style={[styles.completionBadge, { backgroundColor: checkedItems === totalItems ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
-              <Text style={[styles.completionPercentage, { color: checkedItems === totalItems ? "#67D16C" : "#FFD700" }]}>
-                {totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0}%
+            <View
+              style={[
+                styles.completionBadge,
+                {
+                  backgroundColor:
+                    checkedItems === totalItems
+                      ? "rgba(103,209,108,0.15)"
+                      : "rgba(255,211,102,0.15)",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.completionPercentage,
+                  {
+                    color: checkedItems === totalItems ? "#67D16C" : "#FFD700",
+                  },
+                ]}
+              >
+                {totalItems > 0
+                  ? Math.round((checkedItems / totalItems) * 100)
+                  : 0}
+                %
               </Text>
             </View>
           </View>
@@ -232,9 +280,12 @@ export const ManualInspectionScreen: React.FC = () => {
             <View
               style={[
                 styles.progressBar,
-                { 
-                  width: `${totalItems > 0 ? (checkedItems / totalItems) * 100 : 0}%`,
-                  backgroundColor: checkedItems === totalItems ? "#67D16C" : "#C9B6FF",
+                {
+                  width: `${
+                    totalItems > 0 ? (checkedItems / totalItems) * 100 : 0
+                  }%`,
+                  backgroundColor:
+                    checkedItems === totalItems ? "#67D16C" : "#C9B6FF",
                 },
               ]}
             />
@@ -269,8 +320,15 @@ export const ManualInspectionScreen: React.FC = () => {
                   onChangeText={setEndBatteryPercentage}
                   keyboardType="numeric"
                 />
-                <View style={[styles.unitBadge, { backgroundColor: "rgba(103,209,108,0.15)" }]}>
-                  <Text style={[styles.inputUnit, { color: "#67D16C" }]}>%</Text>
+                <View
+                  style={[
+                    styles.unitBadge,
+                    { backgroundColor: "rgba(103,209,108,0.15)" },
+                  ]}
+                >
+                  <Text style={[styles.inputUnit, { color: "#67D16C" }]}>
+                    %
+                  </Text>
                 </View>
               </View>
             </View>
@@ -307,8 +365,11 @@ export const ManualInspectionScreen: React.FC = () => {
           {categories.map((category) => {
             const categoryChecked = getCategoryCheckedCount(category);
             const categoryTotal = category.items.length;
-            const categoryProgress = categoryTotal > 0 ? Math.round((categoryChecked / categoryTotal) * 100) : 0;
-            
+            const categoryProgress =
+              categoryTotal > 0
+                ? Math.round((categoryChecked / categoryTotal) * 100)
+                : 0;
+
             return (
               <View key={category.id} style={styles.categoryCard}>
                 <TouchableOpacity
@@ -317,11 +378,25 @@ export const ManualInspectionScreen: React.FC = () => {
                   activeOpacity={0.8}
                 >
                   <View style={styles.categoryHeaderLeft}>
-                    <View style={[styles.categoryIcon, { backgroundColor: categoryProgress === 100 ? "rgba(103,209,108,0.15)" : "rgba(201,182,255,0.15)" }]}>
-                      <AntDesign 
-                        name={categoryProgress === 100 ? "check-circle" : "file-text"} 
-                        size={16} 
-                        color={categoryProgress === 100 ? "#67D16C" : "#C9B6FF"} 
+                    <View
+                      style={[
+                        styles.categoryIcon,
+                        {
+                          backgroundColor:
+                            categoryProgress === 100
+                              ? "rgba(103,209,108,0.15)"
+                              : "rgba(201,182,255,0.15)",
+                        },
+                      ]}
+                    >
+                      <AntDesign
+                        name={
+                          categoryProgress === 100
+                            ? "check-circle"
+                            : "file-text"
+                        }
+                        size={16}
+                        color={categoryProgress === 100 ? "#67D16C" : "#C9B6FF"}
                       />
                     </View>
                     <View style={styles.categoryTitleContainer}>
@@ -333,7 +408,16 @@ export const ManualInspectionScreen: React.FC = () => {
                   </View>
                   <View style={styles.categoryHeaderRight}>
                     <View style={[styles.categoryProgressBar, { width: 60 }]}>
-                      <View style={[styles.categoryProgressFill, { width: `${categoryProgress}%`, backgroundColor: categoryProgress === 100 ? "#67D16C" : "#C9B6FF" }]} />
+                      <View
+                        style={[
+                          styles.categoryProgressFill,
+                          {
+                            width: `${categoryProgress}%`,
+                            backgroundColor:
+                              categoryProgress === 100 ? "#67D16C" : "#C9B6FF",
+                          },
+                        ]}
+                      />
                     </View>
                     <AntDesign
                       name={category.expanded ? "up" : "down"}
@@ -348,7 +432,10 @@ export const ManualInspectionScreen: React.FC = () => {
                     {category.items.map((item) => (
                       <TouchableOpacity
                         key={item.id}
-                        style={[styles.itemCard, item.checked && styles.itemCardChecked]}
+                        style={[
+                          styles.itemCard,
+                          item.checked && styles.itemCardChecked,
+                        ]}
                         onPress={() => toggleItem(category.id, item.id)}
                         activeOpacity={0.8}
                       >
@@ -362,11 +449,20 @@ export const ManualInspectionScreen: React.FC = () => {
                             <AntDesign name="check" size={14} color="#FFFFFF" />
                           )}
                         </View>
-                        <Text style={[styles.itemText, item.checked && styles.itemTextChecked]}>
+                        <Text
+                          style={[
+                            styles.itemText,
+                            item.checked && styles.itemTextChecked,
+                          ]}
+                        >
                           {item.label}
                         </Text>
                         {item.checked && (
-                          <AntDesign name="check-circle" size={16} color="#67D16C" />
+                          <AntDesign
+                            name="check-circle"
+                            size={16}
+                            color="#67D16C"
+                          />
                         )}
                       </TouchableOpacity>
                     ))}
@@ -377,34 +473,98 @@ export const ManualInspectionScreen: React.FC = () => {
           })}
         </View>
 
-        {/* Complete Button */}
+        {/* Action Buttons */}
         <TouchableOpacity
-          style={[
-            styles.primaryCta,
-            (checkedItems !== totalItems || isSubmitting) && styles.primaryCtaDisabled,
-          ]}
-          onPress={handleCompleteInspection}
-          disabled={checkedItems !== totalItems || isSubmitting}
+          style={styles.secondaryCta}
+          onPress={() => {
+            navigation.navigate("AdditionalFees", {
+              bookingId: bookingId,
+            });
+          }}
+          activeOpacity={0.8}
         >
-          <View style={styles.primaryCtaContent}>
-            {isSubmitting ? (
-              <>
-                <AntDesign name="loading" size={18} color="#0B0B0F" />
-                <Text style={styles.primaryCtaText}>Đang gửi...</Text>
-              </>
-            ) : checkedItems === totalItems ? (
-              <>
-                <AntDesign name="check-circle" size={18} color="#0B0B0F" />
-                <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
-              </>
-            ) : (
-              <>
-                <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
-                <Text style={styles.primaryCtaTextDisabled}>Chưa hoàn thành</Text>
-              </>
-            )}
+          <View style={styles.secondaryCtaContent}>
+            <View style={styles.secondaryCtaIconContainer}>
+              <AntDesign name="plus-circle" size={18} color="#FFD666" />
+            </View>
+            <Text style={styles.secondaryCtaText}>Thêm phí phát sinh</Text>
+            <AntDesign name="right" size={16} color="#FFD666" />
           </View>
         </TouchableOpacity>
+        {inspectionCompleted ? (
+          <View style={styles.actionButtonsContainer}>
+            {/* Additional Fees Button */}
+            <TouchableOpacity
+              style={styles.secondaryCta}
+              onPress={() => {
+                navigation.navigate("AdditionalFees", {
+                  bookingId: bookingId,
+                });
+              }}
+              activeOpacity={0.8}
+            >
+              <View style={styles.secondaryCtaContent}>
+                <View style={styles.secondaryCtaIconContainer}>
+                  <AntDesign name="plus-circle" size={18} color="#FFD666" />
+                </View>
+                <Text style={styles.secondaryCtaText}>Thêm phí phát sinh</Text>
+                <AntDesign name="right" size={16} color="#FFD666" />
+              </View>
+            </TouchableOpacity>
+
+            {/* View Report Button */}
+            <TouchableOpacity
+              style={styles.primaryCta}
+              onPress={() => {
+                if (returnReceiptData) {
+                  navigation.navigate("ReturnReport", {
+                    bookingId: bookingId,
+                    rentalReceiptId: returnReceiptData.rentalReceiptId,
+                    settlement: returnReceiptData.settlement,
+                  });
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <View style={styles.primaryCtaContent}>
+                <AntDesign name="file-text" size={18} color="#0B0B0F" />
+                <Text style={styles.primaryCtaText}>Xem báo cáo trả xe</Text>
+                <AntDesign name="arrow-right" size={16} color="#0B0B0F" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.primaryCta,
+              (checkedItems !== totalItems || isSubmitting) &&
+                styles.primaryCtaDisabled,
+            ]}
+            onPress={handleCompleteInspection}
+            disabled={checkedItems !== totalItems || isSubmitting}
+          >
+            <View style={styles.primaryCtaContent}>
+              {isSubmitting ? (
+                <>
+                  <AntDesign name="loading" size={18} color="#0B0B0F" />
+                  <Text style={styles.primaryCtaText}>Đang gửi...</Text>
+                </>
+              ) : checkedItems === totalItems ? (
+                <>
+                  <AntDesign name="check-circle" size={18} color="#0B0B0F" />
+                  <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
+                </>
+              ) : (
+                <>
+                  <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
+                  <Text style={styles.primaryCtaTextDisabled}>
+                    Chưa hoàn thành
+                  </Text>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -702,5 +862,42 @@ const styles = StyleSheet.create({
   },
   primaryCtaTextDisabled: {
     color: "#9CA3AF",
+  },
+  actionButtonsContainer: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    gap: 12,
+  },
+  secondaryCta: {
+    backgroundColor: "#1A1D26",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#FFD666",
+    shadowColor: "#FFD666",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    overflow: "hidden",
+  },
+  secondaryCtaContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 18,
+  },
+  secondaryCtaIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,214,102,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryCtaText: {
+    color: "#FFD666",
+    fontWeight: "700",
+    fontSize: 16,
   },
 });

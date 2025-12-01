@@ -5,12 +5,12 @@ import { RentalReturnRepository } from "../../repositories/rentalReturn/RentalRe
 
 export interface RentalReturnCreateReceiptUseCaseInput {
     bookingId: string;
+    actualReturnDatetime: string;
     endOdometerKm: number;
     endBatteryPercentage: number;
     notes: string;
     returnImageUrls: string[];
     checkListImage: string;
-    additionalFees: AdditionalFeesBreakdown[];
 }
 
 export class RentalReturnCreateReceiptUseCase {

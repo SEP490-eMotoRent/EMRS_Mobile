@@ -184,4 +184,14 @@ export const ApiEndpoints = {
     getSessions: "/GPSSharing/sessions",
     getSessionsByRenterId: (renterId: string) => `/GPSSharing/sessions/renter/${renterId}`,
   },
+
+  // Additional Fees endpoints
+  additionalFees: {
+    addLateReturnFee: "/additional-fees/late-return",
+    addCrossBranchFee: "/additional-fees/cross-branch",
+    addExcessKmFee: "/additional-fees/excess-km",
+    addDamageFee: "/additional-fees/damage",
+    addCleaningFee: "/additional-fees/cleaning",
+    getDamageTypes: "/additional-fees/damage-types",
+  },
 };

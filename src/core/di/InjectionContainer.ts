@@ -157,6 +157,12 @@ import { GpsSharingRepositoryImpl } from "../../data/repositories/gpsSharing/Gps
 import { GpsSharingRepository } from "../../domain/repositories/gpsSharing/GpsSharingRepository";
 import { GpsSharingInviteUseCase } from "../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
 
+// Additional Fee imports
+import { AdditionalFeeRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/additionalFee/AdditionalFeeRemoteDataSourceImpl";
+import { AdditionalFeeRepositoryImpl } from "../../data/repositories/additionalFee/AdditionalFeeRepositoryImpl";
+import { AdditionalFeeRepository } from "../../domain/repositories/additionalFee/AdditionalFeeRepository";
+import { GetDamageTypesUseCase } from "../../domain/usecases/additionalFee/GetDamageTypesUseCase";
+
 
 /**
  * Service Locator / Dependency Injection Container
@@ -418,6 +424,14 @@ class ServiceLocator {
     this.services.set("GetFeedbackByVehicleModelIdUseCase", getFeedbackByVehicleModelIdUseCase);
     const getAllFeedbacksUseCase = new GetAllFeedbacksUseCase(feedbackRepository);
     this.services.set("GetAllFeedbacksUseCase", getAllFeedbacksUseCase);
+
+    // Additional Fee services
+    const additionalFeeRemoteDataSource = new AdditionalFeeRemoteDataSourceImpl(axiosClient);
+    this.services.set("AdditionalFeeRemoteDataSource", additionalFeeRemoteDataSource);
+    const additionalFeeRepository = new AdditionalFeeRepositoryImpl(additionalFeeRemoteDataSource);
+    this.services.set("AdditionalFeeRepository", additionalFeeRepository);
+    const getDamageTypesUseCase = new GetDamageTypesUseCase(additionalFeeRepository);
+    this.services.set("GetDamageTypesUseCase", getDamageTypesUseCase);
   }
 
   static getInstance(): ServiceLocator {

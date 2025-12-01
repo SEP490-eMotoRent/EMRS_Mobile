@@ -375,13 +375,7 @@ export type StaffStackParamList = {
   ReturnInspection: { bookingId: string };
   AIAnalysis: { bookingId: string; analyzeReturnData: AnalyzeReturnResponse };
   ManualInspection: { bookingId: string; photos: string[] };
-  AdditionalFees: {
-    endOdometerKm: number;
-    endBatteryPercentage: number;
-    bookingId: string;
-    returnImageUrls: string[];
-    checkListImage: string;
-  };
+  AdditionalFees: { bookingId: string };
   ReturnReport: {
     bookingId: string;
     rentalReceiptId: string;
