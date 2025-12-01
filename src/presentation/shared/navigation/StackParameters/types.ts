@@ -262,7 +262,10 @@ export type TripStackParamList = {
     vehicleId?: string;
     licensePlate?: string;
   };
-  ReturnComplete: undefined;
+  ReturnComplete: {
+    bookingId: string;
+    refundAmount: number;
+  };
   RentedVehicleDetails: {
     vehicleId: string;
   };
@@ -343,7 +346,8 @@ export type StaffStackParamList = {
     startOdometerKm: number;
     startBatteryPercentage: number;
     bookingId: string;
-    vehicleFiles: string[];
+    handOverVehicleImageFiles: string[];
+    returnVehicleImageFiles: string[];
     checkListFile: string;
   };
   HandoverReceiptReport: {

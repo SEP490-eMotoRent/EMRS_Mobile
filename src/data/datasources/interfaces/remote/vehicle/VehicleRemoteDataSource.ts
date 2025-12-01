@@ -15,6 +15,7 @@ export interface VehicleRemoteDataSource {
         currentOdometerKm?: number,
         batteryHealthPercentage?: number,
         status?: string,
+        orderbyDescending?: boolean,
         branchId?: string,
         vehicleModelId?: string,
         pageSize?: number,

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { MembershipResponse, RenterResponse } from '../../../../../data/models/account/renter/RenterResponse';
 import { Renter } from '../../../../../domain/entities/account/Renter';
 import { Membership } from '../../../../../domain/entities/financial/Membership';
-import { useAppSelector } from '../../../authentication/store/hooks';
+import { useAppDispatch, useAppSelector } from '../../../authentication/store/hooks';
 import sl from '../../../../../core/di/InjectionContainer';
+import { removeAuth } from '../../../authentication/store/slices/authSlice';
 
 // NORMALIZE AVATAR URL
 const normalizeAvatarUrl = (url: any): string | null => {
@@ -33,6 +34,7 @@ const normalizeRenter = (renter: any): Renter => {
 
 export const useRenterProfile = () => {
     const token = useAppSelector((state) => state.auth.token);
+    const dispatch = useAppDispatch();
     const [renter, setRenter] = useState<Renter | null>(null);
     const [renterResponse, setRenterResponse] = useState<RenterResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -77,6 +79,7 @@ export const useRenterProfile = () => {
             setRenter(normalizedRenter);
             setRenterResponse(normalizedResponse);
         } catch (err: any) {
+            dispatch(removeAuth())
             console.error('Failed to fetch renter profile:', err);
             setError(err.message || 'Failed to load profile');
         } finally {

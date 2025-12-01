@@ -73,7 +73,7 @@ export const TrackingGPSScreen: React.FC = () => {
         const trackingUseCase = new TrackingVehicleUseCase(
           sl.get("VehicleRepository")
         );
-        const tracking = await trackingUseCase.execute("7e4c7e3e-339f-43cf-b5d1-6e871c5af65a");
+        const tracking = await trackingUseCase.execute(vehicleId);
         setTrackingData(tracking);
       } catch (error) {
         console.error(error);

@@ -7,7 +7,7 @@ export interface HandoverReceiptResponse {
     bookingId: string;
     staffId: string;
     endOdometerKm: number;
-    vehicleFiles: string[];
+    handOverVehicleImageFiles: string[];
+    returnVehicleImageFiles: string[];
     checkListFile: string;
 }
-
