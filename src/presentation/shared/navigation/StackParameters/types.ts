@@ -278,6 +278,7 @@ export type TripStackParamList = {
 export type ProfileStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
+  ChangePassword: undefined;
   DocumentManagement: undefined;
   CitizenIDVerification: undefined;
   DriverLicenseVerification: undefined;

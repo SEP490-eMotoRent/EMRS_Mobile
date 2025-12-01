@@ -7,6 +7,7 @@ import { AccountRemoteDataSource } from "../../datasources/interfaces/remote/acc
 import { GoogleLoginRequest } from "../../models/account/accountDTO/GoogleLoginRequest";
 import { LoginResponseData } from "../../models/account/accountDTO/LoginResponse";
 import { RegisterUserRequest } from "../../models/account/accountDTO/RegisterUserRequest";
+import { ChangePasswordRequest } from "../../models/account/password/ChangePasswordRequest";
 
 export class AccountRepositoryImpl implements AccountRepository {
     constructor(private remote: AccountRemoteDataSource) {}
@@ -104,5 +105,9 @@ export class AccountRepositoryImpl implements AccountRepository {
 
     async resendOtp(email: string): Promise<ApiResponse<string>> {
         return await this.remote.resendOtp({ email });
+    }
+
+    async changePassword(request: ChangePasswordRequest): Promise<ApiResponse<string>> {
+        return await this.remote.changePassword(request);
     }
 }

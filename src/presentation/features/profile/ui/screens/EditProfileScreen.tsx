@@ -735,7 +735,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
                 onDeleteLicenseDoc={licenseDoc ? handleDeleteLicenseDoc : undefined}
                 onLicenseIssueDatePress={handleLicenseIssueDatePress}
                 onLicenseAuthorityChange={setLicenseAuthority}
-                onChangePassword={() => {}}
+                onChangePassword={() => navigation.navigate('ChangePassword')}
                 saving={isSaving}
             />
             

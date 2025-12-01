@@ -18,6 +18,7 @@ import { ProfileStackParamList } from '../../StackParameters/types';
 import { CitizenIDVerificationScreen } from '../../../../features/profile/ui/screens/Documents/CitizenIDVerificationScreen';
 import { DocumentManagementHubScreen } from '../../../../features/profile/ui/screens/Documents/DocumentManagementHubScreen';
 import { DriverLicenseVerificationScreen } from '../../../../features/profile/ui/screens/Documents/DriverLicenseVerificationScreen';
+import { ChangePasswordScreen } from '../../../../features/profile/ui/screens/ChangePasswordScreen';
 
 const Stack = createStackNavigator<ProfileStackParamList>();
 
@@ -54,6 +55,8 @@ export const ProfileNavigator: React.FC = () => {
 
             {/* Transaction Screens */}
             <Stack.Screen name="AllTransactions" component={AllTransactionsScreen} />
+
+            <Stack.Screen name="ChangePassword" component={ChangePasswordScreen}/>
         </Stack.Navigator>
     );
 };

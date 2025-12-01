@@ -1,4 +1,5 @@
 import { ServerException } from "../../../../../core/errors/ServerException";
+import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
 import { AppLogger } from "../../../../../core/utils/Logger";
@@ -8,6 +9,7 @@ import { LoginResponseData } from "../../../../models/account/accountDTO/LoginRe
 import { ResendOtpRequest } from "../../../../models/account/accountDTO/otp/ResendOtpRequest";
 import { VerifyOtpRequest } from "../../../../models/account/accountDTO/otp/VerifyOtpRequest";
 import { RegisterUserRequest } from "../../../../models/account/accountDTO/RegisterUserRequest";
+import { ChangePasswordRequest } from "../../../../models/account/password/ChangePasswordRequest";
 import { AccountRemoteDataSource } from "../../../interfaces/remote/account/AccountRemoteDataSource";
 
 export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
@@ -214,5 +216,13 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
                 error.response?.status || 500
             );
         }
+    }
+
+    async changePassword(request: ChangePasswordRequest): Promise<ApiResponse<string>> {
+        const response = await this.apiClient.post<ApiResponse<string>>(
+            ApiEndpoints.auth.changePassword,
+            request
+        );
+        return response.data;
     }
 }

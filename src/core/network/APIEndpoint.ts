@@ -65,6 +65,7 @@ export const ApiEndpoints = {
     googleLogin: "/auth/google-login",
     verifyOtp: "/auth/verify-otp",
     resendOtp: "/auth/resend-otp",
+    changePassword: "/auth/change-password",
   },
 
   transaction: {

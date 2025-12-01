@@ -154,8 +154,8 @@ import { VerifyOtpUseCase } from "../../domain/usecases/account/OTP/VerifyOtpUse
 // Gps Sharing imports
 import { GpsSharingRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/gpsSharing/GpsSharingRemoteDataSourceImpl";
 import { GpsSharingRepositoryImpl } from "../../data/repositories/gpsSharing/GpsSharingRepositoryImpl";
-import { GpsSharingRepository } from "../../domain/repositories/gpsSharing/GpsSharingRepository";
 import { GpsSharingInviteUseCase } from "../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
+import { ChangePasswordUseCase } from "../../domain/usecases/account/ChangePasswordUseCase";
 
 // Additional Fee imports
 import { AdditionalFeeRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/additionalFee/AdditionalFeeRemoteDataSourceImpl";
@@ -182,6 +182,7 @@ class ServiceLocator {
     this.services.set("AccountRemoteDataSource", accountRemoteDataSource);
     const accountRepository = new AccountRepositoryImpl(accountRemoteDataSource);
     this.services.set("AccountRepository", accountRepository);
+    
 
     //Google Sign-In Use Case
     const googleSignInUseCase = new GoogleSignInUseCase();
@@ -432,6 +433,9 @@ class ServiceLocator {
     this.services.set("AdditionalFeeRepository", additionalFeeRepository);
     const getDamageTypesUseCase = new GetDamageTypesUseCase(additionalFeeRepository);
     this.services.set("GetDamageTypesUseCase", getDamageTypesUseCase);
+    const changePasswordUseCase = new ChangePasswordUseCase(accountRepository);
+    this.services.set("ChangePasswordUseCase", changePasswordUseCase);
+
   }
 
   static getInstance(): ServiceLocator {
@@ -742,6 +746,10 @@ class ServiceLocator {
 
   getResendOtpUseCase(): ResendOtpUseCase {
       return this.get<ResendOtpUseCase>('ResendOtpUseCase');
+  }
+
+  getChangePasswordUseCase(): ChangePasswordUseCase {
+    return this.get<ChangePasswordUseCase>('ChangePasswordUseCase');
   }
 }
 
