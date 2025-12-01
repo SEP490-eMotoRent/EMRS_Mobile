@@ -1,20 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    View,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
     Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../../common/theme/colors';
 
 interface PasswordInputProps {
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  label?: string;
-  error?: string;
+    value: string;
+    onChangeText: (text: string) => void;
+    placeholder?: string;
+    label?: string;
+    error?: string;
+    onBlur?: () => void;
 }
 
 export const PasswordInput: React.FC<PasswordInputProps> = ({
@@ -23,6 +24,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
     placeholder = 'Mật khẩu',
     label,
     error,
+    onBlur,
 }) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -39,6 +41,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
             style={styles.input}
             value={value}
             onChangeText={onChangeText}
+            onBlur={onBlur} // ✅ Add this
             placeholder={placeholder}
             placeholderTextColor={colors.input.placeholder}
             secureTextEntry={!isPasswordVisible}
