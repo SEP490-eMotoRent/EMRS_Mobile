@@ -195,6 +195,10 @@ export type BookingStackParamList = {
 
 export type TripStackParamList = {
   Trip: undefined;
+  ChargingListBooking: {
+    bookingId: string;
+    licensePlate?: string;
+  };
   BookingDetails: {
     bookingId: string;
   };
@@ -360,6 +364,10 @@ export type StaffStackParamList = {
   HandoverComplete: undefined;
   BookingDetails: { bookingId?: string; booking?: any };
   Charging: undefined;
+  ChargingListBooking: {
+    bookingId: string;
+    licensePlate?: string;
+  };
   Profile: undefined;
   VehicleConfirmation: {
     bookingId: string;
@@ -368,13 +376,7 @@ export type StaffStackParamList = {
   ReturnInspection: { bookingId: string };
   AIAnalysis: { bookingId: string; analyzeReturnData: AnalyzeReturnResponse };
   ManualInspection: { bookingId: string; photos: string[] };
-  AdditionalFees: {
-    endOdometerKm: number;
-    endBatteryPercentage: number;
-    bookingId: string;
-    returnImageUrls: string[];
-    checkListImage: string;
-  };
+  AdditionalFees: { bookingId: string };
   ReturnReport: {
     bookingId: string;
     rentalReceiptId: string;

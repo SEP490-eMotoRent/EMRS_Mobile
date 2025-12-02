@@ -41,43 +41,18 @@ export const RentalScreen: React.FC = () => {
     fetchBookings(1);
   }, []);
 
-  // Mock data for handover schedule
-  // const handoverSchedule = [
-  //   {
-  //     id: "1",
-  //     time: "10:30 AM - 11:00 AM",
-  //     timeSubtext: "In 2 hours",
-  //     customerName: "John Nguyen",
-  //     bookingId: "#EMR240915001",
-  //     vehicleName: "VinFast Evo200",
-  //     rentalDuration: "7 days rental",
-  //     branch: "District 2 Branch",
-  //     arrivalStatus: "Arrives in 15 min",
-  //   },
-  //   {
-  //     id: "2",
-  //     time: "2:00 PM - 2:30 PM",
-  //     timeSubtext: "In 4 hours",
-  //     customerName: "Doraemon Nguyen",
-  //     bookingId: "#EMR240915002",
-  //     vehicleName: "Klara S",
-  //     rentalDuration: "3 days rental",
-  //     branch: "District 2 Branch",
-  //     arrivalStatus: "Scheduled",
-  //   },
-  // ];
-
   const fetchHandoverSchedule = async (page: number = pageNum) => {
     setLoading(true);
     try {
       const getBookingListUseCase = new GetBookingListUseCase(
         sl.get("BookingRepository")
       );
+      const today = new Date().toISOString().split("T")[0]; 
       const response = await getBookingListUseCase.execute(
         "",
         "",
         "Booking",
-        new Date().toISOString(),
+        today,
         page,
         pageSize
       );

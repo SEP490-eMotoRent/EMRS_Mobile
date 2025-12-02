@@ -42,6 +42,7 @@ import {
 import TrackingGPSScreen from "../../../features/staff/tracking/ui/screens/TrackingGPSScreen";
 import { BookingReturnListScreen } from "../../../features/staff/return/ui/screens/BookingReturnListScreen";
 import { FaceScanCameraScreen } from "../../../features/staff/scan/ui/screens/FaceScanCameraScreen ";
+import ChargingListBookingScreen from "../../../features/charging/ui/screens/ChargingListBookingScreen";
 import {
   TicketDetailScreen,
   TicketListScreen,
@@ -155,6 +156,10 @@ export const StaffNavigator: React.FC = () => {
         />
         <Stack.Screen name="TicketList" component={TicketListScreen} />
         <Stack.Screen name="TicketDetail" component={TicketDetailScreen} />
+        <Stack.Screen
+          name="ChargingListBooking"
+          component={ChargingListBookingScreen}
+        />
       </Stack.Navigator>
     </View>
   );

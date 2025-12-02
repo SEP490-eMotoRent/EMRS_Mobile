@@ -101,7 +101,7 @@ export const ChargingScreen: React.FC = () => {
       const getChargingByLicensePlateUseCase =
         new GetChargingByLicensePlateUseCase(sl.get("ChargingRepository"));
       const response = await getChargingByLicensePlateUseCase.execute(
-        manualPlate.trim()
+        manualPlate.trim().toLocaleUpperCase()
       );
       if (response.success) {
         const data: BookingChargingResponse = unwrapResponse(response);
@@ -122,7 +122,7 @@ export const ChargingScreen: React.FC = () => {
       Toast.show({
         type: "error",
         text1: "Lỗi",
-        text2: `Không tìm thấy xe có biển số ${manualPlate}`,
+        text2: `Không tìm thấy xe có biển số ${manualPlate.trim().toLocaleUpperCase()}`,
       });
       setChargingData(null);
     } finally {
@@ -250,7 +250,7 @@ export const ChargingScreen: React.FC = () => {
       "Xác nhận tạo bản ghi sạc",
       `Xe: ${
         chargingData.licensePlate
-      }\nPin bắt đầu: ${startBatteryPercentage}%\nPin kết thúc: ${endBatteryPercentage}%\nkWh sạc: ${kwhCharged} kWh\nGhi chú: ${
+      }\nPin trước sạc: ${startBatteryPercentage}%\nPin sau sạc: ${endBatteryPercentage}%\nkWh sạc: ${kwhCharged} kWh\nGhi chú: ${
         notes || "Không có"
       }`,
       [

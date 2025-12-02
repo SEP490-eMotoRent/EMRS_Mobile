@@ -90,6 +90,7 @@ export const StaffVehicleListScreen: React.FC = () => {
           filterOdometerMin ? Number(filterOdometerMin) : undefined,
           filterBatteryMin ? Number(filterBatteryMin) : undefined,
           filterStatus !== "all" ? filterStatus : undefined,
+          undefined,
           user?.branchId,
           filterModelId || undefined,
           PAGE_SIZE,

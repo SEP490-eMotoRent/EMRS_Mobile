@@ -9,4 +9,5 @@ export interface GpsSharingRepository {
     join(request: JoinRequest): Promise<ApiResponse<any>>;
     getSession(sessionId: string): Promise<ApiResponse<SessionDetailResponse>>;
     getSessions(): Promise<ApiResponse<any[]>>;
+    getSessionsByRenterId(renterId: string): Promise<ApiResponse<any[]>>;
 }

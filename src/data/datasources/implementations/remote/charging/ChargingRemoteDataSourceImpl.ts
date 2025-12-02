@@ -6,6 +6,7 @@ import { BookingChargingResponse } from "../../../../models/charging/BookingChar
 import { CreateChargingRecordRequest } from "../../../../models/charging/CreateChargingRecordRequest";
 import { GetChargingRateRequest } from "../../../../models/charging/GetChargingRateRequest";
 import { GetChargingRateResponse } from "../../../../models/charging/GetChargingRateResponse";
+import { ChargingListResponse } from "../../../../models/charging/ChargingListResponse";
 
 export class ChargingRemoteDataSourceImpl implements ChargingRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
@@ -63,6 +64,21 @@ export class ChargingRemoteDataSourceImpl implements ChargingRemoteDataSource {
       };
     } catch (error: any) {
       console.error("Error creating charging record:", error);
+      throw error;
+    }
+  }
+
+  async getByBookingId(bookingId: string): Promise<ApiResponse<ChargingListResponse[]>> {
+    try {
+      const response = await this.axiosClient.get<ApiResponse<ChargingListResponse[]>>(ApiEndpoints.charging.getByBookingId(bookingId));
+      return {
+        success: true,
+        message: "Charging found successfully",
+        data: response.data.data,
+        code: response.status,
+      };
+    } catch (error: any) {
+      console.error("Error getting charging by booking id:", error);
       throw error;
     }
   }

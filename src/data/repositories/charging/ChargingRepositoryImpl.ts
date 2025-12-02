@@ -5,6 +5,7 @@ import { BookingChargingResponse } from "../../models/charging/BookingChargingRe
 import { CreateChargingRecordRequest } from "../../models/charging/CreateChargingRecordRequest";
 import { GetChargingRateResponse } from "../../models/charging/GetChargingRateResponse";
 import { GetChargingRateRequest } from "../../models/charging/GetChargingRateRequest";
+import { ChargingListResponse } from "../../models/charging/ChargingListResponse";
 
 export class ChargingRepositoryImpl implements ChargingRepository {
   constructor(private remote: ChargingRemoteDataSource) {}
@@ -23,5 +24,9 @@ export class ChargingRepositoryImpl implements ChargingRepository {
 
   async getChargingRate(request: GetChargingRateRequest): Promise<ApiResponse<GetChargingRateResponse>> {
     return await this.remote.getChargingRate(request);
+  }
+
+  async getByBookingId(bookingId: string): Promise<ApiResponse<ChargingListResponse[]>> {
+    return await this.remote.getByBookingId(bookingId);
   }
 }

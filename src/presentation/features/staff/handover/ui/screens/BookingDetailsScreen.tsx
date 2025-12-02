@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -74,9 +74,15 @@ export const BookingDetailsScreen: React.FC = () => {
       fetchBooking();
       fetchVehicleModels();
       fetchRentalReceipt();
-      fetchSummary();
+      // fetchSummary();
     }, [])
   );
+
+  useEffect(() => {
+    if (booking?.bookingStatus === "Completed") {
+      fetchSummary();
+    }
+  }, [booking?.bookingStatus]);
 
   const fetchBooking = async () => {
     try {
@@ -311,63 +317,66 @@ export const BookingDetailsScreen: React.FC = () => {
         }
       >
         {/* Payment Ready Banner - Show when return files exist and status is Renting */}
-        {booking?.bookingStatus === "Renting" && (
-          rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 &&
-          // rentalReceipts?.[0]?.checkListFile &&
-          <TouchableOpacity
-            style={styles.paymentReadyBanner}
-            onPress={openReturnReport}
-            activeOpacity={0.9}
-          >
-            <View style={styles.paymentReadyContent}>
-              <View style={styles.paymentReadyLeft}>
-                <View style={styles.paymentReadyIconContainer}>
-                  <AntDesign name="wallet" size={24} color="#FFD666" />
+        {booking?.bookingStatus === "Renting" &&
+          rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
+            // rentalReceipts?.[0]?.checkListFile &&
+            <TouchableOpacity
+              style={styles.paymentReadyBanner}
+              onPress={openReturnReport}
+              activeOpacity={0.9}
+            >
+              <View style={styles.paymentReadyContent}>
+                <View style={styles.paymentReadyLeft}>
+                  <View style={styles.paymentReadyIconContainer}>
+                    <AntDesign name="wallet" size={24} color="#FFD666" />
+                  </View>
+                  <View style={styles.paymentReadyTextContainer}>
+                    <Text style={styles.paymentReadyTitle}>
+                      Sẵn sàng thanh toán
+                    </Text>
+                    <Text style={styles.paymentReadySubtitle}>
+                      Xem biên bản trả xe và hoàn tất thanh toán
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.paymentReadyTextContainer}>
-                  <Text style={styles.paymentReadyTitle}>
-                    Sẵn sàng thanh toán
+                <View style={styles.paymentReadyRight}>
+                  <View style={styles.paymentReadyBadge}>
+                    <AntDesign name="check-circle" size={16} color="#67D16C" />
+                    <Text style={styles.paymentReadyBadgeText}>Mới</Text>
+                  </View>
+                  <AntDesign
+                    name="arrow-right"
+                    size={20}
+                    color="#FFD666"
+                    style={styles.paymentReadyArrow}
+                  />
+                </View>
+              </View>
+              <View style={styles.paymentReadyFooter}>
+                <View style={styles.paymentReadyInfoRow}>
+                  <AntDesign
+                    name="picture"
+                    size={14}
+                    color={colors.text.secondary}
+                  />
+                  <Text style={styles.paymentReadyInfoText}>
+                    {rentalReceipts[0].returnVehicleImageFiles.length} ảnh xe
+                    trả
                   </Text>
-                  <Text style={styles.paymentReadySubtitle}>
-                    Xem biên bản trả xe và hoàn tất thanh toán
+                </View>
+                <View style={styles.paymentReadyInfoRow}>
+                  <AntDesign
+                    name="file-text"
+                    size={14}
+                    color={colors.text.secondary}
+                  />
+                  <Text style={styles.paymentReadyInfoText}>
+                    Đã có checklist
                   </Text>
                 </View>
               </View>
-              <View style={styles.paymentReadyRight}>
-                <View style={styles.paymentReadyBadge}>
-                  <AntDesign name="check-circle" size={16} color="#67D16C" />
-                  <Text style={styles.paymentReadyBadgeText}>Mới</Text>
-                </View>
-                <AntDesign
-                  name="arrow-right"
-                  size={20}
-                  color="#FFD666"
-                  style={styles.paymentReadyArrow}
-                />
-              </View>
-            </View>
-            <View style={styles.paymentReadyFooter}>
-              <View style={styles.paymentReadyInfoRow}>
-                <AntDesign
-                  name="picture"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.paymentReadyInfoText}>
-                  {rentalReceipts[0].returnVehicleImageFiles.length} ảnh xe trả
-                </Text>
-              </View>
-              <View style={styles.paymentReadyInfoRow}>
-                <AntDesign
-                  name="file-text"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.paymentReadyInfoText}>Đã có checklist</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          )}
 
         {/* Customer Information */}
         <View style={styles.section}>
@@ -429,16 +438,20 @@ export const BookingDetailsScreen: React.FC = () => {
 
           <InfoCard>
             {/* Vehicle Model */}
-            <View style={styles.iconRow}>
-              <View style={styles.iconLeft}>
-                <AntDesign name="idcard" size={14} color="#7DB3FF" />
-                <Text style={styles.iconLabel}>Mã xe thuê</Text>
-              </View>
-              <Text style={styles.iconValue}>
-                #{booking?.vehicle?.id.slice(-12) || "-"}
-              </Text>
-            </View>
-            <View style={styles.divider} />
+            {booking?.vehicle?.id && (
+              <>
+                <View style={styles.iconRow}>
+                  <View style={styles.iconLeft}>
+                    <AntDesign name="idcard" size={14} color="#7DB3FF" />
+                    <Text style={styles.iconLabel}>Mã xe thuê</Text>
+                  </View>
+                  <Text style={styles.iconValue}>
+                    #{booking?.vehicle?.id.slice(-12) || "-"}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
             <View style={styles.iconRow}>
               <View style={styles.iconLeft}>
                 <AntDesign name="car" size={14} color="#FFD666" />
@@ -494,29 +507,65 @@ export const BookingDetailsScreen: React.FC = () => {
           </InfoCard>
         </View>
         {booking?.vehicle?.id && (
-          <TouchableOpacity
-            style={styles.vehicleDetailsBtn}
-            activeOpacity={0.85}
-            onPress={openVehicleDetails}
-          >
-            <View style={styles.vehicleDetailsLeft}>
-              <View style={styles.vehicleIconBadge}>
-                <AntDesign name="car" size={18} color="#000" />
+          <>
+            <TouchableOpacity
+              style={styles.vehicleDetailsBtn}
+              activeOpacity={0.85}
+              onPress={openVehicleDetails}
+            >
+              <View style={styles.vehicleDetailsLeft}>
+                <View style={styles.vehicleIconBadge}>
+                  <AntDesign name="car" size={18} color="#000" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.vehicleDetailsTitle}>
+                    Xem thông tin xe đang thuê
+                  </Text>
+                  <Text style={styles.vehicleDetailsSubtitle}>
+                    {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
+                    {booking?.vehicleModel?.modelName ||
+                      booking?.vehicle?.vehicleModel?.modelName ||
+                      "Đang cập nhật"}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.vehicleDetailsTitle}>
-                  Xem thông tin xe đang thuê
-                </Text>
-                <Text style={styles.vehicleDetailsSubtitle}>
-                  {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
-                  {booking?.vehicleModel?.modelName ||
-                    booking?.vehicle?.vehicleModel?.modelName ||
-                    "Đang cập nhật"}
-                </Text>
+              <AntDesign name="arrow-right" size={18} color="#fff" />
+            </TouchableOpacity>
+
+            {/* Charging history CTA - navigate to booking charging list */}
+            <TouchableOpacity
+              style={styles.chargingHistoryBtn}
+              activeOpacity={0.9}
+              onPress={() =>
+                navigation.navigate("ChargingListBooking", {
+                  bookingId,
+                  licensePlate: booking?.vehicle?.licensePlate,
+                })
+              }
+            >
+              <View style={styles.chargingHistoryLeft}>
+                <View style={styles.chargingIconBadge}>
+                  <AntDesign name="thunderbolt" size={20} color="#000" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.chargingHistoryTitle}>
+                    Lịch sử sạc theo booking
+                  </Text>
+                  <Text style={styles.chargingHistorySubtitle}>
+                    Xem các phiên sạc đã tạo cho xe ·{" "}
+                    {booking?.vehicle?.licensePlate || "Chưa có biển số"}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <AntDesign name="arrow-right" size={18} color="#fff" />
-          </TouchableOpacity>
+              <View style={styles.chargingHistoryRight}>
+                <View style={styles.chargingHistoryBadge}>
+                  <AntDesign name="thunderbolt" size={12} color="#22C55E" />
+                  <Text style={styles.chargingHistoryBadgeText}>Charging</Text>
+                </View>
+                <AntDesign name="arrow-right" size={18} color="#C9B6FF" />
+              </View>
+            </TouchableOpacity>
+          </>
         )}
 
         {hasInsurancePackage && insurancePackage && (
@@ -598,7 +647,7 @@ export const BookingDetailsScreen: React.FC = () => {
         )}
 
         {/* Return Summary */}
-        {booking?.bookingStatus === "Returned" && (
+        {booking?.bookingStatus === "Completed" && (
           <View style={styles.section}>
             <SectionHeader title="Tóm tắt trả xe" icon="profile" />
             <View style={styles.summaryCard}>
@@ -1051,7 +1100,7 @@ export const BookingDetailsScreen: React.FC = () => {
       <RNModal
         visible={showReceiptListModal}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowReceiptListModal(false)}
       >
         <View style={styles.receiptModalBackdrop}>
@@ -1800,6 +1849,70 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: 12,
     marginTop: 2,
+  },
+  chargingHistoryBtn: {
+    marginTop: 10,
+    marginBottom: 8,
+    marginHorizontal: 16,
+    backgroundColor: "#14121F",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "rgba(201,182,255,0.6)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  chargingHistoryLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  chargingIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#C9B6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chargingHistoryTitle: {
+    color: colors.text.primary,
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  chargingHistorySubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  chargingHistoryRight: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
+  chargingHistoryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(34,197,94,0.12)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(34,197,94,0.4)",
+  },
+  chargingHistoryBadgeText: {
+    color: "#22C55E",
+    fontSize: 11,
+    fontWeight: "600",
   },
   sectionHeaderRow: {
     flexDirection: "row",

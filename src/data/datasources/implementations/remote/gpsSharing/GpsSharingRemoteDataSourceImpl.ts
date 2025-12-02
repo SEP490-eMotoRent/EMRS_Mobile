@@ -64,4 +64,20 @@ export class GpsSharingRemoteDataSourceImpl
       };
     }
   }
+
+  async getSessionsByRenterId(renterId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await this.axiosClient.get<ApiResponse<any[]>>(
+        ApiEndpoints.gpsSharing.getSessionsByRenterId(renterId)
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: true,
+        message: "Sessions retrieved successfully",
+        data: null,
+        code: 500,
+      };
+    }
+  }
 }

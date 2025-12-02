@@ -174,6 +174,7 @@ export const ApiEndpoints = {
     getByLicensePlate: "/Charging/search-by-license-plate",
     getChargingRate: "/Charging/get-charging-rate",
     create: "/Charging/create",
+    getByBookingId: (bookingId: string) => `/Charging/booking/${bookingId}`,
   },
 
   //GPS Sharing endpoints
@@ -182,5 +183,16 @@ export const ApiEndpoints = {
     join: "/GPSSharing/join",
     getSession: (sessionId: string) => `/GPSSharing/session/${sessionId}`,
     getSessions: "/GPSSharing/sessions",
+    getSessionsByRenterId: (renterId: string) => `/GPSSharing/sessions/renter/${renterId}`,
+  },
+
+  // Additional Fees endpoints
+  additionalFees: {
+    addLateReturnFee: "/additional-fees/late-return",
+    addCrossBranchFee: "/additional-fees/cross-branch",
+    addExcessKmFee: "/additional-fees/excess-km",
+    addDamageFee: "/additional-fees/damage",
+    addCleaningFee: "/additional-fees/cleaning",
+    getDamageTypes: "/additional-fees/damage-types",
   },
 };

@@ -51,6 +51,7 @@ export class RentalReturnRemoteDataSourceImpl
       const formData = new FormData();
 
       formData.append("BookingId", request.bookingId);
+      formData.append("ActualReturnDatetime", request.actualReturnDatetime);
       formData.append("EndOdometerKm", request.endOdometerKm.toString());
       formData.append(
         "EndBatteryPercentage",
@@ -62,7 +63,6 @@ export class RentalReturnRemoteDataSourceImpl
         JSON.stringify(request.returnImageUrls)
       );
       formData.append("ChecklistImage", request.checkListImage);
-      formData.append("AdditionalFees", JSON.stringify(request.additionalFees));
 
       console.log("=== FormData Content ===");
       (formData as any)._parts.forEach(([key, value]: [string, any]) => {

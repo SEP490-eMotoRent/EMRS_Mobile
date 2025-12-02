@@ -90,6 +90,7 @@ export const SelectVehicleScreen: React.FC = () => {
         filterOdometerMin ? Number(filterOdometerMin) : undefined,
         undefined, // max odometer (not used)
         filterStatus || "",
+        undefined,
         user?.branchId,
         (filterVehicleModelId || vehicleModel?.id) as any,
         pageSize,

@@ -28,8 +28,6 @@ import Toast from "react-native-toast-message";
 import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 
-const customerAvatar = require("../../../../../../../assets/images/avatar2.png");
-
 type PhotoTileProps = {
   uri: string | null;
   labelTop?: string;
