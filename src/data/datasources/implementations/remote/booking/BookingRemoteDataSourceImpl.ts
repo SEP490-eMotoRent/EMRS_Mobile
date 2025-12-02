@@ -8,7 +8,7 @@ import { BookingResponseForRenter } from "../../../../models/booking/BookingResp
 import { BookingWithoutWalletResponse } from "../../../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
-import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
+import { BookingDetailResponse } from "../../../../models/booking/BookingDetailResponse"; // ✅ CHANGED
 import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/BookingRemoteDataSource";
 import { BookingResponse } from "../../../../models/booking/BookingResponse";
@@ -131,11 +131,12 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  async getById(id: string): Promise<BookingForStaffResponse | null> {
+  // Return type from BookingForStaffResponse to BookingDetailResponse
+  async getById(id: string): Promise<BookingDetailResponse | null> {
     try {
       const endpoint = ApiEndpoints.booking.detail(id);
       const response = await this.axiosClient.get<
-        ApiResponse<BookingForStaffResponse>
+        ApiResponse<BookingDetailResponse>
       >(endpoint);
       return unwrapResponse(response.data);
     } catch (error: any) {
@@ -224,7 +225,7 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-    async assignVehicle(vehicleId: string, bookingId: string): Promise<ApiResponse<AssignVehicleResponse>> {
+  async assignVehicle(vehicleId: string, bookingId: string): Promise<ApiResponse<AssignVehicleResponse>> {
     try {
       const endpoint = ApiEndpoints.booking.assignVehicle(vehicleId, bookingId);
       const response = await this.axiosClient.put<ApiResponse<AssignVehicleResponse>>(endpoint);
@@ -240,7 +241,6 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  // ✅ NEW: Cancel booking method
   async cancelBooking(bookingId: string): Promise<BookingResponse> {
     try {
       console.log("📤 [CANCEL BOOKING] Calling API for booking:", bookingId);

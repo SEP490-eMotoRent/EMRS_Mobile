@@ -1,6 +1,7 @@
 import { ApiResponse } from "../../../core/network/APIResponse";
 import { Account } from "../../../domain/entities/account/Account";
 import { Renter } from "../../../domain/entities/account/Renter";
+import { AdditionalFee } from "../../../domain/entities/booking/AdditionalFee";
 import { Booking } from "../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../domain/entities/booking/RentalContract";
 import { RentalReceipt } from "../../../domain/entities/booking/RentalReceipt";
@@ -14,7 +15,9 @@ import {
   VNPayBookingResult,
 } from "../../../domain/repositories/booking/BookingRepository";
 import { BookingRemoteDataSource } from "../../datasources/interfaces/remote/booking/BookingRemoteDataSource";
+import { AdditionalFeeResponse } from "../../models/booking/AdditionalFeeResponse";
 import { AssignVehicleResponse } from "../../models/booking/AssignVehicleResponse";
+import { BookingDetailResponse } from "../../models/booking/BookingDetailResponse"; // ✅ ADDED
 import { BookingResponse } from "../../models/booking/BookingResponse";
 import {
   BookingResponseForRenter,
@@ -104,21 +107,23 @@ export class BookingRepositoryImpl implements BookingRepository {
 
     return {
       booking: this.mapVNPayResponseToEntity(response),
-      vnpayUrl: response.vnpayUrl, // ✅ This must match the field name from backendQ
+      vnpayUrl: response.vnpayUrl,
     };
   }
 
   // =========================================================================
   // READ
   // =========================================================================
+  // ✅ CHANGED: Use new mapper for BookingDetailResponse
   async getById(id: string): Promise<Booking | null> {
     const response = await this.remote.getById(id);
-    return response ? this.mapStaffResponseToEntity(response) : null;
+    return response ? this.mapDetailResponseToEntity(response) : null;
   }
 
+  // ✅ CHANGED: Use new mapper for BookingDetailResponse
   async getByIdForStaff(id: string): Promise<Booking | null> {
     const response = await this.remote.getById(id);
-    return response ? this.mapStaffResponseToEntity(response) : null;
+    return response ? this.mapDetailResponseToEntity(response) : null;
   }
 
   async getByRenter(renterId: string): Promise<Booking[]> {
@@ -177,127 +182,12 @@ export class BookingRepositoryImpl implements BookingRepository {
     return await this.remote.assignVehicle(vehicleId, bookingId);
   }
 
-  // =========================================================================
-  // TYPE GUARD
-  // =========================================================================
-  private isStaffResponse(item: any): item is BookingForStaffResponse {
-    return "vehicle" in item && item.vehicle !== undefined;
-  }
-
-  // =========================================================================
-  // ✅ VNPAY MAPPER - NO MOCK DATA
-  // =========================================================================
-  private mapVNPayResponseToEntity(dto: BookingWithoutWalletResponse): Booking {
-    console.log("🔄 Mapping VNPay booking response:", dto.id);
-    // console.log("📝 Booking code:", dto.bookingCode); // ← Should print actual code
-
-    return new Booking(
-      dto.id,
-      "", // ← USE ACTUAL BOOKING CODE
-      dto.baseRentalFee,
-      dto.depositAmount,
-      dto.rentalDays,
-      dto.rentalHours,
-      dto.rentingRate,
-      dto.lateReturnFee || 0,
-      dto.averageRentalPrice,
-      0, // excessKmFee
-      0, // cleaningFee
-      0, // crossBranchFee
-      0, // totalChargingFee
-      0, // totalAdditionalFee
-      dto.totalRentalFee,
-      dto.totalAmount,
-      0, // refundAmount
-      dto.bookingStatus,
-      dto.vehicleModelId,
-      dto.renterId,
-      undefined, // renter
-      undefined, // vehicleModel
-      dto.vehicleId,
-      undefined, // vehicle
-      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
-      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
-      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-      undefined, // insurancePackageId
-      undefined, // insurancePackage
-      undefined, // rentalContract
-      undefined, // rentalReceipts
-      undefined, // handoverBranchId
-      undefined, // handoverBranch
-      undefined, // returnBranchId
-      undefined, // returnBranch
-      undefined, // feedback
-      undefined, // insuranceClaims
-      undefined, // additionalFees
-      undefined, // chargingRecords
-      new Date(),
-      null,
-      null,
-      false
-    );
-  }
-
-  // =========================================================================
-  // ✅ SIMPLE MAPPER - NO MOCK DATA
-  // =========================================================================
-  private mapSimpleResponseToEntity(dto: BookingResponse): Booking {
-    console.log("🔄 Mapping simple booking response:", dto.id);
-
-    return new Booking(
-      dto.id,
-      "",
-      dto.baseRentalFee,
-      dto.depositAmount,
-      dto.rentalDays,
-      dto.rentalHours,
-      dto.rentingRate,
-      dto.lateReturnFee || 0,
-      dto.averageRentalPrice,
-      0, // excessKmFee
-      0, // cleaningFee
-      0, // crossBranchFee
-      0, // totalChargingFee
-      0, // totalAdditionalFee
-      dto.totalRentalFee,
-      dto.totalAmount,
-      0, // refundAmount
-      dto.bookingStatus,
-      dto.vehicleModelId,
-      dto.renterId,
-      undefined, // renter
-      undefined, // vehicleModel
-      dto.vehicleId,
-      undefined, // vehicle
-      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
-      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
-      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-      undefined, // insurancePackageId
-      undefined, // insurancePackage
-      undefined, // rentalContract
-      undefined, // rentalReceipts
-      undefined, // handoverBranchId
-      undefined, // handoverBranch
-      undefined, // returnBranchId
-      undefined, // returnBranch
-      undefined, // feedback
-      undefined, // insuranceClaims
-      undefined, // additionalFees
-      undefined, // chargingRecords
-      new Date(),
-      null,
-      null,
-      false
-    );
-  }
-
-  // ✅ NEW: Cancel booking
+  // ✅ Cancel booking
   async cancelBooking(bookingId: string): Promise<Booking> {
     console.log("🔄 [REPOSITORY] Cancelling booking:", bookingId);
 
     const response = await this.remote.cancelBooking(bookingId);
 
-    // Map the BookingResponse to Booking entity
     const cancelledBooking = new Booking(
       response.id,
       response.bookingCode,
@@ -313,10 +203,11 @@ export class BookingRepositoryImpl implements BookingRepository {
       0, // crossBranchFee
       0, // totalChargingFee
       0, // totalAdditionalFee
+      undefined, // earlyHandoverFee
       response.totalRentalFee,
       response.totalAmount,
       0, // refundAmount
-      response.bookingStatus, // Should be "Cancelled"
+      response.bookingStatus,
       response.vehicleModelId,
       response.renterId,
       undefined, // renter
@@ -354,7 +245,122 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   // =========================================================================
-  //  LIST MAPPER - WITH NESTED OBJECTS
+  // TYPE GUARD
+  // =========================================================================
+  private isStaffResponse(item: any): item is BookingForStaffResponse {
+    return "vehicle" in item && item.vehicle !== undefined;
+  }
+
+  // =========================================================================
+  // ✅ VNPAY MAPPER
+  // =========================================================================
+  private mapVNPayResponseToEntity(dto: BookingWithoutWalletResponse): Booking {
+    console.log("🔄 Mapping VNPay booking response:", dto.id);
+
+    return new Booking(
+      dto.id,
+      "",
+      dto.baseRentalFee,
+      dto.depositAmount,
+      dto.rentalDays,
+      dto.rentalHours,
+      dto.rentingRate,
+      dto.lateReturnFee || 0,
+      dto.averageRentalPrice,
+      0, // excessKmFee
+      0, // cleaningFee
+      0, // crossBranchFee
+      0, // totalChargingFee
+      0, // totalAdditionalFee
+      undefined, // earlyHandoverFee
+      dto.totalRentalFee,
+      dto.totalAmount,
+      0, // refundAmount
+      dto.bookingStatus,
+      dto.vehicleModelId,
+      dto.renterId,
+      undefined, // renter
+      undefined, // vehicleModel
+      dto.vehicleId,
+      undefined, // vehicle
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      undefined, // insurancePackageId
+      undefined, // insurancePackage
+      undefined, // rentalContract
+      undefined, // rentalReceipts
+      undefined, // handoverBranchId
+      undefined, // handoverBranch
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims
+      undefined, // additionalFees
+      undefined, // chargingRecords
+      new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  // =========================================================================
+  // ✅ SIMPLE MAPPER
+  // =========================================================================
+  private mapSimpleResponseToEntity(dto: BookingResponse): Booking {
+    console.log("🔄 Mapping simple booking response:", dto.id);
+
+    return new Booking(
+      dto.id,
+      dto.bookingCode,
+      dto.baseRentalFee,
+      dto.depositAmount,
+      dto.rentalDays,
+      dto.rentalHours,
+      dto.rentingRate,
+      dto.lateReturnFee || 0,
+      dto.averageRentalPrice,
+      0, // excessKmFee
+      0, // cleaningFee
+      0, // crossBranchFee
+      0, // totalChargingFee
+      0, // totalAdditionalFee
+      undefined, // earlyHandoverFee
+      dto.totalRentalFee,
+      dto.totalAmount,
+      0, // refundAmount
+      dto.bookingStatus,
+      dto.vehicleModelId,
+      dto.renterId,
+      undefined, // renter
+      undefined, // vehicleModel
+      dto.vehicleId,
+      undefined, // vehicle
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      undefined, // insurancePackageId
+      undefined, // insurancePackage
+      undefined, // rentalContract
+      undefined, // rentalReceipts
+      undefined, // handoverBranchId
+      undefined, // handoverBranch
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims
+      undefined, // additionalFees
+      undefined, // chargingRecords
+      new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  // =========================================================================
+  // ✅ LIST MAPPER - WITH NESTED OBJECTS
   // =========================================================================
   private mapListResponseToEntity(dto: BookingResponseForRenter): Booking {
     console.log("🔄 Mapping list booking response:", dto.id);
@@ -381,14 +387,15 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.rentingRate,
       dto.lateReturnFee || 0,
       dto.averageRentalPrice,
-      0,
-      0,
-      0,
-      0,
-      0,
+      0, // excessKmFee
+      0, // cleaningFee
+      0, // crossBranchFee
+      0, // totalChargingFee
+      0, // totalAdditionalFee
+      undefined, // earlyHandoverFee
       dto.totalRentalFee,
       dto.totalAmount,
-      0,
+      0, // refundAmount
       dto.bookingStatus,
       dto.vehicleModelId,
       dto.renterId,
@@ -419,8 +426,182 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   // =========================================================================
+  // ✅ NEW: DETAIL RESPONSE MAPPER - FULL BOOKING DETAILS WITH ALL FEES
+  // =========================================================================
+  private mapDetailResponseToEntity(dto: BookingDetailResponse): Booking {
+    console.log("🔄 Mapping detail booking response:", dto.id);
+
+    const renter = dto.renter
+      ? this.mapRenterFromStaffResponse(dto.renter)
+      : undefined;
+
+    const vehicle = dto.vehicle
+      ? this.mapVehicleFromStaffResponse(dto.vehicle)
+      : undefined;
+
+    const vehicleModel = dto.vehicleModel
+      ? this.mapVehicleModelFromStaffResponse(dto.vehicleModel)
+      : undefined;
+
+    const rentalContract = dto.rentalContract
+      ? this.mapRentalContractFromStaffResponse(dto.rentalContract)
+      : undefined;
+
+    const rentalReceipts = dto.rentalReceipt?.map(receipt =>
+      this.mapRentalReceiptFromStaffResponse(receipt)
+    );
+
+    const insurancePackage = dto.insurancePackage
+      ? this.mapInsurancePackageFromStaffResponse(dto.insurancePackage)
+      : undefined;
+
+    const handoverBranch = dto.handoverBranch
+      ? this.mapBranchFromStaffResponse(dto.handoverBranch)
+      : undefined;
+
+    const returnBranch = dto.returnBranch
+      ? this.mapBranchFromStaffResponse(dto.returnBranch)
+      : undefined;
+
+    // ✅ Map additional fees
+    const additionalFees = dto.additionalFees?.map(fee =>
+      this.mapAdditionalFeeFromResponse(fee)
+    );
+
+    return new Booking(
+      dto.id,
+      dto.bookingCode,
+      dto.baseRentalFee,
+      dto.depositAmount,
+      dto.rentalDays,
+      dto.rentalHours,
+      dto.rentingRate,
+      dto.lateReturnFee || 0,
+      dto.averageRentalPrice,
+      dto.excessKmFee || 0,
+      dto.cleaningFee || 0,
+      dto.crossBranchFee || 0,
+      dto.totalChargingFee || 0,
+      dto.totalAdditionalFee || 0,
+      dto.earlyHandoverFee,
+      dto.totalRentalFee,
+      dto.totalAmount,
+      dto.refundAmount || 0,
+      dto.bookingStatus,
+      vehicleModel?.id ?? dto.vehicleModel?.id ?? "unknown-model",
+      renter?.id ?? dto.renter?.id ?? "unknown-renter",
+      renter,
+      vehicleModel,
+      vehicle?.id,
+      vehicle,
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      insurancePackage?.id,
+      insurancePackage,
+      rentalContract,
+      rentalReceipts,
+      handoverBranch?.id,
+      handoverBranch,
+      returnBranch?.id,
+      returnBranch,
+      undefined, // feedback
+      undefined, // insuranceClaims
+      additionalFees, // ✅ MAPPED ADDITIONAL FEES
+      undefined, // chargingRecords
+      new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  // =========================================================================
+  // ✅ STAFF RESPONSE MAPPER - FOR PAGINATED LISTS
+  // =========================================================================
+  private mapStaffResponseToEntity(dto: BookingForStaffResponse): Booking {
+    const renter = this.mapRenterFromStaffResponse(dto.renter);
+    const vehicle = dto?.vehicle
+      ? this.mapVehicleFromStaffResponse(dto.vehicle)
+      : undefined;
+
+    const vehicleModel = dto.vehicleModel
+      ? this.mapVehicleModelFromStaffResponse(dto.vehicleModel)
+      : undefined;
+
+    const rentalContract = dto.rentalContract
+      ? this.mapRentalContractFromStaffResponse(dto.rentalContract)
+      : undefined;
+
+    const rentalReceipt = dto.rentalReceipt
+      ? this.mapRentalReceiptFromStaffResponse(dto.rentalReceipt)
+      : undefined;
+
+    const insurancePackage = dto.insurancePackage
+      ? this.mapInsurancePackageFromStaffResponse(dto.insurancePackage)
+      : undefined;
+
+    const handoverBranch = dto.handoverBranch
+      ? this.mapBranchFromStaffResponse(dto.handoverBranch)
+      : undefined;
+
+    // ✅ Map additional fees if present
+    const additionalFees = dto.additionalFees?.map(fee =>
+      this.mapAdditionalFeeFromResponse(fee)
+    );
+
+    return new Booking(
+      dto?.id,
+      "",
+      dto.baseRentalFee,
+      dto.depositAmount,
+      dto.rentalDays,
+      dto.rentalHours,
+      dto.rentingRate,
+      dto.lateReturnFee || 0,
+      dto.averageRentalPrice,
+      dto.excessKmFee || 0,
+      dto.cleaningFee || 0,
+      dto.crossBranchFee || 0,
+      dto.totalChargingFee || 0,
+      dto.totalAdditionalFee || 0,
+      dto.earlyHandoverFee,
+      dto.totalRentalFee,
+      dto.totalAmount,
+      dto.refundAmount || 0,
+      dto.bookingStatus,
+      vehicleModel?.id ?? "unknown-model",
+      renter?.id ?? "unknown-renter",
+      renter,
+      vehicleModel,
+      vehicle?.id,
+      vehicle,
+      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+      insurancePackage?.id,
+      insurancePackage,
+      rentalContract,
+      rentalReceipt ? [rentalReceipt] : undefined,
+      handoverBranch?.id,
+      handoverBranch,
+      undefined, // returnBranchId
+      undefined, // returnBranch
+      undefined, // feedback
+      undefined, // insuranceClaims
+      additionalFees, // ✅ MAPPED ADDITIONAL FEES
+      undefined, // chargingRecords
+      new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  // =========================================================================
   // NESTED OBJECT MAPPERS
   // =========================================================================
+
   private mapVehicleModelFromListResponse(
     dto: VehicleModelResponse
   ): VehicleModel {
@@ -483,82 +664,6 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.deductibleAmount,
       dto.description,
       true,
-      new Date(),
-      null,
-      null,
-      false
-    );
-  }
-
-  // =========================================================================
-  // STAFF RESPONSE MAPPER - FULL DETAILS
-  // =========================================================================
-  private mapStaffResponseToEntity(dto: BookingForStaffResponse): Booking {
-    const renter = this.mapRenterFromStaffResponse(dto.renter);
-    const vehicle = dto?.vehicle
-      ? this.mapVehicleFromStaffResponse(dto.vehicle)
-      : undefined;
-
-    const vehicleModel = dto.vehicleModel
-      ? this.mapVehicleModelFromStaffResponse(dto.vehicleModel)
-      : undefined;
-
-    const rentalContract = dto.rentalContract
-      ? this.mapRentalContractFromStaffResponse(dto.rentalContract)
-      : undefined;
-
-    const rentalReceipt = dto.rentalReceipt
-      ? this.mapRentalReceiptFromStaffResponse(dto.rentalReceipt)
-      : undefined;
-
-    const insurancePackage = dto.insurancePackage
-      ? this.mapInsurancePackageFromStaffResponse(dto.insurancePackage)
-      : undefined;
-
-    const handoverBranch = dto.handoverBranch
-      ? this.mapBranchFromStaffResponse(dto.handoverBranch)
-      : undefined;
-
-    return new Booking(
-      dto?.id,
-      "",
-      dto.baseRentalFee,
-      dto.depositAmount,
-      dto.rentalDays,
-      dto.rentalHours,
-      dto.rentingRate,
-      dto.lateReturnFee || 0,
-      dto.averageRentalPrice,
-      0,
-      0,
-      0,
-      0,
-      0,
-      dto.totalRentalFee,
-      dto.totalAmount,
-      0,
-      dto.bookingStatus,
-      vehicleModel?.id ?? "unknown-model",
-      renter?.id ?? "unknown-renter",
-      renter,
-      vehicleModel,
-      vehicle?.id,
-      vehicle,
-      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
-      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
-      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-      insurancePackage?.id ?? "unknown-insurance-package",
-      insurancePackage,
-      rentalContract,
-      rentalReceipt ? [rentalReceipt] : undefined, // ✅ Convert to array
-      handoverBranch?.id ?? "unknown-handover-branch",
-      handoverBranch,
-      undefined,
-      undefined,
-      undefined, // feedback
-      undefined, // insuranceClaims
-      undefined, // additionalFees
-      undefined, // chargingRecords
       new Date(),
       null,
       null,
@@ -719,7 +824,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       "",
       "unknown",
       dto.vehicleModel?.id,
-      undefined, // branch - Not needed
+      undefined,
       vehicleModel,
       [],
       [],
@@ -740,6 +845,22 @@ export class BookingRepositoryImpl implements BookingRepository {
       dto.excessKmPrice,
       [],
       new Date(),
+      null,
+      null,
+      false
+    );
+  }
+
+  // ✅ Map additional fee from response to entity
+  private mapAdditionalFeeFromResponse(dto: AdditionalFeeResponse): AdditionalFee {
+    return new AdditionalFee(
+      dto.id,
+      dto.feeType,
+      dto.description,
+      dto.amount,
+      dto.bookingId,
+      undefined as any, // booking reference - avoid circular dependency
+      new Date(dto.createdAt),
       null,
       null,
       false

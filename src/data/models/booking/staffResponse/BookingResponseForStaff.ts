@@ -1,3 +1,5 @@
+import { AdditionalFeeResponse } from "../AdditionalFeeResponse";
+
 export interface BookingForStaffResponse {
     id: string;
     startDatetime?: Date;
@@ -20,6 +22,15 @@ export interface BookingForStaffResponse {
     rentalReceipt: RentalReceiptBookingResponse; // ✅ Nested
     insurancePackage: InsurancePackageBookingResponse; // ✅ Nested
     handoverBranch: BranchBookingResponse; // ✅ Nested
+
+    additionalFees?: AdditionalFeeResponse[];
+    earlyHandoverFee?: number;
+    excessKmFee?: number;
+    cleaningFee?: number;
+    crossBranchFee?: number;
+    totalChargingFee?: number;
+    totalAdditionalFee?: number;
+    refundAmount?: number;
 }
 
 export interface RenterBookingResponse {
