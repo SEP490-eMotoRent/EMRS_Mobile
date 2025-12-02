@@ -53,11 +53,21 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     const [currentTimeType, setCurrentTimeType] = useState<"pickup" | "return">("pickup");
     const [pickupTime, setPickupTime] = useState(initialPickupTime);
     const [returnTime, setReturnTime] = useState(initialReturnTime);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
     const periods = ["SA", "CH"];
 
-    // ✅ FIXED: Use local timezone
+    // ✅ Current time
+    const now = new Date();
+    
+    // ✅ Calculate minimum datetime (24 hours from now)
+    const minDateTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const minDate = new Date(minDateTime);
+    minDate.setHours(0, 0, 0, 0);
+    const minDateStr = formatLocalDate(minDate);
+
+    // ✅ Today for comparison
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = formatLocalDate(today);
@@ -77,17 +87,33 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     const branchClose = parseBranchTime(branchCloseTime);
 
     const getAvailableHours = (period: string) => {
-        const allHours = Array.from({ length: 12 }, (_, i) => i + 1);
+        const allHours = Array.from({ length: 12 }, (_, i) => i + 1); // [1, 2, ..., 12]
         
-        if (period === branchOpen.period && period === branchClose.period) {
-            return allHours.filter(h => h >= branchOpen.hour && h <= branchClose.hour);
-        } else if (period === branchOpen.period) {
-            return allHours.filter(h => h >= branchOpen.hour);
-        } else if (period === branchClose.period) {
-            return allHours.filter(h => h <= branchClose.hour);
-        }
+        // Convert 12-hour format to 24-hour for proper comparison
+        const convertTo24Hour = (hour: number, per: string): number => {
+            if (per === 'SA') {
+                return hour === 12 ? 0 : hour; // 12 SA = 0 (midnight)
+            } else {
+                return hour === 12 ? 12 : hour + 12; // 12 CH = 12 (noon), 1 CH = 13, etc.
+            }
+        };
         
-        return allHours;
+        const openHour24 = convertTo24Hour(branchOpen.hour, branchOpen.period);
+        const closeHour24 = convertTo24Hour(branchClose.hour, branchClose.period);
+        
+        const availableHours = allHours.filter(h => {
+            const hour24 = convertTo24Hour(h, period);
+            return hour24 >= openHour24 && hour24 <= closeHour24;
+        });
+        
+        // Sort hours chronologically within the period
+        // For SA: [1, 2, ..., 11, 12] → [12, 1, 2, ..., 11] (midnight first)
+        // For CH: [1, 2, ..., 11, 12] → [12, 1, 2, ..., 11] (noon first)
+        return availableHours.sort((a, b) => {
+            const a24 = convertTo24Hour(a, period);
+            const b24 = convertTo24Hour(b, period);
+            return a24 - b24;
+        });
     };
 
     useEffect(() => {
@@ -127,10 +153,18 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         }
     }, [visible, initialStartDate, initialEndDate, initialPickupTime, initialReturnTime]);
 
+    // ✅ Clear error when modal opens
+    useEffect(() => {
+        if (visible) {
+            setValidationError(null);
+        }
+    }, [visible]);
+
     const onDayPress = (day: any) => {
         const selectedDay = new Date(day.dateString);
         
-        if (selectedDay < today) {
+        // ✅ Prevent selecting dates before minimum date
+        if (selectedDay < minDate) {
             return;
         }
 
@@ -182,8 +216,59 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         }
     };
 
+    // ✅ NEW: Convert time string to Date object
+    const parseTimeToDate = (dateStr: string, timeStr: string): Date => {
+        const match = timeStr.match(/(\d+):(\d+)\s*(SA|CH)/);
+        if (!match) {
+            const date = new Date(dateStr);
+            date.setHours(10, 0, 0, 0);
+            return date;
+        }
+
+        let hour = parseInt(match[1]);
+        const minute = parseInt(match[2]);
+        const period = match[3];
+
+        if (period === 'CH' && hour !== 12) {
+            hour += 12;
+        } else if (period === 'SA' && hour === 12) {
+            hour = 0;
+        }
+
+        const date = new Date(dateStr);
+        date.setHours(hour, minute, 0, 0);
+        return date;
+    };
+
+    // ✅ NEW: Validate 24-hour advance booking
+    const validateBookingTime = (startDateStr: string, startTimeStr: string): boolean => {
+        const selectedStartDateTime = parseTimeToDate(startDateStr, startTimeStr);
+        const minAllowedTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        if (selectedStartDateTime < minAllowedTime) {
+            const hoursUntilBooking = (selectedStartDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+            setValidationError(
+                `Bạn phải đặt trước ít nhất 24 giờ. Thời gian nhận xe phải sau ${minDateTime.toLocaleString('vi-VN', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })}`
+            );
+            return false;
+        }
+
+        setValidationError(null);
+        return true;
+    };
+
     const handleConfirm = () => {
         if (startDate && endDate) {
+            // ✅ Validate 24-hour advance booking
+            if (!validateBookingTime(startDate, pickupTime)) {
+                return; // Don't close modal if validation fails
+            }
+
             onConfirm(`${startDate} - ${endDate} (${pickupTime} - ${returnTime})`);
             onClose();
         }
@@ -198,27 +283,28 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         const time = `${hour}:00 ${period}`;
         if (currentTimeType === "pickup") {
             setPickupTime(time);
+            // ✅ Clear validation error when time changes
+            setValidationError(null);
         } else {
             setReturnTime(time);
         }
         setShowTimePicker(false);
     };
 
-    // ✅ FIXED: Use local timezone for disabled dates
+    // ✅ FIXED: Mark dates within 24 hours as disabled
     const markedDatesWithDisabled = { ...selectedDates };
     
-    const currentDate = new Date(today);
-    currentDate.setDate(currentDate.getDate() - 1);
-    
+    // Disable all dates before minDate
+    const disableDate = new Date(minDate);
     for (let i = 0; i < 60; i++) {
-        const pastDateStr = formatLocalDate(currentDate);
+        disableDate.setDate(disableDate.getDate() - 1);
+        const pastDateStr = formatLocalDate(disableDate);
         if (!markedDatesWithDisabled[pastDateStr]) {
             markedDatesWithDisabled[pastDateStr] = {
                 disabled: true,
                 disableTouchEvent: true,
             };
         }
-        currentDate.setDate(currentDate.getDate() - 1);
     }
 
     return (
@@ -243,6 +329,9 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                     <Text style={styles.branchHours}>
                                         ⏰ Giờ mở cửa: {branchOpenTime} - {branchCloseTime}
                                     </Text>
+                                    <Text style={styles.advanceBookingNotice}>
+                                        ⚠️ Phải đặt trước ít nhất 24 giờ
+                                    </Text>
                                 </View>
                                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                                     <Text style={styles.closeIcon}>✕</Text>
@@ -257,7 +346,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                     pastScrollRange={0}
                                     futureScrollRange={12}
                                     scrollEnabled={true}
-                                    minDate={todayStr}
+                                    minDate={minDateStr}
                                     maxDate={maxDateStr}
                                     monthFormat={'MMMM yyyy'}
                                     renderHeader={(date) => {
@@ -285,7 +374,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                         dayTextColor: "#fff",
                                         monthTextColor: "#fff",
                                         arrowColor: "#fff",
-                                        textDisabledColor: "#222", // ✅ DARKER disabled color
+                                        textDisabledColor: "#222",
                                         todayTextColor: "#b8a4ff",
                                         selectedDayBackgroundColor: "#b8a4ff",
                                         selectedDayTextColor: "#000",
@@ -295,6 +384,13 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                             </View>
 
                             <View style={styles.dateTimeOverlay}>
+                                {validationError && (
+                                    <View style={styles.errorBanner}>
+                                        <Text style={styles.errorIcon}>⚠️</Text>
+                                        <Text style={styles.errorText}>{validationError}</Text>
+                                    </View>
+                                )}
+                                
                                 <View style={styles.dateTimeContainer}>
                                     <ScrollView style={styles.dateTimeBoxScroll}>
                                         <View style={styles.dateTimeBox}>
@@ -507,6 +603,12 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginTop: 2,
     },
+    advanceBookingNotice: {
+        color: "#fbbf24",
+        fontSize: 12,
+        marginTop: 4,
+        fontWeight: "600",
+    },
     closeButton: {
         padding: 5,
     },
@@ -531,6 +633,27 @@ const styles = StyleSheet.create({
         right: 20,
         flexDirection: "column",
         alignItems: "center",
+    },
+    errorBanner: {
+        backgroundColor: "#7c2d12",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 12,
+        width: "100%",
+        flexDirection: "row",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#ea580c",
+    },
+    errorIcon: {
+        fontSize: 16,
+        marginRight: 8,
+    },
+    errorText: {
+        color: "#fed7aa",
+        fontSize: 13,
+        flex: 1,
+        fontWeight: "500",
     },
     dateTimeContainer: {
         flexDirection: "row",
