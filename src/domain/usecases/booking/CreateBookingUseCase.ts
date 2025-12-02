@@ -51,50 +51,51 @@ export class CreateBookingUseCase {
 
         // Construct Booking entity in the correct order
     const booking = new Booking(
-            "", // id
-            "", // bookingCode
-            input.baseRentalFee,
-            input.depositAmount,
-            input.rentalDays,
-            input.rentalHours,
-            input.rentingRate,
-            0, // lateReturnFee
-            input.averageRentalPrice,
-            0, // excessKmFee
-            0, // cleaningFee
-            0, // crossBranchFee
-            0, // totalChargingFee
-            0, // totalAdditionalFee
-            input.totalRentalFee,
-            input.totalRentalFee, // totalAmount
-            0, // refundAmount
-            "Pending", // bookingStatus
-            input.vehicleModelId,
-            input.renterId,
-            mockRenter, // renter
-            mockVehicleModel, // vehicleModel
-            undefined, // vehicleId
-            undefined, // vehicle
-            input.startDatetime,
-            input.endDatetime,
-            undefined, // actualReturnDatetime
-            input.insurancePackageId,
-            undefined, // insurancePackage
-            undefined, // rentalContract
-            undefined, // rentalReceipts (plural!)
-            input.handoverBranchId,
-            undefined, // handoverBranch
-            undefined, // returnBranchId
-            undefined, // returnBranch
-            undefined, // feedback
-            undefined, // insuranceClaims
-            undefined, // additionalFees
-            undefined, // chargingRecords
-            new Date(), // createdAt
-            null, // updatedAt
-            null, // deletedAt
-            false // isDeleted
-        );
+        "", // id
+        "", // bookingCode
+        input.baseRentalFee,
+        input.depositAmount,
+        input.rentalDays,
+        input.rentalHours,
+        input.rentingRate,
+        0, // lateReturnFee
+        input.averageRentalPrice,
+        0, // excessKmFee
+        0, // cleaningFee
+        0, // crossBranchFee
+        0, // totalChargingFee
+        0, // totalAdditionalFee
+        undefined, // ✅ earlyHandoverFee - ADD THIS LINE!
+        input.totalRentalFee,
+        input.totalRentalFee, // totalAmount
+        0, // refundAmount
+        "Pending", // bookingStatus
+        input.vehicleModelId,
+        input.renterId,
+        mockRenter,
+        mockVehicleModel,
+        undefined, // vehicleId
+        undefined, // vehicle
+        input.startDatetime,
+        input.endDatetime,
+        undefined, // actualReturnDatetime
+        input.insurancePackageId,
+        undefined, // insurancePackage
+        undefined, // rentalContract
+        undefined, // rentalReceipts
+        input.handoverBranchId,
+        undefined, // handoverBranch
+        undefined, // returnBranchId
+        undefined, // returnBranch
+        undefined, // feedback
+        undefined, // insuranceClaims
+        undefined, // additionalFees
+        undefined, // chargingRecords
+        new Date(), // createdAt
+        null, // updatedAt
+        null, // deletedAt
+        false // isDeleted
+    );
 
         return await this.bookingRepository.create(booking);
     }

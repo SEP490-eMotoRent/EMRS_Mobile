@@ -3,25 +3,25 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { CreateBookingUseCase } from "../../../../../../domain/usecases/booking/CreateBookingUseCase";
 import {
-  CreateVNPayBookingUseCase,
-  VNPayBookingResultWithExpiry,
+    CreateVNPayBookingUseCase,
+    VNPayBookingResultWithExpiry,
 } from "../../../../../../domain/usecases/booking/CreateVNPayBookingUseCase";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useAppSelector } from "../../../../authentication/store/hooks";
-import { useCreateBooking } from "../../../hooks/useCreateBooking";
 import { useWallet } from '../../../../profile/hooks/wallet/useWallet';
+import { useCreateBooking } from "../../../hooks/useCreateBooking";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { BookingSummaryCard } from "../../organisms/booking/BookingSummaryCard";
@@ -104,9 +104,12 @@ export const PaymentConfirmationScreen: React.FC = () => {
         rentingRate,
         averageRentalPrice,
         vehicleCategory,
-        // ✅ NEW: Receive holiday data
         holidaySurcharge,
         holidayDayCount,
+        // ✅ FIXED: Receive membership data
+        membershipDiscountPercentage,
+        membershipDiscountAmount,
+        membershipTier,
     } = route.params;
 
     const parsePrice = (price: string): number => {
@@ -145,6 +148,9 @@ export const PaymentConfirmationScreen: React.FC = () => {
     console.log("- Vehicle Category:", vehicleCategory);
     console.log("- Holiday Surcharge:", holidaySurcharge);
     console.log("- Holiday Day Count:", holidayDayCount);
+    console.log("- Membership Tier:", membershipTier);
+    console.log("- Membership Discount %:", membershipDiscountPercentage);
+    console.log("- Membership Discount Amount:", membershipDiscountAmount);
 
     const parseDateString = (dateStr: string): Date => {
         const monthNames: { [key: string]: number } = {
@@ -200,11 +206,21 @@ export const PaymentConfirmationScreen: React.FC = () => {
             const startDateTime = parseDateString(startDate);
             const endDateTime = parseDateString(endDate);
 
-            const insurancePackageId =
-                insurancePlanId && /^[0-9a-f-]{36}$/i.test(insurancePlanId)
-                    ? insurancePlanId
-                    : undefined;
+            // ✅ FIXED: Better insurance package ID validation
+            // Allow null/undefined for "no insurance" case, but validate UUIDs if present
+            let finalInsurancePackageId: string | undefined = undefined;
+            
+            if (insurancePlanId && insurancePlanId !== "none") {
+                if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(insurancePlanId)) {
+                    finalInsurancePackageId = insurancePlanId;
+                } else {
+                    console.warn("⚠️ Invalid insurance package ID format:", insurancePlanId);
+                    // Still try to use it - let the API validate
+                    finalInsurancePackageId = insurancePlanId;
+                }
+            }
 
+            // ✅ FIXED: Complete booking input with ALL fields
             const bookingInput = {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
@@ -216,15 +232,20 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 depositAmount: deposit,
                 rentingRate: rentingRate,
                 averageRentalPrice: averageRentalPrice,
-                insurancePackageId,
+                insurancePackageId: finalInsurancePackageId,
                 totalRentalFee: rental,
                 renterId: userId,
-                // ✅ NEW: Include holiday surcharge if backend expects it
-                holidaySurcharge: holidaySurcharge,
-                holidayDayCount: holidayDayCount,
+                // ✅ FIXED: Include holiday data
+                holidaySurcharge: holidaySurcharge || 0,
+                holidayDayCount: holidayDayCount || 0,
+                // ✅ FIXED: Include membership data
+                membershipDiscountPercentage: membershipDiscountPercentage || 0,
+                membershipDiscountAmount: membershipDiscountAmount || 0,
+                membershipTier: membershipTier || "BRONZE",
             };
 
-            console.log("Creating booking with:", bookingInput);
+            console.log("📋 Complete booking input:");
+            console.log(JSON.stringify(bookingInput, null, 2));
             console.log("Expected total charge:", totalAmount);
 
             if (selectedPaymentMethod === "wallet") {
@@ -353,7 +374,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     insuranceFee={insuranceFee}
                     securityDeposit={securityDeposit}
                     total={totalAmountFormatted}
-                    // ✅ NEW: Pass holiday data for display
                     holidaySurcharge={holidaySurcharge}
                     holidayDayCount={holidayDayCount}
                 />
