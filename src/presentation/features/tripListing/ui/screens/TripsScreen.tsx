@@ -150,6 +150,17 @@ export const TripsScreen: React.FC = () => {
             return undefined;
         };
 
+        // Check if booking has additional fees
+        const hasAdditionalFees = !!(
+            (booking.additionalFees && booking.additionalFees.length > 0) ||
+            booking.lateReturnFee ||
+            booking.excessKmFee ||
+            booking.cleaningFee ||
+            booking.crossBranchFee ||
+            booking.totalChargingFee ||
+            booking.earlyHandoverFee
+        );
+
         return {
             id: booking.id,
             vehicleName,
@@ -165,6 +176,7 @@ export const TripsScreen: React.FC = () => {
             baseRentalFee: formatVnd(booking.baseRentalFee),
             hasInsurance: !!booking.insurancePackage,
             vehicleAssigned: !!booking.vehicleId,
+            hasAdditionalFees,
         };
     };
 

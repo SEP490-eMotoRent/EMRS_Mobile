@@ -5,7 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -25,26 +25,57 @@ export const ReturnCompleteScreen: React.FC = () => {
   const route = useRoute<RouteP>();
   const { bookingId, refundAmount } = route.params;
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchBooking();
   }, [bookingId]);
 
   const fetchBooking = async () => {
-    const bookingUseCase = new GetBookingByIdUseCase(
-      sl.get("BookingRepository")
-    );
-    const booking = await bookingUseCase.execute(bookingId);
-    setBooking(booking);
+    try {
+      setLoading(true);
+      const bookingUseCase = new GetBookingByIdUseCase(
+        sl.get("BookingRepository")
+      );
+      const fetchedBooking = await bookingUseCase.execute(bookingId);
+      setBooking(fetchedBooking);
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatVnd = (n: number) =>
     new Intl.NumberFormat("vi-VN").format(n) + "đ";
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleString("en-GB");
+    return date.toLocaleString("vi-VN");
   };
+
+  // ✅ Check if any fees exist
+  const hasAdditionalFees = !!(
+    booking?.lateReturnFee ||
+    booking?.excessKmFee ||
+    booking?.cleaningFee ||
+    booking?.crossBranchFee ||
+    booking?.totalChargingFee ||
+    booking?.earlyHandoverFee ||
+    (booking?.additionalFees && booking.additionalFees.length > 0)
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#C9B6FF" />
+          <Text style={styles.loadingText}>Đang tải thông tin...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -71,11 +102,11 @@ export const ReturnCompleteScreen: React.FC = () => {
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>
-                {booking?.renter?.account?.fullname}
+                {booking?.renter?.account?.fullname || "N/A"}
               </Text>
               <Text style={styles.vehicleInfo}>
-                {booking?.vehicleModel?.modelName} -{" "}
-                {booking?.vehicle?.licensePlate}
+                {booking?.vehicleModel?.modelName || "N/A"} -{" "}
+                {booking?.vehicle?.licensePlate || "N/A"}
               </Text>
             </View>
           </View>
@@ -106,10 +137,133 @@ export const ReturnCompleteScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* ✅ NEW: Fee Breakdown Card */}
+        {hasAdditionalFees && (
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Chi phí phát sinh</Text>
+
+            {booking?.lateReturnFee && booking.lateReturnFee > 0 && (
+              <View style={styles.feeRow}>
+                <View style={styles.feeLeft}>
+                  <AntDesign name="clock-circle" size={14} color="#F59E0B" />
+                  <Text style={styles.feeLabel}>Phí trả xe muộn</Text>
+                </View>
+                <Text style={styles.feeAmount}>
+                  {formatVnd(booking.lateReturnFee)}
+                </Text>
+              </View>
+            )}
+
+            {booking?.excessKmFee && booking.excessKmFee > 0 && (
+              <View style={styles.feeRow}>
+                <View style={styles.feeLeft}>
+                  <AntDesign name="dashboard" size={14} color="#F59E0B" />
+                  <Text style={styles.feeLabel}>Phí vượt quá km</Text>
+                </View>
+                <Text style={styles.feeAmount}>
+                  {formatVnd(booking.excessKmFee)}
+                </Text>
+              </View>
+            )}
+
+            {booking?.cleaningFee && booking.cleaningFee > 0 && (
+              <View style={styles.feeRow}>
+                <View style={styles.feeLeft}>
+                  <AntDesign name="tool" size={14} color="#F59E0B" />
+                  <Text style={styles.feeLabel}>Phí vệ sinh</Text>
+                </View>
+                <Text style={styles.feeAmount}>
+                  {formatVnd(booking.cleaningFee)}
+                </Text>
+              </View>
+            )}
+
+            {booking?.crossBranchFee && booking.crossBranchFee > 0 && (
+              <View style={styles.feeRow}>
+                <View style={styles.feeLeft}>
+                  <AntDesign name="swap" size={14} color="#F59E0B" />
+                  <Text style={styles.feeLabel}>Phí chuyển chi nhánh</Text>
+                </View>
+                <Text style={styles.feeAmount}>
+                  {formatVnd(booking.crossBranchFee)}
+                </Text>
+              </View>
+            )}
+
+            {booking?.totalChargingFee && booking.totalChargingFee > 0 && (
+              <View style={styles.feeRow}>
+                <View style={styles.feeLeft}>
+                  <AntDesign name="thunderbolt" size={14} color="#F59E0B" />
+                  <Text style={styles.feeLabel}>Phí sạc pin</Text>
+                </View>
+                <Text style={styles.feeAmount}>
+                  {formatVnd(booking.totalChargingFee)}
+                </Text>
+              </View>
+            )}
+
+            {booking?.earlyHandoverFee && booking.earlyHandoverFee > 0 && (
+              <View style={styles.feeRow}>
+                <View style={styles.feeLeft}>
+                  <AntDesign name="calendar" size={14} color="#F59E0B" />
+                  <Text style={styles.feeLabel}>Phí bàn giao sớm</Text>
+                </View>
+                <Text style={styles.feeAmount}>
+                  {formatVnd(booking.earlyHandoverFee)}
+                </Text>
+              </View>
+            )}
+
+            {/* ✅ Additional Fees List */}
+            {booking?.additionalFees &&
+              booking.additionalFees.length > 0 &&
+              booking.additionalFees.map((fee) => (
+                <View key={fee.id} style={styles.additionalFeeItem}>
+                  <View style={styles.additionalFeeLeft}>
+                    <Text style={styles.additionalFeeFeeType}>{fee.feeType}</Text>
+                    <Text style={styles.additionalFeeDescription}>
+                      {fee.description}
+                    </Text>
+                  </View>
+                  <Text style={styles.additionalFeeAmount}>
+                    {formatVnd(fee.amount)}
+                  </Text>
+                </View>
+              ))}
+
+            {/* Total Additional Fees */}
+            {booking?.totalAdditionalFee && booking.totalAdditionalFee > 0 && (
+              <View style={[styles.feeRow, styles.totalFeeRow]}>
+                <Text style={styles.totalFeeLabel}>Tổng phí phụ trội</Text>
+                <Text style={styles.totalFeeAmount}>
+                  {formatVnd(booking.totalAdditionalFee)}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Financial Summary Card */}
         <View style={[styles.card, styles.financialCard]}>
           <Text style={styles.cardHeader}>Thanh toán cuối cùng</Text>
 
           <View style={styles.financialRow}>
+            <Text style={styles.financialLabel}>Tiền cọc</Text>
+            <Text style={styles.financialValue}>
+              {formatVnd(booking?.depositAmount || 0)}
+            </Text>
+          </View>
+
+          {hasAdditionalFees && (
+            <View style={styles.financialRow}>
+              <Text style={styles.financialLabel}>Trừ phí phát sinh</Text>
+              <Text style={[styles.financialValue, { color: "#F59E0B" }]}>
+                -{formatVnd(booking?.totalAdditionalFee || 0)}
+              </Text>
+            </View>
+          )}
+
+          <View style={[styles.financialRow, styles.refundRow]}>
             <Text style={styles.financialLabel}>Hoàn tiền</Text>
             <Text style={styles.refundAmount}>{formatVnd(refundAmount)}</Text>
           </View>
@@ -180,6 +334,16 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: 40,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#aaa",
+    fontSize: 14,
+    marginTop: 12,
   },
   header: {
     alignItems: "center",
@@ -299,11 +463,91 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: 12,
   },
+  // ✅ NEW: Fee Breakdown Styles
+  feeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "rgba(245, 158, 11, 0.05)",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  feeLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  feeLabel: {
+    color: colors.text.primary,
+    fontSize: 14,
+  },
+  feeAmount: {
+    color: "#F59E0B",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  additionalFeeItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "rgba(187, 134, 252, 0.05)",
+    borderRadius: 8,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#BB86FC",
+  },
+  additionalFeeLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+  additionalFeeFeeType: {
+    color: "#BB86FC",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  additionalFeeDescription: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  additionalFeeAmount: {
+    color: "#F59E0B",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  totalFeeRow: {
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(245, 158, 11, 0.3)",
+    marginTop: 4,
+  },
+  totalFeeLabel: {
+    color: colors.text.primary,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  totalFeeAmount: {
+    color: "#F59E0B",
+    fontSize: 16,
+    fontWeight: "700",
+  },
   financialRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
+  },
+  refundRow: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(34, 197, 94, 0.3)",
+    paddingTop: 12,
+    marginTop: 4,
   },
   financialLabel: {
     color: colors.text.primary,
@@ -361,11 +605,6 @@ const styles = StyleSheet.create({
     color: "#22C55E",
     fontSize: 12,
     fontWeight: "700",
-  },
-  stepsValue: {
-    color: colors.text.primary,
-    fontSize: 14,
-    fontWeight: "600",
   },
   feedbackBanner: {
     backgroundColor: "#2A2A2A",
