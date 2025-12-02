@@ -48,6 +48,7 @@ export class Booking implements BaseEntity {
     public crossBranchFee: number;
     public totalChargingFee: number;
     public totalAdditionalFee: number;
+    public earlyHandoverFee?: number;
     public totalRentalFee: number;
     public totalAmount: number;
     public refundAmount: number;
@@ -97,6 +98,7 @@ export class Booking implements BaseEntity {
         crossBranchFee: number,
         totalChargingFee: number,
         totalAdditionalFee: number,
+        earlyHandoverFee: number | undefined,
         totalRentalFee: number,
         totalAmount: number,
         refundAmount: number,
@@ -148,6 +150,7 @@ export class Booking implements BaseEntity {
         this.crossBranchFee = crossBranchFee;
         this.totalChargingFee = totalChargingFee;
         this.totalAdditionalFee = totalAdditionalFee;
+        this.earlyHandoverFee = earlyHandoverFee; 
         this.totalRentalFee = totalRentalFee;
         this.totalAmount = totalAmount;
         this.refundAmount = refundAmount;

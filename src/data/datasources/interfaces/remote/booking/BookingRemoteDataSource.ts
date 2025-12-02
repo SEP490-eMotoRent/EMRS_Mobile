@@ -2,7 +2,7 @@ import { BookingResponseForRenter } from "../../../../models/booking/BookingResp
 import { BookingWithoutWalletResponse } from "../../../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
-import { BookingForStaffResponse } from "../../../../models/booking/staffResponse/BookingResponseForStaff";
+import { BookingDetailResponse } from "../../../../models/booking/BookingDetailResponse"; // ✅ CHANGED
 import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingResponse } from "../../../../models/booking/BookingResponse";
 import { AssignVehicleResponse } from "../../../../models/booking/AssignVehicleResponse";
@@ -23,9 +23,9 @@ export interface BookingRemoteDataSource {
   createVNPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse>;
 
   /**
-   * Get booking by ID
+   * Get booking by ID (returns full booking details with additional fees)
    */
-  getById(id: string): Promise<BookingForStaffResponse | null>;
+  getById(id: string): Promise<BookingDetailResponse | null>; // ✅ CHANGED
 
   /**
    * Confirm VNPay payment callback
