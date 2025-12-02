@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { Booking } from '../../../../domain/entities/booking/Booking';
-import { BookingDetailsData } from '../ui/templates/BookingDetailsTemplate';
+import { BookingDetailsData, AdditionalFeeItem } from '../ui/templates/BookingDetailsTemplate';
 import sl from '../../../../core/di/InjectionContainer';
-
 
 interface UseBookingDetailsReturn {
     bookingData: BookingDetailsData | null;
@@ -32,17 +31,17 @@ export const useBookingDetails = (bookingId: string, bookingReference?: string):
 
             console.log('✅ [BOOKING DETAILS] Booking fetched successfully');
             console.log('📊 [BOOKING DETAILS] Raw Booking Entity:', JSON.stringify(booking, null, 2));
-            console.log('📋 [BOOKING DETAILS] Booking ID:', booking.id);
-            console.log('📋 [BOOKING DETAILS] Booking Code:', booking.bookingCode);
-            console.log('📋 [BOOKING DETAILS] Booking Status:', booking.bookingStatus);
-            console.log('📋 [BOOKING DETAILS] Vehicle Model:', booking.vehicleModel?.modelName);
-            console.log('📋 [BOOKING DETAILS] Vehicle:', booking.vehicle);
-            console.log('📋 [BOOKING DETAILS] Handover Branch:', booking.handoverBranch);
-            console.log('📋 [BOOKING DETAILS] Return Branch:', booking.returnBranch);
-            console.log('📋 [BOOKING DETAILS] Insurance Package:', booking.insurancePackage);
-            console.log('📋 [BOOKING DETAILS] Rental Contract:', booking.rentalContract);
-            console.log('📋 [BOOKING DETAILS] Rental Receipts:', booking.rentalReceipts);
-            console.log('📋 [BOOKING DETAILS] Renter:', booking.renter);
+            console.log('📋 [BOOKING DETAILS] Additional Fees:', booking.additionalFees);
+            console.log('📋 [BOOKING DETAILS] Fee Breakdown:', {
+                excessKmFee: booking.excessKmFee,
+                cleaningFee: booking.cleaningFee,
+                crossBranchFee: booking.crossBranchFee,
+                totalChargingFee: booking.totalChargingFee,
+                totalAdditionalFee: booking.totalAdditionalFee,
+                earlyHandoverFee: booking.earlyHandoverFee,
+                lateReturnFee: booking.lateReturnFee,
+                refundAmount: booking.refundAmount,
+            });
 
             // Map Booking entity to BookingDetailsData
             const data: BookingDetailsData = mapBookingToDetailsData(booking, bookingReference);
@@ -126,6 +125,37 @@ const mapBookingToDetailsData = (booking: Booking, bookingReference?: string): B
     console.log('📌 [MAPPING] Security deposit:', securityDeposit);
     console.log('📌 [MAPPING] Total paid:', totalPaid);
 
+    // ✅ NEW: Map fee breakdown
+    const excessKmFee = booking.excessKmFee ? formatCurrency(booking.excessKmFee) : undefined;
+    const cleaningFee = booking.cleaningFee ? formatCurrency(booking.cleaningFee) : undefined;
+    const crossBranchFee = booking.crossBranchFee ? formatCurrency(booking.crossBranchFee) : undefined;
+    const totalChargingFee = booking.totalChargingFee ? formatCurrency(booking.totalChargingFee) : undefined;
+    const totalAdditionalFee = booking.totalAdditionalFee ? formatCurrency(booking.totalAdditionalFee) : undefined;
+    const earlyHandoverFee = booking.earlyHandoverFee ? formatCurrency(booking.earlyHandoverFee) : undefined;
+    const lateReturnFee = booking.lateReturnFee ? formatCurrency(booking.lateReturnFee) : undefined;
+    const refundAmount = booking.refundAmount !== undefined ? formatCurrency(booking.refundAmount) : undefined;
+    
+    console.log('📌 [MAPPING] Fee Breakdown:', {
+        excessKmFee,
+        cleaningFee,
+        crossBranchFee,
+        totalChargingFee,
+        totalAdditionalFee,
+        earlyHandoverFee,
+        lateReturnFee,
+        refundAmount,
+    });
+
+    // ✅ NEW: Map additional fees array
+    const additionalFees: AdditionalFeeItem[] | undefined = booking.additionalFees?.map(fee => ({
+        id: fee.id,
+        feeType: fee.feeType,
+        description: fee.description,
+        amount: formatCurrency(fee.amount),
+    }));
+    
+    console.log('📌 [MAPPING] Additional Fees Array:', additionalFees);
+
     // Get contract information
     const contractStatus = booking.rentalContract?.contractStatus || 'Pending';
     const digitalSignatureCompleted = booking.rentalContract?.contractStatus === 'SIGNED';
@@ -147,7 +177,6 @@ const mapBookingToDetailsData = (booking: Booking, bookingReference?: string): B
             'Vehicle must be returned with minimum 10% battery',
         ];
     console.log('📌 [MAPPING] Key terms count:', keyTerms.length);
-    console.log('📌 [MAPPING] Key terms:', keyTerms);
 
     console.log('✅ [MAPPING] Mapping completed successfully');
 
@@ -171,7 +200,7 @@ const mapBookingToDetailsData = (booking: Booking, bookingReference?: string): B
         operatingHours,
         branchPhone,
 
-        // Payment Summary
+        // Payment Summary - Base Fees
         rentalFee,
         insuranceFee,
         insuranceBadge: insurancePackageName,
@@ -179,6 +208,19 @@ const mapBookingToDetailsData = (booking: Booking, bookingReference?: string): B
         securityDeposit,
         totalPaid,
         paymentMethod: 'eMotoRent Wallet',
+
+        // ✅ NEW: Fee Breakdown
+        excessKmFee,
+        cleaningFee,
+        crossBranchFee,
+        totalChargingFee,
+        totalAdditionalFee,
+        earlyHandoverFee,
+        lateReturnFee,
+        refundAmount,
+
+        // ✅ NEW: Additional Fees Array
+        additionalFees,
 
         // Contract Information
         digitalSignatureCompleted,

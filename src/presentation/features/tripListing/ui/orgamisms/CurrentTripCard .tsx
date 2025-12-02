@@ -17,6 +17,7 @@ export interface CurrentTrip {
     baseRentalFee?: string;
     hasInsurance?: boolean;
     vehicleAssigned?: boolean;
+    hasAdditionalFees?: boolean; // ✅ NEW
 }
 
 interface CurrentTripCardProps {
@@ -40,14 +41,22 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
             onPress={onViewDetails}
             activeOpacity={0.7}
         >
-            {/* Header with status and insurance indicator */}
+            {/* Header with status and indicators */}
             <View style={styles.header}>
                 <StatusBadge status={trip.status} />
-                {trip.hasInsurance && (
-                    <View style={styles.insuranceIcon}>
-                        <Text style={styles.shieldIcon}>◈</Text>
-                    </View>
-                )}
+                <View style={styles.indicators}>
+                    {trip.hasInsurance && (
+                        <View style={styles.insuranceIcon}>
+                            <Text style={styles.shieldIcon}>◈</Text>
+                        </View>
+                    )}
+                    {/* ✅ NEW: Additional Fees Indicator */}
+                    {trip.hasAdditionalFees && (
+                        <View style={styles.feeBadge}>
+                            <Text style={styles.feeBadgeText}>+Phí</Text>
+                        </View>
+                    )}
+                </View>
             </View>
             
             {/* Vehicle info - cleaner layout */}
@@ -196,6 +205,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 16,
     },
+    // ✅ NEW: Indicators container
+    indicators: {
+        flexDirection: "row",
+        gap: 8,
+    },
     // ✅ Simplified insurance indicator
     insuranceIcon: {
         backgroundColor: "rgba(34, 197, 94, 0.1)",
@@ -208,6 +222,21 @@ const styles = StyleSheet.create({
     shieldIcon: {
         fontSize: 16,
         color: "#22c55e",
+    },
+    // ✅ NEW: Fee badge indicator
+    feeBadge: {
+        backgroundColor: "rgba(251, 191, 36, 0.1)",
+        paddingHorizontal: 8,
+        paddingVertical: 6,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "rgba(251, 191, 36, 0.3)",
+        justifyContent: "center",
+    },
+    feeBadgeText: {
+        color: "#fbbf24",
+        fontSize: 10,
+        fontWeight: "700",
     },
     // ✅ Better vehicle info hierarchy
     vehicleSection: {
