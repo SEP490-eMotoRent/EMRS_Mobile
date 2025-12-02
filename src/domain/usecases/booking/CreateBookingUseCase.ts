@@ -65,7 +65,7 @@ export class CreateBookingUseCase {
         0, // crossBranchFee
         0, // totalChargingFee
         0, // totalAdditionalFee
-        undefined, // ✅ earlyHandoverFee - ADD THIS LINE!
+        undefined, // earlyHandoverFee
         input.totalRentalFee,
         input.totalRentalFee, // totalAmount
         0, // refundAmount
