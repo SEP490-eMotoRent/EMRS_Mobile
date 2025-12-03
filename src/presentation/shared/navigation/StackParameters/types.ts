@@ -206,7 +206,7 @@ export type TripStackParamList = {
     bookingId: string;
     rentalReceiptId?: string;
   };
-  ReturnReport: {
+  ReturnReceiptReport: {
     bookingId: string;
     rentalReceiptId: string;
     settlement: {
@@ -415,6 +415,10 @@ export type StaffStackParamList = {
   };
   TicketDetail: {
     ticketId: string;
+  };
+  ReturnReceiptReport: {
+    bookingId: string;
+    rentalReceiptId: string;
   };
 };
 

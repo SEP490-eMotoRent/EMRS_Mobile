@@ -47,6 +47,7 @@ import {
   TicketDetailScreen,
   TicketListScreen,
 } from "../../../features/staff/ticket/ui/screens";
+import { ReturnReceiptReportScreen } from "../../../features/tripDetails/ui/screens/ReturnReceiptReportScreen";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -106,6 +107,10 @@ export const StaffNavigator: React.FC = () => {
         <Stack.Screen
           name="HandoverReceiptReport"
           component={HandoverReceiptReportScreen}
+        />
+        <Stack.Screen
+          name="ReturnReceiptReport"
+          component={ReturnReceiptReportScreen}
         />
         <Stack.Screen
           name="AwaitingApproval"

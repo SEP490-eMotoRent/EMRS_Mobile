@@ -19,15 +19,14 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { AntDesign } from "@expo/vector-icons";
 
-import { colors } from "../../../../../common/theme/colors";
-import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
-import { SectionHeader } from "../molecules/SectionHeader";
-import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import sl from "../../../../../../core/di/InjectionContainer";
-import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
-import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
-import { Booking } from "../../../../../../domain/entities/booking/Booking";
-import { GetDetailRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
+import { colors } from "../../../../common/theme/colors";
+import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
+import { StaffStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import sl from "../../../../../core/di/InjectionContainer";
+import { RentalReceipt } from "../../../../../domain/entities/booking/RentalReceipt";
+import { GetBookingByIdUseCase } from "../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import { Booking } from "../../../../../domain/entities/booking/Booking";
+import { GetDetailRentalReceiptUseCase } from "../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -71,8 +70,8 @@ export const HandoverReceiptReportScreen: React.FC = () => {
   const thumbnailScrollRef = useRef<ScrollView | null>(null);
 
   const handoverImages = rentalReceipt?.handOverVehicleImageFiles ?? [];
-  const checklistImage = rentalReceipt?.checkListFile
-    ? [rentalReceipt?.checkListFile].flat()[0]
+  const checklistHandoverImage = rentalReceipt?.checkListHandoverFile
+    ? [rentalReceipt?.checkListHandoverFile].flat()[0]
     : undefined;
 
   const loadData = useCallback(
@@ -217,95 +216,180 @@ export const HandoverReceiptReportScreen: React.FC = () => {
         </View>
       );
     }
-
     return (
       <>
         <View style={styles.section}>
-          <SectionHeader title="Thông tin chung" icon="idcard" />
           <View style={styles.card}>
-            <InfoRow label="Khách thuê">
+            <View style={styles.cardHeaderRow}>
+              <View style={[styles.iconBadge, { backgroundColor: "rgba(201, 182, 255, 0.15)" }]}>
+                <AntDesign name="idcard" size={16} color="#C9B6FF" />
+              </View>
+              <Text style={styles.cardHeader}>Thông tin chung</Text>
+            </View>
+            <View style={styles.divider} />
+            <InfoRow 
+              label="Khách thuê" 
+              icon="user"
+              iconColor="#C9B6FF"
+            >
               {booking?.renter?.fullName() || "-"}
             </InfoRow>
-            <InfoRow label="Mã booking">{bookingCode}</InfoRow>
-            <InfoRow label="Biên bản">
+            <InfoRow 
+              label="Mã booking" 
+              icon="tag"
+              iconColor="#7DB3FF"
+            >
+              {bookingCode}
+            </InfoRow>
+            <InfoRow 
+              label="Biên bản" 
+              icon="file-text"
+              iconColor="#3B82F6"
+            >
               {rentalReceipt?.id ? `#${rentalReceipt?.id.slice(-8)}` : "-"}
             </InfoRow>
-            <InfoRow label="Thời gian tạo">
+            <InfoRow 
+              label="Thời gian tạo" 
+              icon="clock-circle"
+              iconColor="#FFD666"
+            >
               {formatDateTime(rentalReceipt?.createdAt)}
             </InfoRow>
-            <InfoRow label="Ghi chú">{rentalReceipt?.notes || "-"}</InfoRow>
+            {rentalReceipt?.notes && (
+              <InfoRow 
+                label="Ghi chú" 
+                icon="message"
+                iconColor="#22C55E"
+              >
+                {rentalReceipt.notes}
+              </InfoRow>
+            )}
           </View>
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Thông số ban đầu" icon="dashboard" />
           <View style={styles.card}>
-            <InfoRow label="Số km ban đầu">
+            <View style={styles.cardHeaderRow}>
+              <View style={[styles.iconBadge, { backgroundColor: "rgba(59, 130, 246, 0.15)" }]}>
+                <AntDesign name="dashboard" size={16} color="#3B82F6" />
+              </View>
+              <Text style={styles.cardHeader}>Thông số ban đầu</Text>
+            </View>
+            <View style={styles.divider} />
+            <InfoRow 
+              label="Số km ban đầu" 
+              icon="dashboard"
+              iconColor="#F59E0B"
+            >
               {rentalReceipt?.startOdometerKm ?? "-"} km
             </InfoRow>
-            <InfoRow label="Pin ban đầu">
+            <InfoRow 
+              label="Pin ban đầu" 
+              icon="thunderbolt"
+              iconColor="#3B82F6"
+            >
               {rentalReceipt?.startBatteryPercentage ?? "-"}%
             </InfoRow>
-            <InfoRow label="Nhân viên bàn giao">{staffName}</InfoRow>
-            <InfoRow label="Chi nhánh">{branchName}</InfoRow>
+            <InfoRow 
+              label="Nhân viên bàn giao" 
+              icon="user"
+              iconColor="#22C55E"
+            >
+              {staffName}
+            </InfoRow>
+            <InfoRow 
+              label="Chi nhánh" 
+              icon="environment"
+              iconColor="#7DB3FF"
+            >
+              {branchName}
+            </InfoRow>
           </View>
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Ảnh xe bàn giao" icon="picture" />
-          {handoverImages.length > 0 ? (
-            <View style={styles.photoGrid}>
-              {handoverImages.map((uri, index) => (
-                <TouchableOpacity
-                  key={uri + index}
-                  style={styles.photoItem}
-                  activeOpacity={0.85}
-                  onPress={() => openImageModal(index)}
-                >
-                  <Image source={{ uri }} style={styles.photoImage} />
-                  <View style={styles.photoOverlay}>
-                    <View style={styles.photoOverlayIcon}>
-                      <AntDesign name="eye" size={18} color="#fff" />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <View style={[styles.iconBadge, { backgroundColor: "rgba(34, 197, 94, 0.15)" }]}>
+                <AntDesign name="picture" size={16} color="#22C55E" />
+              </View>
+              <View style={styles.cardHeaderRight}>
+                <Text style={styles.cardHeader}>Ảnh xe bàn giao</Text>
+                {handoverImages.length > 0 && (
+                  <Text style={styles.imageCount}>
+                    {handoverImages.length} ảnh
+                  </Text>
+                )}
+              </View>
             </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <AntDesign name="frown" size={24} color={colors.text.secondary} />
-              <Text style={styles.emptyStateText}>Chưa có ảnh bàn giao</Text>
-            </View>
-          )}
+            {handoverImages.length > 0 ? (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.photoGrid}>
+                  {handoverImages.map((uri, index) => (
+                    <TouchableOpacity
+                      key={uri + index}
+                      style={styles.photoItem}
+                      activeOpacity={0.85}
+                      onPress={() => openImageModal(index)}
+                    >
+                      <Image source={{ uri }} style={styles.photoImage} />
+                      <View style={styles.photoOverlay}>
+                        <View style={styles.photoOverlayIcon}>
+                          <AntDesign name="eye" size={20} color="#fff" />
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.emptyState}>
+                  <AntDesign name="picture" size={32} color={colors.text.secondary} />
+                  <Text style={styles.emptyStateText}>Chưa có ảnh bàn giao</Text>
+                </View>
+              </>
+            )}
+          </View>
         </View>
 
-        {checklistImage && (
+        {checklistHandoverImage && (
           <View style={styles.section}>
-            <SectionHeader title="Checklist bàn giao" icon="profile" />
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.checklistWrap}
-              onPress={() => openImageModal(handoverImages.length)}
-            >
-              <Image
-                source={{ uri: checklistImage }}
-                style={styles.checklistImage}
-                resizeMode="cover"
-              />
-              <View style={styles.photoOverlay}>
-                <View style={styles.photoOverlayIcon}>
-                  <AntDesign name="eye" size={18} color="#fff" />
+            <View style={styles.card}>
+              <View style={styles.cardHeaderRow}>
+                <View style={[styles.iconBadge, { backgroundColor: "rgba(255, 214, 102, 0.15)" }]}>
+                  <AntDesign name="check-square" size={16} color="#FFD666" />
                 </View>
+                <Text style={styles.cardHeader}>Checklist bàn giao</Text>
               </View>
-            </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.checklistWrap}
+                onPress={() => openImageModal(handoverImages.length)}
+              >
+                <Image
+                  source={{ uri: checklistHandoverImage }}
+                  style={styles.checklistImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.photoOverlay}>
+                  <View style={styles.photoOverlayIcon}>
+                    <AntDesign name="eye" size={20} color="#fff" />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </>
     );
   };
 
-  const combinedImages = checklistImage
-    ? [...handoverImages, checklistImage]
+  const combinedImages = checklistHandoverImage
+    ? [...handoverImages, checklistHandoverImage]
     : handoverImages;
 
   return (
@@ -412,11 +496,18 @@ export const HandoverReceiptReportScreen: React.FC = () => {
 type InfoRowProps = {
   label: string;
   children: React.ReactNode;
+  icon?: keyof typeof AntDesign.glyphMap;
+  iconColor?: string;
 };
 
-const InfoRow: React.FC<InfoRowProps> = ({ label, children }) => (
+const InfoRow: React.FC<InfoRowProps> = ({ label, children, icon, iconColor = colors.text.secondary }) => (
   <View style={styles.infoRow}>
-    <Text style={styles.infoLabel}>{label}</Text>
+    <View style={styles.infoLabelContainer}>
+      {icon && (
+        <AntDesign name={icon} size={12} color={iconColor} style={styles.infoIcon} />
+      )}
+      <Text style={styles.infoLabel}>{label}</Text>
+    </View>
     <Text style={styles.infoValue}>{children}</Text>
   </View>
 );
@@ -429,19 +520,62 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   card: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 16,
+    backgroundColor: "#2A2A2A",
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 12,
+    borderColor: "#3A3A3A",
+    padding: 12,
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+  iconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardHeader: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "700",
+    flex: 1,
+  },
+  cardHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  imageCount: {
+    color: colors.text.secondary,
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#3A3A3A",
+    marginVertical: 10,
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    marginBottom: 10,
     gap: 12,
+  },
+  infoLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
+  },
+  infoIcon: {
+    marginRight: 2,
   },
   infoLabel: {
     color: colors.text.secondary,
@@ -458,21 +592,27 @@ const styles = StyleSheet.create({
   photoGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
-    marginTop: 12,
+    gap: 10,
   },
   photoItem: {
     width: "48%",
     aspectRatio: 1,
     borderRadius: 12,
     overflow: "hidden",
+    backgroundColor: "#1F1F1F",
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#3A3A3A",
     position: "relative",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   photoImage: {
     width: "100%",
     height: "100%",
+    resizeMode: "cover",
   },
   photoOverlay: {
     position: "absolute",
@@ -480,46 +620,49 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.2)",
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 12,
   },
   photoOverlayIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.3)",
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   emptyState: {
     backgroundColor: "#1F1F1F",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#3A3A3A",
     paddingVertical: 32,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
     gap: 8,
   },
   emptyStateText: {
     color: colors.text.secondary,
-    fontSize: 12,
+    fontSize: 14,
+    marginTop: 8,
   },
   checklistWrap: {
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#3A3A3A",
     overflow: "hidden",
-    marginTop: 12,
-    height: 1500,
+    backgroundColor: "#1F1F1F",
+    position: "relative",
+    maxHeight: 400,
   },
   checklistImage: {
     width: "100%",
-    height: "100%",
+    height: 400,
+    resizeMode: "contain",
   },
   loadingContainer: {
     marginTop: 40,

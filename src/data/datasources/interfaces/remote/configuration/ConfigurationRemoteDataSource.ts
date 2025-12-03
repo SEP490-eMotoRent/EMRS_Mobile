@@ -5,4 +5,5 @@ export interface ConfigurationRemoteDataSource {
     getAll(): Promise<ConfigurationListResponse>;
     getById(id: string): Promise<ConfigurationResponse>;
     getByType(type: ConfigurationType): Promise<ConfigurationListResponse>;
+    getAdditionalFricingConfig(): Promise<ConfigurationListResponse>;
 }

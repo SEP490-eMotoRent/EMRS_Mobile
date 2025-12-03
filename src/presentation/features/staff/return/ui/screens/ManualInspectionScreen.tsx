@@ -474,23 +474,6 @@ export const ManualInspectionScreen: React.FC = () => {
         </View>
 
         {/* Action Buttons */}
-        <TouchableOpacity
-          style={styles.secondaryCta}
-          onPress={() => {
-            navigation.navigate("AdditionalFees", {
-              bookingId: bookingId,
-            });
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={styles.secondaryCtaContent}>
-            <View style={styles.secondaryCtaIconContainer}>
-              <AntDesign name="plus-circle" size={18} color="#FFD666" />
-            </View>
-            <Text style={styles.secondaryCtaText}>Thêm phí phát sinh</Text>
-            <AntDesign name="right" size={16} color="#FFD666" />
-          </View>
-        </TouchableOpacity>
         {inspectionCompleted ? (
           <View style={styles.actionButtonsContainer}>
             {/* Additional Fees Button */}
@@ -504,9 +487,7 @@ export const ManualInspectionScreen: React.FC = () => {
               activeOpacity={0.8}
             >
               <View style={styles.secondaryCtaContent}>
-                <View style={styles.secondaryCtaIconContainer}>
-                  <AntDesign name="plus-circle" size={18} color="#FFD666" />
-                </View>
+                <AntDesign name="plus-circle" size={18} color="#FFD666" />
                 <Text style={styles.secondaryCtaText}>Thêm phí phát sinh</Text>
                 <AntDesign name="right" size={16} color="#FFD666" />
               </View>
@@ -832,7 +813,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   primaryCta: {
-    marginHorizontal: 16,
     backgroundColor: "#C9B6FF",
     borderRadius: 16,
     marginTop: 8,
@@ -886,14 +866,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
     paddingVertical: 18,
-  },
-  secondaryCtaIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,214,102,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
   },
   secondaryCtaText: {
     color: "#FFD666",

@@ -3,7 +3,7 @@ export { BookingDetailsScreen } from './BookingDetailsScreen';
 export { SelectVehicleScreen } from './SelectVehicleScreen';
 export { VehicleInspectionScreen } from './VehicleInspectionScreen';
 export { HandoverReportScreen } from './HandoverReportScreen';
-export { HandoverReceiptReportScreen } from './HandoverReceiptReportScreen';
+export { HandoverReceiptReportScreen } from '../../../../tripDetails/ui/screens/HandoverReceiptReportScreen';
 export { AwaitingApprovalScreen } from './AwaitingApprovalScreen';
 export { HandoverDocumentScreen } from './HandoverDocumentScreen';
 export { HandoverCompleteScreen } from './HandoverCompleteScreen';

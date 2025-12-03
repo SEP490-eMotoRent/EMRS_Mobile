@@ -18,7 +18,8 @@ export class RentalReceipt implements BaseEntity {
     public endBatteryPercentage: number;
     public handOverVehicleImageFiles: string[];
     public returnVehicleImageFiles: string[];
-    public checkListFile: string;
+    public checkListHandoverFile : string[];
+    public checkListReturnFile : string[];
     public bookingId: string;
     public staffId: string;
 
@@ -35,7 +36,8 @@ export class RentalReceipt implements BaseEntity {
         endBatteryPercentage: number,
         handOverVehicleImageFiles: string[],
         returnVehicleImageFiles: string[],
-        checkListFile: string,
+        checkListHandoverFile: string[],
+        checkListReturnFile: string[],
         bookingId: string,
         staffId: string,
         booking: Booking,      // ✅ ADDED
@@ -62,7 +64,8 @@ export class RentalReceipt implements BaseEntity {
         this.staffId = staffId;
         this.handOverVehicleImageFiles = handOverVehicleImageFiles;
         this.returnVehicleImageFiles = returnVehicleImageFiles;
-        this.checkListFile = checkListFile;
+        this.checkListHandoverFile = checkListHandoverFile;
+        this.checkListReturnFile = checkListReturnFile;
         
         // ✅ RELATIONS
         this.booking = booking;

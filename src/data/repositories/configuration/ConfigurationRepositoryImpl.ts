@@ -33,4 +33,10 @@ export class ConfigurationRepositoryImpl implements ConfigurationRepository {
         const data = unwrapResponse(response);
         return ConfigurationMapper.toDomainList(data);
     }
+
+    async getAdditionalFricingConfig(): Promise<Configuration[]> {
+        const response = await this.remoteDataSource.getAdditionalFricingConfig();
+        const data = unwrapResponse(response);
+        return ConfigurationMapper.toDomainList(data);
+    }
 }

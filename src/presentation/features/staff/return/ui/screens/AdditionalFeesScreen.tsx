@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
   Modal,
+  Animated,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -18,13 +19,20 @@ import { StaffStackParamList } from "../../../../../shared/navigation/StackParam
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { StepProgressBar } from "../atoms";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { RentalReturnCreateReceiptUseCase } from "../../../../../../domain/usecases/rentalReturn/CreateReceiptUseCase";
 import sl from "../../../../../../core/di/InjectionContainer";
-import { CreateReceiptResponse } from "../../../../../../data/models/rentalReturn/CreateReceiptResponse";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import Toast from "react-native-toast-message";
 import { DamageType } from "../../../../../../data/models/additionalFee/DamageTypesResponse";
 import { GetDamageTypesUseCase } from "../../../../../../domain/usecases/additionalFee/GetDamageTypesUseCase";
+import { AddDamageFeeUseCase } from "../../../../../../domain/usecases/additionalFee/AddDamageFeeUseCase";
+import { AddCleaningFeeUseCase } from "../../../../../../domain/usecases/additionalFee/AddCleaningFeeUseCase";
+import { AddLateReturnFeeUseCase } from "../../../../../../domain/usecases/additionalFee/AddLateReturnFeeUseCase";
+import { AddCrossBranchUseCase } from "../../../../../../domain/usecases/additionalFee/AddCrossBranchUseCase";
+import { AddExcessKmFeeUseCase } from "../../../../../../domain/usecases/additionalFee/AddExcessKmFeeUseCase";
+import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import { GetAdditionalPricingConfigUseCase } from "../../../../../../domain/usecases/configuration/GetAdditionalPricingConfigUseCase";
+import { Configuration } from "../../../../../../domain/entities/configuration/Configuration";
 
 type AdditionalFeesScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -35,7 +43,7 @@ type AdditionalFeesScreenRouteProp = RouteProp<
   StaffStackParamList,
   "AdditionalFees"
 >;
-    
+
 interface AdditionalFeesBreakdown {
   feeType: string;
   amount: number;
@@ -55,62 +63,581 @@ export const AdditionalFeesScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customFees, setCustomFees] = useState<AdditionalFeesBreakdown[]>([]);
   const [damageFees, setDamageFees] = useState<DamageFee[]>([]);
+  const [Booking, setBooking] = useState<Booking>(null);
   const [openTypeIdx, setOpenTypeIdx] = useState<number | null>(null);
   const [openDamageIdx, setOpenDamageIdx] = useState<number | null>(null);
   const [damageTypeOptions, setDamageTypeOptions] = useState<DamageType[]>([]);
+  const [expandedDamageCards, setExpandedDamageCards] = useState<Set<number>>(
+    new Set()
+  );
+  const [expandedCustomCards, setExpandedCustomCards] = useState<Set<number>>(
+    new Set()
+  );
+  const [damageAmountErrors, setDamageAmountErrors] = useState<
+    Record<number, string>
+  >({});
+  const [additionalPricingConfig, setAdditionalPricingConfig] = useState<
+    Configuration[]
+  >([]);
+  const shakeAnimations = useRef<Map<number, Animated.Value>>(new Map());
+
+  /**
+   * Helpers đọc giá trị cấu hình từ API (Configuration)
+   * Dựa trên field type (18 - 27) và value trả về
+   */
+  const getConfigNumericValue = (
+    type: number,
+    defaultValue: number
+  ): number => {
+    if (!additionalPricingConfig || additionalPricingConfig.length === 0) {
+      return defaultValue;
+    }
+
+    const found = additionalPricingConfig.find(
+      (cfg) => !cfg.isDeleted && cfg.type === type
+    );
+
+    return found ? found.getNumericValue() : defaultValue;
+  };
+
+  // Giá giờ cho phí trả xe trễ (type = 18)
+  const getLateReturnHourlyRate = () =>
+    getConfigNumericValue(
+      18,
+      30000 // fallback nếu chưa có cấu hình
+    );
+
+  // Phí vệ sinh cố định (type = 19)
+  const getCleaningFeeAmount = () =>
+    getConfigNumericValue(
+      19,
+      50000 // fallback nếu chưa có cấu hình
+    );
+
+  // Phí trả khác chi nhánh cố định (type = 21)
+  const getCrossBranchFeeAmount = () =>
+    getConfigNumericValue(
+      21,
+      200000 // fallback nếu chưa có cấu hình
+    );
+
+  // Get excess km configuration based on vehicle category
+  const getExcessKmConfig = () => {
+    const rawCategory =
+      Booking?.vehicle?.vehicleModel?.category ||
+      Booking?.vehicleModel?.category ||
+      "STANDARD";
+
+    const category = (rawCategory || "STANDARD").toUpperCase() as
+      | "ECONOMY"
+      | "STANDARD"
+      | "PREMIUM";
+
+    // Map category -> type cấu hình cho giá/km và giới hạn km/ngày
+    const categoryTypeMap: Record<
+      "ECONOMY" | "STANDARD" | "PREMIUM",
+      {
+        priceType: number;
+        limitType: number;
+        defaultPrice: number;
+        defaultLimit: number;
+      }
+    > = {
+      ECONOMY: {
+        priceType: 22,
+        limitType: 25,
+        defaultPrice: 2500,
+        defaultLimit: 70,
+      },
+      STANDARD: {
+        priceType: 23,
+        limitType: 26,
+        defaultPrice: 3500,
+        defaultLimit: 100,
+      },
+      PREMIUM: {
+        priceType: 24,
+        limitType: 27,
+        defaultPrice: 4500,
+        defaultLimit: 150,
+      },
+    };
+
+    const mapEntry = categoryTypeMap[category] ?? categoryTypeMap["STANDARD"];
+
+    const pricePerKm = getConfigNumericValue(
+      mapEntry.priceType,
+      mapEntry.defaultPrice
+    );
+
+    const dailyLimit = getConfigNumericValue(
+      mapEntry.limitType,
+      mapEntry.defaultLimit
+    );
+
+    return { dailyLimit, pricePerKm };
+  };
+
+  // Calculate excess km fee
+  const calculateExcessKmFee = (): {
+    excessKm: number;
+    fee: number;
+    details: string;
+  } => {
+    if (!Booking) {
+      return { excessKm: 0, fee: 0, details: "" };
+    }
+
+    const receipts = Booking.rentalReceipts || [];
+    const receipt = receipts.length > 0 ? receipts[receipts.length - 1] : null;
+    if (!receipt || !receipt.startOdometerKm || !receipt.endOdometerKm) {
+      return { excessKm: 0, fee: 0, details: "" };
+    }
+
+    const totalKm = receipt.endOdometerKm - receipt.startOdometerKm;
+
+    if (!Booking.startDatetime || !Booking.endDatetime) {
+      return { excessKm: 0, fee: 0, details: "" };
+    }
+
+    const startTime = new Date(Booking.startDatetime).getTime();
+    const endTime = new Date(Booking.endDatetime).getTime();
+    const rentalDays = Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24));
+
+    const config = getExcessKmConfig();
+    const freeKmLimit = rentalDays * config.dailyLimit;
+    const excessKm = Math.max(0, totalKm - freeKmLimit);
+    const fee = excessKm * config.pricePerKm;
+    const details = `Đi ${totalKm} km / ${freeKmLimit} km miễn phí (${rentalDays} ngày × ${config.dailyLimit} km/ngày)`;
+
+    return { excessKm, fee, details };
+  };
 
   useEffect(() => {
-    const getDamageTypesUseCase = new GetDamageTypesUseCase(sl.get("AdditionalFeeRepository"));
-    getDamageTypesUseCase.execute().then((options) => {
-      setDamageTypeOptions(options);
-    });
-  }, []);
+    const fetchData = async () => {
+      const getAdditionalPricingConfigUseCase =
+        new GetAdditionalPricingConfigUseCase(
+          sl.get("ConfigurationRepository")
+        );
+      const getDamageTypesUseCase = new GetDamageTypesUseCase(
+        sl.get("AdditionalFeeRepository")
+      );
+      const getBookingUseCase = new GetBookingByIdUseCase(
+        sl.get("BookingRepository")
+      );
 
-  const feeTypeOptions = [
-    { value: "CLEANING", label: "Phí vệ sinh", icon: "clear", color: "#7CFFCB" },
-    { value: "LATE_RETURN", label: "Phí trả muộn", icon: "clock-circle", color: "#FFD666" },
-    { value: "CROSS_BRANCH", label: "Phí trả khác chi nhánh", icon: "swap", color: "#7DB3FF" },
-    { value: "EXCESS_KM", label: "Phí vượt km", icon: "dashboard", color: "#C9B6FF" },
+      try {
+        const [additionalPricingConfig, damageTypes, booking] =
+          await Promise.all([
+            getAdditionalPricingConfigUseCase.execute(),
+            getDamageTypesUseCase.execute(),
+            getBookingUseCase.execute(bookingId),
+          ]);
+
+        setAdditionalPricingConfig(additionalPricingConfig);
+        setDamageTypeOptions(damageTypes);
+        setBooking(booking);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    if (bookingId) {
+      fetchData();
+    }
+  }, [bookingId]);
+
+  const allFeeTypeOptions = [
+    {
+      value: "CLEANING",
+      label: "Phí vệ sinh",
+      icon: "clear",
+      color: "#7CFFCB",
+      price: getCleaningFeeAmount(),
+    },
+    {
+      value: "LATE_RETURN",
+      label: "Phí trả muộn",
+      icon: "clock-circle",
+      color: "#FFD666",
+      pricePerHour: getLateReturnHourlyRate(),
+    },
+    {
+      value: "CROSS_BRANCH",
+      label: "Phí trả khác chi nhánh",
+      icon: "swap",
+      color: "#7DB3FF",
+      price: getCrossBranchFeeAmount(),
+    },
+    {
+      value: "EXCESS_KM",
+      label: "Phí vượt km",
+      icon: "dashboard",
+      color: "#C9B6FF",
+      price: 0,
+    },
   ];
 
+  // Calculate available fees based on booking data
+  const getAvailableFeeOptions = () => {
+    if (!Booking) return allFeeTypeOptions;
+
+    const available: typeof allFeeTypeOptions = [];
+
+    // Cleaning fee - always available
+    available.push(allFeeTypeOptions.find((opt) => opt.value === "CLEANING")!);
+
+    // Cross-branch fee - only if different branches
+    if (
+      Booking.handoverBranch?.id &&
+      Booking.returnBranch?.id &&
+      Booking.handoverBranch.id !== Booking.returnBranch.id
+    ) {
+      available.push(
+        allFeeTypeOptions.find((opt) => opt.value === "CROSS_BRANCH")!
+      );
+    }
+
+    // Late-return fee - only if actual return is after end datetime
+    if (Booking.endDatetime && Booking.actualReturnDatetime) {
+      const endTime = new Date(Booking.endDatetime).getTime();
+      const actualReturnTime = new Date(Booking.actualReturnDatetime).getTime();
+
+      if (actualReturnTime > endTime) {
+        available.push(
+          allFeeTypeOptions.find((opt) => opt.value === "LATE_RETURN")!
+        );
+      }
+    }
+
+    // Excess KM - only if excessKm > 0
+    const { excessKm } = calculateExcessKmFee();
+    if (excessKm > 0) {
+      available.push(
+        allFeeTypeOptions.find((opt) => opt.value === "EXCESS_KM")!
+      );
+    }
+
+    return available;
+  };
+
+  const feeTypeOptions = getAvailableFeeOptions();
+
+  // Calculate late return fee amount
+  const calculateLateReturnFee = (): number => {
+    if (!Booking?.endDatetime || !Booking?.actualReturnDatetime) return 0;
+
+    const endTime = new Date(Booking.endDatetime).getTime();
+    const actualReturnTime = new Date(Booking.actualReturnDatetime).getTime();
+
+    if (actualReturnTime <= endTime) return 0;
+
+    const hoursLate = Math.ceil(
+      (actualReturnTime - endTime) / (1000 * 60 * 60)
+    );
+    return hoursLate * getLateReturnHourlyRate();
+  };
+
+  // Get late return hours
+  const getLateReturnHours = (): number => {
+    if (!Booking?.endDatetime || !Booking?.actualReturnDatetime) return 0;
+
+    const endTime = new Date(Booking.endDatetime).getTime();
+    const actualReturnTime = new Date(Booking.actualReturnDatetime).getTime();
+
+    if (actualReturnTime <= endTime) return 0;
+
+    return Math.ceil((actualReturnTime - endTime) / (1000 * 60 * 60));
+  };
+
+  // Check if has cross-branch fee
+  const hasCrossBranchFee = (): boolean => {
+    if (!Booking) return false;
+    return (
+      Booking.handoverBranch?.id &&
+      Booking.returnBranch?.id &&
+      Booking.handoverBranch.id !== Booking.returnBranch.id
+    );
+  };
+
   const getFeeTypeInfo = (feeType: string) => {
-    return feeTypeOptions.find((opt) => opt.value === feeType) || {
-      value: feeType,
-      label: feeType,
-      icon: "file-text",
-      color: "#9CA3AF",
-    };
+    return (
+      allFeeTypeOptions.find((opt) => opt.value === feeType) || {
+        value: feeType,
+        label: feeType,
+        icon: "file-text",
+        color: "#9CA3AF",
+        price: 0,
+      }
+    );
+  };
+
+  const getFeePrice = (feeType: string): string => {
+    if (feeType === "LATE_RETURN") {
+      const amount = calculateLateReturnFee();
+      return amount > 0 ? formatCurrency(amount) : "";
+    }
+
+    if (feeType === "EXCESS_KM") {
+      const { fee } = calculateExcessKmFee();
+      return fee > 0 ? formatCurrency(fee) : "";
+    }
+
+    const feeInfo = allFeeTypeOptions.find((opt) => opt.value === feeType);
+    if (feeInfo?.price) {
+      return formatCurrency(feeInfo.price);
+    }
+
+    return "";
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN").format(amount) + " VND";
   };
 
-  // Values used in existing UI blocks. Keep simple defaults so the screen compiles
-  // and focuses on the custom additional fees the user can add.
-  const distanceFee = 0;
-  const batteryFee = 0;
-  const damageFee = 0;
-  const otherFees: {
-    id: string;
-    label: string;
-    checked: boolean;
-    amount: number;
-  }[] = [];
-  const baseRentalFee = 0;
-  const subtotalCustomFees = customFees.reduce((sum, f) => sum + (f.amount || 0), 0);
-  const subtotalDamageFees = damageFees.reduce((sum, f) => sum + (f.amount || 0), 0);
+  const addAdditionalFeesHandler = async () => {
+    if (isSubmitting) return;
+
+    // Validate bookingId
+    if (!bookingId) {
+      Alert.alert("Lỗi", "Không tìm thấy thông tin booking");
+      return;
+    }
+
+    // Validate that at least one fee is added
+    if (damageFees.length === 0 && customFees.length === 0) {
+      Alert.alert("Thông báo", "Vui lòng thêm ít nhất một loại phí phát sinh");
+      return;
+    }
+
+    // Validate damage fees
+    const invalidDamageFees = damageFees.filter((fee) => {
+      if (!fee.damageType || !fee.amount || fee.amount <= 0) {
+        return true;
+      }
+      // Check min/max validation
+      const error = validateDamageAmount(fee.amount, fee.damageType);
+      return error !== null;
+    });
+    if (invalidDamageFees.length > 0) {
+      Alert.alert(
+        "Lỗi",
+        "Vui lòng điền đầy đủ thông tin và đảm bảo số tiền nằm trong khoảng cho phép cho tất cả các phí hư hỏng"
+      );
+      return;
+    }
+
+    // Check if there are any validation errors
+    if (Object.keys(damageAmountErrors).length > 0) {
+      Alert.alert("Lỗi", "Vui lòng sửa các lỗi validation cho số tiền hư hỏng");
+      return;
+    }
+
+    // Validate custom fees
+    const invalidCustomFees = customFees.filter((fee) => !fee.feeType);
+    if (invalidCustomFees.length > 0) {
+      Alert.alert("Lỗi", "Vui lòng chọn loại phí cho tất cả các phí bổ sung");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Process damage fees
+      const addDamageFeeUseCase = new AddDamageFeeUseCase(
+        sl.get("AdditionalFeeRepository")
+      );
+
+      for (const damageFee of damageFees) {
+        const damageResponse = await addDamageFeeUseCase.execute({
+          bookingId,
+          damageType: damageFee.damageType,
+          amount: damageFee.amount,
+          additionalNotes: damageFee.additionalNotes || "",
+        });
+        unwrapResponse(damageResponse);
+      }
+
+      // Process custom fees based on feeType
+      for (const customFee of customFees) {
+        let useCase;
+        switch (customFee.feeType) {
+          case "CLEANING":
+            useCase = new AddCleaningFeeUseCase(
+              sl.get("AdditionalFeeRepository")
+            );
+            await useCase.execute({ bookingId });
+            break;
+          case "LATE_RETURN":
+            useCase = new AddLateReturnFeeUseCase(
+              sl.get("AdditionalFeeRepository")
+            );
+            await useCase.execute({ bookingId });
+            break;
+          case "CROSS_BRANCH":
+            useCase = new AddCrossBranchUseCase(
+              sl.get("AdditionalFeeRepository")
+            );
+            await useCase.execute({ bookingId });
+            break;
+          case "EXCESS_KM":
+            useCase = new AddExcessKmFeeUseCase(
+              sl.get("AdditionalFeeRepository")
+            );
+            await useCase.execute({ bookingId });
+            break;
+          default:
+            console.warn(`Unknown fee type: ${customFee.feeType}`);
+            continue;
+        }
+      }
+
+      // Show success message
+      Toast.show({
+        text1: "Thành công",
+        text2: `Đã thêm ${
+          damageFees.length + customFees.length
+        } loại phí phát sinh`,
+        type: "success",
+      });
+
+      // Navigate back after a short delay
+
+      const receipts = Booking.rentalReceipts || [];
+      const lastReceipt =
+        receipts.length > 0 ? receipts[receipts.length - 1] : null;
+      setTimeout(() => {
+        navigation.navigate("ReturnReport", {
+          bookingId: bookingId,
+          rentalReceiptId: lastReceipt?.id || "",
+          settlement: {
+            baseRentalFee: 0,
+            depositAmount: 0,
+            totalAmount: 0,
+            totalChargingFee: 0,
+            totalAdditionalFees: 0,
+            refundAmount: 0,
+            feesBreakdown: {
+              cleaningFee: 0,
+              crossBranchFee: 0,
+              damageFee: 0,
+              excessKmFee: 0,
+              lateReturnFee: 0,
+            },
+          },
+        });
+      }, 1500);
+    } catch (error: any) {
+      console.error("Error adding additional fees:", error);
+      Alert.alert(
+        "Lỗi",
+        `Không thể thêm phí phát sinh: ${
+          error.message || "Đã xảy ra lỗi không xác định"
+        }`
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Calculate custom fees total based on fee types
+  const subtotalCustomFees = customFees.reduce((sum, fee) => {
+    if (!fee.feeType) return sum;
+
+    if (fee.feeType === "LATE_RETURN") {
+      return sum + calculateLateReturnFee();
+    }
+
+    if (fee.feeType === "EXCESS_KM") {
+      return sum + calculateExcessKmFee().fee;
+    }
+
+    const feeInfo = allFeeTypeOptions.find((opt) => opt.value === fee.feeType);
+    if (feeInfo?.price) {
+      return sum + feeInfo.price;
+    }
+
+    return sum;
+  }, 0);
+
+  const subtotalDamageFees = damageFees.reduce(
+    (sum, f) => sum + (f.amount || 0),
+    0
+  );
   const subtotalFees = subtotalCustomFees + subtotalDamageFees;
-  const depositHeld = 0;
-  const refundAmount = 0;
-  const totalAmount = baseRentalFee + subtotalFees;
 
   const addFeeRow = () => {
     if (isSubmitting) return;
+    const newIndex = customFees.length;
     setCustomFees((prev) => [
       ...prev,
       { feeType: "", amount: 0, description: "" },
     ]);
+    // Auto expand new card
+    setExpandedCustomCards((prev) => new Set(prev).add(newIndex));
+  };
+
+  // Shake animation function for error text
+  const shakeError = (index: number) => {
+    if (!shakeAnimations.current.has(index)) {
+      shakeAnimations.current.set(index, new Animated.Value(0));
+    }
+
+    const animValue = shakeAnimations.current.get(index)!;
+    animValue.setValue(0);
+
+    Animated.sequence([
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const toggleDamageCard = (index: number) => {
+    // Không cho phép đóng nếu có lỗi validation
+    if (expandedDamageCards.has(index) && damageAmountErrors[index]) {
+      shakeError(index);
+      return;
+    }
+
+    setExpandedDamageCards((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleCustomCard = (index: number) => {
+    setExpandedCustomCards((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   const removeFeeRow = (index: number) => {
@@ -120,15 +647,42 @@ export const AdditionalFeesScreen: React.FC = () => {
 
   const addDamageRow = () => {
     if (isSubmitting) return;
+    const newIndex = damageFees.length;
     setDamageFees((prev) => [
       ...prev,
       { damageType: "", amount: 0, additionalNotes: "" },
     ]);
+    // Auto expand new card
+    setExpandedDamageCards((prev) => new Set(prev).add(newIndex));
   };
 
   const removeDamageRow = (index: number) => {
     if (isSubmitting) return;
     setDamageFees((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const validateDamageAmount = (
+    amount: number,
+    damageType: string
+  ): string | null => {
+    if (!damageType) return null;
+
+    const damageTypeInfo = damageTypeOptions.find(
+      (opt) => opt.damageType === damageType
+    );
+    if (!damageTypeInfo) return null;
+
+    const { minAmount, maxAmount } = damageTypeInfo;
+
+    if (amount < minAmount) {
+      return `Số tiền phải tối thiểu ${formatCurrency(minAmount)}`;
+    }
+
+    if (maxAmount > 0 && amount > maxAmount) {
+      return `Số tiền không được vượt quá ${formatCurrency(maxAmount)}`;
+    }
+
+    return null;
   };
 
   const updateDamageField = (
@@ -140,9 +694,36 @@ export const AdditionalFeesScreen: React.FC = () => {
       const next = [...prev];
       if (key === "amount") {
         const num = parseInt(value || "0", 10);
-        next[index].amount = isNaN(num) ? 0 : num;
+        const amount = isNaN(num) ? 0 : num;
+        next[index].amount = amount;
+
+        // Validate amount
+        const error = validateDamageAmount(amount, next[index].damageType);
+        setDamageAmountErrors((prevErrors) => {
+          if (error) {
+            return { ...prevErrors, [index]: error };
+          } else {
+            const newErrors = { ...prevErrors };
+            delete newErrors[index];
+            return newErrors;
+          }
+        });
       } else if (key === "damageType") {
         next[index].damageType = value;
+
+        // Re-validate amount when damage type changes
+        if (next[index].amount > 0) {
+          const error = validateDamageAmount(next[index].amount, value);
+          setDamageAmountErrors((prevErrors) => {
+            if (error) {
+              return { ...prevErrors, [index]: error };
+            } else {
+              const newErrors = { ...prevErrors };
+              delete newErrors[index];
+              return newErrors;
+            }
+          });
+        }
       } else if (key === "additionalNotes") {
         next[index].additionalNotes = value;
       }
@@ -206,7 +787,8 @@ export const AdditionalFeesScreen: React.FC = () => {
             <View>
               <Text style={styles.sectionTitle}>Phí hư hỏng</Text>
               <Text style={styles.sectionSubtitle}>
-                {damageFees.length} {damageFees.length === 1 ? "hư hỏng" : "hư hỏng"} đã thêm
+                {damageFees.length}{" "}
+                {damageFees.length === 1 ? "hư hỏng" : "hư hỏng"} đã thêm
               </Text>
             </View>
           </View>
@@ -228,120 +810,227 @@ export const AdditionalFeesScreen: React.FC = () => {
             </Text>
           </View>
         ) : (
-          damageFees.map((damage, index) => (
-            <View key={index} style={styles.damageCard}>
-              <View style={styles.damageCardHeader}>
-                <View style={styles.damageCardHeaderLeft}>
-                  <View style={styles.damageBadge}>
-                    <AntDesign name="warning" size={14} color="#FF6B6B" />
-                    <Text style={styles.damageBadgeText}>
-                      Hư hỏng #{index + 1}
-                    </Text>
+          damageFees.map((damage, index) => {
+            const isExpanded = expandedDamageCards.has(index);
+            return (
+              <View key={index} style={styles.damageCard}>
+                <View style={styles.damageCardHeader}>
+                  <View style={styles.damageCardHeaderLeft}>
+                    <View style={styles.damageBadge}>
+                      <AntDesign name="warning" size={14} color="#FF6B6B" />
+                      <Text style={styles.damageBadgeText}>
+                        Hư hỏng #{index + 1}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.damageCardHeaderRight}>
+                    <TouchableOpacity
+                      style={styles.collapseBtn}
+                      onPress={() => toggleDamageCard(index)}
+                      disabled={isSubmitting}
+                    >
+                      <AntDesign
+                        name={isExpanded ? "up" : "down"}
+                        size={16}
+                        color={colors.text.secondary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.removeDamageBtn}
+                      onPress={() => {
+                        removeDamageRow(index);
+                        setExpandedDamageCards((prev) => {
+                          const newSet = new Set(prev);
+                          newSet.delete(index);
+                          return newSet;
+                        });
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      <AntDesign
+                        name="close-circle"
+                        size={20}
+                        color="#FF6B6B"
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.removeDamageBtn}
-                  onPress={() => removeDamageRow(index)}
-                  disabled={isSubmitting}
-                >
-                  <AntDesign name="close-circle" size={20} color="#FF6B6B" />
-                </TouchableOpacity>
-              </View>
 
-              <View style={styles.damageForm}>
-                <View style={styles.damageFormRow}>
-                  <Text style={styles.damageInputLabel}>Loại hư hỏng</Text>
-                  <TouchableOpacity
-                    style={[styles.damageSelectBox, isSubmitting && styles.disabled]}
-                    activeOpacity={0.8}
-                    disabled={isSubmitting}
-                    onPress={() =>
-                      setOpenDamageIdx(openDamageIdx === index ? null : index)
-                    }
-                  >
-                    <Text style={styles.damageSelectText}>
-                      {damage.damageType || "Chọn loại hư hỏng"}
-                    </Text>
-                    <AntDesign
-                      name={openDamageIdx === index ? "up" : "down"}
-                      size={14}
-                      color={colors.text.secondary}
-                    />
-                  </TouchableOpacity>
-                  {openDamageIdx === index && (
-                    <View style={styles.damageDropdown}>
-                      <ScrollView
-                        style={styles.damageDropdownScroll}
-                        nestedScrollEnabled={true}
-                        showsVerticalScrollIndicator={true}
+                {!isExpanded && damage.damageType && (
+                  <Text style={styles.damageCardSummary}>
+                    {damageTypeOptions.find(
+                      (opt) => opt.damageType === damage.damageType
+                    )?.displayText || damage.damageType}
+                    {damage.amount > 0 && ` · ${formatCurrency(damage.amount)}`}
+                  </Text>
+                )}
+                {isExpanded && (
+                  <View style={styles.damageForm}>
+                    <View style={styles.damageFormRow}>
+                      <Text style={styles.damageInputLabel}>Loại hư hỏng</Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.damageSelectBox,
+                          isSubmitting && styles.disabled,
+                        ]}
+                        activeOpacity={0.8}
+                        disabled={isSubmitting}
+                        onPress={() =>
+                          setOpenDamageIdx(
+                            openDamageIdx === index ? null : index
+                          )
+                        }
                       >
-                        {damageTypeOptions.map((opt) => (
-                          <TouchableOpacity
-                            key={opt.damageType}
-                            style={styles.damageDropdownItem}
-                            onPress={() => {
-                              updateDamageField(index, "damageType", opt.damageType);
-                              setOpenDamageIdx(null);
-                            }}
+                        <Text style={styles.damageSelectText}>
+                          {damage.damageType || "Chọn loại hư hỏng"}
+                        </Text>
+                        <AntDesign
+                          name={openDamageIdx === index ? "up" : "down"}
+                          size={14}
+                          color={colors.text.secondary}
+                        />
+                      </TouchableOpacity>
+                      {openDamageIdx === index && (
+                        <View style={styles.damageDropdown}>
+                          <ScrollView
+                            style={styles.damageDropdownScroll}
+                            nestedScrollEnabled={true}
+                            showsVerticalScrollIndicator={true}
                           >
-                            <Text style={styles.damageDropdownItemText}>
-                              {opt.displayText}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
+                            {damageTypeOptions.map((opt) => (
+                              <TouchableOpacity
+                                key={opt.damageType}
+                                style={styles.damageDropdownItem}
+                                onPress={() => {
+                                  updateDamageField(
+                                    index,
+                                    "damageType",
+                                    opt.damageType
+                                  );
+                                  setOpenDamageIdx(null);
+                                }}
+                              >
+                                <Text style={styles.damageDropdownItemText}>
+                                  {opt.displayText}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      )}
                     </View>
-                  )}
-                </View>
 
-                <View style={styles.damageFormRow}>
-                  <Text style={styles.damageInputLabel}>Số tiền (VND)</Text>
-                  <View style={styles.damageAmountInputContainer}>
-                    <TextInput
-                      style={styles.damageAmountInput}
-                      placeholder="0"
-                      placeholderTextColor={colors.text.secondary}
-                      keyboardType="numeric"
-                      value={String(damage.amount || 0)}
-                      onChangeText={(t) => updateDamageField(index, "amount", t)}
-                      editable={!isSubmitting}
-                    />
-                    <View style={styles.damageAmountBadge}>
-                      <Text style={styles.damageAmountBadgeText}>VND</Text>
+                    <View style={styles.damageFormRow}>
+                      <View style={styles.damageInputLabelRow}>
+                        <Text style={styles.damageInputLabel}>
+                          Số tiền (VND)
+                        </Text>
+                        {damage.damageType &&
+                          (() => {
+                            const damageTypeInfo = damageTypeOptions.find(
+                              (opt) => opt.damageType === damage.damageType
+                            );
+                            if (damageTypeInfo) {
+                              const { minAmount, maxAmount } = damageTypeInfo;
+                              const rangeText =
+                                maxAmount > 0
+                                  ? `${formatCurrency(
+                                      minAmount
+                                    )} - ${formatCurrency(maxAmount)}`
+                                  : `Tối thiểu ${formatCurrency(minAmount)}`;
+                              return (
+                                <Text style={styles.damageInputHelperText}>
+                                  ({rangeText})
+                                </Text>
+                              );
+                            }
+                            return null;
+                          })()}
+                      </View>
+                      <View style={styles.damageAmountInputContainer}>
+                        <TextInput
+                          style={[
+                            styles.damageAmountInput,
+                            damageAmountErrors[index] &&
+                              styles.damageAmountInputError,
+                          ]}
+                          placeholder="0"
+                          placeholderTextColor={colors.text.secondary}
+                          keyboardType="numeric"
+                          value={String(damage.amount || 0)}
+                          onChangeText={(t) =>
+                            updateDamageField(index, "amount", t)
+                          }
+                          editable={!isSubmitting}
+                        />
+                        <View style={styles.damageAmountBadge}>
+                          <Text style={styles.damageAmountBadgeText}>VND</Text>
+                        </View>
+                      </View>
+                      {damageAmountErrors[index] &&
+                        (() => {
+                          if (!shakeAnimations.current.has(index)) {
+                            shakeAnimations.current.set(
+                              index,
+                              new Animated.Value(0)
+                            );
+                          }
+                          const animValue = shakeAnimations.current.get(index)!;
+
+                          return (
+                            <Animated.View
+                              style={{
+                                transform: [{ translateX: animValue }],
+                              }}
+                            >
+                              <Text style={styles.damageAmountErrorText}>
+                                {damageAmountErrors[index]}
+                              </Text>
+                            </Animated.View>
+                          );
+                        })()}
+                    </View>
+
+                    <View style={styles.damageFormRow}>
+                      <Text style={styles.damageInputLabel}>
+                        Ghi chú bổ sung
+                      </Text>
+                      <TextInput
+                        style={[styles.damageNotesInput, styles.damageTextArea]}
+                        placeholder="Mô tả chi tiết về hư hỏng..."
+                        placeholderTextColor={colors.text.secondary}
+                        value={damage.additionalNotes}
+                        onChangeText={(t) =>
+                          updateDamageField(index, "additionalNotes", t)
+                        }
+                        editable={!isSubmitting}
+                        multiline
+                        numberOfLines={3}
+                      />
                     </View>
                   </View>
-                </View>
-
-                <View style={styles.damageFormRow}>
-                  <Text style={styles.damageInputLabel}>Ghi chú bổ sung</Text>
-                  <TextInput
-                    style={[styles.damageNotesInput, styles.damageTextArea]}
-                    placeholder="Mô tả chi tiết về hư hỏng..."
-                    placeholderTextColor={colors.text.secondary}
-                    value={damage.additionalNotes}
-                    onChangeText={(t) =>
-                      updateDamageField(index, "additionalNotes", t)
-                    }
-                    editable={!isSubmitting}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </View>
+                )}
               </View>
-            </View>
-          ))
+            );
+          })
         )}
 
         {/* Additional Fees Section */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderLeft}>
-            <View style={[styles.sectionIconContainer, { backgroundColor: "rgba(201,182,255,0.15)" }]}>
+            <View
+              style={[
+                styles.sectionIconContainer,
+                { backgroundColor: "rgba(201,182,255,0.15)" },
+              ]}
+            >
               <AntDesign name="plus-circle" size={18} color="#C9B6FF" />
             </View>
             <View>
               <Text style={styles.sectionTitle}>Phí bổ sung khác</Text>
               <Text style={styles.sectionSubtitle}>
-                {customFees.length} {customFees.length === 1 ? "phí" : "phí"} đã thêm
+                {customFees.length} {customFees.length === 1 ? "phí" : "phí"} đã
+                thêm
               </Text>
             </View>
           </View>
@@ -356,7 +1045,11 @@ export const AdditionalFeesScreen: React.FC = () => {
 
         {customFees.length === 0 ? (
           <View style={styles.emptyStateCard}>
-            <AntDesign name="file-text" size={32} color={colors.text.secondary} />
+            <AntDesign
+              name="file-text"
+              size={32}
+              color={colors.text.secondary}
+            />
             <Text style={styles.emptyStateText}>Chưa có phí bổ sung nào</Text>
             <Text style={styles.emptyStateSubtext}>
               Nhấn nút + để thêm phí bổ sung
@@ -365,6 +1058,7 @@ export const AdditionalFeesScreen: React.FC = () => {
         ) : (
           customFees.map((fee, index) => {
             const feeInfo = getFeeTypeInfo(fee.feeType);
+            const isExpanded = expandedCustomCards.has(index);
             return (
               <View key={index} style={styles.feeCard}>
                 <View style={styles.feeCardHeader}>
@@ -385,160 +1079,333 @@ export const AdditionalFeesScreen: React.FC = () => {
                       <Text style={styles.feeCardTitle}>
                         {fee.feeType ? feeInfo.label : "Chọn loại phí"}
                       </Text>
-                      {fee.amount > 0 && (
-                        <Text style={styles.feeCardAmount}>
-                          {formatCurrency(fee.amount)}
+                      {fee.feeType && (
+                        <Text
+                          style={[
+                            styles.feeCardAmount,
+                            { color: feeInfo.color },
+                          ]}
+                        >
+                          {getFeePrice(fee.feeType)}
                         </Text>
                       )}
                     </View>
                   </View>
-                  <TouchableOpacity
-                    style={styles.removeFeeBtn}
-                    onPress={() => removeFeeRow(index)}
-                    disabled={isSubmitting}
-                  >
-                    <AntDesign name="close-circle" size={20} color="#FF6B6B" />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.feeCardBody}>
-                  <View style={styles.feeFormRow}>
-                    <Text style={styles.feeInputLabel}>Loại phí</Text>
+                  <View style={styles.feeCardHeaderRight}>
                     <TouchableOpacity
-                      style={[styles.feeSelectBox, isSubmitting && styles.disabled]}
-                      activeOpacity={0.8}
+                      style={styles.collapseBtn}
+                      onPress={() => toggleCustomCard(index)}
                       disabled={isSubmitting}
-                      onPress={() =>
-                        setOpenTypeIdx(openTypeIdx === index ? null : index)
-                      }
                     >
-                      <Text style={styles.feeSelectText}>
-                        {fee.feeType || "Chọn loại phí"}
-                      </Text>
                       <AntDesign
-                        name={openTypeIdx === index ? "up" : "down"}
-                        size={14}
+                        name={isExpanded ? "up" : "down"}
+                        size={16}
                         color={colors.text.secondary}
                       />
                     </TouchableOpacity>
-                    {openTypeIdx === index && (
-                      <View style={styles.feeDropdown}>
-                        {feeTypeOptions.map((opt) => (
-                          <TouchableOpacity
-                            key={opt.value}
-                            style={styles.feeDropdownItem}
-                            onPress={() => {
-                              updateFeeField(index, "feeType", opt.value);
-                              setOpenTypeIdx(null);
-                            }}
-                          >
-                            <View style={styles.feeDropdownItemLeft}>
-                              <View
-                                style={[
-                                  styles.feeDropdownIcon,
-                                  { backgroundColor: `${opt.color}20` },
-                                ]}
-                              >
-                                <AntDesign
-                                  name={opt.icon as any}
-                                  size={14}
-                                  color={opt.color}
-                                />
-                              </View>
-                              <Text style={styles.feeDropdownItemText}>
-                                {opt.label}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.feeFormRow}>
-                    <Text style={styles.feeInputLabel}>Số tiền (VND)</Text>
-                    <View style={styles.feeAmountInputContainer}>
-                      <TextInput
-                        style={styles.feeAmountInput}
-                        placeholder="0"
-                        placeholderTextColor={colors.text.secondary}
-                        keyboardType="numeric"
-                        value={String(fee.amount || 0)}
-                        onChangeText={(t) => updateFeeField(index, "amount", t)}
-                        editable={!isSubmitting}
+                    <TouchableOpacity
+                      style={styles.removeFeeBtn}
+                      onPress={() => {
+                        removeFeeRow(index);
+                        setExpandedCustomCards((prev) => {
+                          const newSet = new Set(prev);
+                          newSet.delete(index);
+                          return newSet;
+                        });
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      <AntDesign
+                        name="close-circle"
+                        size={20}
+                        color="#FF6B6B"
                       />
-                      <View style={styles.feeAmountBadge}>
-                        <Text style={styles.feeAmountBadgeText}>VND</Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <View style={styles.feeFormRow}>
-                    <Text style={styles.feeInputLabel}>Mô tả (tùy chọn)</Text>
-                    <TextInput
-                      style={[styles.feeNotesInput, styles.feeTextArea]}
-                      placeholder="Ghi chú ngắn về phí này..."
-                      placeholderTextColor={colors.text.secondary}
-                      value={fee.description}
-                      onChangeText={(t) =>
-                        updateFeeField(index, "description", t)
-                      }
-                      editable={!isSubmitting}
-                      multiline
-                      numberOfLines={2}
-                    />
+                    </TouchableOpacity>
                   </View>
                 </View>
+
+                {isExpanded && (
+                  <View style={styles.feeCardBody}>
+                    <View style={styles.feeFormRow}>
+                      <Text style={styles.feeInputLabel}>Loại phí</Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.feeSelectBox,
+                          isSubmitting && styles.disabled,
+                        ]}
+                        activeOpacity={0.8}
+                        disabled={isSubmitting}
+                        onPress={() =>
+                          setOpenTypeIdx(openTypeIdx === index ? null : index)
+                        }
+                      >
+                        <Text style={styles.feeSelectText}>
+                          {fee.feeType || "Chọn loại phí"}
+                        </Text>
+                        <AntDesign
+                          name={openTypeIdx === index ? "up" : "down"}
+                          size={14}
+                          color={colors.text.secondary}
+                        />
+                      </TouchableOpacity>
+                      {openTypeIdx === index && (
+                        <View style={styles.feeDropdown}>
+                          {feeTypeOptions.map((opt) => (
+                            <TouchableOpacity
+                              key={opt.value}
+                              style={styles.feeDropdownItem}
+                              onPress={() => {
+                                updateFeeField(index, "feeType", opt.value);
+                                setOpenTypeIdx(null);
+                              }}
+                            >
+                              <View style={styles.feeDropdownItemLeft}>
+                                <View
+                                  style={[
+                                    styles.feeDropdownIcon,
+                                    { backgroundColor: `${opt.color}20` },
+                                  ]}
+                                >
+                                  <AntDesign
+                                    name={opt.icon as any}
+                                    size={14}
+                                    color={opt.color}
+                                  />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={styles.feeDropdownItemText}>
+                                    {opt.label}
+                                  </Text>
+                                  {opt.value === "LATE_RETURN" &&
+                                  Booking?.endDatetime &&
+                                  Booking?.actualReturnDatetime ? (
+                                    <Text
+                                      style={[
+                                        styles.feeDropdownItemPrice,
+                                        { color: opt.color },
+                                      ]}
+                                    >
+                                      {getFeePrice(opt.value)}
+                                    </Text>
+                                  ) : opt.value === "EXCESS_KM" ? (
+                                    <Text
+                                      style={[
+                                        styles.feeDropdownItemPrice,
+                                        { color: opt.color },
+                                      ]}
+                                    >
+                                      {getFeePrice(opt.value) || "Tính tự động"}
+                                    </Text>
+                                  ) : opt.price ? (
+                                    <Text
+                                      style={[
+                                        styles.feeDropdownItemPrice,
+                                        { color: opt.color },
+                                      ]}
+                                    >
+                                      {formatCurrency(opt.price)}
+                                    </Text>
+                                  ) : null}
+                                </View>
+                              </View>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
               </View>
             );
           })
         )}
 
-        {/* Summary Card */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <View style={styles.summaryHeaderIcon}>
-              <AntDesign name="calculator" size={20} color="#C9B6FF" />
+        {/* Damage Fees Summary Card */}
+        {damageFees.length > 0 && (
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryHeader}>
+              <View style={styles.summaryHeaderIcon}>
+                <AntDesign name="warning" size={20} color="#FF6B6B" />
+              </View>
+              <Text style={styles.summaryHeaderTitle}>Phí hư hỏng</Text>
             </View>
-            <Text style={styles.summaryHeaderTitle}>Tổng kết</Text>
-          </View>
 
-          {damageFees.length > 0 && (
+            {damageFees.map((damage, index) => {
+              const damageTypeInfo = damageTypeOptions.find(
+                (opt) => opt.damageType === damage.damageType
+              );
+              return (
+                <View key={index} style={styles.summaryRow}>
+                  <View style={styles.summaryRowLeft}>
+                    <AntDesign name="warning" size={14} color="#FF6B6B" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.summaryLabel}>
+                        Phí hư hỏng #{index + 1}
+                      </Text>
+                      {damageTypeInfo && (
+                        <Text style={styles.summaryNote}>
+                          {damageTypeInfo.displayText}
+                          {damage.additionalNotes &&
+                            ` - ${damage.additionalNotes}`}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <Text style={[styles.summaryValue, { color: "#FF6B6B" }]}>
+                    {formatCurrency(damage.amount || 0)}
+                  </Text>
+                </View>
+              );
+            })}
+
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryTotalLabel}>Tổng phí hư hỏng</Text>
+              <Text style={[styles.summaryTotalValue, { color: "#FF6B6B" }]}>
+                {formatCurrency(subtotalDamageFees)}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Additional Fees Summary Card */}
+        {(customFees.length > 0 || subtotalFees > 0) && (
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryHeader}>
+              <View style={styles.summaryHeaderIcon}>
+                <AntDesign name="calculator" size={20} color="#C9B6FF" />
+              </View>
+              <Text style={styles.summaryHeaderTitle}>Phí bổ sung khác</Text>
+            </View>
+
+            {/* Custom Fees Breakdown */}
+            {customFees.length > 0 && (
+              <>
+                {customFees.map((fee, index) => {
+                  const feeInfo = getFeeTypeInfo(fee.feeType);
+                  let note = "";
+
+                  if (fee.feeType === "CROSS_BRANCH" && hasCrossBranchFee()) {
+                    note = `${Booking?.handoverBranch?.branchName || "N/A"} → ${
+                      Booking?.returnBranch?.branchName || "N/A"
+                    }`;
+                  } else if (fee.feeType === "LATE_RETURN") {
+                    const hours = getLateReturnHours();
+                    if (hours > 0) {
+                      note = `Trả muộn ${hours} giờ`;
+                    }
+                  } else if (fee.feeType === "EXCESS_KM") {
+                    const { excessKm, details } = calculateExcessKmFee();
+                    const detailText = details || "Chưa có dữ liệu quãng đường";
+                    note =
+                      excessKm > 0
+                        ? `${detailText} · Vượt ${excessKm} km`
+                        : `${detailText} · Không vượt km`;
+                  }
+
+                  let feeAmount = 0;
+                  if (fee.feeType === "LATE_RETURN") {
+                    feeAmount = calculateLateReturnFee();
+                  } else if (fee.feeType === "EXCESS_KM") {
+                    feeAmount = calculateExcessKmFee().fee;
+                  } else {
+                    feeAmount = feeInfo.price || 0;
+                  }
+
+                  return (
+                    <View key={index} style={styles.summaryRow}>
+                      <View style={styles.summaryRowLeft}>
+                        <AntDesign
+                          name={feeInfo.icon as any}
+                          size={14}
+                          color={feeInfo.color}
+                        />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.summaryLabel}>
+                            {feeInfo.label}
+                          </Text>
+                          {note && (
+                            <Text style={styles.summaryNote}>{note}</Text>
+                          )}
+                        </View>
+                      </View>
+                      <Text
+                        style={[styles.summaryValue, { color: feeInfo.color }]}
+                      >
+                        {formatCurrency(feeAmount)}
+                      </Text>
+                    </View>
+                  );
+                })}
+
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryRowLeft}>
+                    <AntDesign name="plus-circle" size={14} color="#C9B6FF" />
+                    <Text style={styles.summaryLabel}>Tổng phí bổ sung</Text>
+                  </View>
+                  <Text style={[styles.summaryValue, { color: "#C9B6FF" }]}>
+                    {formatCurrency(subtotalCustomFees)}
+                  </Text>
+                </View>
+              </>
+            )}
+
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryTotalLabel}>
+                Tổng phí bổ sung khác
+              </Text>
+              <Text style={styles.summaryTotalValue}>
+                {formatCurrency(subtotalCustomFees)}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Overall Combined Summary Card */}
+        {subtotalFees > 0 && (
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryHeader}>
+              <View style={styles.summaryHeaderIcon}>
+                <AntDesign name="wallet" size={20} color="#7CFFCB" />
+              </View>
+              <Text style={styles.summaryHeaderTitle}>Tổng phí phát sinh</Text>
+            </View>
+
             <View style={styles.summaryRow}>
               <View style={styles.summaryRowLeft}>
                 <AntDesign name="warning" size={14} color="#FF6B6B" />
-                <Text style={styles.summaryLabel}>Tổng phí hư hỏng</Text>
+                <Text style={styles.summaryLabel}>Phí hư hỏng</Text>
               </View>
               <Text style={[styles.summaryValue, { color: "#FF6B6B" }]}>
                 {formatCurrency(subtotalDamageFees)}
               </Text>
             </View>
-          )}
 
-          {customFees.length > 0 && (
             <View style={styles.summaryRow}>
               <View style={styles.summaryRowLeft}>
                 <AntDesign name="plus-circle" size={14} color="#C9B6FF" />
-                <Text style={styles.summaryLabel}>Tổng phí bổ sung</Text>
+                <Text style={styles.summaryLabel}>Phí bổ sung khác</Text>
               </View>
               <Text style={[styles.summaryValue, { color: "#C9B6FF" }]}>
                 {formatCurrency(subtotalCustomFees)}
               </Text>
             </View>
-          )}
 
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryTotalLabel}>Tổng phí bổ sung</Text>
-            <Text style={styles.summaryTotalValue}>
-              {formatCurrency(subtotalFees)}
-            </Text>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryTotalLabel}>Tổng cộng</Text>
+              <Text style={styles.summaryTotalValue}>
+                {formatCurrency(subtotalFees)}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Generate Report Button */}
         <TouchableOpacity
           style={[styles.generateButton, isSubmitting && styles.disabled]}
+          onPress={addAdditionalFeesHandler}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -699,6 +1566,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flex: 1,
+  },
+  damageCardHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  damageCardSummary: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FF6B6B",
+    marginBottom: 8,
+  },
+  collapseBtn: {
+    padding: 4,
   },
   damageBadge: {
     flexDirection: "row",
@@ -725,11 +1607,22 @@ const styles = StyleSheet.create({
   damageFormRow: {
     marginBottom: 4,
   },
+  damageInputLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
   damageInputLabel: {
     fontSize: 12,
     color: colors.text.secondary,
-    marginBottom: 8,
     fontWeight: "600",
+  },
+  damageInputHelperText: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    opacity: 0.7,
+    fontStyle: "italic",
   },
   damageSelectBox: {
     backgroundColor: "#11131A",
@@ -785,6 +1678,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2A2D36",
   },
+  damageAmountInputError: {
+    borderColor: "#FF6B6B",
+    borderWidth: 1.5,
+  },
+  damageAmountErrorText: {
+    fontSize: 11,
+    color: "#FF6B6B",
+    marginTop: 6,
+    marginLeft: 4,
+    fontWeight: "500",
+  },
   damageAmountBadge: {
     backgroundColor: "rgba(255,107,107,0.15)",
     paddingHorizontal: 12,
@@ -832,6 +1736,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     flex: 1,
+  },
+  feeCardHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   feeIconContainer: {
     width: 40,
@@ -912,191 +1821,10 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontSize: 14,
   },
-  feeAmountInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  feeAmountInput: {
-    flex: 1,
-    backgroundColor: "#11131A",
-    borderRadius: 12,
-    padding: 14,
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-    borderWidth: 1,
-    borderColor: "#2A2D36",
-  },
-  feeAmountBadge: {
-    backgroundColor: "rgba(201,182,255,0.15)",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(201,182,255,0.3)",
-  },
-  feeAmountBadgeText: {
-    color: "#C9B6FF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  feeNotesInput: {
-    backgroundColor: "#11131A",
-    borderRadius: 12,
-    padding: 14,
-    color: colors.text.primary,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: "#2A2D36",
-    minHeight: 60,
-    textAlignVertical: "top",
-  },
-  feeTextArea: {
-    minHeight: 60,
-  },
-  card: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#444444",
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.text.primary,
-    marginBottom: 16,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  detailLabel: {
-    fontSize: 14,
+  feeDropdownItemPrice: {
     color: colors.text.secondary,
-    flex: 1,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.text.primary,
-    textAlign: "right",
-  },
-  detailValueWarning: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#FF6B35",
-    textAlign: "right",
-  },
-  feeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#444444",
-  },
-  feeLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.text.primary,
-  },
-  feeValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.text.primary,
-  },
-  peakHoursBadge: {
-    backgroundColor: "#D97706",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  peakHoursText: {
-    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "600",
-  },
-  damageRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  damageDescription: {
-    fontSize: 14,
-    color: colors.text.primary,
-    flex: 1,
-  },
-  damageAmount: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.text.primary,
-    textAlign: "right",
-  },
-  additionalFeesHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 16,
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  additionalFeesIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#C9B6FF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
-  additionalFeesTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.text.primary,
-  },
-  otherFeeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 12,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: "#1E90FF",
-    borderColor: "#1E90FF",
-  },
-  otherFeeContent: {
-    flex: 1,
-  },
-  otherFeeLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.text.primary,
-    marginBottom: 2,
-  },
-  otherFeeSubtitle: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  otherFeeAmount: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.text.primary,
+    marginTop: 2,
   },
   summaryCard: {
     backgroundColor: "#1A1D26",
@@ -1143,6 +1871,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
   },
+  summaryNote: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    marginTop: 2,
+    fontStyle: "italic",
+    opacity: 0.8,
+  },
   summaryValue: {
     fontSize: 14,
     fontWeight: "600",
@@ -1180,88 +1915,6 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.6,
-  },
-  cardHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  iconBtn: {
-    backgroundColor: "#C9B6FF",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  feeInputRow: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#444444",
-    padding: 12,
-    marginBottom: 12,
-  },
-  feeColWide: {
-    marginBottom: 8,
-  },
-  feeColNarrow: {
-    marginBottom: 8,
-  },
-  feeColFull: {
-    marginTop: 4,
-  },
-  inputLabel: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: "#111",
-    color: colors.text.primary,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "#2F2F2F",
-  },
-  removeBtn: {
-    position: "absolute",
-    right: 8,
-    top: 8,
-    padding: 6,
-  },
-  selectBox: {
-    backgroundColor: "#111",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#2F2F2F",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  selectText: {
-    color: colors.text.primary,
-    fontSize: 14,
-  },
-  dropdown: {
-    backgroundColor: "#0F0F0F",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#2F2F2F",
-    marginTop: 8,
-    overflow: "hidden",
-  },
-  dropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1E1E1E",
-  },
-  dropdownItemText: {
-    color: colors.text.primary,
-    fontSize: 14,
   },
   modalBackdrop: {
     position: "absolute",

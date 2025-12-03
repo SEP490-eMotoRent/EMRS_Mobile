@@ -237,10 +237,10 @@ export const BookingDetailsScreen: React.FC = () => {
     });
   };
 
-  const openReturnReport = () => {
+  const openReturnReceiptReport = () => {
     if (!booking) return;
     const zero = 0;
-    navigation.navigate("ReturnReport", {
+    navigation.navigate("ReturnReceiptReport", {
       bookingId,
       rentalReceiptId: rentalReceipts?.[0]?.id || "",
       settlement: {
@@ -301,7 +301,7 @@ export const BookingDetailsScreen: React.FC = () => {
       });
     }
   };
-
+  console.log("user?.role", user?.role);
   return (
     <SafeAreaView style={styles.container}>
       {/* Global loading overlay */}
@@ -317,12 +317,13 @@ export const BookingDetailsScreen: React.FC = () => {
         }
       >
         {/* Payment Ready Banner - Show when return files exist and status is Renting */}
-        {booking?.bookingStatus === "Renting" &&
+        {user?.role === "RENTER" &&
+        booking?.bookingStatus === "Returned" &&
           rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
             // rentalReceipts?.[0]?.checkListFile &&
             <TouchableOpacity
               style={styles.paymentReadyBanner}
-              onPress={openReturnReport}
+              onPress={openReturnReceiptReport}
               activeOpacity={0.9}
             >
               <View style={styles.paymentReadyContent}>
@@ -672,11 +673,11 @@ export const BookingDetailsScreen: React.FC = () => {
                   </Text>
                 </View>
               )}
-              {summary?.feesBreakdown?.damageFee !== 0 && (
+              {summary?.feesBreakdown?.damageDetails.length > 0 && (
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryKey}>Phí hư hỏng</Text>
                   <Text style={styles.summaryVal}>
-                    {formatVnd(summary?.feesBreakdown.damageFee || 0)}
+                    {formatVnd(summary?.feesBreakdown.damageDetails.reduce((acc, detail) => acc + detail.amount, 0) || 0)}
                   </Text>
                 </View>
               )}
@@ -779,12 +780,12 @@ export const BookingDetailsScreen: React.FC = () => {
                     : "Xem biên bản bàn giao"}
                 </Text>
               </TouchableOpacity>
-              {booking?.bookingStatus === "Completed" &&
+              {booking?.bookingStatus === "Completed" || booking?.bookingStatus === "Returned" &&
                 rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
                   // rentalReceipts?.[0]?.checkListReturnFile &&
                   <TouchableOpacity
                     style={[styles.actionBtn, styles.returnReportBtn]}
-                    onPress={openReturnReport}
+                    onPress={openReturnReceiptReport}
                   >
                     <AntDesign name="file-text" size={18} color="#000" />
                     <Text style={styles.returnReportBtnText}>
@@ -938,6 +939,28 @@ export const BookingDetailsScreen: React.FC = () => {
               >
                 <AntDesign name="export" size={16} color="#000" />
                 <Text style={styles.actionBtnText}>Share GPS Invite</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        {(booking?.bookingStatus === "Returned") &&
+          user?.role === "STAFF" && (
+            <View style={styles.editRow}>
+              <TouchableOpacity
+                style={styles.additionalFeesBtn}
+                onPress={() => {
+                  navigation.navigate("AdditionalFees", {
+                    bookingId: bookingId,
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.additionalFeesBtnContent}>
+                  <AntDesign name="plus-circle" size={18} color="#FFD666" />
+                  <Text style={styles.additionalFeesBtnText}>
+                    Thêm phí phát sinh
+                  </Text>
+                  <AntDesign name="right" size={16} color="#FFD666" />
+                </View>
               </TouchableOpacity>
             </View>
           )}
@@ -2219,5 +2242,31 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: 12,
     fontWeight: "500",
+  },
+  // Additional Fees Button Styles (matching ManualInspectionScreen)
+  additionalFeesBtn: {
+    flex: 1,
+    backgroundColor: "#1A1D26",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#FFD666",
+    shadowColor: "#FFD666",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    overflow: "hidden",
+  },
+  additionalFeesBtnContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 18,
+  },
+  additionalFeesBtnText: {
+    color: "#FFD666",
+    fontWeight: "700",
+    fontSize: 16,
   },
 });

@@ -25,4 +25,9 @@ export class ConfigurationRemoteDataSourceImpl implements ConfigurationRemoteDat
         const response = await this.axiosClient.get<ConfigurationListResponse>(`${this.baseEndpoint}/type/${type}`);
         return response.data;
     }
+
+    async getAdditionalFricingConfig(): Promise<ConfigurationListResponse> {
+        const response = await this.axiosClient.get<ConfigurationListResponse>(`${this.baseEndpoint}/additionalPricing`);
+        return response.data;
+    }
 }
