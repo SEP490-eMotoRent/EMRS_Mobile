@@ -56,9 +56,12 @@ export const InsurancePlansScreen: React.FC = () => {
         rentingRate,
         averageRentalPrice,
         vehicleCategory,
-        // ✅ NEW: Receive holiday data
         holidaySurcharge,
         holidayDayCount,
+        // ✅ FIXED: Receive membership data
+        membershipDiscountPercentage,
+        membershipDiscountAmount,
+        membershipTier,
     } = route.params;
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
@@ -145,9 +148,12 @@ export const InsurancePlansScreen: React.FC = () => {
             rentingRate,
             averageRentalPrice,
             vehicleCategory,
-            // ✅ NEW: Pass through holiday data
             holidaySurcharge,
             holidayDayCount,
+            // ✅ FIXED: Pass membership data through
+            membershipDiscountPercentage,
+            membershipDiscountAmount,
+            membershipTier,
         });
     };
 
@@ -229,7 +235,7 @@ export const InsurancePlansScreen: React.FC = () => {
                         <Text style={styles.summaryValue}>{rentalFee}</Text>
                     </View>
 
-                    {/* ✅ NEW: Show holiday surcharge if applicable */}
+                    {/* ✅ Show holiday surcharge if applicable */}
                     {holidaySurcharge > 0 && (
                         <View style={styles.summaryRow}>
                             <Text style={styles.summaryLabelHoliday}>
@@ -397,7 +403,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
     },
-    // ✅ NEW: Holiday surcharge styles
     summaryLabelHoliday: {
         color: "#fca5a5",
         fontSize: 12,

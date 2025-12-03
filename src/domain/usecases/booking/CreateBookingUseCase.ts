@@ -50,7 +50,7 @@ export class CreateBookingUseCase {
         );
 
         // Construct Booking entity in the correct order
-    const booking = new Booking(
+        const booking = new Booking(
             "", // id
             "", // bookingCode
             input.baseRentalFee,
@@ -65,14 +65,15 @@ export class CreateBookingUseCase {
             0, // crossBranchFee
             0, // totalChargingFee
             0, // totalAdditionalFee
+            undefined, // earlyHandoverFee
             input.totalRentalFee,
             input.totalRentalFee, // totalAmount
             0, // refundAmount
             "Pending", // bookingStatus
             input.vehicleModelId,
             input.renterId,
-            mockRenter, // renter
-            mockVehicleModel, // vehicleModel
+            mockRenter,
+            mockVehicleModel,
             undefined, // vehicleId
             undefined, // vehicle
             input.startDatetime,
@@ -81,7 +82,7 @@ export class CreateBookingUseCase {
             input.insurancePackageId,
             undefined, // insurancePackage
             undefined, // rentalContract
-            undefined, // rentalReceipts (plural!)
+            undefined, // rentalReceipts
             input.handoverBranchId,
             undefined, // handoverBranch
             undefined, // returnBranchId
@@ -95,7 +96,7 @@ export class CreateBookingUseCase {
             null, // deletedAt
             false // isDeleted
         );
-
+        
         return await this.bookingRepository.create(booking);
     }
 }

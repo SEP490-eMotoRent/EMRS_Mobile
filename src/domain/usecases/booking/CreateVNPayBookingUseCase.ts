@@ -71,6 +71,7 @@ export class CreateVNPayBookingUseCase {
             0, // crossBranchFee
             0, // totalChargingFee
             0, // totalAdditionalFee
+            undefined, // ✅ earlyHandoverFee - ADD THIS LINE!
             input.totalRentalFee,
             input.totalRentalFee, // totalAmount
             0, // refundAmount
