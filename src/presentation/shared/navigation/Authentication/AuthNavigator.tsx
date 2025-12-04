@@ -1,6 +1,7 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { ForgotPasswordScreen } from '../../../features/authentication/ui/screens/ForgotPasswordScreen';
+import { ForgotPasswordScreen } from '../../../features/authentication/ui/screens/Password/ForgotPasswordScreen';
+import { ResetPasswordScreen } from '../../../features/authentication/ui/screens/Password/ResetPasswordScreen'; // ← ADD
 import { HelloScreen } from '../../../features/authentication/ui/screens/hello/HelloScreen';
 import { LoginScreen } from '../../../features/authentication/ui/screens/login/LoginScreen';
 import { OTPVerificationScreen } from '../../../features/authentication/ui/screens/otp/OTPVerificationScreen';
@@ -21,12 +22,11 @@ export const AuthNavigator: React.FC = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="AdditionalInfo" component={AdditionalInfoScreen}/>
       <Stack.Screen name="OTPVerification" component={OTPVerificationScreen}/>
-
     </Stack.Navigator>
   );
 };
 
 export { AuthStackParamList };
-

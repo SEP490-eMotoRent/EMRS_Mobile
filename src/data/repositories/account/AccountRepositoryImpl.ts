@@ -8,6 +8,8 @@ import { GoogleLoginRequest } from "../../models/account/accountDTO/GoogleLoginR
 import { LoginResponseData } from "../../models/account/accountDTO/LoginResponse";
 import { RegisterUserRequest } from "../../models/account/accountDTO/RegisterUserRequest";
 import { ChangePasswordRequest } from "../../models/account/password/ChangePasswordRequest";
+import { ForgotPasswordRequest } from "../../models/account/password/ForgotPasswordRequest";
+import { ResetPasswordRequest } from "../../models/account/password/ResetPasswordRequest";
 
 export class AccountRepositoryImpl implements AccountRepository {
     constructor(private remote: AccountRemoteDataSource) {}
@@ -109,5 +111,13 @@ export class AccountRepositoryImpl implements AccountRepository {
 
     async changePassword(request: ChangePasswordRequest): Promise<ApiResponse<string>> {
         return await this.remote.changePassword(request);
+    }
+
+    async forgotPassword(request: ForgotPasswordRequest): Promise<ApiResponse<string>> {
+        return await this.remote.forgotPassword(request);
+    }
+
+    async resetPassword(request: ResetPasswordRequest): Promise<ApiResponse<string>> {
+        return await this.remote.resetPassword(request);
     }
 }

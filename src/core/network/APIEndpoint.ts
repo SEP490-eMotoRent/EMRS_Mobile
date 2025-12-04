@@ -66,6 +66,8 @@ export const ApiEndpoints = {
     verifyOtp: "/auth/verify-otp",
     resendOtp: "/auth/resend-otp",
     changePassword: "/auth/change-password",
+    forgotPassword: "/auth/forgot-password",
+    resetPassword: "/auth/reset-password",
   },
 
   transaction: {

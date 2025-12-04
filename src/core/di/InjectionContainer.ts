@@ -154,13 +154,14 @@ import { VerifyOtpUseCase } from "../../domain/usecases/account/OTP/VerifyOtpUse
 // Gps Sharing imports
 import { GpsSharingRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/gpsSharing/GpsSharingRemoteDataSourceImpl";
 import { GpsSharingRepositoryImpl } from "../../data/repositories/gpsSharing/GpsSharingRepositoryImpl";
+import { ChangePasswordUseCase } from "../../domain/usecases/account/Passwords/ChangePasswordUseCase";
 import { GpsSharingInviteUseCase } from "../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
-import { ChangePasswordUseCase } from "../../domain/usecases/account/ChangePasswordUseCase";
 
 // Additional Fee imports
 import { AdditionalFeeRemoteDataSourceImpl } from "../../data/datasources/implementations/remote/additionalFee/AdditionalFeeRemoteDataSourceImpl";
 import { AdditionalFeeRepositoryImpl } from "../../data/repositories/additionalFee/AdditionalFeeRepositoryImpl";
-import { AdditionalFeeRepository } from "../../domain/repositories/additionalFee/AdditionalFeeRepository";
+import { ForgotPasswordUseCase } from "../../domain/usecases/account/Passwords/ForgotPasswordUseCase";
+import { ResetPasswordUseCase } from "../../domain/usecases/account/Passwords/ResetPasswordUseCase";
 import { GetDamageTypesUseCase } from "../../domain/usecases/additionalFee/GetDamageTypesUseCase";
 
 
@@ -433,9 +434,14 @@ class ServiceLocator {
     this.services.set("AdditionalFeeRepository", additionalFeeRepository);
     const getDamageTypesUseCase = new GetDamageTypesUseCase(additionalFeeRepository);
     this.services.set("GetDamageTypesUseCase", getDamageTypesUseCase);
+
+
     const changePasswordUseCase = new ChangePasswordUseCase(accountRepository);
     this.services.set("ChangePasswordUseCase", changePasswordUseCase);
-
+    const forgotPasswordUseCase = new ForgotPasswordUseCase(accountRepository);
+    this.services.set("ForgotPasswordUseCase", forgotPasswordUseCase);
+    const resetPasswordUseCase = new ResetPasswordUseCase(accountRepository);
+    this.services.set("ResetPasswordUseCase", resetPasswordUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -750,6 +756,14 @@ class ServiceLocator {
 
   getChangePasswordUseCase(): ChangePasswordUseCase {
     return this.get<ChangePasswordUseCase>('ChangePasswordUseCase');
+  }
+
+  getForgotPasswordUseCase(): ForgotPasswordUseCase {
+    return this.get<ForgotPasswordUseCase>('ForgotPasswordUseCase');
+  }
+
+  getResetPasswordUseCase(): ResetPasswordUseCase {
+      return this.get<ResetPasswordUseCase>('ResetPasswordUseCase');
   }
 }
 

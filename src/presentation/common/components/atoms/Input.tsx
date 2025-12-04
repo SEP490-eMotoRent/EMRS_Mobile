@@ -16,12 +16,13 @@ interface InputProps {
   value: string;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad'; // ← Added number-pad
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   editable?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   error?: string;
+  maxLength?: number; // ← NEW: For OTP inputs
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -35,6 +36,7 @@ export const Input: React.FC<InputProps> = ({
   style,
   textStyle,
   error,
+  maxLength, // ← NEW
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -61,6 +63,7 @@ export const Input: React.FC<InputProps> = ({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           editable={editable}
+          maxLength={maxLength} // ← NEW
         />
         {secureTextEntry && (
           <TouchableOpacity
@@ -89,7 +92,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   input: {
-    height: 54, // Default height, Each Screen using this can customize it
+    height: 54,
     borderWidth: 1,
     borderColor: colors.input.border,
     borderRadius: 8,

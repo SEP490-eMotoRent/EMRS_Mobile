@@ -50,6 +50,7 @@ export const LoginScreen: React.FC = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [pendingUsername, setPendingUsername] = useState('');
   const [resendingOtp, setResendingOtp] = useState(false);
+  const [loginError, setLoginError] = useState<string>('');
 
   const handleContinue = async (data: {
     username: string;
@@ -57,6 +58,7 @@ export const LoginScreen: React.FC = () => {
   }) => {
     try {
       setLoading(true);
+      setLoginError(''); // Clear previous errors
 
       const loginUseCase = new LoginUseCase(sl.get("AccountRepository"));
       const response = await loginUseCase.execute({
@@ -105,7 +107,8 @@ export const LoginScreen: React.FC = () => {
           ]
         );
       } else {
-        Alert.alert("Đăng nhập thất bại", errorMessage);
+        // Set inline error instead of Alert - clean message without technical details
+        setLoginError("Tên đăng nhập hoặc mật khẩu không đúng");
       }
       
       console.error("Login error:", error);
@@ -143,6 +146,7 @@ export const LoginScreen: React.FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
+      setLoginError(''); // Clear previous errors
 
       const googleSignInUseCase = sl.getGoogleSignInUseCase();
       const { idToken, email, name } = await googleSignInUseCase.execute();
@@ -173,7 +177,7 @@ export const LoginScreen: React.FC = () => {
       });
 
     } catch (error: any) {
-      Alert.alert('Đăng nhập Google thất bại', error.message);
+      setLoginError('Đăng nhập Google thất bại. Vui lòng thử lại.');
       console.error('Google Sign-In error:', error);
     } finally {
       setLoading(false);
@@ -208,7 +212,9 @@ export const LoginScreen: React.FC = () => {
           <LoginForm 
             onContinue={handleContinue} 
             onForgotPassword={handleForgotPassword}
-            loading={loading} 
+            loading={loading}
+            error={loginError}
+            onErrorDismiss={() => setLoginError('')}
           />
           
           <SocialAuthGroup onGooglePress={handleGoogleSignIn} />
