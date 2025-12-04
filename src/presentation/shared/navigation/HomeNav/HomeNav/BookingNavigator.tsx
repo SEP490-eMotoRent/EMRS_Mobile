@@ -4,18 +4,19 @@ import { ConfirmRentalDurationScreen } from '../../../../features/booking/ui/scr
 import { InsurancePlansScreen } from '../../../../features/booking/ui/screens/phase2/InsurancePlansScreen';
 import { PaymentConfirmationScreen } from '../../../../features/booking/ui/screens/phase3/PaymentConfirmationScreen';
 // import { VNPayCallbackScreen } from '../../../../features/booking/ui/screens/phase3/VNPayCallbackScreen';
+import { VNPayWebViewScreen } from '../../../../features/booking/ui/screens/phase3/VNPayWebViewScreen';
+import { ZaloPayResultScreen } from '../../../../features/booking/ui/screens/phase3/ZaloPayResultScreen';
 import { DigitalContractScreen } from '../../../../features/booking/ui/screens/phase4/DigitalContractScreen';
 import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
 import { BookingStackParamList } from '../../StackParameters/types';
-import { VNPayWebViewScreen } from '../../../../features/booking/ui/screens/phase3/VNPayWebViewScreen';
 
 const Stack = createStackNavigator<BookingStackParamList>();
 
 export const BookingNavigator: React.FC = () => {
     return (
-        <Stack.Navigator 
-            id={undefined} 
-            initialRouteName="ConfirmRentalDuration" 
+        <Stack.Navigator
+            id={undefined}
+            initialRouteName="ConfirmRentalDuration"
             screenOptions={{ headerShown: false }}
         >
             <Stack.Screen name="ConfirmRentalDuration" component={ConfirmRentalDurationScreen} />
@@ -25,6 +26,8 @@ export const BookingNavigator: React.FC = () => {
             <Stack.Screen name="Trips" component={TripsScreen} />
             {/* <Stack.Screen name="VNPayCallback" component={VNPayCallbackScreen} /> */}
             <Stack.Screen name="VNPayWebView" component={VNPayWebViewScreen} />
+
+            <Stack.Screen name="ZaloPayResult" component={ZaloPayResultScreen} />
         </Stack.Navigator>
     );
 };

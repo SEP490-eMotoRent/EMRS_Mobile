@@ -75,4 +75,6 @@ export interface BookingRepository {
    * @returns The cancelled booking entity
    */
   cancelBooking(bookingId: string): Promise<Booking>;
+
+  createZaloPay(booking: Booking): Promise<VNPayBookingResult>;
 }

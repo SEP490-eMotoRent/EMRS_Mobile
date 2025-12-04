@@ -65,4 +65,7 @@ export interface BookingRemoteDataSource {
    * @returns The cancelled booking data
    */
   cancelBooking(bookingId: string): Promise<BookingResponse>;
+
+  createZaloPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse>;
+
 }
