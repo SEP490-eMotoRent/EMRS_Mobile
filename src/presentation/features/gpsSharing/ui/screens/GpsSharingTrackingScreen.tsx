@@ -12,11 +12,14 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
 import { colors } from "../../../../common/theme/colors";
 import mqtt, { MqttClient } from "mqtt";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import sl from "../../../../../core/di/InjectionContainer";
 import { SessionDetailResponse } from "../../../../../data/models/gpsSharing/SessionDetailResponse";
 import { GetGpsSharingSessionDetailUseCase } from "../../../../../domain/usecases/gpsSharing/GetGpsSharingSessionDetailUseCase";
+import CustomMapViewDirections from "../organisms/CustomMapViewDirections";
+import { useAppSelector } from "../../../authentication/store/hooks";
+import { RootState } from "../../../authentication/store";
 
 type DeviceLocation = {
   lat: number;
@@ -37,7 +40,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
     // ownerRenterName,
     // guestRenterName,
   } = route.params || {};
-
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const [ownerLocation, setOwnerLocation] = useState<DeviceLocation | null>(
     null
   );
@@ -46,7 +49,6 @@ export const GpsSharingTrackingScreen: React.FC = () => {
   );
   const [connecting, setConnecting] = useState(true);
   const [mqttError, setMqttError] = useState<string | null>(null);
-  const [connectionNonce, setConnectionNonce] = useState(0);
   const [sessionDetail, setSessionDetail] =
     useState<SessionDetailResponse | null>(null);
   const mapRef = useRef<MapView | null>(null);
@@ -95,15 +97,6 @@ export const GpsSharingTrackingScreen: React.FC = () => {
     };
   }, [ownerLocation, guestLocation]);
 
-  // Route coordinates for Polyline
-  const routeCoordinates = useMemo(() => {
-    if (!ownerLocation || !guestLocation) return [];
-    return [
-      { latitude: ownerLocation.lat, longitude: ownerLocation.lon },
-      { latitude: guestLocation.lat, longitude: guestLocation.lon },
-    ];
-  }, [ownerLocation, guestLocation]);
-
   useEffect(() => {
     const fetchSessionDetail = async () => {
       if (!sessionId) return;
@@ -125,12 +118,8 @@ export const GpsSharingTrackingScreen: React.FC = () => {
   }, [sessionId]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("Reconnecting MQTT...");
-      setConnectionNonce((prev) => prev + 1);
-    }, 30000); // 30s
-
-    return () => clearInterval(interval);
+    // Chỉ rely vào reconnectPeriod của MQTT client, không tự force reconnect bằng interval
+    // để tránh log "Reconnecting MQTT..." liên tục và teardown/reconnect không cần thiết.
   }, []);
 
   // MQTT connection for owner vehicle
@@ -193,7 +182,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
     return () => {
       client.end(true);
     };
-  }, [OWNER_MQTT_TOPIC, connectionNonce]);
+  }, [OWNER_MQTT_TOPIC]);
 
   // MQTT connection for guest vehicle
   useEffect(() => {
@@ -236,8 +225,8 @@ export const GpsSharingTrackingScreen: React.FC = () => {
 
         if (typeof lat === "number" && typeof lon === "number") {
           setGuestLocation({
-            lat,
-            lon,
+            lat: 10.8436907,
+            lon: 106.8355672,
             raw: msg,
             time: msg?.timestamp || msg?.["position.timestamp"],
           });
@@ -251,11 +240,51 @@ export const GpsSharingTrackingScreen: React.FC = () => {
     return () => {
       client.end(true);
     };
-  }, [GUEST_MQTT_TOPIC, connectionNonce]);
+  }, [GUEST_MQTT_TOPIC]);
 
-  // Auto center map when locations update
+  // Auto center map khi có location lần đầu, ưu tiên vị trí user đang đăng nhập (owner/guest)
+  const hasCenteredRef = useRef(false);
   useEffect(() => {
-    if (ownerLocation && guestLocation && mapRef.current) {
+    if (!mapRef.current || hasCenteredRef.current) {
+      return;
+    }
+
+    // Ưu tiên center theo user đang đăng nhập nếu có
+    if (sessionDetail && user) {
+      const isOwner = sessionDetail.ownerInfo?.renterName === user.username;
+      const isGuest = sessionDetail.guestInfo?.renterName === user.username;
+
+      if (isOwner && ownerLocation) {
+        mapRef.current.animateToRegion(
+          {
+            latitude: ownerLocation.lat,
+            longitude: ownerLocation.lon,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          800
+        );
+        hasCenteredRef.current = true;
+        return;
+      }
+
+      if (isGuest && guestLocation) {
+        mapRef.current.animateToRegion(
+          {
+            latitude: guestLocation.lat,
+            longitude: guestLocation.lon,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          800
+        );
+        hasCenteredRef.current = true;
+        return;
+      }
+    }
+
+    // Nếu chưa biết user/role hoặc user không match, fallback: center theo cả hai nếu có
+    if (ownerLocation && guestLocation) {
       const lats = [ownerLocation.lat, guestLocation.lat];
       const lons = [ownerLocation.lon, guestLocation.lon];
       const minLat = Math.min(...lats);
@@ -272,8 +301,38 @@ export const GpsSharingTrackingScreen: React.FC = () => {
         },
         800
       );
+      hasCenteredRef.current = true;
+      return;
     }
-  }, [ownerLocation, guestLocation]);
+
+    // Nếu chỉ có 1 bên có location, center theo bên đó
+    if (ownerLocation) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: ownerLocation.lat,
+          longitude: ownerLocation.lon,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        800
+      );
+      hasCenteredRef.current = true;
+      return;
+    }
+
+    if (guestLocation) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: guestLocation.lat,
+          longitude: guestLocation.lon,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        800
+      );
+      hasCenteredRef.current = true;
+    }
+  }, [ownerLocation, guestLocation, sessionDetail, user]);
 
   const handleSheetChanges = useCallback((index: number) => {
     console.log("Bottom sheet index:", index);
@@ -300,6 +359,79 @@ export const GpsSharingTrackingScreen: React.FC = () => {
   const hasAnyLocation = ownerLocation || guestLocation;
   const isTracking = hasAnyLocation && !connecting;
 
+  // Center map về vị trí của user đang đăng nhập (nếu là owner hoặc guest)
+  const handleCenterOnCurrentUser = useCallback(() => {
+    if (!mapRef.current || !sessionDetail || !user) {
+      return;
+    }
+
+    const isOwner = sessionDetail.ownerInfo?.renterName === user.username;
+    const isGuest = sessionDetail.guestInfo?.renterName === user.username;
+
+    let targetLat: number | null = null;
+    let targetLon: number | null = null;
+
+    if (isOwner && ownerLocation) {
+      targetLat = ownerLocation.lat;
+      targetLon = ownerLocation.lon;
+    } else if (isGuest && guestLocation) {
+      targetLat = guestLocation.lat;
+      targetLon = guestLocation.lon;
+    }
+
+    if (targetLat == null || targetLon == null) {
+      return;
+    }
+
+    mapRef.current.animateToRegion(
+      {
+        latitude: targetLat,
+        longitude: targetLon,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      },
+      600
+    );
+  }, [mapRef, sessionDetail, user, ownerLocation, guestLocation]);
+
+  // Center map về vị trí của "đối phương" (nếu mình là owner thì xem guest, ngược lại)
+  const handleCenterOnCounterpart = useCallback(() => {
+    if (!mapRef.current || !sessionDetail || !user) {
+      return;
+    }
+
+    const isOwner = sessionDetail.ownerInfo?.renterName === user.username;
+    const isGuest = sessionDetail.guestInfo?.renterName === user.username;
+
+    let targetLat: number | null = null;
+    let targetLon: number | null = null;
+
+    // Nếu mình là owner thì xem vị trí guest
+    if (isOwner && guestLocation) {
+      targetLat = guestLocation.lat;
+      targetLon = guestLocation.lon;
+    }
+    // Nếu mình là guest thì xem vị trí owner
+    else if (isGuest && ownerLocation) {
+      targetLat = ownerLocation.lat;
+      targetLon = ownerLocation.lon;
+    }
+
+    if (targetLat == null || targetLon == null) {
+      return;
+    }
+
+    mapRef.current.animateToRegion(
+      {
+        latitude: targetLat,
+        longitude: targetLon,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      },
+      600
+    );
+  }, [mapRef, sessionDetail, user, ownerLocation, guestLocation]);
+
   return (
     <View style={styles.container}>
       {/* Full Screen Map */}
@@ -309,30 +441,22 @@ export const GpsSharingTrackingScreen: React.FC = () => {
         provider={PROVIDER_GOOGLE}
         initialRegion={initialRegion}
         mapType="standard"
-        showsUserLocation={false}
-        showsMyLocationButton={false}
-      >
-        {/* Route Line */}
-        {routeCoordinates.length === 2 && (
-          <>
-            <Polyline
-              coordinates={routeCoordinates}
-              strokeColor="#000"
-              strokeWidth={6}
-              lineJoin="round"
-              lineCap="round"
-              lineDashPattern={[0]}
-            />
-            <Polyline
-              coordinates={routeCoordinates}
-              strokeColor="#C9B6FF"
-              strokeWidth={4}
-              lineJoin="round"
-              lineCap="round"
-              lineDashPattern={[10, 5]}
-            />
-          </>
-        )}
+       >
+         {/* Route Line using OSRM via CustomMapViewDirections */}
+         {ownerLocation && guestLocation && (
+           <CustomMapViewDirections
+             origin={{
+               latitude: ownerLocation.lat,
+               longitude: ownerLocation.lon,
+             }}
+             destination={{
+               latitude: guestLocation.lat,
+               longitude: guestLocation.lon,
+             }}
+             strokeColor="#0F53FF"
+             strokeWidth={4}
+           />
+         )}
 
         {/* Owner Vehicle Marker - Avatar with pointer */}
         {ownerLocation && sessionDetail?.ownerInfo && (
@@ -402,6 +526,40 @@ export const GpsSharingTrackingScreen: React.FC = () => {
           <ActivityIndicator size="large" color="#C9B6FF" />
           <Text style={styles.loadingText}>Đang tải bản đồ...</Text>
         </View>
+      )}
+
+      {/* Center-on-user Floating Button */}
+      {hasAnyLocation && sessionDetail && user && (
+        <SafeAreaView
+          style={styles.centerButtonsWrapper}
+          edges={["bottom", "right"]}
+        >
+          {/* Center về vị trí của mình */}
+          <TouchableOpacity
+            style={styles.centerButton}
+            onPress={handleCenterOnCurrentUser}
+            activeOpacity={0.8}
+          >
+            <AntDesign name="environment" size={18} color="#0F53FF" />
+          </TouchableOpacity>
+
+          {/* Center về vị trí đối phương (nếu có location) */}
+          <TouchableOpacity
+            style={[styles.centerButton, styles.counterpartButton]}
+            onPress={handleCenterOnCounterpart}
+            activeOpacity={0.8}
+            disabled={
+              !(
+                (sessionDetail.ownerInfo?.renterName === user.username &&
+                  !!guestLocation) ||
+                (sessionDetail.guestInfo?.renterName === user.username &&
+                  !!ownerLocation)
+              )
+            }
+          >
+            <AntDesign name="swap" size={18} color="#0F53FF" />
+          </TouchableOpacity>
+        </SafeAreaView>
       )}
 
       {/* Bottom Sheet */}
@@ -588,6 +746,30 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: 14,
     marginTop: 12,
+  },
+  centerButtonsWrapper: {
+    position: "absolute",
+    right: 16,
+    bottom: 80,
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: 10,
+  },
+  centerButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  counterpartButton: {
+    backgroundColor: "#FFFFFF",
   },
   markerContainer: {
     alignItems: "center",

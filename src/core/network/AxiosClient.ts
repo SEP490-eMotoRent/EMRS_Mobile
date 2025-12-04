@@ -151,7 +151,6 @@ export class AxiosClient {
         error.response?.data?.error ??
         error.message ??
         "Unknown error";
-
       const serverError = new ServerException(msg, error.response?.status);
       (serverError as any).responseData = error.response?.data;
       throw serverError;
