@@ -1,6 +1,8 @@
 import { ApiResponse } from '../../../core/network/APIResponse';
 import { LoginResponseData } from '../../../data/models/account/accountDTO/LoginResponse';
 import { ChangePasswordRequest } from '../../../data/models/account/password/ChangePasswordRequest';
+import { ForgotPasswordRequest } from '../../../data/models/account/password/ForgotPasswordRequest';
+import { ResetPasswordRequest } from '../../../data/models/account/password/ResetPasswordRequest';
 import { Account } from '../../entities/account/Account';
 
 export interface AccountRepository {
@@ -14,4 +16,6 @@ export interface AccountRepository {
     resendOtp(email: string): Promise<ApiResponse<string>>;
 
     changePassword(request: ChangePasswordRequest): Promise<ApiResponse<string>>;
+    forgotPassword(request: ForgotPasswordRequest): Promise<ApiResponse<string>>;
+    resetPassword(request: ResetPasswordRequest): Promise<ApiResponse<string>>;
 }
