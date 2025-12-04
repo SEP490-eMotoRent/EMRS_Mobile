@@ -1,78 +1,68 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Image,
+  Alert,
   Modal,
   Dimensions,
   StatusBar,
 } from "react-native";
-import { colors } from "../../../../../common/theme/colors";
-import { AntDesign } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StepProgressBar } from "../atoms";
-import { SummaryResponse } from "../../../../../../data/models/rentalReturn/SummaryResponse";
-import { unwrapResponse } from "../../../../../../core/network/APIResponse";
-import { RentalReturnSummaryUseCase } from "../../../../../../domain/usecases/rentalReturn/SummaryReceiptUseCase";
-import sl from "../../../../../../core/di/InjectionContainer";
-import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
-import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { AntDesign } from "@expo/vector-icons";
+import { colors } from "../../../../common/theme/colors";
+import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
+import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
+import { SummaryResponse } from "../../../../../data/models/rentalReturn/SummaryResponse";
+import { RentalReturnSummaryUseCase } from "../../../../../domain/usecases/rentalReturn/SummaryReceiptUseCase";
+import { unwrapResponse } from "../../../../../core/network/APIResponse";
+import { RentalReturnFinalizeUseCase } from "../../../../../domain/usecases/rentalReturn/RentalReturnFinalizeUseCase";
+import { FinalizeReturnResponse } from "../../../../../data/models/rentalReturn/FinalizeReturnResponse";
+import sl from "../../../../../core/di/InjectionContainer";
+import { RentalReceipt } from "../../../../../domain/entities/booking/RentalReceipt";
+import { Booking } from "../../../../../domain/entities/booking/Booking";
+import { GetBookingByIdUseCase } from "../../../../../domain/usecases/booking/GetBookingByIdUseCase";
 import {
   BookingStatus,
   BookingStatusColorMap,
   BookingStatusMap,
-} from "../../../../tripDetails/constant/BookingStatus";
-import { GetDetailRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
-import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
+} from "../../constant/BookingStatus";
+import Toast from "react-native-toast-message";
+import { GetDetailRentalReceiptUseCase } from "../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
+import { RootState } from "../../../authentication/store";
+import { useAppSelector } from "../../../authentication/store/hooks";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-type ReturnReportNavigationProp = StackNavigationProp<
-  StaffStackParamList,
-  "ReturnReport"
->;
+type NavProp = StackNavigationProp<TripStackParamList, "ReturnReceiptReport">;
+type RouteP = RouteProp<TripStackParamList, "ReturnReceiptReport">;
 
-type ReturnReportRouteProp = RouteProp<StaffStackParamList, "ReturnReport">;
-
-export const ReturnReportScreen: React.FC = () => {
-  const navigation = useNavigation<ReturnReportNavigationProp>();
-  const route = useRoute<ReturnReportRouteProp>();
-  const { bookingId, rentalReceiptId, settlement } = route.params;
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const imageScrollRef = useRef<ScrollView>(null);
-  const thumbnailScrollRef = useRef<ScrollView>(null);
-
-  const formatVnd = (n: number) =>
-    new Intl.NumberFormat("vi-VN").format(n) + "đ";
-
+export const ReturnReceiptReportScreen: React.FC = () => {
+  const navigation = useNavigation<NavProp>();
+  const route = useRoute<RouteP>();
+  const { bookingId, rentalReceiptId } = route.params;
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [rentalReceipt, setRentalReceipt] = useState<RentalReceipt | null>(
     null
   );
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const imageScrollRef = useRef<ScrollView>(null);
+  const thumbnailScrollRef = useRef<ScrollView>(null);
+
   useEffect(() => {
-    fetchSummary();
+    fetchSummaryReceipt();
     fetchBooking();
     fetchRentalReceipt();
   }, [bookingId]);
-
-  const handleRefresh = async () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    fetchSummary();
-    fetchBooking();
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
 
   const fetchBooking = async () => {
     try {
@@ -86,16 +76,19 @@ export const ReturnReportScreen: React.FC = () => {
     }
   };
 
-  const fetchSummary = async () => {
+  const fetchSummaryReceipt = async () => {
     try {
-      const getSummaryUseCase = new RentalReturnSummaryUseCase(
+      setLoading(true);
+      const getBookingByIdUseCase = new RentalReturnSummaryUseCase(
         sl.get("RentalReturnRepository")
       );
-      const summaryResponse = await getSummaryUseCase.execute(bookingId);
+      const summaryResponse = await getBookingByIdUseCase.execute(bookingId);
       const summaryData: SummaryResponse = unwrapResponse(summaryResponse);
       setSummary(summaryData);
-    } catch (error) {
-      console.error("Error fetching summary:", error);
+    } catch (error: any) {
+      Alert.alert("Lỗi", `Không thể tải báo cáo: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,6 +106,53 @@ export const ReturnReportScreen: React.FC = () => {
     }
   };
 
+  const formatVnd = (n: number) =>
+    new Intl.NumberFormat("vi-VN").format(n) + "đ";
+
+  const handleFinalizeReturn = async () => {
+    try {
+      setLoading(true);
+      const finalizeReturnUseCase = new RentalReturnFinalizeUseCase(
+        sl.get("RentalReturnRepository")
+      );
+      const finalizeReturnResponse = await finalizeReturnUseCase.execute({
+        bookingId,
+        renterConfirmed: true,
+      });
+      const finalizeReturnData: FinalizeReturnResponse = unwrapResponse(
+        finalizeReturnResponse
+      );
+
+      // Navigate to Return Complete screen
+      Toast.show({
+        text1: "Trả xe thành công",
+        type: "success",
+      });
+      navigation.navigate("ReturnComplete", {
+        bookingId,
+        refundAmount: finalizeReturnData.paymentResult.refundAmount,
+      });
+    } catch (error: any) {
+      Toast.show({
+        text1: `Không thể hoàn tất trả xe: ${error.message}`,
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = () => {
+    handleFinalizeReturn();
+  };
+
+  const handleRequestRecheck = () => {
+    navigation.navigate("ReturnComplete", {
+      bookingId,
+      refundAmount: 300000,
+    });
+  };
+
   const openImageModal = (index: number) => {
     setSelectedImageIndex(index);
     setModalVisible(true);
@@ -127,8 +167,9 @@ export const ReturnReportScreen: React.FC = () => {
     const index = Math.round(contentOffsetX / SCREEN_WIDTH);
     setSelectedImageIndex(index);
 
+    // Auto-scroll thumbnail strip to show selected thumbnail
     if (thumbnailScrollRef.current) {
-      const thumbnailWidth = 60 + 8;
+      const thumbnailWidth = 60 + 8; // thumbnail width + gap
       const scrollPosition = Math.max(0, (index - 2) * thumbnailWidth);
       thumbnailScrollRef.current.scrollTo({
         x: scrollPosition,
@@ -146,8 +187,9 @@ export const ReturnReportScreen: React.FC = () => {
     }
     setSelectedImageIndex(index);
 
+    // Auto-scroll thumbnail strip to show selected thumbnail
     if (thumbnailScrollRef.current) {
-      const thumbnailWidth = 60 + 8;
+      const thumbnailWidth = 60 + 8; // thumbnail width + gap
       const scrollPosition = Math.max(0, (index - 2) * thumbnailWidth);
       thumbnailScrollRef.current.scrollTo({
         x: scrollPosition,
@@ -160,22 +202,23 @@ export const ReturnReportScreen: React.FC = () => {
     const returnImages = rentalReceipt?.returnVehicleImageFiles || [];
     const checklistImages = rentalReceipt?.checkListReturnFile || [];
     return [...returnImages, ...checklistImages];
-  }, [rentalReceipt?.returnVehicleImageFiles, rentalReceipt?.checkListReturnFile]);
+  }, [
+    rentalReceipt?.returnVehicleImageFiles,
+    rentalReceipt?.checkListReturnFile,
+  ]);
 
+  // Scroll to selected image when modal opens
   useEffect(() => {
-    if (
-      modalVisible &&
-      imageScrollRef.current &&
-      combinedImages.length > 0
-    ) {
+    if (modalVisible && imageScrollRef.current && combinedImages.length > 0) {
       const scrollTimeout = setTimeout(() => {
         imageScrollRef.current?.scrollTo({
           x: selectedImageIndex * SCREEN_WIDTH,
           animated: false,
         });
 
+        // Also scroll thumbnail strip
         if (thumbnailScrollRef.current) {
-          const thumbnailWidth = 60 + 8;
+          const thumbnailWidth = 60 + 8; // thumbnail width + gap
           const scrollPosition = Math.max(
             0,
             (selectedImageIndex - 2) * thumbnailWidth
@@ -192,60 +235,41 @@ export const ReturnReportScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scroll}>
         <ScreenHeader
-          title={
-            booking?.bookingStatus === BookingStatus.COMPLETED
-              ? "Đã hoàn tất trả xe"
-              : "Đang chờ phê duyệt khách hàng"
-          }
+          title="Báo cáo trả xe"
           subtitle=""
           submeta=""
           onBack={() => navigation.goBack()}
           showBackButton={true}
         />
 
-        {booking?.bookingStatus !== BookingStatus.COMPLETED && (
-          <StepProgressBar currentStep={4} totalSteps={4} />
-        )}
-
-        {/* Status Banner */}
-        {booking?.bookingStatus === BookingStatus.COMPLETED && (
+        {/* Banner cảnh báo */}
+        {booking?.bookingStatus === BookingStatus.RENTING && (
           <View style={styles.banner}>
-            <AntDesign name="check-circle" size={14} color="#22C55E" />
+            <AntDesign name="exclamation-circle" size={14} color="#FFEDD5" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.bannerTitle}>Trả xe đã hoàn tất</Text>
+              <Text style={styles.bannerTitle}>
+                Vui lòng kiểm tra kỹ báo cáo
+              </Text>
               <Text style={styles.bannerSub}>
-                Khách hàng đã phê duyệt và thanh toán vào{" "}
-                {booking?.actualReturnDatetime
-                  ? new Date(booking.actualReturnDatetime).toLocaleString(
-                      "vi-VN"
-                    )
-                  : new Date().toLocaleString("vi-VN")}
+                Đã báo cáo vào {new Date().toLocaleString("vi-VN")}
               </Text>
             </View>
           </View>
         )}
 
-        {/* Sent to customer status */}
-        {booking?.bookingStatus !== BookingStatus.COMPLETED && (
-          <View style={styles.centerStatusWrap}>
-            <View style={styles.iconCircleOuter}>
-              <View style={styles.iconCircleInner}>
-                <AntDesign name="file-text" size={20} color="#C9B6FF" />
-              </View>
-            </View>
-            <Text style={styles.centerTitle}>
-              Báo cáo đã gửi cho khách hàng
-            </Text>
-            <Text style={styles.centerSub}>Đang chờ phê duyệt...</Text>
-          </View>
-        )}
-
-        {/* Report Summary */}
+        {/* Xe */}
         <View style={styles.card}>
-          <View style={styles.cardHeaderRowSpaceBetween}>
-            <Text style={styles.cardHeader}>Tóm tắt báo cáo</Text>
+          <View style={styles.rowBetween}>
+            <View>
+              <Text style={styles.vehicleTitle}>
+                {booking?.vehicle?.vehicleModel?.modelName}
+              </Text>
+              <Text style={styles.vehicleMeta}>
+                {booking?.vehicle?.licensePlate}
+              </Text>
+            </View>
             {booking?.bookingStatus && (
               <View
                 style={[
@@ -280,88 +304,46 @@ export const ReturnReportScreen: React.FC = () => {
               </View>
             )}
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Xe</Text>
-            <Text style={styles.summaryValueRight}>
-              {booking?.vehicle?.vehicleModel?.modelName} (
-              {booking?.vehicle?.licensePlate})
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Thời gian trả</Text>
-            <Text style={styles.summaryValueRight}>
-              {booking?.actualReturnDatetime
-                ? new Date(booking.actualReturnDatetime).toLocaleTimeString(
-                    "vi-VN"
-                  )
-                : "—"}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Số km lúc trả xe</Text>
-            <Text style={styles.summaryValueRight}>
-              {booking?.rentalReceipts[0]?.endOdometerKm + " km"}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Pin lúc trả xe</Text>
-            <Text style={styles.summaryValueRight}>
-              {booking?.rentalReceipts[0]?.endBatteryPercentage
-                ? booking.rentalReceipts[0]?.endBatteryPercentage + "%"
-                : "—"}
-            </Text>
-          </View>
         </View>
 
-        {/* Ảnh tình trạng xe */}
+        {/* Ảnh */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <View style={[styles.iconBadge, { backgroundColor: "rgba(34, 197, 94, 0.15)" }]}>
-              <AntDesign name="picture" size={16} color="#22C55E" />
-            </View>
-            <View style={styles.cardHeaderRight}>
-              <Text style={styles.cardHeader}>Ảnh tình trạng xe</Text>
-              {rentalReceipt?.returnVehicleImageFiles && (
-                <Text style={styles.imageCount}>
-                  {rentalReceipt?.returnVehicleImageFiles.length} ảnh
-                </Text>
-              )}
-            </View>
+            <Text style={styles.cardHeader}>Ảnh tình trạng xe</Text>
+            {rentalReceipt?.returnVehicleImageFiles && (
+              <Text style={styles.imageCount}>
+                {rentalReceipt?.returnVehicleImageFiles.length} ảnh
+              </Text>
+            )}
           </View>
           {rentalReceipt?.returnVehicleImageFiles &&
           rentalReceipt?.returnVehicleImageFiles.length > 0 ? (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.photoGrid}>
-                {rentalReceipt?.returnVehicleImageFiles.map((image, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={styles.photoItem}
-                    onPress={() => openImageModal(i)}
-                    activeOpacity={0.8}
-                  >
-                    <Image source={{ uri: image }} style={styles.photoImg} />
-                    <View style={styles.photoOverlay}>
-                      <View style={styles.photoOverlayIcon}>
-                        <AntDesign name="eye" size={20} color="#fff" />
-                      </View>
+            <View style={styles.photoGrid}>
+              {rentalReceipt?.returnVehicleImageFiles.map((image, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.photoItem}
+                  onPress={() => openImageModal(i)}
+                  activeOpacity={0.8}
+                >
+                  <Image source={{ uri: image }} style={styles.photoImg} />
+                  <View style={styles.photoOverlay}>
+                    <View style={styles.photoOverlayIcon}>
+                      <AntDesign name="eye" size={20} color="#fff" />
                     </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
           ) : (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.noImagesContainer}>
-                <AntDesign
-                  name="picture"
-                  size={32}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.noImagesText}>Chưa có ảnh</Text>
-              </View>
-            </>
+            <View style={styles.noImagesContainer}>
+              <AntDesign
+                name="picture"
+                size={32}
+                color={colors.text.secondary}
+              />
+              <Text style={styles.noImagesText}>Chưa có ảnh</Text>
+            </View>
           )}
           <TouchableOpacity style={styles.successBtn}>
             <AntDesign name="check-circle" size={14} color="#16A34A" />
@@ -371,50 +353,161 @@ export const ReturnReportScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Checklist Return */}
-        {rentalReceipt?.checkListReturnFile && rentalReceipt.checkListReturnFile.length > 0 && (
-          <View style={styles.card}>
-            <View style={styles.cardHeaderRow}>
-              <View style={[styles.iconBadge, { backgroundColor: "rgba(255, 214, 102, 0.15)" }]}>
-                <AntDesign name="check-square" size={16} color="#FFD666" />
-              </View>
-              <Text style={styles.cardHeader}>Checklist trả xe</Text>
-            </View>
-            <View style={styles.divider} />
-            {rentalReceipt.checkListReturnFile.map((checklistUri, index) => {
-              const imageIndex = (rentalReceipt.returnVehicleImageFiles?.length || 0) + index;
-              return (
-                <TouchableOpacity
-                  key={index}
-                  activeOpacity={0.85}
-                  style={styles.checklistWrap}
-                  onPress={() => {
-                    setSelectedImageIndex(imageIndex);
-                    setModalVisible(true);
-                  }}
-                >
-                  <Image
-                    source={{ uri: checklistUri }}
-                    style={styles.checklistImage}
-                    resizeMode="contain"
-                  />
-                  <View style={styles.photoOverlay}>
-                    <View style={styles.photoOverlayIcon}>
-                      <AntDesign name="zoom-in" size={20} color="#fff" />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Financial Summary */}
+        {/* Odometer */}
         <View style={styles.card}>
-          <Text style={styles.cardHeaderPrimary}>Tổng hợp chi phí</Text>
+          <View style={styles.cardHeaderRow}>
+            <View
+              style={[
+                styles.iconBadge,
+                { backgroundColor: "rgba(245, 158, 11, 0.15)" },
+              ]}
+            >
+              <AntDesign name="dashboard" size={16} color="#F59E0B" />
+            </View>
+            <Text style={styles.cardHeader}>Đồng hồ công tơ mét</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.odometerRow}>
+            <View style={styles.odometerItem}>
+              <View style={styles.odometerIconContainer}>
+                <AntDesign name="play-circle" size={14} color="#22C55E" />
+              </View>
+              <Text style={styles.odometerLabel}>Bắt đầu</Text>
+              <Text style={styles.odometerValue}>
+                {summary?.feesBreakdown?.excessKmDetails?.startOdometerKm ||
+                  rentalReceipt?.startOdometerKm ||
+                  0}{" "}
+                km
+              </Text>
+            </View>
+            <View style={styles.odometerItem}>
+              <View style={styles.odometerIconContainer}>
+                <AntDesign name="check-circle" size={14} color="#3B82F6" />
+              </View>
+              <Text style={styles.odometerLabel}>Kết thúc</Text>
+              <Text style={styles.odometerValue}>
+                {summary?.feesBreakdown?.excessKmDetails?.endOdometerKm ||
+                  rentalReceipt?.endOdometerKm ||
+                  0}{" "}
+                km
+              </Text>
+            </View>
+          </View>
+          <View style={styles.odometerRow}>
+            <View style={styles.odometerItem}>
+              <View
+                style={[
+                  styles.odometerIconContainer,
+                  { backgroundColor: "rgba(59, 130, 246, 0.15)" },
+                ]}
+              >
+                <AntDesign name="car" size={14} color="#3B82F6" />
+              </View>
+              <Text style={styles.odometerLabel}>Quãng đường đã đi</Text>
+              <Text style={styles.odometerValue}>
+                {summary?.feesBreakdown?.excessKmDetails?.actualKmDriven ||
+                  (rentalReceipt?.endOdometerKm &&
+                  rentalReceipt?.startOdometerKm
+                    ? rentalReceipt.endOdometerKm -
+                      rentalReceipt.startOdometerKm
+                    : 0)}{" "}
+                km
+              </Text>
+            </View>
+          </View>
+          {summary?.feesBreakdown?.excessKmDetails && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.odometerRow}>
+                <View style={styles.odometerItem}>
+                  <View
+                    style={[
+                      styles.odometerIconContainer,
+                      { backgroundColor: "rgba(34, 197, 94, 0.15)" },
+                    ]}
+                  >
+                    <AntDesign name="safety" size={14} color="#22C55E" />
+                  </View>
+                  <Text style={styles.odometerLabel}>Giới hạn miễn phí</Text>
+                  <Text style={styles.odometerValue}>
+                    {summary.feesBreakdown.excessKmDetails.totalKmLimit} km
+                  </Text>
+                </View>
+                <View style={styles.odometerItem}>
+                  <View
+                    style={[
+                      styles.odometerIconContainer,
+                      { backgroundColor: "rgba(245, 158, 11, 0.15)" },
+                    ]}
+                  >
+                    <AntDesign name="warning" size={14} color="#F59E0B" />
+                  </View>
+                  <Text style={styles.odometerLabel}>Vượt quá</Text>
+                  <Text
+                    style={[
+                      styles.odometerValue,
+                      { color: "#F59E0B", fontWeight: "700" },
+                    ]}
+                  >
+                    {summary.feesBreakdown.excessKmDetails.excessKm} km
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* Checklist Return */}
+        {rentalReceipt?.checkListReturnFile &&
+          rentalReceipt.checkListReturnFile.length > 0 && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderRow}>
+                <View
+                  style={[
+                    styles.iconBadge,
+                    { backgroundColor: "rgba(255, 214, 102, 0.15)" },
+                  ]}
+                >
+                  <AntDesign name="check-square" size={16} color="#FFD666" />
+                </View>
+                <Text style={styles.cardHeader}>Checklist trả xe</Text>
+              </View>
+              <View style={styles.divider} />
+              {rentalReceipt.checkListReturnFile.map((checklistUri, index) => {
+                const imageIndex =
+                  (rentalReceipt.returnVehicleImageFiles?.length || 0) + index;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    activeOpacity={0.85}
+                    style={styles.checklistWrap}
+                    onPress={() => {
+                      setSelectedImageIndex(imageIndex);
+                      setModalVisible(true);
+                    }}
+                  >
+                    <Image
+                      source={{ uri: checklistUri }}
+                      style={styles.checklistImage}
+                      resizeMode="contain"
+                    />
+                    <View style={styles.photoOverlay}>
+                      <View style={styles.photoOverlayIcon}>
+                        <AntDesign name="zoom-in" size={20} color="#fff" />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+
+        {/* Phí */}
+        <View style={styles.card}>
+          <Text style={styles.cardHeader}>Tổng hợp chi phí</Text>
 
           {/* Phí thuê xe cơ bản */}
-          {summary?.baseRentalFee !== 0 && (
+          {booking?.baseRentalFee !== 0 && (
             <View style={styles.feeSection}>
               <View style={styles.feeHeaderRow}>
                 <View
@@ -429,7 +522,7 @@ export const ReturnReportScreen: React.FC = () => {
                   <Text style={styles.feeTitle}>Phí thuê xe</Text>
                 </View>
                 <Text style={[styles.feeAmount, { color: "#C9B6FF" }]}>
-                  {formatVnd(summary?.baseRentalFee || 0)}
+                  {formatVnd(booking?.baseRentalFee || 0)}
                 </Text>
               </View>
             </View>
@@ -657,14 +750,14 @@ export const ReturnReportScreen: React.FC = () => {
                 </Text>
               </View>
             )}
-            {(summary?.baseRentalFee || 0) > 0 && (
+            {(booking?.baseRentalFee || 0) > 0 && (
               <View style={styles.paidRow}>
                 <View style={styles.paidItem}>
                   <View style={styles.paidDot} />
                   <Text style={styles.paidLabel}>Phí thuê xe</Text>
                 </View>
                 <Text style={[styles.paidAmount, { color: "#22C55E" }]}>
-                  -{formatVnd(summary?.baseRentalFee || 0)}
+                  -{formatVnd(booking?.baseRentalFee || 0)}
                 </Text>
               </View>
             )}
@@ -673,7 +766,7 @@ export const ReturnReportScreen: React.FC = () => {
               <Text style={styles.paidTotalAmount}>
                 -
                 {formatVnd(
-                  (summary?.depositAmount || 0) + (summary?.baseRentalFee || 0)
+                  (summary?.depositAmount || 0) + (booking?.baseRentalFee || 0)
                 )}
               </Text>
             </View>
@@ -720,51 +813,27 @@ export const ReturnReportScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Hint box */}
-        {booking?.bookingStatus !== BookingStatus.COMPLETED && (
-          <View style={styles.hintCard}>
-            <Text style={styles.hintText}>
-              Nếu khách hàng không phản hồi trong 15 phút, bạn có thể buộc hoàn
-              tất
-            </Text>
-          </View>
-        )}
-
-        {/* Actions */}
-        {booking?.bookingStatus === BookingStatus.COMPLETED ? (
-          <TouchableOpacity
-            style={styles.homeBtn}
-            onPress={() => navigation.navigate("Rental")}
-          >
-            <AntDesign name="home" size={16} color="#000" />
-            <Text style={styles.homeText}>Về trang chủ</Text>
-          </TouchableOpacity>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={styles.refreshBtn}
-              onPress={handleRefresh}
-              disabled={isRefreshing}
+        {/* Nút hành động */}
+        {booking?.bookingStatus === BookingStatus.RETURNED &&
+          user?.role === "RENTER" && (
+            <>
+              <TouchableOpacity
+                style={styles.primaryCta}
+                onPress={handleApprove}
+              >
+                <Text style={styles.primaryCtaText}>
+                  Phê duyệt & Thanh toán
+                </Text>
+              </TouchableOpacity>
+              {/* <TouchableOpacity
+              style={styles.secondaryCta}
+              onPress={handleRequestRecheck}
             >
-              <AntDesign name="reload" size={16} color="#C9B6FF" />
-              <Text style={styles.refreshText}>
-                {isRefreshing ? "Đang làm mới..." : "Làm mới trạng thái"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.waitingBtn} disabled>
-              <Text style={styles.waitingText}>Đang chờ khách hàng...</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.homeBtn}
-              onPress={() => navigation.navigate("Rental")}
-            >
-              <AntDesign name="home" size={16} color="#000" />
-              <Text style={styles.homeText}>Về trang chủ</Text>
-            </TouchableOpacity>
-          </>
-        )}
+              <Text style={styles.secondaryCtaText}>Yêu cầu kiểm tra lại</Text>
+            </TouchableOpacity> */}
+            </>
+          )}
       </ScrollView>
-
       {/* Image Modal */}
       <Modal
         visible={modalVisible}
@@ -862,68 +931,31 @@ export const ReturnReportScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  centerStatusWrap: {
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { paddingBottom: 40 },
+  headerRow: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 12,
-    marginBottom: 16,
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  iconCircleOuter: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#111827",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  iconCircleInner: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#1F2937",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#C9B6FF",
-  },
-  centerTitle: {
-    color: colors.text.primary,
-    fontWeight: "600",
-    marginTop: 4,
-  },
-  centerSub: {
-    color: colors.text.secondary,
-    fontSize: 12,
-    marginTop: 4,
-  },
+  backBtn: { padding: 6 },
+  headerTitle: { color: colors.text.primary, fontWeight: "700" },
+
   banner: {
     marginHorizontal: 16,
-    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    backgroundColor: "#7C3E1D",
     borderRadius: 12,
     padding: 12,
     gap: 8,
     flexDirection: "row",
     alignItems: "center",
     marginTop: 8,
-    borderWidth: 1,
-    borderColor: "rgba(34, 197, 94, 0.3)",
   },
-  bannerTitle: {
-    color: "#22C55E",
-    fontWeight: "700",
-    fontSize: 12,
-  },
-  bannerSub: {
-    color: "#16A34A",
-    fontSize: 11,
-  },
+  bannerTitle: { color: "#FFEDD5", fontWeight: "700", fontSize: 12 },
+  bannerSub: { color: "#FED7AA", fontSize: 11 },
+
   card: {
     backgroundColor: "#2A2A2A",
     borderRadius: 12,
@@ -933,45 +965,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#3A3A3A",
   },
-  cardHeaderPrimary: {
-    color: colors.text.primary,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
   cardHeader: {
     color: colors.text.primary,
     fontWeight: "700",
-  },
-  cardHeaderRowSpaceBetween: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    justifyContent: "space-between",
     marginBottom: 10,
   },
-  cardHeaderRow: {
+  rowBetween: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 10,
   },
-  iconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardHeaderRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flex: 1,
-  },
-  imageCount: {
-    color: colors.text.secondary,
-    fontSize: 11,
-    fontWeight: "500",
-  },
+  vehicleTitle: { color: colors.text.primary, fontWeight: "700" },
+  vehicleMeta: { color: colors.text.secondary, fontSize: 12 },
   statusPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -996,27 +1001,163 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.3,
   },
-  summaryRow: {
+
+  cardHeaderRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    gap: 10,
     marginBottom: 10,
   },
-  summaryLabel: {
-    color: colors.text.secondary,
-    fontSize: 12,
-    flex: 1,
-  },
-  summaryValueRight: {
-    color: colors.text.primary,
-    fontSize: 12,
-    textAlign: "right",
-    flex: 1,
+  iconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   divider: {
     height: 1,
     backgroundColor: "#3A3A3A",
-    marginVertical: 12,
+    marginVertical: 10,
+  },
+  imageCount: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  odometerRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+  odometerItem: {
+    flex: 1,
+    backgroundColor: "#1F1F1F",
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+  },
+  odometerIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  odometerLabel: {
+    color: colors.text.secondary,
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  odometerValue: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  checklistWrap: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    overflow: "hidden",
+    backgroundColor: "#1F1F1F",
+    position: "relative",
+    maxHeight: 400,
+    marginBottom: 10,
+  },
+  checklistImage: {
+    width: "100%",
+    height: 400,
+    resizeMode: "contain",
+  },
+  photoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 12,
+  },
+  photoItem: {
+    width: "48%",
+    aspectRatio: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#1F1F1F",
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    position: "relative",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  photoImg: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  photoOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+  },
+  photoOverlayIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  noImagesContainer: {
+    padding: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1F1F1F",
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  noImagesText: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    marginTop: 8,
+  },
+  successBtn: {
+    marginTop: 10,
+    backgroundColor: "#052e1a",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  successBtnText: { color: "#22C55E", fontWeight: "700", fontSize: 12 },
+
+  kvRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  kvKey: { color: colors.text.secondary, fontSize: 12 },
+  kvVal: { color: colors.text.primary, fontSize: 12 },
+  kvDim: { color: colors.text.secondary, fontSize: 12 },
+  kvStrong: { color: colors.text.primary, fontWeight: "700" },
+  topLine: {
+    borderTopWidth: 1,
+    borderTopColor: "#3A3A3A",
+    paddingTop: 8,
+    marginTop: 6,
   },
   feeSection: {
     marginBottom: 12,
@@ -1081,15 +1222,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
   },
-  kvRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  kvKey: { color: colors.text.secondary, fontSize: 12 },
-  kvVal: { color: colors.text.primary, fontSize: 12 },
-  kvDim: { color: colors.text.secondary, fontSize: 12 },
-  kvStrong: { color: colors.text.primary, fontWeight: "700" },
   paidSection: {
     marginTop: 12,
     padding: 12,
@@ -1189,137 +1321,34 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "800",
   },
-  hintCard: {
-    backgroundColor: "#111827",
-    borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  hintText: { color: colors.text.secondary, textAlign: "center", fontSize: 12 },
-  refreshBtn: {
-    backgroundColor: "#111827",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#1F2937",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  refreshText: { color: "#C9B6FF", fontWeight: "700" },
-  waitingBtn: {
-    backgroundColor: "#1F2937",
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    alignItems: "center",
-  },
-  waitingText: { color: colors.text.secondary, fontWeight: "600" },
-  homeBtn: {
+
+  primaryCta: {
     backgroundColor: "#C9B6FF",
-    borderRadius: 10,
-    paddingVertical: 14,
-    marginTop: 16,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
     marginHorizontal: 16,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-  },
-  homeText: { color: "#000", fontWeight: "700" },
-  photoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 12,
-  },
-  photoItem: {
-    width: "48%",
-    aspectRatio: 1,
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "#1F1F1F",
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
-    position: "relative",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    marginTop: 16,
+    shadowColor: "#C9B6FF",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  photoImg: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  photoOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
+  primaryCtaText: { color: "#000", fontWeight: "700" },
+  secondaryCta: {
+    backgroundColor: "transparent",
     borderRadius: 12,
-  },
-  photoOverlayIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "center",
+    paddingVertical: 14,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-  },
-  noImagesContainer: {
-    padding: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1F1F1F",
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  noImagesText: {
-    color: colors.text.secondary,
-    fontSize: 14,
-    marginTop: 8,
-  },
-  successBtn: {
+    marginHorizontal: 16,
     marginTop: 10,
-    backgroundColor: "#052e1a",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  successBtnText: { color: "#22C55E", fontWeight: "700", fontSize: 12 },
-  checklistWrap: {
-    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#3A3A3A",
-    overflow: "hidden",
-    backgroundColor: "#1F1F1F",
-    position: "relative",
-    maxHeight: 400,
-    marginBottom: 10,
   },
-  checklistImage: {
-    width: "100%",
-    height: 400,
-    resizeMode: "contain",
-  },
+  secondaryCtaText: { color: colors.text.primary, fontWeight: "700" },
+
+  // Modal Styles
   modalContainer: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.95)",

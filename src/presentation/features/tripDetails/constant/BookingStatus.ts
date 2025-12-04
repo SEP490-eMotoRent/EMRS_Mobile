@@ -1,6 +1,7 @@
 export enum BookingStatus {
     BOOKED = "Booked",
     RENTING = "Renting",
+    RETURNED = "Returned",
     CANCELLED = "Cancelled",
     COMPLETED = "Completed",
 }
@@ -8,6 +9,7 @@ export enum BookingStatus {
 export const BookingStatusMap = {
     [BookingStatus.BOOKED]: "Chờ duyệt",
     [BookingStatus.RENTING]: "Đang thuê",
+    [BookingStatus.RETURNED]: "Đã trả xe",
     [BookingStatus.CANCELLED]: "Đã hủy",
     [BookingStatus.COMPLETED]: "Đã hoàn thành",
 }
@@ -15,6 +17,7 @@ export const BookingStatusMap = {
 export const BookingStatusColorMap = {
     [BookingStatus.BOOKED]: "#FF9800",
     [BookingStatus.RENTING]: "#4CAF50",
+    [BookingStatus.RETURNED]: "#2ED573",
     [BookingStatus.CANCELLED]: "#F44336",
     [BookingStatus.COMPLETED]: "#2ED573",
 }

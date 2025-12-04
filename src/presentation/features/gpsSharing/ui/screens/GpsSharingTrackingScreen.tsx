@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -333,38 +334,52 @@ export const GpsSharingTrackingScreen: React.FC = () => {
           </>
         )}
 
-        {/* Owner Vehicle Marker */}
+        {/* Owner Vehicle Marker - Avatar with pointer */}
         {ownerLocation && sessionDetail?.ownerInfo && (
           <Marker
             coordinate={{
               latitude: ownerLocation.lat,
               longitude: ownerLocation.lon,
             }}
-            anchor={{ x: 0.5, y: 0.5 }}
+            anchor={{ x: 0.5, y: 1 }}
           >
             <View style={styles.markerContainer}>
-              <View style={[styles.markerPin, styles.ownerMarkerPin]}>
-                <View style={styles.markerDot} />
+              <View style={styles.markerAvatarWrapperOwner}>
+                <Image
+                  source={{
+                    uri:
+                      (sessionDetail as any)?.ownerInfo?.avatarUrl ||
+                      "https://picsum.photos/200/300",
+                  }}
+                  style={styles.markerAvatarImage}
+                />
               </View>
-              <View style={[styles.markerCircle, styles.ownerMarkerCircle]} />
+              <View style={[styles.markerPointer, styles.ownerMarkerPointer]} />
             </View>
           </Marker>
         )}
 
-        {/* Guest Vehicle Marker */}
+        {/* Guest Vehicle Marker - Avatar with pointer */}
         {guestLocation && sessionDetail?.guestInfo && (
           <Marker
             coordinate={{
               latitude: guestLocation.lat,
               longitude: guestLocation.lon,
             }}
-            anchor={{ x: 0.5, y: 0.5 }}
+            anchor={{ x: 0.5, y: 1 }}
           >
             <View style={styles.markerContainer}>
-              <View style={[styles.markerPin, styles.guestMarkerPin]}>
-                <View style={styles.markerDot} />
+              <View style={styles.markerAvatarWrapperGuest}>
+                <Image
+                  source={{
+                    uri:
+                      (sessionDetail as any)?.guestInfo?.avatarUrl ||
+                      "https://picsum.photos/200/301",
+                  }}
+                  style={styles.markerAvatarImage}
+                />
               </View>
-              <View style={[styles.markerCircle, styles.guestMarkerCircle]} />
+              <View style={[styles.markerPointer, styles.guestMarkerPointer]} />
             </View>
           </Marker>
         )}
@@ -409,9 +424,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
               <View style={styles.userInfoRow}>
                 <View style={styles.avatarContainer}>
                   <View style={[styles.avatar, styles.ownerAvatar]}>
-                    <Text style={styles.avatarText}>
-                      {getInitials(sessionDetail.ownerInfo.renterName)}
-                    </Text>
+                    <Image source={{ uri: 'https://picsum.photos/200/300' }} style={styles.avatarImage} />
                   </View>
                 </View>
                 <View style={styles.userDetails}>
@@ -467,9 +480,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
               <View style={styles.userInfoRow}>
                 <View style={styles.avatarContainer}>
                   <View style={[styles.avatar, styles.guestAvatar]}>
-                    <Text style={styles.avatarText}>
-                      {getInitials(sessionDetail.guestInfo.renterName)}
-                    </Text>
+                    <Image source={{ uri: 'https://picsum.photos/200/300' }} style={styles.avatarImage} />
                   </View>
                 </View>
                 <View style={styles.userDetails}>
@@ -557,6 +568,11 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     marginTop: 8,
   },
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
   loadingOverlay: {
     position: "absolute",
     top: 0,
@@ -576,6 +592,39 @@ const styles = StyleSheet.create({
   markerContainer: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  markerAvatarWrapperOwner: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderColor: "#C9B6FF",
+  },
+  markerAvatarWrapperGuest: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderColor: "#C9B6FF",
+  },
+  markerAvatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  markerPointer: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 7,
+    borderRightWidth: 7,
+    borderTopWidth: 10,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    marginTop: -2,
+  },
+  ownerMarkerPointer: {
+    borderTopColor: "#7DB3FF",
+  },
+  guestMarkerPointer: {
+    borderTopColor: "#C9B6FF",
   },
   markerPin: {
     width: 24,

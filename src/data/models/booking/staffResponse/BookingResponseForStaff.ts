@@ -98,7 +98,8 @@ export interface RentalReceiptBookingResponse {
     staffId: string;
     handOverVehicleImageFiles: string[];
     returnVehicleImageFiles: string[];
-    checkListFile: string[];
+    checkListHandoverFile: string[];
+    checkListReturnFile: string[];
 }
 
 export interface InsurancePackageBookingResponse {

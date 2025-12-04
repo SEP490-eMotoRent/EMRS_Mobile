@@ -8,7 +8,7 @@ import { EmergencyContactScreen } from '../../../../features/insuranceClaim/ui/s
 import { IncidentReportScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentReportScreen';
 import { IncidentPhotoCaptureScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentPhotoCaptureScreen';
 import TrackingGPSScreen from '../../../../features/staff/tracking/ui/screens/TrackingGPSScreen';
-import { ReturnReportScreen } from '../../../../features/tripDetails/ui/screens/ReturnReportScreen';
+import { ReturnReceiptReportScreen } from '../../../../features/tripDetails/ui/screens/ReturnReceiptReportScreen';
 import { ReturnCompleteScreen } from '../../../../features/tripDetails/ui/screens/ReturnCompleteScreen';
 import { CreateTicketScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/CreateTicketScreen';
 import { TicketListScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/TicketListScreen';
@@ -212,8 +212,8 @@ export const TripNavigator: React.FC = () => {
         }}
       />
       <Stack.Screen
-        name="ReturnReport"
-        component={ReturnReportScreen}
+        name="ReturnReceiptReport"
+        component={ReturnReceiptReportScreen}
         options={{
           headerShown: false,
           gestureEnabled: true,

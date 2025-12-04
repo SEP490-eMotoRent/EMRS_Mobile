@@ -437,7 +437,7 @@ export const CustomerRentalsScreen: React.FC = () => {
             <View style={styles.fieldRow}>
               <Text style={styles.fieldLabel}>Trạng thái đặt chỗ</Text>
               <View style={styles.statusRow}>
-                {["Booked", "Unavailable", "Available"].map((s) => {
+                {["Booked", "Renting", "Returned", "Completed"].map((s) => {
                   const active = filterStatus === s;
                   return (
                     <TouchableOpacity
