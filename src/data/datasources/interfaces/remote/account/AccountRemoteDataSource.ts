@@ -1,4 +1,3 @@
-// src/data/datasources/interfaces/remote/account/AccountRemoteDataSource.ts
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { GoogleLoginRequest } from "../../../../models/account/accountDTO/GoogleLoginRequest";
 import { LoginRequest } from "../../../../models/account/accountDTO/LoginRequest";
@@ -7,6 +6,8 @@ import { ResendOtpRequest } from "../../../../models/account/accountDTO/otp/Rese
 import { VerifyOtpRequest } from "../../../../models/account/accountDTO/otp/VerifyOtpRequest";
 import { RegisterUserRequest } from "../../../../models/account/accountDTO/RegisterUserRequest";
 import { ChangePasswordRequest } from "../../../../models/account/password/ChangePasswordRequest";
+import { ForgotPasswordRequest } from "../../../../models/account/password/ForgotPasswordRequest";
+import { ResetPasswordRequest } from "../../../../models/account/password/ResetPasswordRequest";
 
 export interface AccountRemoteDataSource {
     getByEmail(email: string): Promise<RegisterUserRequest | null>;
@@ -18,4 +19,6 @@ export interface AccountRemoteDataSource {
     verifyOtp(request: VerifyOtpRequest): Promise<ApiResponse<string>>;
     resendOtp(request: ResendOtpRequest): Promise<ApiResponse<string>>;
     changePassword(request: ChangePasswordRequest): Promise<ApiResponse<string>>;
+    forgotPassword(request: ForgotPasswordRequest): Promise<ApiResponse<string>>;
+    resetPassword(request: ResetPasswordRequest): Promise<ApiResponse<string>>;
 }

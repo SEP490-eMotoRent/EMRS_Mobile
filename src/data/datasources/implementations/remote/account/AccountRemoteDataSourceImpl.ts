@@ -10,6 +10,8 @@ import { ResendOtpRequest } from "../../../../models/account/accountDTO/otp/Rese
 import { VerifyOtpRequest } from "../../../../models/account/accountDTO/otp/VerifyOtpRequest";
 import { RegisterUserRequest } from "../../../../models/account/accountDTO/RegisterUserRequest";
 import { ChangePasswordRequest } from "../../../../models/account/password/ChangePasswordRequest";
+import { ForgotPasswordRequest } from "../../../../models/account/password/ForgotPasswordRequest";
+import { ResetPasswordRequest } from "../../../../models/account/password/ResetPasswordRequest";
 import { AccountRemoteDataSource } from "../../../interfaces/remote/account/AccountRemoteDataSource";
 
 export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
@@ -224,5 +226,67 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
             request
         );
         return response.data;
+    }
+
+    async forgotPassword(request: ForgotPasswordRequest): Promise<ApiResponse<string>> {
+        try {
+            this.logger.info('🔄 Requesting password reset...');
+            
+            const response = await this.apiClient.post<ApiResponse<string>>(
+                ApiEndpoints.auth.forgotPassword,
+                request
+            );
+
+            this.logger.info('✅ Password reset OTP sent successfully');
+            
+            return {
+                success: response.data.success,
+                message: response.data.message,
+                code: response.data.code,
+                data: response.data.data
+            };
+        } catch (error: any) {
+            this.logger.error(`❌ Forgot password failed: ${error.message}`);
+            
+            if (error instanceof ServerException) {
+                throw error;
+            }
+            
+            throw new ServerException(
+                error.response?.data?.message || 'Failed to send reset password OTP',
+                error.response?.status || 400
+            );
+        }
+    }
+
+    async resetPassword(request: ResetPasswordRequest): Promise<ApiResponse<string>> {
+        try {
+            this.logger.info('🔄 Resetting password...');
+            
+            const response = await this.apiClient.post<ApiResponse<string>>(
+                ApiEndpoints.auth.resetPassword,
+                request
+            );
+
+            this.logger.info('✅ Password reset successful');
+            
+            return {
+                success: response.data.success,
+                message: response.data.message,
+                code: response.data.code,
+                data: response.data.data
+            };
+        } catch (error: any) {
+            this.logger.error(`❌ Reset password failed: ${error.message}`);
+            
+            if (error instanceof ServerException) {
+                throw error;
+            }
+            
+            throw new ServerException(
+                error.response?.data?.message || 'Failed to reset password',
+                error.response?.status || 400
+            );
+        }
     }
 }
