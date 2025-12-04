@@ -2,7 +2,6 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react';
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -21,17 +20,27 @@ import { OTPForm } from '../../organism/otp/OTPForm';
 type OTPVerificationScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'OTPVerification'>;
 type OTPVerificationScreenRouteProp = RouteProp<AuthStackParamList, 'OTPVerification'>;
 
+const isEmailAlreadyVerifiedError = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase();
+    return lowerMessage.includes('already verified') || 
+           lowerMessage.includes('đã được xác minh') ||
+           lowerMessage.includes('đã xác minh');
+};
+
 export const OTPVerificationScreen: React.FC = () => {
     const navigation = useNavigation<OTPVerificationScreenNavigationProp>();
     const route = useRoute<OTPVerificationScreenRouteProp>();
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
+    const [verifyError, setVerifyError] = useState<string>('');
+    const [resendError, setResendError] = useState<string>('');
 
     const { email, userId } = route.params;
 
     const handleVerify = async (code: string) => {
         try {
             setLoading(true);
+            setVerifyError(''); // Clear previous errors
 
             const verifyOtpUseCase = sl.getVerifyOtpUseCase();
             const response = await verifyOtpUseCase.execute(email, code);
@@ -49,10 +58,14 @@ export const OTPVerificationScreen: React.FC = () => {
                 }, 500);
             }
         } catch (error: any) {
-            Alert.alert(
-                'Xác minh thất bại', 
-                error.message || 'Mã OTP không hợp lệ hoặc đã hết hạn'
-            );
+            const errorMessage = error.message || 'Mã OTP không hợp lệ hoặc đã hết hạn';
+            
+            if (isEmailAlreadyVerifiedError(errorMessage)) {
+                setVerifyError('Email này đã được xác minh rồi. Vui lòng đăng ký với email khác hoặc đăng nhập.');
+            } else {
+                setVerifyError('Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.');
+            }
+            
             console.error('OTP verification error:', error);
         } finally {
             setLoading(false);
@@ -62,6 +75,7 @@ export const OTPVerificationScreen: React.FC = () => {
     const handleResend = async () => {
         try {
             setResending(true);
+            setResendError(''); // Clear previous errors
 
             const resendOtpUseCase = sl.getResendOtpUseCase();
             const response = await resendOtpUseCase.execute(email);
@@ -74,10 +88,14 @@ export const OTPVerificationScreen: React.FC = () => {
                 });
             }
         } catch (error: any) {
-            Alert.alert(
-                'Gửi lại thất bại', 
-                error.message || 'Không thể gửi lại mã OTP'
-            );
+            const errorMessage = error.message || 'Không thể gửi lại mã OTP';
+            
+            if (isEmailAlreadyVerifiedError(errorMessage)) {
+                setResendError('Email này đã được xác minh rồi. Vui lòng đăng ký với email khác.');
+            } else {
+                setResendError('Không thể gửi lại mã. Vui lòng thử lại sau.');
+            }
+            
             console.error('Resend OTP error:', error);
         } finally {
             setResending(false);
@@ -104,6 +122,12 @@ export const OTPVerificationScreen: React.FC = () => {
                         loading={loading}
                         resending={resending}
                         email={email}
+                        verifyError={verifyError}
+                        resendError={resendError}
+                        onErrorDismiss={() => {
+                            setVerifyError('');
+                            setResendError('');
+                        }}
                     />
                 </ScrollView>
             </KeyboardAvoidingView>

@@ -1,4 +1,3 @@
-// src/features/auth/components/organism/otp/OTPForm.tsx
 import React, { useCallback, useRef, useState } from 'react';
 import { 
     ActivityIndicator, 
@@ -21,6 +20,9 @@ interface OTPFormProps {
     loading?: boolean;
     resending?: boolean;
     email: string;
+    verifyError?: string;
+    resendError?: string;
+    onErrorDismiss?: () => void;
 }
 
 export const OTPForm: React.FC<OTPFormProps> = ({ 
@@ -28,7 +30,10 @@ export const OTPForm: React.FC<OTPFormProps> = ({
     onResend, 
     loading = false,
     resending = false,
-    email 
+    email,
+    verifyError,
+    resendError,
+    onErrorDismiss,
 }) => {
     const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
     const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -44,6 +49,11 @@ export const OTPForm: React.FC<OTPFormProps> = ({
         newOtp[index] = text;
         setOtp(newOtp);
 
+        // Clear errors when user starts typing
+        if (onErrorDismiss) {
+            onErrorDismiss();
+        }
+
         // Auto-focus next input when typing
         if (text && index < OTP_LENGTH - 1) {
             inputRefs.current[index + 1]?.focus();
@@ -56,7 +66,7 @@ export const OTPForm: React.FC<OTPFormProps> = ({
                 setTimeout(() => onVerify(fullCode), 100);
             }
         }
-    }, [otp, onVerify]);
+    }, [otp, onVerify, onErrorDismiss]);
 
     const handleKeyPress = useCallback((e: any, index: number) => {
         if (e.nativeEvent.key === 'Backspace') {
@@ -86,13 +96,22 @@ export const OTPForm: React.FC<OTPFormProps> = ({
         // Clear OTP inputs when resending
         setOtp(Array(OTP_LENGTH).fill(''));
         inputRefs.current[0]?.focus();
+        
+        // Clear errors
+        if (onErrorDismiss) {
+            onErrorDismiss();
+        }
+        
         onResend();
-    }, [onResend]);
+    }, [onResend, onErrorDismiss]);
 
     const verifyButtonStyle: ViewStyle = {
         ...styles.verifyButton,
         ...((!isCodeComplete || loading) && styles.verifyButtonDisabled)
     };
+
+    // Show verify error or resend error
+    const displayError = verifyError || resendError;
 
     return (
         <View style={styles.container}>
@@ -115,6 +134,14 @@ export const OTPForm: React.FC<OTPFormProps> = ({
                     />
                 ))}
             </View>
+
+            {/* Inline Error Message */}
+            {displayError && (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <Text style={styles.errorText}>{displayError}</Text>
+                </View>
+            )}
 
             <Button
                 title={loading ? 'Đang xác minh...' : 'Xác minh'}
@@ -175,9 +202,31 @@ const styles = StyleSheet.create({
     otpContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
         paddingHorizontal: 10,
         gap: 8,
+    },
+    errorContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: 'rgba(251, 146, 60, 0.1)', // Orange with 10% opacity for warning
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FB923C', // Orange-400 for warning
+    },
+    errorIcon: {
+        fontSize: 18,
+        marginRight: 8,
+        marginTop: 1,
+    },
+    errorText: {
+        flex: 1,
+        color: '#FED7AA', // Orange-200 - lighter orange for dark theme
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 20,
     },
     verifyButton: {
         backgroundColor: colors.button.primary,
