@@ -5,6 +5,7 @@ import React, { useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Linking,
     ScrollView,
     StyleSheet,
     Text,
@@ -28,6 +29,7 @@ import { BookingSummaryCard } from "../../organisms/booking/BookingSummaryCard";
 import { CostBreakdown } from "../../organisms/CostBreakdown";
 import { PaymentMethodCard } from "../../organisms/payment/PaymentMethodCard";
 import { PaymentNotices } from "../../organisms/payment/PaymentNotices";
+import { CreateZaloPayBookingUseCase } from '../../../../../../domain/usecases/booking/zaloPay/CreateZaloPayBookingUseCase';
 
 type RoutePropType = RouteProp<BookingStackParamList, 'PaymentConfirmation'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'PaymentConfirmation'>;
@@ -48,7 +50,7 @@ interface BookingContext {
 }
 
 export const PaymentConfirmationScreen: React.FC = () => {
-    // ==================== 1. HOOKS (MUST BE AT TOP) ====================
+    // ==================== 1. HOOKS ====================
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
 
@@ -67,11 +69,16 @@ export const PaymentConfirmationScreen: React.FC = () => {
         []
     );
 
+    const createZaloPayBookingUseCase = useMemo(
+        () => sl.get<CreateZaloPayBookingUseCase>("CreateZaloPayBookingUseCase"),
+        []
+    );
+
     const { createBooking, loading: bookingLoading } = useCreateBooking(createBookingUseCase);
 
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"wallet" | "vnpay">("wallet");
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"wallet" | "vnpay" | "zalopay">("wallet");
 
-    // ==================== 2. EARLY RETURN (SAFE NOW) ====================
+    // ==================== 2. EARLY RETURN ====================
     if (walletLoading) {
         return (
             <View style={[styles.container, styles.center]}>
@@ -81,7 +88,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
         );
     }
 
-    // ==================== 3. DATA & LOGIC ====================
+    // ==================== 3. DATA & CALCULATIONS ====================
     const safeBalance = walletBalance ?? 0;
 
     const {
@@ -106,7 +113,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
         vehicleCategory,
         holidaySurcharge,
         holidayDayCount,
-        // ✅ FIXED: Receive membership data
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
@@ -137,20 +143,21 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
     const totalAmountFormatted = `${totalAmount.toLocaleString('vi-VN')}đ`;
 
-    console.log("Payment Confirmation - Amounts:");
-    console.log("- Base Rental Fee:", baseRentalFee);
-    console.log("- Renting Rate:", rentingRate);
-    console.log("- Rental Fee (after discount):", rental);
-    console.log("- Average Rental Price:", averageRentalPrice);
-    console.log("- Insurance Fee:", insurance);
-    console.log("- Security Deposit:", deposit);
-    console.log("- Total Amount:", totalAmount);
-    console.log("- Vehicle Category:", vehicleCategory);
-    console.log("- Holiday Surcharge:", holidaySurcharge);
-    console.log("- Holiday Day Count:", holidayDayCount);
-    console.log("- Membership Tier:", membershipTier);
-    console.log("- Membership Discount %:", membershipDiscountPercentage);
-    console.log("- Membership Discount Amount:", membershipDiscountAmount);
+    console.log("Payment Confirmation - Amounts:", {
+        baseRentalFee,
+        rentingRate,
+        rental,
+        averageRentalPrice,
+        insurance,
+        deposit,
+        totalAmount,
+        vehicleCategory,
+        holidaySurcharge,
+        holidayDayCount,
+        membershipTier,
+        membershipDiscountPercentage,
+        membershipDiscountAmount,
+    });
 
     const parseDateString = (dateStr: string): Date => {
         const monthNames: { [key: string]: number } = {
@@ -206,8 +213,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
             const startDateTime = parseDateString(startDate);
             const endDateTime = parseDateString(endDate);
 
-            // ✅ FIXED: Better insurance package ID validation
-            // Allow null/undefined for "no insurance" case, but validate UUIDs if present
             let finalInsurancePackageId: string | undefined = undefined;
             
             if (insurancePlanId && insurancePlanId !== "none") {
@@ -215,12 +220,10 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     finalInsurancePackageId = insurancePlanId;
                 } else {
                     console.warn("⚠️ Invalid insurance package ID format:", insurancePlanId);
-                    // Still try to use it - let the API validate
                     finalInsurancePackageId = insurancePlanId;
                 }
             }
 
-            // ✅ FIXED: Complete booking input with ALL fields
             const bookingInput = {
                 vehicleModelId: vehicleId,
                 startDatetime: startDateTime,
@@ -235,19 +238,16 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 insurancePackageId: finalInsurancePackageId,
                 totalRentalFee: rental,
                 renterId: userId,
-                // ✅ FIXED: Include holiday data
                 holidaySurcharge: holidaySurcharge || 0,
                 holidayDayCount: holidayDayCount || 0,
-                // ✅ FIXED: Include membership data
                 membershipDiscountPercentage: membershipDiscountPercentage || 0,
                 membershipDiscountAmount: membershipDiscountAmount || 0,
                 membershipTier: membershipTier || "BRONZE",
             };
 
-            console.log("📋 Complete booking input:");
-            console.log(JSON.stringify(bookingInput, null, 2));
-            console.log("Expected total charge:", totalAmount);
+            console.log("📋 Complete booking input:", JSON.stringify(bookingInput, null, 2));
 
+            // ========== WALLET PAYMENT ==========
             if (selectedPaymentMethod === "wallet") {
                 const booking = await createBooking(bookingInput);
                 await refreshWallet();
@@ -266,12 +266,14 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     securityDeposit,
                     contractNumber: booking.bookingCode || booking.id,
                 });
-            } else if (selectedPaymentMethod === "vnpay") {
+            } 
+            // ========== VNPAY PAYMENT ==========
+            else if (selectedPaymentMethod === "vnpay") {
                 const result: VNPayBookingResultWithExpiry = await createVNPayBookingUseCase.execute({
                     ...bookingInput,
                 });
 
-                console.log("VNPay booking created:", {
+                console.log("✅ VNPay booking created:", {
                     bookingId: result.booking.id,
                     bookingCode: result.booking.bookingCode,
                     vnpayUrl: result.vnpayUrl,
@@ -311,14 +313,98 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     insurancePlan,
                     securityDeposit,
                 });
+            } 
+            // ========== ZALOPAY PAYMENT ==========
+            else if (selectedPaymentMethod === "zalopay") {
+                console.log("🔄 Creating ZaloPay booking...");
+                
+                const result = await createZaloPayBookingUseCase.execute({
+                    ...bookingInput,
+                });
+
+                console.log("✅ ZaloPay booking created:", {
+                    bookingId: result.booking.id,
+                    zaloPayUrl: result.vnpayUrl,
+                });
+
+                const context: BookingContext = {
+                    bookingId: result.booking.id,
+                    vehicleId,
+                    vehicleName,
+                    vehicleImageUrl,
+                    startDate,
+                    endDate,
+                    duration,
+                    rentalDays,
+                    branchName,
+                    insurancePlan,
+                    totalAmount: totalAmountFormatted,
+                    securityDeposit,
+                };
+
+                const STORAGE_KEY = `zalopay_payment_context_${result.booking.id}`;
+                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(context));
+
+                // Navigate to waiting screen FIRST
+                navigation.navigate("ZaloPayResult", {
+                    bookingId: result.booking.id,
+                    vehicleId,
+                    vehicleName,
+                    vehicleImageUrl,
+                    startDate,
+                    endDate,
+                    duration,
+                    rentalDays,
+                    branchName,
+                    insurancePlan,
+                    totalAmount: totalAmountFormatted,
+                    securityDeposit,
+                });
+
+                // THEN open ZaloPay app after short delay
+                setTimeout(async () => {
+                    console.log("📱 Opening ZaloPay app with URL:", result.vnpayUrl);
+                    
+                    const canOpen = await Linking.canOpenURL(result.vnpayUrl);
+                    if (canOpen) {
+                        await Linking.openURL(result.vnpayUrl);
+                    } else {
+                        Alert.alert(
+                            "Lỗi",
+                            "Không thể mở ZaloPay. Vui lòng cài đặt ứng dụng ZaloPay để tiếp tục.",
+                            [{ 
+                                text: "OK", 
+                                onPress: () => navigation.goBack() 
+                            }]
+                        );
+                    }
+                }, 500);
             }
         } catch (error: any) {
-            console.error("Payment failed:", error);
+            console.error("❌ Payment failed:", error);
             Alert.alert("Lỗi thanh toán", error.message || "Đã xảy ra lỗi khi xử lý thanh toán");
         }
     };
 
-    // ==================== 5. RENDER ====================
+    // ==================== 5. BUTTON TITLE LOGIC ====================
+    const getButtonTitle = (): string => {
+        if (bookingLoading) {
+            return "Đang xử lý...";
+        }
+        
+        switch (selectedPaymentMethod) {
+            case "wallet":
+                return `Thanh toán ${totalAmountFormatted} bằng Ví`;
+            case "vnpay":
+                return `Thanh toán ${totalAmountFormatted} bằng VNPay`;
+            case "zalopay":
+                return `Thanh toán ${totalAmountFormatted} bằng ZaloPay`;
+            default:
+                return `Thanh toán ${totalAmountFormatted}`;
+        }
+    };
+
+    // ==================== 6. RENDER ====================
     return (
         <View style={styles.container}>
             <PageHeader title="Xác nhận thanh toán" onBack={() => navigation.goBack()} />
@@ -334,6 +420,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 />
 
                 <View style={styles.section}>
+                    {/* ========== WALLET PAYMENT OPTION ========== */}
                     <PaymentMethodCard
                         isSelected={selectedPaymentMethod === "wallet"}
                         onSelect={() => setSelectedPaymentMethod("wallet")}
@@ -342,6 +429,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                         isSufficient={isSufficient}
                     />
 
+                    {/* ========== VNPAY PAYMENT OPTION ========== */}
                     <TouchableOpacity
                         style={[
                             styles.paymentOption,
@@ -367,6 +455,33 @@ export const PaymentConfirmationScreen: React.FC = () => {
                             </View>
                         </View>
                     </TouchableOpacity>
+
+                    {/* ========== ZALOPAY PAYMENT OPTION ========== */}
+                    <TouchableOpacity
+                        style={[
+                            styles.paymentOption,
+                            selectedPaymentMethod === "zalopay" && styles.paymentOptionSelected,
+                        ]}
+                        onPress={() => setSelectedPaymentMethod("zalopay")}
+                    >
+                        <View style={styles.paymentOptionRow}>
+                            <View style={styles.radioButton}>
+                                {selectedPaymentMethod === "zalopay" && <View style={styles.radioButtonInner} />}
+                            </View>
+                            <View style={styles.paymentOptionContent}>
+                                <View style={styles.paymentOptionHeader}>
+                                    <Text style={styles.paymentOptionTitle}>ZaloPay</Text>
+                                    <View style={styles.zaloPayBadge}>
+                                        <Text style={styles.zaloPayBadgeText}>Mới</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.paymentOptionDesc}>Thanh toán qua ứng dụng ZaloPay</Text>
+                                <Text style={styles.paymentMethodsText}>
+                                    Ví ZaloPay • Thẻ ATM • Visa • MasterCard
+                                </Text>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
                 </View>
 
                 <CostBreakdown
@@ -383,30 +498,35 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
             <View style={styles.footer}>
                 <PrimaryButton
-                    title={
-                        bookingLoading
-                            ? "Đang xử lý..."
-                            : selectedPaymentMethod === "wallet"
-                                ? `Thanh toán ${totalAmountFormatted} bằng Ví`
-                                : `Thanh toán ${totalAmountFormatted} bằng VNPay`
-                    }
+                    title={getButtonTitle()}
                     onPress={handlePayment}
                     disabled={
                         bookingLoading ||
                         (selectedPaymentMethod === "wallet" && !isSufficient)
                     }
+                    loading={bookingLoading}
                 />
             </View>
         </View>
     );
 };
 
-// ==================== 6. STYLES ====================
+// ==================== 7. STYLES ====================
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#000" },
-    scrollView: { flex: 1 },
-    content: { padding: 16, paddingBottom: 100 },
-    section: { marginBottom: 20 },
+    container: { 
+        flex: 1, 
+        backgroundColor: "#000" 
+    },
+    scrollView: { 
+        flex: 1 
+    },
+    content: { 
+        padding: 16, 
+        paddingBottom: 100 
+    },
+    section: { 
+        marginBottom: 20 
+    },
     footer: {
         padding: 16,
         paddingBottom: 32,
@@ -414,6 +534,8 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
     },
+    
+    // Payment Option Styles
     paymentOption: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,
@@ -426,7 +548,12 @@ const styles = StyleSheet.create({
         borderColor: "#4169E1",
         backgroundColor: "#0f1729",
     },
-    paymentOptionRow: { flexDirection: "row", alignItems: "flex-start" },
+    paymentOptionRow: { 
+        flexDirection: "row", 
+        alignItems: "flex-start" 
+    },
+    
+    // Radio Button Styles
     radioButton: {
         width: 24,
         height: 24,
@@ -444,23 +571,65 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: "#4169E1",
     },
-    paymentOptionContent: { flex: 1 },
-    paymentOptionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+    
+    // Payment Option Content Styles
+    paymentOptionContent: { 
+        flex: 1 
+    },
+    paymentOptionHeader: { 
+        flexDirection: "row", 
+        alignItems: "center", 
+        marginBottom: 4 
+    },
     paymentOptionTitle: {
         color: "#fff",
         fontSize: 16,
         fontWeight: "600",
         marginRight: 8,
     },
+    paymentOptionDesc: { 
+        color: "#999", 
+        fontSize: 14, 
+        marginBottom: 8 
+    },
+    paymentMethodsText: { 
+        color: "#666", 
+        fontSize: 12 
+    },
+    
+    // Badge Styles
     vnpayBadge: {
         backgroundColor: "#4169E1",
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 4,
     },
-    vnpayBadgeText: { color: "#fff", fontSize: 11, fontWeight: "600" },
-    paymentOptionDesc: { color: "#999", fontSize: 14, marginBottom: 8 },
-    paymentMethodsText: { color: "#666", fontSize: 12 },
-    center: { flex: 1, justifyContent: "center", alignItems: "center" },
-    loadingText: { color: "#aaa", marginTop: 12, fontSize: 16 },
+    vnpayBadgeText: { 
+        color: "#fff", 
+        fontSize: 11, 
+        fontWeight: "600" 
+    },
+    zaloPayBadge: {
+        backgroundColor: "#00a650",
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    zaloPayBadgeText: {
+        color: "#fff",
+        fontSize: 11,
+        fontWeight: "600"
+    },
+    
+    // Loading/Center Styles
+    center: { 
+        flex: 1, 
+        justifyContent: "center", 
+        alignItems: "center" 
+    },
+    loadingText: { 
+        color: "#aaa", 
+        marginTop: 12, 
+        fontSize: 16 
+    },
 });

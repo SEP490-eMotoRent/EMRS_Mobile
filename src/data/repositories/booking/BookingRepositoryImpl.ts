@@ -244,6 +244,46 @@ export class BookingRepositoryImpl implements BookingRepository {
     return cancelledBooking;
   }
 
+
+  async createZaloPay(booking: Booking): Promise<VNPayBookingResult> {
+    const request: CreateBookingRequest = {
+      startDatetime: booking.startDatetime?.toISOString(),
+      endDatetime: booking.endDatetime?.toISOString(),
+      handoverBranchId: booking.handoverBranchId!,
+      baseRentalFee: booking.baseRentalFee,
+      depositAmount: booking.depositAmount,
+      rentalDays: booking.rentalDays,
+      rentalHours: booking.rentalHours,
+      rentingRate: booking.rentingRate,
+      vehicleModelId: booking.vehicleModelId,
+      averageRentalPrice: booking.averageRentalPrice,
+      insurancePackageId: booking.insurancePackageId,
+      totalRentalFee: booking.totalRentalFee,
+    };
+
+    const response = await this.remote.createZaloPay(request);
+
+    console.log(
+      "📥 ZaloPay Response from backend:",
+      JSON.stringify(response, null, 2)
+    );
+
+    // ✅ Validate response has required fields
+    if (!response.id || !response.vnpayUrl) {
+      console.error("❌ Invalid ZaloPay response:", response);
+      throw new Error(
+        "Invalid ZaloPay booking response from server - missing id or payment URL"
+      );
+    }
+
+    console.log("✅ ZaloPay URL extracted:", response.vnpayUrl);
+
+    return {
+      booking: this.mapVNPayResponseToEntity(response), // Reuse same mapper
+      vnpayUrl: response.vnpayUrl, // This contains the ZaloPay URL
+    };
+  }
+
   // =========================================================================
   // TYPE GUARD
   // =========================================================================

@@ -8,7 +8,7 @@ import { BookingResponseForRenter } from "../../../../models/booking/BookingResp
 import { BookingWithoutWalletResponse } from "../../../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
-import { BookingDetailResponse } from "../../../../models/booking/BookingDetailResponse"; // ✅ CHANGED
+import { BookingDetailResponse } from "../../../../models/booking/BookingDetailResponse";
 import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/BookingRemoteDataSource";
 import { BookingResponse } from "../../../../models/booking/BookingResponse";
@@ -260,6 +260,75 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         || error.response?.data?.error
         || error.message 
         || "Failed to cancel booking";
+      
+      throw new Error(errorMessage);
+    }
+  }
+
+  async createZaloPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse> {
+    console.log("📤 ZaloPay booking request:", JSON.stringify(request, null, 2));
+
+    const cleanedRequest: Record<string, any> = {
+      startDatetime: request.startDatetime,
+      endDatetime: request.endDatetime,
+      handoverBranchId: request.handoverBranchId,
+      baseRentalFee: request.baseRentalFee,
+      depositAmount: request.depositAmount,
+      rentalDays: request.rentalDays,
+      rentalHours: request.rentalHours,
+      rentingRate: request.rentingRate,
+      vehicleModelId: request.vehicleModelId,
+      averageRentalPrice: request.averageRentalPrice,
+      totalRentalFee: request.totalRentalFee,
+      insurancePackageId: request.insurancePackageId || null,
+    };
+
+    try {
+      const response = await this.axiosClient.post<ApiResponse<any>>(
+        ApiEndpoints.booking.createZaloPay,
+        cleanedRequest
+      );
+      
+      const rawData = unwrapResponse(response.data);
+      console.log("📥 Raw ZaloPay response from backend:", JSON.stringify(rawData, null, 2));
+      
+      const transformedData: BookingWithoutWalletResponse = {
+        id: rawData.id || rawData.Id,
+        vehicleModelId: rawData.vehicleModelId || rawData.VehicleModelId,
+        renterId: rawData.renterId || rawData.RenterId,
+        vehicleId: rawData.vehicleId || rawData.VehicleId,
+        startDatetime: rawData.startDatetime || rawData.StartDatetime,
+        endDatetime: rawData.endDatetime || rawData.EndDatetime,
+        actualReturnDatetime: rawData.actualReturnDatetime || rawData.ActualReturnDatetime,
+        baseRentalFee: rawData.baseRentalFee ?? rawData.BaseRentalFee,
+        depositAmount: rawData.depositAmount ?? rawData.DepositAmount,
+        rentalDays: rawData.rentalDays ?? rawData.RentalDays,
+        rentalHours: rawData.rentalHours ?? rawData.RentalHours,
+        rentingRate: rawData.rentingRate ?? rawData.RentingRate,
+        lateReturnFee: rawData.lateReturnFee ?? rawData.LateReturnFee ?? 0,
+        averageRentalPrice: rawData.averageRentalPrice ?? rawData.AverageRentalPrice,
+        totalRentalFee: rawData.totalRentalFee ?? rawData.TotalRentalFee,
+        totalAmount: rawData.totalAmount ?? rawData.TotalAmount,
+        bookingStatus: rawData.bookingStatus || rawData.BookingStatus,
+        vnpayUrl: rawData.vnpayurl || rawData.VNPAYURL || rawData.vnpayUrl || rawData.VnpayUrl, // Reusing same field
+      };
+      
+      console.log("✅ Transformed ZaloPay response:", JSON.stringify(transformedData, null, 2));
+      
+      if (!transformedData.vnpayUrl) {
+        console.error("❌ Missing ZaloPay URL in response!");
+        throw new Error("ZaloPay URL not found in backend response");
+      }
+      
+      return transformedData;
+    } catch (error: any) {
+      console.error("❌ [CREATE ZALOPAY BOOKING] API Error:", error);
+      console.error("❌ Error Response:", JSON.stringify(error.response?.data, null, 2));
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error
+        || error.message 
+        || "Failed to create ZaloPay booking";
       
       throw new Error(errorMessage);
     }

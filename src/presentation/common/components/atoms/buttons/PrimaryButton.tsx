@@ -6,7 +6,6 @@ import {
     ViewStyle, 
     TextStyle,
     ActivityIndicator,
-    View
 } from 'react-native';
 import { colors } from '../../../../common/theme/colors';
 
@@ -16,7 +15,7 @@ interface PrimaryButtonProps {
     style?: ViewStyle;
     textStyle?: TextStyle;
     disabled?: boolean;
-    loading?: boolean; // ✅ Added loading prop
+    loading?: boolean;
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -41,13 +40,11 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
             disabled={isDisabled}
         >
             {loading ? (
-                // ✅ Show spinner when loading
                 <ActivityIndicator 
                     size="small" 
                     color={colors.button.text} 
                 />
             ) : (
-                // ✅ Show text when not loading
                 <Text style={[
                     styles.text, 
                     textStyle,
@@ -68,7 +65,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 56, // ✅ Added to maintain height when loading
+        minHeight: 56,
     },
     text: {
         color: colors.button.text,

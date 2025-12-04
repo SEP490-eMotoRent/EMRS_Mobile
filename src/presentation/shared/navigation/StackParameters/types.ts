@@ -192,6 +192,49 @@ export type BookingStackParamList = {
     contractNumber: string;
   };
   Trips: undefined;
+
+
+  ZaloPayWebView: {
+    zaloPayUrl: string;
+    bookingId: string;
+    expiresAt: string;
+    vehicleName: string;
+    totalAmount: string;
+    vehicleId: string;
+    vehicleImageUrl: string;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+    branchName: string;
+    insurancePlan: string;
+    securityDeposit: string;
+  };
+  
+  ZaloPayResult: {
+    amount?: string;
+    appid?: string;
+    apptransid?: string;
+    bankcode?: string;
+    checksum?: string;
+    discountamount?: string;
+    pmcid?: string;
+    status?: string;
+    // Context data
+    bookingId?: string;
+    vehicleId: string;
+    vehicleName: string;
+    vehicleImageUrl?: string;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+    branchName: string;
+    insurancePlan: string;
+    totalAmount: string;
+    securityDeposit: string;
+  };
+  
 };
 
 export type TripStackParamList = {
