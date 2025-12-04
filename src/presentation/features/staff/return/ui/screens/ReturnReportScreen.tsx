@@ -300,14 +300,14 @@ export const ReturnReportScreen: React.FC = () => {
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Số km lúc trả xe</Text>
             <Text style={styles.summaryValueRight}>
-              {booking?.rentalReceipts[0]?.endOdometerKm + " km"}
+              {rentalReceipt?.endOdometerKm + " km"}
             </Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Pin lúc trả xe</Text>
             <Text style={styles.summaryValueRight}>
-              {booking?.rentalReceipts[0]?.endBatteryPercentage
-                ? booking.rentalReceipts[0]?.endBatteryPercentage + "%"
+              {rentalReceipt?.endBatteryPercentage
+                ? rentalReceipt?.endBatteryPercentage + "%"
                 : "—"}
             </Text>
           </View>
@@ -630,53 +630,26 @@ export const ReturnReportScreen: React.FC = () => {
 
           <View style={styles.divider} />
 
-          {/* Tổng phụ phí */}
+          {/* Tóm tắt nhanh trước khi tính kết quả */}
           <View style={styles.kvRow}>
-            <Text style={styles.kvDim}>Tổng phụ phí</Text>
-            <Text style={styles.kvStrong}>
-              {formatVnd(summary?.totalAmount || 0)}
+            <Text style={styles.kvDim}>
+              Tổng phụ phí (hư hỏng, vệ sinh, vượt km...)
+            </Text>
+            <Text style={[styles.kvStrong, { color: "#F97316" }]}>
+              {formatVnd(summary?.totalAdditionalFees || 0)}
             </Text>
           </View>
-
-          {/* Đã thanh toán khi booking */}
-          <View style={styles.paidSection}>
-            <View style={styles.paidSectionHeader}>
-              <AntDesign name="check-circle" size={14} color="#22C55E" />
-              <Text style={styles.paidSectionTitle}>
-                Đã thanh toán khi booking
-              </Text>
-            </View>
-            {(summary?.depositAmount || 0) > 0 && (
-              <View style={styles.paidRow}>
-                <View style={styles.paidItem}>
-                  <View style={styles.paidDot} />
-                  <Text style={styles.paidLabel}>Tiền cọc</Text>
-                </View>
-                <Text style={[styles.paidAmount, { color: "#22C55E" }]}>
-                  -{formatVnd(summary?.depositAmount || 0)}
-                </Text>
-              </View>
-            )}
-            {(summary?.baseRentalFee || 0) > 0 && (
-              <View style={styles.paidRow}>
-                <View style={styles.paidItem}>
-                  <View style={styles.paidDot} />
-                  <Text style={styles.paidLabel}>Phí thuê xe</Text>
-                </View>
-                <Text style={[styles.paidAmount, { color: "#22C55E" }]}>
-                  -{formatVnd(summary?.baseRentalFee || 0)}
-                </Text>
-              </View>
-            )}
-            <View style={styles.paidTotalRow}>
-              <Text style={styles.paidTotalLabel}>Tổng đã thanh toán</Text>
-              <Text style={styles.paidTotalAmount}>
-                -
-                {formatVnd(
-                  (summary?.depositAmount || 0) + (summary?.baseRentalFee || 0)
-                )}
-              </Text>
-            </View>
+          <View style={styles.kvRow}>
+            <Text style={styles.kvDim}>Phí sạc pin</Text>
+            <Text style={[styles.kvStrong, { color: "#3B82F6" }]}>
+              {formatVnd(summary?.totalChargingFee || 0)}
+            </Text>
+          </View>
+          <View style={styles.kvRow}>
+            <Text style={styles.kvDim}>Đã trừ tiền cọc</Text>
+            <Text style={[styles.kvStrong, { color: "#22C55E" }]}>
+              -{formatVnd(summary?.depositAmount || 0)}
+            </Text>
           </View>
 
           {/* Kết quả */}
@@ -1090,70 +1063,6 @@ const styles = StyleSheet.create({
   kvVal: { color: colors.text.primary, fontSize: 12 },
   kvDim: { color: colors.text.secondary, fontSize: 12 },
   kvStrong: { color: colors.text.primary, fontWeight: "700" },
-  paidSection: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: "rgba(34, 197, 94, 0.08)",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(34, 197, 94, 0.2)",
-  },
-  paidSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 10,
-  },
-  paidSectionTitle: {
-    color: "#22C55E",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
-  paidRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  paidItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  paidDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#22C55E",
-  },
-  paidLabel: {
-    color: colors.text.secondary,
-    fontSize: 12,
-  },
-  paidAmount: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  paidTotalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(34, 197, 94, 0.2)",
-  },
-  paidTotalLabel: {
-    color: "#22C55E",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  paidTotalAmount: {
-    color: "#22C55E",
-    fontSize: 13,
-    fontWeight: "700",
-  },
   resultSection: {
     marginTop: 12,
     padding: 14,

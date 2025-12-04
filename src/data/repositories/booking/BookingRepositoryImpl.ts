@@ -24,6 +24,7 @@ import {
   InsurancePackageResponse,
   RenterDetailResponse,
   VehicleModelResponse,
+  VehicleResponse,
 } from "../../models/booking/BookingResponseForRenter";
 import { BookingWithoutWalletResponse } from "../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../models/booking/CreateBookingRequest";
@@ -405,6 +406,10 @@ export class BookingRepositoryImpl implements BookingRepository {
   private mapListResponseToEntity(dto: BookingResponseForRenter): Booking {
     console.log("🔄 Mapping list booking response:", dto.id);
 
+    const vehicle = dto.vehicle
+      ? this.mapVehicleFromListResponse(dto.vehicle)
+      : undefined;
+
     const vehicleModel = dto.vehicleModel
       ? this.mapVehicleModelFromListResponse(dto.vehicleModel)
       : undefined;
@@ -442,7 +447,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       renter,
       vehicleModel,
       dto.vehicleId,
-      undefined, // vehicle - Not in list response
+      vehicle, // vehicle - Not in list response
       dto.startDatetime ? new Date(dto.startDatetime) : undefined,
       dto.endDatetime ? new Date(dto.endDatetime) : undefined,
       dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
@@ -642,6 +647,24 @@ export class BookingRepositoryImpl implements BookingRepository {
   // NESTED OBJECT MAPPERS
   // =========================================================================
 
+  private mapVehicleFromListResponse(dto: VehicleResponse): Vehicle {
+    return new Vehicle(
+      dto.id,
+      dto.licensePlate,
+      dto.color,
+      dto.currentOdometerKm,
+      0,
+      "unknown",
+      "",
+      "unknown",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
+  }
+      
   private mapVehicleModelFromListResponse(
     dto: VehicleModelResponse
   ): VehicleModel {

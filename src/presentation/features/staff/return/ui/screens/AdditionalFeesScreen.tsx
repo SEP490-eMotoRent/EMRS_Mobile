@@ -504,8 +504,25 @@ export const AdditionalFeesScreen: React.FC = () => {
       // Navigate back after a short delay
 
       const receipts = Booking.rentalReceipts || [];
-      const lastReceipt =
-        receipts.length > 0 ? receipts[receipts.length - 1] : null;
+      const bookingVehicleId =
+        Booking?.vehicle?.id || Booking?.vehicleId || null;
+      const lastReceipt = receipts.length
+        ? (() => {
+            if (!bookingVehicleId) {
+              return receipts[receipts.length - 1];
+            }
+            const matched = [...receipts]
+              .reverse()
+              .find((receipt) => {
+                const receiptVehicleId =
+                  receipt?.vehicle?.id ||
+                  receipt?.booking?.vehicle?.id ||
+                  null;
+                return receiptVehicleId === bookingVehicleId;
+              });
+            return matched || receipts[receipts.length - 1];
+          })()
+        : null;
       setTimeout(() => {
         navigation.navigate("ReturnReport", {
           bookingId: bookingId,

@@ -1,5 +1,5 @@
-import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -33,24 +33,46 @@ export const GpsSharingSessionListScreen: React.FC = () => {
   const [invitationCode, setInvitationCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
+  const [rentingBookings, setRentingBookings] = useState<Booking[]>([]);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
-    fetchCurrentBooking();
-    fetchSessions();
+    const init = async () => {
+      try {
+        const booking = await fetchCurrentBooking();
+        await fetchSessions(booking?.renterId);
+      } catch (error) {
+        console.error("Error initializing GPS sharing sessions:", error);
+      }
+    };
+
+    init();
   }, []);
 
-  const fetchCurrentBooking = async () => {
+  const fetchCurrentBooking = async (): Promise<Booking | null> => {
     try {
-      const getCurrentRenterBookingsUseCase = new GetCurrentRenterBookingsUseCase(
-        sl.get("BookingRepository")
-      );
+      const getCurrentRenterBookingsUseCase =
+        new GetCurrentRenterBookingsUseCase(sl.get("BookingRepository"));
       const bookings = await getCurrentRenterBookingsUseCase.execute();
-      const rentingBooking = bookings.find((b) => b.bookingStatus === "Renting");
-      if (rentingBooking?.id) {
-        setCurrentBooking(rentingBooking);
-      }
+      const renting = bookings.filter((b) => b.bookingStatus === "Renting");
+
+      setRentingBookings(renting);
+
+      const primaryBooking = renting[0] || null;
+      setCurrentBooking(primaryBooking);
+
+      // Nếu chưa chọn booking nào, mặc định chọn booking đầu tiên đang thuê
+      setSelectedBookingId((prev) => prev ?? primaryBooking?.id ?? null);
+
+      return primaryBooking;
     } catch (error) {
       console.error("Error fetching current booking:", error);
+      setCurrentBooking(null);
+      setRentingBookings([]);
+      setSelectedBookingId(null);
+      return null;
     }
   };
 
@@ -113,32 +135,42 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         return "rgba(129,199,132,0.3)";
     }
   };
-  const fetchSessions = async () => {
+
+  const fetchSessions = async (renterId?: string | null) => {
     try {
-      if (!currentBooking?.renterId) {
+      if (!renterId) {
+        setSessions([]);
         return;
       }
-      console.log("currentBooking", currentBooking);
+
       setLoading(true);
       const getSessionByRenterIdUseCase = new GetSessionByRenterIdUseCase(
         sl.get("GpsSharingRepository")
       );
-      const response = await getSessionByRenterIdUseCase.execute(currentBooking.renterId);
+      const response =
+        await getSessionByRenterIdUseCase.execute(renterId);
+
       if (response.success && response.data) {
         setSessions(response.data);
+      } else {
+        setSessions([]);
       }
     } catch (error) {
       console.error("Error fetching GPS sharing sessions:", error);
+      setSessions([]);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchSessions();
-    fetchCurrentBooking();
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      const booking = await fetchCurrentBooking();
+      await fetchSessions(booking?.renterId);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleJoinSession = async () => {
@@ -151,21 +183,23 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       return;
     }
 
-    if (!currentBooking?.id) {
+    if (!selectedBookingId) {
       Toast.show({
         type: "error",
         text1: "Lỗi",
-        text2: "Bạn cần có xe đang thuê để tham gia session",
+        text2: "Bạn cần chọn booking đang thuê để tham gia session",
       });
       return;
     }
 
     try {
       setJoining(true);
-      const joinUseCase = new GpsSharingJoinUseCase(sl.get("GpsSharingRepository"));
+      const joinUseCase = new GpsSharingJoinUseCase(
+        sl.get("GpsSharingRepository")
+      );
       const response = await joinUseCase.execute({
         invitationCode: invitationCode.trim().toUpperCase(),
-        guestBookingId: currentBooking?.id,
+        guestBookingId: selectedBookingId,
       });
 
       if (response.success) {
@@ -189,7 +223,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       Toast.show({
         type: "error",
         text1: "Lỗi",
-        text2: error.response?.data?.message || "Đã xảy ra lỗi khi tham gia session",
+        text2:
+          error.response?.data?.message || "Đã xảy ra lỗi khi tham gia session",
       });
     } finally {
       setJoining(false);
@@ -230,18 +265,23 @@ export const GpsSharingSessionListScreen: React.FC = () => {
     const isActive = item.status === "Active";
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[
-          styles.sessionCard, 
+          styles.sessionCard,
           { backgroundColor: "#1A1D26" },
-          isActive && styles.sessionCardActive
-        ]} 
+          isActive && styles.sessionCardActive,
+        ]}
         activeOpacity={isActive ? 0.85 : 1}
         onPress={() => handleSessionPress(item)}
         disabled={!isActive}
       >
         {/* Card Header with Gradient Effect */}
-        <View style={[styles.cardHeaderGradient, { borderBottomColor: statusBorderColor }]}>
+        <View
+          style={[
+            styles.cardHeaderGradient,
+            { borderBottomColor: statusBorderColor },
+          ]}
+        >
           <View style={styles.sessionCardHeader}>
             <View style={styles.sessionInfo}>
               <View style={styles.vehiclePlateRow}>
@@ -253,14 +293,28 @@ export const GpsSharingSessionListScreen: React.FC = () => {
                 </Text>
               </View>
               <View style={styles.ownerRow}>
-                <AntDesign name="user" size={12} color={colors.text.secondary} />
+                <AntDesign
+                  name="user"
+                  size={12}
+                  color={colors.text.secondary}
+                />
                 <Text style={styles.sessionSubtitle}>
                   {item.ownerRenterName || "N/A"}
                 </Text>
               </View>
             </View>
-            <View style={[styles.sessionStatusBadge, { backgroundColor: statusBgColor, borderColor: statusBorderColor }]}>
-              <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <View
+              style={[
+                styles.sessionStatusBadge,
+                {
+                  backgroundColor: statusBgColor,
+                  borderColor: statusBorderColor,
+                },
+              ]}
+            >
+              <View
+                style={[styles.statusDot, { backgroundColor: statusColor }]}
+              />
               <Text style={[styles.statusText, { color: statusColor }]}>
                 {getStatusText(item.status)}
               </Text>
@@ -273,7 +327,12 @@ export const GpsSharingSessionListScreen: React.FC = () => {
           {/* Invitation Code - Highlighted */}
           {item.invitationCode && (
             <View style={styles.infoRow}>
-              <View style={[styles.infoIconContainer, styles.invitationIconContainer]}>
+              <View
+                style={[
+                  styles.infoIconContainer,
+                  styles.invitationIconContainer,
+                ]}
+              >
                 <AntDesign name="key" size={18} color="#7DB3FF" />
               </View>
               <View style={styles.infoContent}>
@@ -288,7 +347,9 @@ export const GpsSharingSessionListScreen: React.FC = () => {
           {/* Guest Info (if exists) */}
           {item.guestRenterName && (
             <View style={styles.infoRow}>
-              <View style={[styles.infoIconContainer, styles.guestIconContainer]}>
+              <View
+                style={[styles.infoIconContainer, styles.guestIconContainer]}
+              >
                 <AntDesign name="team" size={18} color="#C9B6FF" />
               </View>
               <View style={styles.infoContent}>
@@ -297,7 +358,9 @@ export const GpsSharingSessionListScreen: React.FC = () => {
                 {item.guestVehicleLicensePlate && (
                   <View style={styles.guestVehicleTag}>
                     <AntDesign name="car" size={12} color="#C9B6FF" />
-                    <Text style={styles.infoSubValue}>{item.guestVehicleLicensePlate}</Text>
+                    <Text style={styles.infoSubValue}>
+                      {item.guestVehicleLicensePlate}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -315,19 +378,25 @@ export const GpsSharingSessionListScreen: React.FC = () => {
                 </View>
                 <View style={styles.timelineContent}>
                   <Text style={styles.timelineLabel}>Tạo lúc</Text>
-                  <Text style={styles.timelineValue}>{formatDate(item.createdAt)}</Text>
+                  <Text style={styles.timelineValue}>
+                    {formatDate(item.createdAt)}
+                  </Text>
                 </View>
               </View>
 
               {/* Accepted Date (if exists) */}
               {item.acceptedAt && (
                 <View style={styles.timelineItem}>
-                  <View style={[styles.timelineDot, styles.timelineDotAccepted]}>
+                  <View
+                    style={[styles.timelineDot, styles.timelineDotAccepted]}
+                  >
                     <AntDesign name="check-circle" size={12} color="#81C784" />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={styles.timelineLabel}>Chấp nhận lúc</Text>
-                    <Text style={styles.timelineValue}>{formatDate(item.acceptedAt)}</Text>
+                    <Text style={styles.timelineValue}>
+                      {formatDate(item.acceptedAt)}
+                    </Text>
                   </View>
                 </View>
               )}
@@ -338,7 +407,9 @@ export const GpsSharingSessionListScreen: React.FC = () => {
           {isActive && (
             <View style={styles.activeIndicator}>
               <AntDesign name="environment" size={14} color="#81C784" />
-              <Text style={styles.activeIndicatorText}>Nhấn để xem vị trí trên bản đồ</Text>
+              <Text style={styles.activeIndicatorText}>
+                Nhấn để xem vị trí trên bản đồ
+              </Text>
             </View>
           )}
         </View>
@@ -367,7 +438,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         </View>
         <Text style={styles.emptyTitle}>Chưa có session nào</Text>
         <Text style={styles.emptySubtitle}>
-          Bạn chưa có session chia sẻ GPS nào. Tạo session mới từ booking details hoặc tham gia session bằng mã mời.
+          Bạn chưa có session chia sẻ GPS nào. Tạo session mới từ booking
+          details hoặc tham gia session bằng mã mời.
         </Text>
         <TouchableOpacity
           style={styles.emptyActionButton}
@@ -380,7 +452,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       </View>
     );
   };
-
+  console.log(rentingBookings);
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader
@@ -388,7 +460,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         subtitle="Danh sách session"
         showBackButton={false}
       />
-      
+
       {/* Join Session Button */}
       <View style={styles.joinSection}>
         <TouchableOpacity
@@ -402,7 +474,9 @@ export const GpsSharingSessionListScreen: React.FC = () => {
             </View>
             <View style={styles.joinButtonTextContainer}>
               <Text style={styles.joinButtonText}>Tham gia session</Text>
-              <Text style={styles.joinButtonSubtext}>Nhập mã mời để tham gia</Text>
+              <Text style={styles.joinButtonSubtext}>
+                Nhập mã mời để tham gia
+              </Text>
             </View>
           </View>
           <AntDesign name="right" size={18} color="#C9B6FF" />
@@ -413,10 +487,16 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         data={sessions}
         keyExtractor={(item, index) => item.sessionId || `session-${index}`}
         renderItem={renderSessionItem}
-        contentContainerStyle={sessions.length === 0 ? styles.emptyListContent : styles.listContent}
+        contentContainerStyle={
+          sessions.length === 0 ? styles.emptyListContent : styles.listContent
+        }
         ListEmptyComponent={renderEmptyState}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7CFFCB" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#7CFFCB"
+          />
         }
         showsVerticalScrollIndicator={false}
       />
@@ -443,7 +523,12 @@ export const GpsSharingSessionListScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Mã mời</Text>
               <View style={styles.inputWrapper}>
-                <AntDesign name="key" size={18} color="#C9B6FF" style={styles.inputIcon} />
+                <AntDesign
+                  name="key"
+                  size={18}
+                  color="#C9B6FF"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="Nhập mã mời (VD: 3YS4CD)"
@@ -457,12 +542,44 @@ export const GpsSharingSessionListScreen: React.FC = () => {
               </View>
             </View>
 
-            {currentBooking?.id ? (
-              <View style={styles.infoBox}>
-                <AntDesign name="check-circle" size={16} color="#81C784" />
-                <Text style={styles.infoBoxText}>
-                  Xe hiện tại sẽ được sử dụng để tham gia session
+            {/* Select Booking Đang Thuê (nếu có) */}
+            {rentingBookings.length > 0 ? (
+              <View style={styles.bookingSelectSection}>
+                <Text style={styles.bookingSelectLabel}>
+                  Chọn booking đang thuê
                 </Text>
+                <View style={styles.bookingPillsContainer}>
+                  {rentingBookings.map((booking) => {
+                    const isSelected = booking.id === selectedBookingId;
+                    return (
+                      <TouchableOpacity
+                        key={booking.id}
+                        style={[
+                          styles.bookingPill,
+                          isSelected && styles.bookingPillSelected,
+                        ]}
+                        activeOpacity={0.8}
+                        onPress={() => setSelectedBookingId(booking.id)}
+                        disabled={joining}
+                      >
+                        <View style={styles.bookingPillHeader}>
+                          <Text style={styles.bookingPillCode}>
+                            {booking.vehicleModel?.modelName}
+                          </Text>
+                          <View
+                            style={[
+                              styles.bookingPillStatusDot,
+                              isSelected && styles.bookingPillStatusDotActive,
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.bookingPillLicense}>
+                          {booking.vehicle?.licensePlate || "Biển số không rõ"}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
             ) : (
               <View style={[styles.infoBox, styles.infoBoxWarning]}>
@@ -488,7 +605,8 @@ export const GpsSharingSessionListScreen: React.FC = () => {
                 style={[
                   styles.modalButton,
                   styles.modalButtonJoin,
-                  (!currentBooking?.id || joining) && styles.modalButtonDisabled,
+                  (!currentBooking?.id || joining) &&
+                    styles.modalButtonDisabled,
                 ]}
                 onPress={handleJoinSession}
                 disabled={!currentBooking?.id || joining}
@@ -961,6 +1079,60 @@ const styles = StyleSheet.create({
   },
   infoBoxTextWarning: {
     color: "#FFD54F",
+  },
+  bookingSelectSection: {
+    marginBottom: 24,
+  },
+  bookingSelectLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.text.secondary,
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  bookingPillsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  bookingPill: {
+    minWidth: 140,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: "#11131A",
+    borderWidth: 1.5,
+    borderColor: "#2A2D36",
+  },
+  bookingPillSelected: {
+    borderColor: "#C9B6FF",
+    backgroundColor: "rgba(201,182,255,0.15)",
+  },
+  bookingPillHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  bookingPillCode: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.text.primary,
+  },
+  bookingPillStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#9E9E9E",
+  },
+  bookingPillStatusDotActive: {
+    backgroundColor: "#81C784",
+  },
+  bookingPillLicense: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    fontWeight: "500",
   },
   modalActions: {
     flexDirection: "row",
