@@ -16,11 +16,20 @@ export interface BookingResponseForRenter {
     bookingCode: string;                // ✅ ADDED
     vehicleModelId: string;
     renterId: string;
+    vehicle: VehicleResponse;
     vehicleId?: string;
     // Nested objects
     vehicleModel: VehicleModelResponse;
     renter: RenterDetailResponse;
     insurancePackage?: InsurancePackageResponse;
+}
+
+export interface VehicleResponse {
+    id: string;
+    licensePlate: string;
+    color: string;
+    yearOfManufacture: string;
+    currentOdometerKm: number;
 }
 
 export interface VehicleModelResponse {

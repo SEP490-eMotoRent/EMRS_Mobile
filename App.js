@@ -20,7 +20,7 @@ import { RootNavigator } from "./src/presentation/shared/navigation/RootNavigato
 import { configureGoogleSignIn } from "./src/core/config/GoogleSignInConfig";
 
 LogBox.ignoreLogs([
-  "ServerException",
+  "",
   "An error occurred while retrieving vehicles",
   "column v0.vehicle_price does not exist",
   "POSITION:",

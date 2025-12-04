@@ -111,6 +111,7 @@ export class RentalReturnRemoteDataSourceImpl
         bookingId: request.bookingId,
         renterConfirmed: request.renterConfirmed,
       });
+      console.log("response", response);
 
       return {
         success: true,
