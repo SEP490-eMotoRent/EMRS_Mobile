@@ -43,6 +43,7 @@ import {
   VehicleModelBookingResponse,
 } from "../../models/booking/staffResponse/BookingResponseForStaff";
 import { VNPayCallback } from "../../models/booking/vnpay/VNPayCallback";
+import { ZaloPayCallbackRequest } from "../../models/booking/zalo/ZaloPayCallbackRequest";
 
 export class BookingRepositoryImpl implements BookingRepository {
   constructor(private remote: BookingRemoteDataSource) {}
@@ -285,6 +286,44 @@ export class BookingRepositoryImpl implements BookingRepository {
     };
   }
 
+  async verifyZaloPayPayment(
+    appId: number,
+    appTransId: string,
+    pmcId: number,
+    bankCode: string,
+    amount: number,
+    discountAmount: number,
+    status: number,
+    checksum: string
+  ): Promise<boolean> {
+    try {
+      console.log('🔄 [Repository] Verifying ZaloPay payment');
+      console.log('📋 Transaction:', appTransId);
+
+      const request: ZaloPayCallbackRequest = {
+        AppId: appId,
+        AppTransId: appTransId,
+        PmcId: pmcId,
+        BankCode: bankCode,
+        Amount: amount,
+        DiscountAmount: discountAmount,
+        Status: status,
+        Checksum: checksum,
+        Message: status === 1 ? 'Payment successful' : 'Payment failed',
+      };
+
+      console.log('📤 [ZaloPay Callback] Request:', JSON.stringify(request, null, 2));
+
+      const result = await this.remote.verifyZaloPayPayment(request);
+
+      console.log('✅ [Repository] Verification result:', result);
+      return result;
+    } catch (error: any) {
+      console.error('❌ [Repository] Verification failed:', error);
+      throw error;
+    }
+  }
+  
   // =========================================================================
   // TYPE GUARD
   // =========================================================================

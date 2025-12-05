@@ -1,12 +1,13 @@
+import { ApiResponse } from "../../../../../core/network/APIResponse";
+import { AssignVehicleResponse } from "../../../../models/booking/AssignVehicleResponse";
+import { BookingDetailResponse } from "../../../../models/booking/BookingDetailResponse"; // ✅ CHANGED
+import { BookingResponse } from "../../../../models/booking/BookingResponse";
 import { BookingResponseForRenter } from "../../../../models/booking/BookingResponseForRenter";
 import { BookingWithoutWalletResponse } from "../../../../models/booking/BookingWithoutWalletResponse";
 import { CreateBookingRequest } from "../../../../models/booking/CreateBookingRequest";
 import { PaginatedBookingResponse } from "../../../../models/booking/PaginatedBookingResponse";
-import { BookingDetailResponse } from "../../../../models/booking/BookingDetailResponse"; // ✅ CHANGED
 import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
-import { BookingResponse } from "../../../../models/booking/BookingResponse";
-import { AssignVehicleResponse } from "../../../../models/booking/AssignVehicleResponse";
-import { ApiResponse } from "../../../../../core/network/APIResponse";
+import { ZaloPayCallbackRequest } from "../../../../models/booking/zalo/ZaloPayCallbackRequest";
 
 /**
  * Remote data source interface for booking operations
@@ -67,5 +68,6 @@ export interface BookingRemoteDataSource {
   cancelBooking(bookingId: string): Promise<BookingResponse>;
 
   createZaloPay(request: CreateBookingRequest): Promise<BookingWithoutWalletResponse>;
+  verifyZaloPayPayment(request: ZaloPayCallbackRequest): Promise<boolean>;
 
 }

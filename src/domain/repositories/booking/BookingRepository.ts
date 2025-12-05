@@ -1,8 +1,8 @@
-import { Booking } from "../../entities/booking/Booking";
+import { ApiResponse } from "../../../core/network/APIResponse";
+import { AssignVehicleResponse } from "../../../data/models/booking/AssignVehicleResponse";
 import { PaginatedBooking } from "../../../data/models/booking/PaginatedBooking";
 import { VNPayCallback } from "../../../data/models/booking/vnpay/VNPayCallback";
-import { AssignVehicleResponse } from "../../../data/models/booking/AssignVehicleResponse";
-import { ApiResponse } from "../../../core/network/APIResponse";
+import { Booking } from "../../entities/booking/Booking";
 
 /**
  * Result type for VNPay booking creation
@@ -77,4 +77,15 @@ export interface BookingRepository {
   cancelBooking(bookingId: string): Promise<Booking>;
 
   createZaloPay(booking: Booking): Promise<VNPayBookingResult>;
+
+  verifyZaloPayPayment(
+    appId: number,
+    appTransId: string,
+    pmcId: number,
+    bankCode: string,
+    amount: number,
+    discountAmount: number,
+    status: number,
+    checksum: string
+  ): Promise<boolean>;
 }

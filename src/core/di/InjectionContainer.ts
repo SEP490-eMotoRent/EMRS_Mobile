@@ -164,6 +164,7 @@ import { ForgotPasswordUseCase } from "../../domain/usecases/account/Passwords/F
 import { ResetPasswordUseCase } from "../../domain/usecases/account/Passwords/ResetPasswordUseCase";
 import { GetDamageTypesUseCase } from "../../domain/usecases/additionalFee/GetDamageTypesUseCase";
 import { CreateZaloPayBookingUseCase } from "../../domain/usecases/booking/zaloPay/CreateZaloPayBookingUseCase";
+import { VerifyZaloPayPaymentUseCase } from "../../domain/usecases/booking/zaloPay/VerifyZaloPayPaymentUseCase";
 
 
 /**
@@ -446,7 +447,8 @@ class ServiceLocator {
 
     const createZaloPayBookingUseCase = new CreateZaloPayBookingUseCase(bookingRepository);
     this.services.set("CreateZaloPayBookingUseCase", createZaloPayBookingUseCase);
-
+    const verifyZaloPayPaymentUseCase = new VerifyZaloPayPaymentUseCase(bookingRepository);
+    this.services.set("VerifyZaloPayPaymentUseCase", verifyZaloPayPaymentUseCase);
   }
 
   static getInstance(): ServiceLocator {
@@ -773,6 +775,10 @@ class ServiceLocator {
 
   getCreateZaloPayBookingUseCase(): CreateZaloPayBookingUseCase {
     return this.get<CreateZaloPayBookingUseCase>('CreateZaloPayBookingUseCase');
+  }
+
+  getVerifyZaloPayPaymentUseCase(): VerifyZaloPayPaymentUseCase {
+    return this.get<VerifyZaloPayPaymentUseCase>('VerifyZaloPayPaymentUseCase');
   }
 }
 
