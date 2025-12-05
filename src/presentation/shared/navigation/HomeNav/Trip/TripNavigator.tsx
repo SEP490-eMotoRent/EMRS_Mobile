@@ -3,12 +3,12 @@ import React from 'react';
 import { TripStackParamList } from '../../StackParameters/types';
 
 // ============================================================================
-// RENTER SCREENS (Trip Listing & Booking Details)
+// TRIP LISTING (Renter's Trips Screen)
 // ============================================================================
 import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
 
 // ============================================================================
-// STAFF SCREENS (kept for reference/future use)
+// BOOKING & VEHICLE SCREENS (Shared by Staff & Renter)
 // ============================================================================
 import { 
   BookingDetailsScreen,
@@ -17,18 +17,38 @@ import {
 } from '../../../../features/staff/handover/ui/screens';
 
 // ============================================================================
-// SHARED SCREENS (Used by both Renter and Staff)
+// CONTRACT & SIGNING
 // ============================================================================
 import { SignContractScreen } from '../../../../features/contract/ui/screens/SignContractScreen';
+
+// ============================================================================
+// EMERGENCY & SUPPORT
+// ============================================================================
 import { EmergencyContactScreen } from '../../../../features/insuranceClaim/ui/screens/EmergencyContactScreen';
 import { IncidentReportScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentReportScreen';
 import { IncidentPhotoCaptureScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentPhotoCaptureScreen';
+
+// ============================================================================
+// TRACKING
+// ============================================================================
 import TrackingGPSScreen from '../../../../features/staff/tracking/ui/screens/TrackingGPSScreen';
+
+// ============================================================================
+// RETURN & RECEIPTS
+// ============================================================================
 import { ReturnReceiptReportScreen } from '../../../../features/tripDetails/ui/screens/ReturnReceiptReportScreen';
 import { ReturnCompleteScreen } from '../../../../features/tripDetails/ui/screens/ReturnCompleteScreen';
+
+// ============================================================================
+// TICKET MANAGEMENT
+// ============================================================================
 import { CreateTicketScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/CreateTicketScreen';
 import { TicketListScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/TicketListScreen';
 import { TicketDetailScreen } from '../../../../features/insuranceClaim/ui/screens/TicketSubmission/TicketDetailScreen';
+
+// ============================================================================
+// CHARGING
+// ============================================================================
 import { ChargingListBookingScreen } from '../../../../features/charging/ui/screens';
 
 const Stack = createStackNavigator<TripStackParamList>();
@@ -57,7 +77,7 @@ export const TripNavigator: React.FC = () => {
       />
 
       {/* ====================================================================== */}
-      {/* RENTER: Booking Details Screen */}
+      {/* BOOKING DETAILS (Used by both Staff & Renter) */}
       {/* ====================================================================== */}
       <Stack.Screen
         name="BookingDetails"
