@@ -785,13 +785,13 @@ export const AdditionalFeesScreen: React.FC = () => {
           <View style={styles.heroLeft}>
             <View style={styles.heroIcon}>
               <AntDesign name="wallet" size={24} color="#14121F" />
-            </View>
+          </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.heroTitle}>Phí bổ sung</Text>
               <Text style={styles.heroSubtitle}>
                 Thêm các loại phí phát sinh trong quá trình thuê xe
               </Text>
-            </View>
+        </View>
           </View>
         </View>
 
@@ -800,14 +800,14 @@ export const AdditionalFeesScreen: React.FC = () => {
           <View style={styles.sectionHeaderLeft}>
             <View style={styles.sectionIconContainer}>
               <AntDesign name="warning" size={18} color="#FF6B6B" />
-            </View>
+          </View>
             <View>
               <Text style={styles.sectionTitle}>Phí hư hỏng</Text>
               <Text style={styles.sectionSubtitle}>
                 {damageFees.length}{" "}
                 {damageFees.length === 1 ? "hư hỏng" : "hư hỏng"} đã thêm
               </Text>
-            </View>
+        </View>
           </View>
           <TouchableOpacity
             style={[styles.addButton, isSubmitting && styles.disabled]}
@@ -825,7 +825,7 @@ export const AdditionalFeesScreen: React.FC = () => {
             <Text style={styles.emptyStateSubtext}>
               Nhấn nút + để thêm hư hỏng
             </Text>
-          </View>
+              </View>
         ) : (
           damageFees.map((damage, index) => {
             const isExpanded = expandedDamageCards.has(index);
@@ -837,15 +837,15 @@ export const AdditionalFeesScreen: React.FC = () => {
                       <AntDesign name="warning" size={14} color="#FF6B6B" />
                       <Text style={styles.damageBadgeText}>
                         Hư hỏng #{index + 1}
-                      </Text>
-                    </View>
-                  </View>
+              </Text>
+            </View>
+        </View>
                   <View style={styles.damageCardHeaderRight}>
-                    <TouchableOpacity
+            <TouchableOpacity
                       style={styles.collapseBtn}
                       onPress={() => toggleDamageCard(index)}
-                      disabled={isSubmitting}
-                    >
+              disabled={isSubmitting}
+            >
                       <AntDesign
                         name={isExpanded ? "up" : "down"}
                         size={16}
@@ -869,9 +869,9 @@ export const AdditionalFeesScreen: React.FC = () => {
                         size={20}
                         color="#FF6B6B"
                       />
-                    </TouchableOpacity>
+            </TouchableOpacity>
                   </View>
-                </View>
+          </View>
 
                 {!isExpanded && damage.damageType && (
                   <Text style={styles.damageCardSummary}>
@@ -885,28 +885,28 @@ export const AdditionalFeesScreen: React.FC = () => {
                   <View style={styles.damageForm}>
                     <View style={styles.damageFormRow}>
                       <Text style={styles.damageInputLabel}>Loại hư hỏng</Text>
-                      <TouchableOpacity
+                <TouchableOpacity
                         style={[
                           styles.damageSelectBox,
                           isSubmitting && styles.disabled,
                         ]}
-                        activeOpacity={0.8}
-                        disabled={isSubmitting}
-                        onPress={() =>
+                  activeOpacity={0.8}
+                  disabled={isSubmitting}
+                  onPress={() =>
                           setOpenDamageIdx(
                             openDamageIdx === index ? null : index
                           )
-                        }
-                      >
+                  }
+                >
                         <Text style={styles.damageSelectText}>
                           {damage.damageType || "Chọn loại hư hỏng"}
-                        </Text>
-                        <AntDesign
+                  </Text>
+                  <AntDesign
                           name={openDamageIdx === index ? "up" : "down"}
-                          size={14}
-                          color={colors.text.secondary}
-                        />
-                      </TouchableOpacity>
+                    size={14}
+                    color={colors.text.secondary}
+                  />
+                </TouchableOpacity>
                       {openDamageIdx === index && (
                         <View style={styles.damageDropdown}>
                           <ScrollView
@@ -915,10 +915,10 @@ export const AdditionalFeesScreen: React.FC = () => {
                             showsVerticalScrollIndicator={true}
                           >
                             {damageTypeOptions.map((opt) => (
-                              <TouchableOpacity
+                      <TouchableOpacity
                                 key={opt.damageType}
                                 style={styles.damageDropdownItem}
-                                onPress={() => {
+                        onPress={() => {
                                   updateDamageField(
                                     index,
                                     "damageType",
@@ -930,12 +930,12 @@ export const AdditionalFeesScreen: React.FC = () => {
                                 <Text style={styles.damageDropdownItemText}>
                                   {opt.displayText}
                                 </Text>
-                              </TouchableOpacity>
-                            ))}
+                      </TouchableOpacity>
+                    ))}
                           </ScrollView>
-                        </View>
-                      )}
-                    </View>
+                  </View>
+                )}
+              </View>
 
                     <View style={styles.damageFormRow}>
                       <View style={styles.damageInputLabelRow}>
@@ -965,24 +965,24 @@ export const AdditionalFeesScreen: React.FC = () => {
                           })()}
                       </View>
                       <View style={styles.damageAmountInputContainer}>
-                        <TextInput
+                <TextInput
                           style={[
                             styles.damageAmountInput,
                             damageAmountErrors[index] &&
                               styles.damageAmountInputError,
                           ]}
-                          placeholder="0"
-                          placeholderTextColor={colors.text.secondary}
-                          keyboardType="numeric"
+                  placeholder="0"
+                  placeholderTextColor={colors.text.secondary}
+                  keyboardType="numeric"
                           value={String(damage.amount || 0)}
                           onChangeText={(t) =>
                             updateDamageField(index, "amount", t)
                           }
-                          editable={!isSubmitting}
-                        />
+                  editable={!isSubmitting}
+                />
                         <View style={styles.damageAmountBadge}>
                           <Text style={styles.damageAmountBadgeText}>VND</Text>
-                        </View>
+              </View>
                       </View>
                       {damageAmountErrors[index] &&
                         (() => {
@@ -1012,20 +1012,20 @@ export const AdditionalFeesScreen: React.FC = () => {
                       <Text style={styles.damageInputLabel}>
                         Ghi chú bổ sung
                       </Text>
-                      <TextInput
+                <TextInput
                         style={[styles.damageNotesInput, styles.damageTextArea]}
                         placeholder="Mô tả chi tiết về hư hỏng..."
-                        placeholderTextColor={colors.text.secondary}
+                  placeholderTextColor={colors.text.secondary}
                         value={damage.additionalNotes}
                         onChangeText={(t) =>
                           updateDamageField(index, "additionalNotes", t)
                         }
-                        editable={!isSubmitting}
+                  editable={!isSubmitting}
                         multiline
                         numberOfLines={3}
-                      />
-                    </View>
-                  </View>
+                />
+              </View>
+            </View>
                 )}
               </View>
             );
@@ -1226,8 +1226,8 @@ export const AdditionalFeesScreen: React.FC = () => {
                                 </View>
                               </View>
                             </TouchableOpacity>
-                          ))}
-                        </View>
+          ))}
+        </View>
                       )}
                     </View>
                   </View>
@@ -1239,7 +1239,7 @@ export const AdditionalFeesScreen: React.FC = () => {
 
         {/* Damage Fees Summary Card */}
         {damageFees.length > 0 && (
-          <View style={styles.summaryCard}>
+        <View style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
               <View style={styles.summaryHeaderIcon}>
                 <AntDesign name="warning" size={20} color="#FF6B6B" />
@@ -1258,7 +1258,7 @@ export const AdditionalFeesScreen: React.FC = () => {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.summaryLabel}>
                         Phí hư hỏng #{index + 1}
-                      </Text>
+            </Text>
                       {damageTypeInfo && (
                         <Text style={styles.summaryNote}>
                           {damageTypeInfo.displayText}
@@ -1266,7 +1266,7 @@ export const AdditionalFeesScreen: React.FC = () => {
                             ` - ${damage.additionalNotes}`}
                         </Text>
                       )}
-                    </View>
+          </View>
                   </View>
                   <Text style={[styles.summaryValue, { color: "#FF6B6B" }]}>
                     {formatCurrency(damage.amount || 0)}
@@ -1275,8 +1275,8 @@ export const AdditionalFeesScreen: React.FC = () => {
               );
             })}
 
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryRow}>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryRow}>
               <Text style={styles.summaryTotalLabel}>Tổng phí hư hỏng</Text>
               <Text style={[styles.summaryTotalValue, { color: "#FF6B6B" }]}>
                 {formatCurrency(subtotalDamageFees)}
@@ -1346,12 +1346,12 @@ export const AdditionalFeesScreen: React.FC = () => {
                           )}
                         </View>
                       </View>
-                      <Text
+            <Text
                         style={[styles.summaryValue, { color: feeInfo.color }]}
-                      >
+            >
                         {formatCurrency(feeAmount)}
-                      </Text>
-                    </View>
+            </Text>
+          </View>
                   );
                 })}
 
@@ -1359,7 +1359,7 @@ export const AdditionalFeesScreen: React.FC = () => {
                   <View style={styles.summaryRowLeft}>
                     <AntDesign name="plus-circle" size={14} color="#C9B6FF" />
                     <Text style={styles.summaryLabel}>Tổng phí bổ sung</Text>
-                  </View>
+        </View>
                   <Text style={[styles.summaryValue, { color: "#C9B6FF" }]}>
                     {formatCurrency(subtotalCustomFees)}
                   </Text>

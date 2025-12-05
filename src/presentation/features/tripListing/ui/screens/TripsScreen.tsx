@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import sl from "../../../../../core/di/InjectionContainer";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
 import { CancelBookingUseCase } from "../../../../../domain/usecases/booking/CancelBookingUseCase";
@@ -351,6 +351,9 @@ export const TripsScreen: React.FC = () => {
 
         return (
             <FlatList
+                refreshControl={
+                    <RefreshControl refreshing={loading} onRefresh={refetch} />
+                }
                 data={filteredCurrentTrips}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => (
@@ -397,6 +400,9 @@ export const TripsScreen: React.FC = () => {
 
         return (
             <FlatList
+                refreshControl={
+                    <RefreshControl refreshing={loading} onRefresh={refetch} />
+                }
                 data={filteredPastTrips}
                 keyExtractor={item => item.id}
                 renderItem={({ item, index }) => (
