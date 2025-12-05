@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Modal as RNModal,
   RefreshControl,
+  Alert,
+  Linking,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -25,9 +27,6 @@ import { Booking } from "../../../../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../../../../domain/entities/booking/RentalContract";
 import Pdf from "react-native-pdf";
 import { WebView } from "react-native-webview";
-import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleModel";
-import { GetAllVehicleModelsUseCase } from "../../../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ";
-import { useSelector } from "react-redux";
 import { RootState } from "../../../../authentication/store";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
@@ -38,6 +37,7 @@ import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetListRentalReceipt";
 import { GpsSharingInviteUseCase } from "../../../../../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
 import Toast from "react-native-toast-message";
+import { useAppSelector } from "../../../../authentication/store/hooks";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -49,7 +49,7 @@ type BookingDetailsScreenRouteProp = RouteProp<
 export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<BookingDetailsScreenRouteProp>();
   const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
-  const user = useSelector((state: RootState) => state.auth.user);
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [contract, setContract] = useState<RentalContract | null>(null);
   const [rentalReceipts, setRentalReceipts] = useState<RentalReceipt[] | null>(
@@ -60,21 +60,15 @@ export const BookingDetailsScreen: React.FC = () => {
   const [showContract, setShowContract] = useState(false);
   const [webviewLoading, setWebviewLoading] = useState(false);
   const [viewer, setViewer] = useState<"pdf" | "webview">("pdf");
-  const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showModelList, setShowModelList] = useState(false);
-  const [selectedModelId, setSelectedModelId] = useState<string>("");
-  const [saving, setSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [showReceiptListModal, setShowReceiptListModal] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       fetchBooking();
-      fetchVehicleModels();
       fetchRentalReceipt();
-      // fetchSummary();
     }, [])
   );
 
@@ -148,17 +142,42 @@ export const BookingDetailsScreen: React.FC = () => {
     }
   };
 
-  const fetchVehicleModels = async () => {
-    try {
-      const uc = new GetAllVehicleModelsUseCase(
-        sl.get("VehicleModelRepository")
-      );
-      const res = await uc.execute();
-      setVehicleModels(res);
-    } catch (e) {
-      // ignore
-      console.error("Error fetching vehicle models:", e);
-    }
+  const handleCancelBooking = () => {
+    Alert.alert(
+      "Hủy đặt xe",
+      "Bạn có chắc chắn muốn hủy đặt xe này không? Hành động này không thể hoàn tác.",
+      [
+        { text: "Không", style: "cancel" },
+        {
+          text: "Có, hủy đặt xe",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const cancelBookingUseCase = sl.getCancelBookingUseCase();
+              const cancelledBooking = await cancelBookingUseCase.execute(
+                bookingId
+              );
+              console.log("cancelledBooking", cancelledBooking);
+              if (cancelledBooking.bookingStatus === "Cancelled") {
+                fetchBooking();
+                Toast.show({
+                  type: "success",
+                  text1: "Thành công",
+                  text2: "Đã hủy đặt xe",
+                });
+              }
+            } catch (error: any) {
+              Toast.show({
+                type: "error",
+                text1: "Lỗi",
+                text2:
+                  error.message || "Không thể hủy đặt xe. Vui lòng thử lại.",
+              });
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getLastReceipt = () => {
@@ -180,34 +199,36 @@ export const BookingDetailsScreen: React.FC = () => {
     return lastReceipt;
   };
 
-  const openEdit = () => {
-    setSelectedModelId(booking?.vehicleModel?.id || "");
-    setShowEdit(true);
+  const handleGetDirectionsHandover = () => {
+    if (!booking) return;
+    const url = `https://maps.google.com/?q=${encodeURIComponent(
+      booking.handoverBranch?.address
+    )}`;
+    Linking.openURL(url);
   };
 
-  const handleCloseEdit = () => {
-    setShowEdit(false);
-    setSelectedModelId("");
-    setShowModelList(false);
+  const handleCallHandoverBranch = () => {
+    if (!booking) return;
+    Linking.openURL(`tel:${booking.handoverBranch?.phone}`);
+  };
+
+  const handleCallReturnBranch = () => {
+    if (!booking) return;
+    Linking.openURL(`tel:${booking.returnBranch?.phone}`);
+  };
+
+  const handleGetDirectionsReturn = () => {
+    if (!booking) return;
+    const url = `https://maps.google.com/?q=${encodeURIComponent(
+      booking.returnBranch?.address
+    )}`;
+    Linking.openURL(url);
   };
 
   const openVehicleDetails = () => {
     navigation.navigate("RentedVehicleDetails", {
       vehicleId: booking?.vehicle?.id,
     });
-  };
-
-  const saveEdit = async () => {
-    try {
-      setSaving(true);
-      const chosen = vehicleModels.find((m) => m.id === selectedModelId);
-      if (chosen && booking) {
-        setBooking({ ...booking, vehicleModel: chosen } as Booking);
-      }
-      setShowEdit(false);
-    } finally {
-      setSaving(false);
-    }
   };
 
   const hasContract = !!contract?.contractPdfUrl;
@@ -259,7 +280,15 @@ export const BookingDetailsScreen: React.FC = () => {
           bg: "rgba(59, 130, 246, 0.12)",
           border: "rgba(59, 130, 246, 0.4)",
           text: "#3B82F6",
-          icon: "checkcircle",
+          icon: "check-circle",
+        };
+      case "Cancelled":
+        return {
+          label: "Đã hủy",
+          bg: "rgba(249,112,102,0.12)",
+          border: "rgba(249,112,102,0.4)",
+          text: "#F97066",
+          icon: "close-circle",
         };
       default:
         return {
@@ -267,7 +296,7 @@ export const BookingDetailsScreen: React.FC = () => {
           bg: "rgba(148, 163, 184, 0.15)",
           border: "rgba(148, 163, 184, 0.4)",
           text: "#94A3B8",
-          icon: "exclamationcircleo",
+          icon: "exclamation-circle",
         };
     }
   }, [booking?.bookingStatus]);
@@ -472,7 +501,10 @@ export const BookingDetailsScreen: React.FC = () => {
             <View
               style={[
                 styles.statusPill,
-                { backgroundColor: statusMeta.bg, borderColor: statusMeta.border },
+                {
+                  backgroundColor: statusMeta.bg,
+                  borderColor: statusMeta.border,
+                },
               ]}
             >
               <AntDesign
@@ -480,12 +512,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 size={12}
                 color={statusMeta.text}
               />
-              <Text
-                style={[
-                  styles.statusPillText,
-                  { color: statusMeta.text },
-                ]}
-              >
+              <Text style={[styles.statusPillText, { color: statusMeta.text }]}>
                 {statusMeta.label}
               </Text>
             </View>
@@ -501,16 +528,16 @@ export const BookingDetailsScreen: React.FC = () => {
             {/* Vehicle Model */}
             {booking?.vehicle?.id && (
               <>
-            <View style={styles.iconRow}>
-              <View style={styles.iconLeft}>
+                <View style={styles.iconRow}>
+                  <View style={styles.iconLeft}>
                     <AntDesign name="idcard" size={14} color="#7DB3FF" />
-                <Text style={styles.iconLabel}>Mã xe thuê</Text>
-              </View>
-              <Text style={styles.iconValue}>
-                #{booking?.vehicle?.id.slice(-12) || "-"}
-              </Text>
-            </View>
-            <View style={styles.divider} />
+                    <Text style={styles.iconLabel}>Mã xe thuê</Text>
+                  </View>
+                  <Text style={styles.iconValue}>
+                    #{booking?.vehicle?.id.slice(-12) || "-"}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
               </>
             )}
             <View style={styles.iconRow}>
@@ -524,17 +551,150 @@ export const BookingDetailsScreen: React.FC = () => {
             </View>
             <View style={styles.divider} />
 
-            {/* Location */}
+            {/* Location - Handover */}
             <View style={styles.iconRow}>
               <View style={styles.iconLeft}>
                 <AntDesign name="environment" size={14} color="#7DB3FF" />
-                <Text style={styles.iconLabel}>Địa điểm thuê</Text>
+                <Text style={styles.iconLabel}>
+                  {booking?.bookingStatus === "Returned" ||
+                  booking?.bookingStatus === "Completed"
+                    ? booking?.handoverBranch?.id === booking?.returnBranch?.id
+                      ? "Địa điểm nhận/trả xe"
+                      : "Địa điểm nhận xe"
+                    : "Địa điểm thuê"}
+                </Text>
               </View>
               <Text style={styles.iconValue}>
                 {booking?.handoverBranch?.branchName || "-"}
               </Text>
             </View>
+            {/* Branch Quick Actions - Handover */}
+            {booking?.handoverBranch && (
+              <View style={styles.branchQuickActions}>
+                {booking?.handoverBranch?.address && (
+                  <TouchableOpacity
+                    style={styles.branchQuickBtn}
+                    onPress={handleGetDirectionsHandover}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.branchQuickIconWrap}>
+                      <AntDesign name="environment" size={14} color="#3B82F6" />
+                    </View>
+                    <Text style={styles.branchQuickText}>
+                      {booking?.bookingStatus === "Returned" ||
+                      booking?.bookingStatus === "Completed"
+                        ? booking?.handoverBranch?.id === booking?.returnBranch?.id
+                          ? "Chỉ đường"
+                          : "Chỉ đường nhận xe"
+                        : "Chỉ đường nhận xe"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {booking?.handoverBranch?.phone && (
+                  <TouchableOpacity
+                    style={[styles.branchQuickBtn, styles.branchQuickBtnHandoverCall]}
+                    onPress={handleCallHandoverBranch}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.branchQuickIconWrap,
+                        styles.branchQuickIconWrapHandoverCall,
+                      ]}
+                    >
+                      <AntDesign name="phone" size={14} color="#3B82F6" />
+                    </View>
+                    <Text
+                      style={[
+                        styles.branchQuickText,
+                        styles.branchQuickTextHandoverCall,
+                      ]}
+                    >
+                      Gọi điện
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
             <View style={styles.divider} />
+            {/* Location - Return (only if different from handover and status is Returned/Completed) */}
+            {(booking?.bookingStatus === "Returned" ||
+              booking?.bookingStatus === "Completed") &&
+              booking?.returnBranch &&
+              booking?.handoverBranch?.id !== booking?.returnBranch?.id && (
+                <>
+                  <View style={styles.iconRow}>
+                    <View style={styles.iconLeft}>
+                      <AntDesign name="environment" size={14} color="#FFB300" />
+                      <Text style={styles.iconLabel}>Địa điểm trả xe</Text>
+                    </View>
+                    <Text style={styles.iconValue}>
+                      {booking?.returnBranch?.branchName || "-"}
+                    </Text>
+                  </View>
+                  {/* Branch Quick Actions - Return */}
+                  <View style={styles.branchQuickActions}>
+                    {booking?.returnBranch?.address && (
+                      <TouchableOpacity
+                        style={[
+                          styles.branchQuickBtn,
+                          styles.branchQuickBtnReturn,
+                        ]}
+                        onPress={handleGetDirectionsReturn}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.branchQuickIconWrap,
+                            styles.branchQuickIconWrapReturn,
+                          ]}
+                        >
+                          <AntDesign name="environment" size={14} color="#FFB300" />
+                        </View>
+                        <Text
+                          style={[
+                            styles.branchQuickText,
+                            styles.branchQuickTextReturn,
+                          ]}
+                        >
+                          Chỉ đường trả xe
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    {booking?.returnBranch?.phone && (
+                      <TouchableOpacity
+                        style={[
+                          styles.branchQuickBtn,
+                          styles.branchQuickBtnCall,
+                          styles.branchQuickBtnReturnCall,
+                        ]}
+                        onPress={handleCallReturnBranch}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.branchQuickIconWrap,
+                            styles.branchQuickIconWrapCall,
+                            styles.branchQuickIconWrapReturnCall,
+                          ]}
+                        >
+                          <AntDesign name="phone" size={14} color="#FFB300" />
+                        </View>
+                        <Text
+                          style={[
+                            styles.branchQuickText,
+                            styles.branchQuickTextCall,
+                            styles.branchQuickTextReturnCall,
+                          ]}
+                        >
+                          Gọi điện
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <View style={styles.divider} />
+                </>
+              )}
             {/* Start time */}
             <View style={styles.iconRow}>
               <View style={styles.iconLeft}>
@@ -569,29 +729,29 @@ export const BookingDetailsScreen: React.FC = () => {
         </View>
         {booking?.vehicle?.id && (
           <>
-          <TouchableOpacity
-            style={styles.vehicleDetailsBtn}
-            activeOpacity={0.85}
-            onPress={openVehicleDetails}
-          >
-            <View style={styles.vehicleDetailsLeft}>
-              <View style={styles.vehicleIconBadge}>
-                <AntDesign name="car" size={18} color="#000" />
+            <TouchableOpacity
+              style={styles.vehicleDetailsBtn}
+              activeOpacity={0.85}
+              onPress={openVehicleDetails}
+            >
+              <View style={styles.vehicleDetailsLeft}>
+                <View style={styles.vehicleIconBadge}>
+                  <AntDesign name="car" size={18} color="#000" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.vehicleDetailsTitle}>
+                    Xem thông tin xe đang thuê
+                  </Text>
+                  <Text style={styles.vehicleDetailsSubtitle}>
+                    {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
+                    {booking?.vehicleModel?.modelName ||
+                      booking?.vehicle?.vehicleModel?.modelName ||
+                      "Đang cập nhật"}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.vehicleDetailsTitle}>
-                  Xem thông tin xe đang thuê
-                </Text>
-                <Text style={styles.vehicleDetailsSubtitle}>
-                  {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
-                  {booking?.vehicleModel?.modelName ||
-                    booking?.vehicle?.vehicleModel?.modelName ||
-                    "Đang cập nhật"}
-                </Text>
-              </View>
-            </View>
-            <AntDesign name="arrow-right" size={18} color="#fff" />
-          </TouchableOpacity>
+              <AntDesign name="arrow-right" size={18} color="#fff" />
+            </TouchableOpacity>
 
             {/* Charging history CTA - navigate to booking charging list */}
             <TouchableOpacity
@@ -709,116 +869,116 @@ export const BookingDetailsScreen: React.FC = () => {
 
         {/* Return Summary */}
         {booking?.bookingStatus === "Completed" && (
-        <View style={styles.section}>
-          <SectionHeader title="Tóm tắt trả xe" icon="profile" />
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryHeaderRow}>
-              <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
-              <View style={styles.summaryPill}>
-                <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
+          <View style={styles.section}>
+            <SectionHeader title="Tóm tắt trả xe" icon="profile" />
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryHeaderRow}>
+                <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
+                <View style={styles.summaryPill}>
+                  <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Phí thuê xe</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.baseRentalFee || 0)}
-              </Text>
-            </View>
-            {summary?.totalChargingFee !== 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí sạc pin</Text>
+                <Text style={styles.summaryKey}>Phí thuê xe</Text>
                 <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.totalChargingFee || 0)}
+                  {formatVnd(summary?.baseRentalFee || 0)}
                 </Text>
               </View>
-            )}
+              {summary?.totalChargingFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí sạc pin</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.totalChargingFee || 0)}
+                  </Text>
+                </View>
+              )}
               {summary?.feesBreakdown?.damageDetails.length > 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí hư hỏng</Text>
-                <Text style={styles.summaryVal}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí hư hỏng</Text>
+                  <Text style={styles.summaryVal}>
                     {formatVnd(
                       summary?.feesBreakdown.damageDetails.reduce(
                         (acc, detail) => acc + detail.amount,
                         0
                       ) || 0
                     )}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.cleaningFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí vệ sinh</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.crossBranchFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.excessKmFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.lateReturnFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Trả muộn</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
-                </Text>
-              </View>
-            )}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.cleaningFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí vệ sinh</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.crossBranchFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.excessKmFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
+                  </Text>
+                </View>
+              )}
+              {summary?.feesBreakdown?.lateReturnFee !== 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Trả muộn</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
+                  </Text>
+                </View>
+              )}
 
-            <View style={styles.divider} />
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Tổng phụ phí</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.totalAmount || 0)}
-              </Text>
-            </View>
+              <View style={styles.divider} />
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Tổng phụ phí</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.totalAmount || 0)}
+                </Text>
+              </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Tiền cọc</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.depositAmount || 0)}
-              </Text>
-            </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Tiền cọc</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.depositAmount || 0)}
+                </Text>
+              </View>
 
-            <View style={styles.divider} />
-            <View style={[styles.summaryRow]}>
-              <Text style={styles.summaryTotalLabel}>
-                {summary?.refundAmount >= 0
-                  ? "Số tiền hoàn lại"
-                  : "Số tiền cần thanh toán thêm"}
-              </Text>
-              <Text
-                style={[
-                  styles.summaryTotalValue,
-                  {
-                    color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
-                  },
-                ]}
-              >
-                {formatVnd(Math.abs(summary?.refundAmount || 0))}
-              </Text>
+              <View style={styles.divider} />
+              <View style={[styles.summaryRow]}>
+                <Text style={styles.summaryTotalLabel}>
+                  {summary?.refundAmount >= 0
+                    ? "Số tiền hoàn lại"
+                    : "Số tiền cần thanh toán thêm"}
+                </Text>
+                <Text
+                  style={[
+                    styles.summaryTotalValue,
+                    {
+                      color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
+                    },
+                  ]}
+                >
+                  {formatVnd(Math.abs(summary?.refundAmount || 0))}
+                </Text>
+              </View>
+              {summary?.refundAmount < 0 && (
+                <Text style={styles.paymentNote}>
+                  Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
+                </Text>
+              )}
             </View>
-            {summary?.refundAmount < 0 && (
-              <Text style={styles.paymentNote}>
-                Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
-              </Text>
-            )}
           </View>
-        </View>
         )}
 
         {hasRentalReceipt && (
@@ -849,15 +1009,15 @@ export const BookingDetailsScreen: React.FC = () => {
                 (booking?.bookingStatus === "Returned" &&
                   rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
                     // rentalReceipts?.[0]?.checkListReturnFile &&
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.returnReportBtn]}
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.returnReportBtn]}
                       onPress={openReturnReceiptReport}
-                >
-                  <AntDesign name="file-text" size={18} color="#000" />
-                  <Text style={styles.returnReportBtnText}>
-                    Xem biên bản trả xe
-                  </Text>
-                </TouchableOpacity>
+                    >
+                      <AntDesign name="file-text" size={18} color="#000" />
+                      <Text style={styles.returnReportBtnText}>
+                        Xem biên bản trả xe
+                      </Text>
+                    </TouchableOpacity>
                   ))}
             </InfoCard>
           </View>
@@ -929,11 +1089,19 @@ export const BookingDetailsScreen: React.FC = () => {
           !hasContract && (
             <View style={styles.editRow}>
               <TouchableOpacity
-                style={[styles.actionBtn, styles.updateBtn]}
-                onPress={openEdit}
+                style={[styles.actionBtn, styles.cancelBtn]}
+                onPress={handleCancelBooking}
+                activeOpacity={0.85}
               >
-                <AntDesign name="edit" size={16} color="#000" />
-                <Text style={styles.actionBtnText}>Update Booking</Text>
+                <View style={styles.cancelIconWrap}>
+                  <AntDesign name="close-circle" size={16} color="#F97066" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cancelTitle}>Hủy booking</Text>
+                  <Text style={styles.cancelSubtitle}>
+                    Trả xe về kho, hoàn cọc
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
           )}
@@ -1085,104 +1253,6 @@ export const BookingDetailsScreen: React.FC = () => {
           </View>
         </SafeAreaView>
       </Modal>
-
-      {/* Edit Booking Modal */}
-      <RNModal
-        visible={showEdit}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowEdit(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeaderDark}>
-              <Text style={styles.modalTitleDark}>Update Booking</Text>
-              <TouchableOpacity onPress={handleCloseEdit}>
-                <AntDesign name="close" size={18} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.fieldLabelDark}>Vehicle Model</Text>
-            <View style={styles.selectContainerDark}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={[styles.inputDark, styles.selectLike]}
-                onPress={() => setShowModelList((p) => !p)}
-              >
-                <Text style={{ color: colors.text.primary }}>
-                  {vehicleModels.find(
-                    (m) =>
-                      m.id === (selectedModelId || booking?.vehicleModel?.id)
-                  )?.modelName || "All models"}
-                </Text>
-                <AntDesign
-                  name={showModelList ? "up" : "down"}
-                  size={12}
-                  color={colors.text.secondary}
-                />
-              </TouchableOpacity>
-              {showModelList && (
-                <View style={styles.dropdownList}>
-                  <ScrollView style={{ maxHeight: 160 }}>
-                    <TouchableOpacity
-                      key={"all"}
-                      style={[
-                        styles.dropdownItem,
-                        !selectedModelId && styles.dropdownItemSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedModelId("");
-                        setShowModelList(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>All models</Text>
-                    </TouchableOpacity>
-                    {vehicleModels.map((m) => (
-                      <TouchableOpacity
-                        key={m.id}
-                        style={[
-                          styles.dropdownItem,
-                          selectedModelId === m.id &&
-                            styles.dropdownItemSelected,
-                        ]}
-                        onPress={() => {
-                          setSelectedModelId(m.id);
-                          setShowModelList(false);
-                        }}
-                      >
-                        <Text style={styles.dropdownItemText}>
-                          {m.modelName}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.modalActionsDark}>
-              <TouchableOpacity
-                style={[styles.modalBtnDark, styles.resetBtnDark]}
-                onPress={() => {
-                  setSelectedModelId("");
-                  setShowModelList(false);
-                }}
-              >
-                <Text style={styles.modalBtnTextDark}>Reset</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtnDark, styles.applyBtnDark]}
-                onPress={saveEdit}
-                disabled={saving}
-              >
-                <Text style={[styles.modalBtnTextDark, { color: "#000" }]}>
-                  {saving ? "Saving..." : "Save"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </RNModal>
 
       {/* Receipt List Modal */}
       <RNModal
@@ -1462,6 +1532,88 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     marginBottom: 8,
   },
+  // Branch Quick Actions Styles
+  branchQuickActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  branchQuickBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "rgba(59,130,246,0.1)",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "rgba(59,130,246,0.25)",
+  },
+  branchQuickBtnCall: {
+    backgroundColor: "rgba(34,197,94,0.1)",
+    borderColor: "rgba(34,197,94,0.25)",
+  },
+  branchQuickIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: "rgba(59,130,246,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(59,130,246,0.3)",
+  },
+  branchQuickIconWrapCall: {
+    backgroundColor: "rgba(34,197,94,0.15)",
+    borderColor: "rgba(34,197,94,0.3)",
+  },
+  branchQuickText: {
+    color: "#3B82F6",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  branchQuickTextCall: {
+    color: "#22C55E",
+  },
+  // Handover Branch Call Button Styles (màu xanh dương để đồng bộ với nút chỉ đường)
+  branchQuickBtnHandoverCall: {
+    backgroundColor: "rgba(59,130,246,0.1)",
+    borderColor: "rgba(59,130,246,0.25)",
+  },
+  branchQuickIconWrapHandoverCall: {
+    backgroundColor: "rgba(59,130,246,0.15)",
+    borderColor: "rgba(59,130,246,0.3)",
+  },
+  branchQuickTextHandoverCall: {
+    color: "#3B82F6",
+  },
+  // Return Branch Styles
+  branchQuickBtnReturn: {
+    backgroundColor: "rgba(255,179,0,0.1)",
+    borderColor: "rgba(255,179,0,0.25)",
+  },
+  branchQuickBtnReturnCall: {
+    backgroundColor: "rgba(255,179,0,0.1)",
+    borderColor: "rgba(255,179,0,0.25)",
+  },
+  branchQuickIconWrapReturn: {
+    backgroundColor: "rgba(255,179,0,0.15)",
+    borderColor: "rgba(255,179,0,0.3)",
+  },
+  branchQuickIconWrapReturnCall: {
+    backgroundColor: "rgba(255,179,0,0.15)",
+    borderColor: "rgba(255,179,0,0.3)",
+  },
+  branchQuickTextReturn: {
+    color: "#FFB300",
+  },
+  branchQuickTextReturnCall: {
+    color: "#FFB300",
+  },
   bullet: {
     fontSize: 14,
     color: colors.text.secondary,
@@ -1487,34 +1639,6 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
   },
-  proceedButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 12,
-    marginTop: 20,
-    marginBottom: 20,
-    marginHorizontal: 16,
-  },
-  proceedButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  checkIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  proceedButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   editRow: {
     flexDirection: "row",
     gap: 10,
@@ -1530,11 +1654,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  updateBtn: { backgroundColor: "#C9B6FF" },
   changeBtn: { backgroundColor: "#FFD666" },
   gpsBtn: { backgroundColor: "#7DB3FF" },
   shareGpsBtn: { backgroundColor: "#7CFFCB" },
   receiptBtn: { backgroundColor: "#C9B6FF" },
+  cancelBtn: {
+    backgroundColor: "rgba(249,112,102,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(249,112,102,0.35)",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  cancelIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: "rgba(249,112,102,0.16)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelTitle: {
+    color: "#F97066",
+    fontWeight: "800",
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  cancelSubtitle: {
+    color: "#FEC6A1",
+    fontSize: 11,
+    fontWeight: "600",
+  },
   actionBtnText: { color: "#000", fontWeight: "700" },
   contractCreateRow: {
     marginTop: 16,
@@ -1818,65 +1968,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  fieldLabelDark: {
-    color: colors.text.secondary,
-    marginBottom: 6,
-    fontSize: 12,
-  },
-  inputDark: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: colors.text.primary,
-  },
-  selectContainerDark: { position: "relative" },
-  selectLike: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  dropdownList: {
-    position: "absolute",
-    bottom: 46,
-    left: 0,
-    right: 0,
-    backgroundColor: "#262626",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#333333",
-    overflow: "hidden",
-    zIndex: 1000,
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333333",
-  },
-  dropdownItemSelected: { backgroundColor: "#313131" },
-  dropdownItemText: { color: colors.text.primary, fontSize: 12 },
-  modalActionsDark: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  modalBtnDark: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
-  },
-  resetBtnDark: { backgroundColor: "#2A2A2A" },
-  applyBtnDark: { backgroundColor: "#C9B6FF", borderColor: "#C9B6FF" },
-  modalBtnTextDark: { color: colors.text.primary, fontWeight: "700" },
   signContractBtn: {
     backgroundColor: "#6B3EF5",
     borderRadius: 10,

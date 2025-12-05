@@ -6,12 +6,12 @@ import { TripStackParamList } from '../../StackParameters/types';
 // RENTER SCREENS (Trip Listing & Booking Details)
 // ============================================================================
 import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
-import { BookingDetailsScreen } from '../../../../features/tripDetails/ui/screens/BookingDetailsScreen';
 
 // ============================================================================
 // STAFF SCREENS (kept for reference/future use)
 // ============================================================================
 import { 
+  BookingDetailsScreen,
   HandoverReceiptReportScreen, 
   RentedVehicleDetailsScreen 
 } from '../../../../features/staff/handover/ui/screens';
