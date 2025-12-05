@@ -13,6 +13,7 @@ import { VNPayCallback } from "../../../../models/booking/vnpay/VNPayCallback";
 import { BookingRemoteDataSource } from "../../../interfaces/remote/booking/BookingRemoteDataSource";
 import { BookingResponse } from "../../../../models/booking/BookingResponse";
 import { AssignVehicleResponse } from "../../../../models/booking/AssignVehicleResponse";
+import { ZaloPayCallbackRequest } from "../../../../models/booking/zalo/ZaloPayCallbackRequest";
 
 export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   constructor(private axiosClient: AxiosClient) {}
@@ -329,6 +330,34 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         || error.response?.data?.error
         || error.message 
         || "Failed to create ZaloPay booking";
+      
+      throw new Error(errorMessage);
+    }
+  }
+
+    async verifyZaloPayPayment(request: ZaloPayCallbackRequest): Promise<boolean> {
+    try {
+      console.log('📤 [ZaloPay Callback] Request:', JSON.stringify(request, null, 2));
+
+      const response = await this.axiosClient.post<ApiResponse<boolean>>(
+        ApiEndpoints.booking.zaloPayCallback,
+        request
+      );
+
+      console.log('📥 [ZaloPay Callback] Response:', JSON.stringify(response.data, null, 2));
+
+      // Backend returns ResultResponse<bool> → ApiResponse<boolean>
+      const result = unwrapResponse(response.data);
+      
+      console.log('✅ [ZaloPay Callback] Success:', result);
+      return result;
+    } catch (error: any) {
+      console.error('❌ [ZaloPay Callback] Error:', error);
+      console.error('❌ Error response:', JSON.stringify(error.response?.data, null, 2));
+      
+      const errorMessage = error.response?.data?.message 
+        || error.message 
+        || 'Failed to verify ZaloPay payment';
       
       throw new Error(errorMessage);
     }

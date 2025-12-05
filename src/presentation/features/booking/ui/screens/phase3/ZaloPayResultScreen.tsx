@@ -1,12 +1,24 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    Linking,
+    AppState,
+    AppStateStatus,
+} from 'react-native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, StyleSheet, Text, View } from 'react-native';
-import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BookingStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
+import sl from '../../../../../../core/di/InjectionContainer';
+import { SecondaryButton } from '../../../../homepage/ui/atoms/buttons/SecondaryButton';
 
-type NavigationPropType = StackNavigationProp<BookingStackParamList>;
+type RoutePropType = RouteProp<BookingStackParamList, 'ZaloPayResult'>;
+type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ZaloPayResult'>;
 
 interface BookingContext {
     bookingId?: string;
@@ -23,210 +35,478 @@ interface BookingContext {
     securityDeposit: string;
 }
 
-export const ZaloPayResultScreen: React.FC = () => {
-    const navigation = useNavigation<NavigationPropType>();
-    
-    const [loading, setLoading] = useState(true);
-    const [paymentSuccess, setPaymentSuccess] = useState(false);
-    const [errorMessage, setErrorMessage] = useState<string>('');
+interface ZaloPayCallbackData {
+    appid?: string;
+    apptransid?: string;
+    pmcid?: string;
+    bankcode?: string;
+    amount?: string;
+    discountamount?: string;
+    status?: string;
+    checksum?: string;
+}
 
-    // ✅ Listen for deep link (same pattern as VNPay)
+export const ZaloPayResultScreen: React.FC = () => {
+    const route = useRoute<RoutePropType>();
+    const navigation = useNavigation<NavigationPropType>();
+    const appState = useRef(AppState.currentState);
+
+    const verifyZaloPayPaymentUseCase = sl.getVerifyZaloPayPaymentUseCase();
+
+    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
+    const [errorMessage, setErrorMessage] = useState<string>('');
+    const [transactionId, setTransactionId] = useState<string>('');
+    const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const { bookingId } = route.params;
+
+    // ==================== LOAD BOOKING CONTEXT ====================
     useEffect(() => {
+        loadBookingContext();
+    }, []);
+
+    const loadBookingContext = async () => {
+        try {
+            console.log('📦 [CONTEXT] Loading booking context for:', bookingId);
+            const STORAGE_KEY = `zalopay_payment_context_${bookingId}`;
+            const contextJson = await AsyncStorage.getItem(STORAGE_KEY);
+            
+            if (contextJson) {
+                const context: BookingContext = JSON.parse(contextJson);
+                setBookingContext(context);
+                console.log('✅ [CONTEXT] Loaded successfully:', context);
+            } else {
+                console.warn('⚠️ [CONTEXT] No context found for bookingId:', bookingId);
+            }
+        } catch (error) {
+            console.error('❌ [CONTEXT] Load failed:', error);
+        }
+    };
+
+    // ==================== HANDLE ZALOPAY CALLBACK ====================
+    const handleZaloPayCallback = async (url: string) => {
+        console.log('═══════════════════════════════════════════════════');
+        console.log('🔔 [CALLBACK] Starting callback handling');
+        console.log('═══════════════════════════════════════════════════');
+        
+        if (isProcessing) {
+            console.log('⏳ [CALLBACK] Already processing, ignoring duplicate');
+            return;
+        }
+
+        console.log('📥 [CALLBACK] Raw URL:', url);
+        setIsProcessing(true);
+
+        try {
+            // Parse URL parameters
+            const params = parseCallbackUrl(url);
+            console.log('📋 [CALLBACK] Parsed params:', JSON.stringify(params, null, 2));
+
+            if (!params.status) {
+                console.error('❌ [CALLBACK] Missing status parameter!');
+                throw new Error('Missing status parameter in callback');
+            }
+
+            console.log('💳 [CALLBACK] Payment Status Code:', params.status);
+            console.log('💰 [CALLBACK] Amount:', params.amount);
+            console.log('🔖 [CALLBACK] Transaction ID:', params.apptransid);
+
+            setTransactionId(params.apptransid || '');
+            
+            // Verify payment
+            console.log('🔄 [CALLBACK] Starting payment verification...');
+            await verifyPaymentWithBackend(params);
+
+        } catch (error: any) {
+            console.error('═══════════════════════════════════════════════════');
+            console.error('❌ [CALLBACK] Processing ERROR:');
+            console.error('❌ Error message:', error.message);
+            console.error('❌ Error stack:', error.stack);
+            console.error('═══════════════════════════════════════════════════');
+            
+            setPaymentStatus('failed');
+            setErrorMessage(error.message || 'Có lỗi xảy ra khi xử lý thanh toán');
+        } finally {
+            setIsProcessing(false);
+            console.log('🏁 [CALLBACK] Processing finished');
+        }
+    };
+
+    // ==================== PARSE CALLBACK URL ====================
+    const parseCallbackUrl = (url: string): ZaloPayCallbackData => {
+        console.log('🔍 [PARSE] Starting URL parsing...');
+        try {
+            const urlObj = new URL(url);
+            console.log('🔍 [PARSE] URL object created');
+            console.log('🔍 [PARSE] Hostname:', urlObj.hostname);
+            console.log('🔍 [PARSE] Pathname:', urlObj.pathname);
+            console.log('🔍 [PARSE] Search params:', urlObj.search);
+            
+            const params: ZaloPayCallbackData = {};
+
+            urlObj.searchParams.forEach((value, key) => {
+                const lowerKey = key.toLowerCase();
+                console.log(`🔍 [PARSE] ${key} (${lowerKey}) = ${value}`);
+                params[lowerKey as keyof ZaloPayCallbackData] = value;
+            });
+
+            console.log('✅ [PARSE] Parsed successfully:', JSON.stringify(params, null, 2));
+            return params;
+        } catch (error) {
+            console.error('❌ [PARSE] Failed to parse URL:', error);
+            return {};
+        }
+    };
+
+    // ==================== VERIFY WITH BACKEND ====================
+    const verifyPaymentWithBackend = async (params: ZaloPayCallbackData) => {
+        console.log('═══════════════════════════════════════════════════');
+        console.log('🔐 [VERIFY] Starting backend verification');
+        console.log('═══════════════════════════════════════════════════');
+        
+        try {
+            // Parse parameters
+            const appId = params.appid ? parseInt(params.appid) : 0;
+            const appTransId = params.apptransid || '';
+            const pmcId = params.pmcid ? parseInt(params.pmcid) : 0;
+            const bankCode = params.bankcode || '';
+            const amount = params.amount ? parseInt(params.amount) : 0;
+            const discountAmount = params.discountamount ? parseInt(params.discountamount) : 0;
+            const status = params.status ? parseInt(params.status) : -1;
+            const checksum = params.checksum || '';
+
+            console.log('📤 [VERIFY] Sending to use case:');
+            console.log('   - AppId:', appId);
+            console.log('   - AppTransId:', appTransId);
+            console.log('   - PmcId:', pmcId);
+            console.log('   - BankCode:', bankCode);
+            console.log('   - Amount:', amount);
+            console.log('   - DiscountAmount:', discountAmount);
+            console.log('   - Status:', status, status === 1 ? '(SUCCESS)' : '(FAILED)');
+            console.log('   - Checksum:', checksum);
+
+            console.log('🎯 [VERIFY] Calling verifyZaloPayPaymentUseCase.execute()...');
+            
+            const isVerified = await verifyZaloPayPaymentUseCase.execute(
+                appId,
+                appTransId,
+                pmcId,
+                bankCode,
+                amount,
+                discountAmount,
+                status,
+                checksum
+            );
+
+            console.log('═══════════════════════════════════════════════════');
+            console.log('📊 [VERIFY] Backend response received:');
+            console.log('   - Verified:', isVerified);
+            console.log('   - Type:', typeof isVerified);
+            console.log('═══════════════════════════════════════════════════');
+
+            if (isVerified === true) {
+                console.log('✅ [VERIFY] Payment VERIFIED successfully!');
+                console.log('🎉 [VERIFY] Setting status to SUCCESS');
+                setPaymentStatus('success');
+                
+                console.log('⏰ [VERIFY] Scheduling navigation to contract in 2 seconds...');
+                setTimeout(() => {
+                    console.log('🚀 [VERIFY] Navigating to contract now...');
+                    navigateToContract();
+                }, 2000);
+            } else {
+                console.log('❌ [VERIFY] Payment verification FAILED');
+                console.log('❌ [VERIFY] isVerified value:', isVerified);
+                console.log('❌ [VERIFY] Setting status to FAILED');
+                setPaymentStatus('failed');
+                setErrorMessage('Thanh toán không thành công');
+            }
+
+        } catch (error: any) {
+            console.error('═══════════════════════════════════════════════════');
+            console.error('❌ [VERIFY] Payment verification ERROR:');
+            console.error('❌ Error name:', error.name);
+            console.error('❌ Error message:', error.message);
+            console.error('❌ Error stack:', error.stack);
+            console.error('❌ Full error:', JSON.stringify(error, null, 2));
+            console.error('═══════════════════════════════════════════════════');
+            
+            setPaymentStatus('failed');
+            setErrorMessage(error.message || 'Không thể xác nhận thanh toán với server');
+        }
+    };
+
+    // ==================== NAVIGATE TO CONTRACT ====================
+    const navigateToContract = () => {
+        console.log('🧭 [NAVIGATE] Starting navigation to contract...');
+        
+        if (!bookingContext) {
+            console.error('❌ [NAVIGATE] No booking context found!');
+            Alert.alert('Lỗi', 'Không tìm thấy thông tin booking');
+            return;
+        }
+
+        console.log('🧹 [NAVIGATE] Cleaning up AsyncStorage...');
+        AsyncStorage.removeItem(`zalopay_payment_context_${bookingId}`);
+
+        console.log('🚀 [NAVIGATE] Replacing screen with DigitalContract');
+        console.log('📋 [NAVIGATE] Contract params:', {
+            vehicleId: bookingContext.vehicleId,
+            vehicleName: bookingContext.vehicleName,
+            contractNumber: transactionId || bookingId
+        });
+
+        navigation.replace('DigitalContract', {
+            vehicleId: bookingContext.vehicleId,
+            vehicleName: bookingContext.vehicleName,
+            vehicleImageUrl: bookingContext.vehicleImageUrl || '',
+            startDate: bookingContext.startDate,
+            endDate: bookingContext.endDate,
+            duration: bookingContext.duration,
+            rentalDays: bookingContext.rentalDays,
+            branchName: bookingContext.branchName,
+            insurancePlan: bookingContext.insurancePlan,
+            totalAmount: bookingContext.totalAmount,
+            securityDeposit: bookingContext.securityDeposit,
+            contractNumber: transactionId || bookingId || '',
+        });
+        
+        console.log('✅ [NAVIGATE] Navigation completed');
+    };
+
+    // ==================== DEEP LINK LISTENER ====================
+    useEffect(() => {
+        console.log('🎧 [LISTENER] Setting up deep link listeners...');
+        
         const handleDeepLinkEvent = (event: { url: string }) => {
-            console.log('🔗 Deep link event received:', event.url);
-            if (event.url.startsWith('emotorent://payment-result')) {
-                console.log('🎯 ZaloPay callback detected!');
+            console.log('🔗 [LISTENER] Deep link event received:', event.url);
+            if (event.url.startsWith('emrs://payment/callback')) {
+                console.log('✅ [LISTENER] Valid ZaloPay callback URL detected');
                 handleZaloPayCallback(event.url);
+            } else {
+                console.log('⚠️ [LISTENER] URL does not match ZaloPay callback pattern');
             }
         };
 
-        // Listen for deep link events
         const subscription = Linking.addEventListener('url', handleDeepLinkEvent);
+        console.log('✅ [LISTENER] Event listener registered');
 
-        // Check if app was opened with a deep link
+        // Check initial URL
+        console.log('🔍 [LISTENER] Checking for initial URL...');
         Linking.getInitialURL().then(url => {
-            if (url && url.startsWith('emotorent://payment-result')) {
-                console.log('🎯 App opened with ZaloPay callback:', url);
-                handleZaloPayCallback(url);
+            if (url) {
+                console.log('🔗 [LISTENER] Initial URL found:', url);
+                if (url.startsWith('emrs://payment/callback')) {
+                    console.log('✅ [LISTENER] Initial URL is ZaloPay callback');
+                    handleZaloPayCallback(url);
+                }
+            } else {
+                console.log('ℹ️ [LISTENER] No initial URL');
             }
         });
 
         return () => {
+            console.log('🔌 [LISTENER] Removing event listener');
+            subscription.remove();
+        };
+    }, [bookingContext, isProcessing]);
+
+    // ==================== APP STATE LISTENER ====================
+    useEffect(() => {
+        console.log('📱 [APPSTATE] Setting up app state listener...');
+        
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        
+        return () => {
+            console.log('🔌 [APPSTATE] Removing listener');
             subscription.remove();
         };
     }, []);
 
-    const handleZaloPayCallback = async (url: string) => {
-        try {
-            console.log('🔄 Processing ZaloPay callback URL:', url);
-            
-            // Parse URL parameters
-            const urlObj = new URL(url);
-            const params = {
-                amount: urlObj.searchParams.get('amount'),
-                appid: urlObj.searchParams.get('appid'),
-                apptransid: urlObj.searchParams.get('apptransid'),
-                bankcode: urlObj.searchParams.get('bankcode'),
-                checksum: urlObj.searchParams.get('checksum'),
-                discountamount: urlObj.searchParams.get('discountamount'),
-                pmcid: urlObj.searchParams.get('pmcid'),
-                status: urlObj.searchParams.get('status'),
-            };
-
-            console.log('📦 ZaloPay params:', params);
-
-            // Status: 1 = success, -1 = failed, 2 = processing
-            if (params.status === '1') {
-                console.log('✅ Payment successful!');
-                setPaymentSuccess(true);
-                setLoading(false);
-                
-                // Wait a moment for UI
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // Navigate to contract
-                await navigateToContract(params.apptransid || '');
-            } else {
-                console.error('❌ Payment failed or cancelled');
-                setPaymentSuccess(false);
-                setErrorMessage(
-                    params.status === '-1' 
-                        ? 'Thanh toán thất bại. Vui lòng thử lại.' 
-                        : 'Thanh toán đang được xử lý.'
-                );
-                setLoading(false);
-            }
-        } catch (error: any) {
-            console.error('❌ Error processing payment:', error);
-            setPaymentSuccess(false);
-            setErrorMessage('Có lỗi xảy ra khi xử lý thanh toán.');
-            setLoading(false);
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+        console.log('📱 [APPSTATE] State changed:', appState.current, '→', nextAppState);
+        
+        if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+            console.log('✅ [APPSTATE] App returned to foreground - checking for deep link');
+            Linking.getInitialURL().then(url => {
+                if (url && url.startsWith('emrs://payment/callback')) {
+                    console.log('🔗 [APPSTATE] Deep link found after return:', url);
+                    handleZaloPayCallback(url);
+                }
+            });
         }
+        appState.current = nextAppState;
     };
 
-    const navigateToContract = async (apptransid: string) => {
-        const STORAGE_KEY = `zalopay_payment_context_${apptransid}`;
-        const ctxStr = await AsyncStorage.getItem(STORAGE_KEY);
-        const ctx: BookingContext | null = ctxStr ? JSON.parse(ctxStr) : null;
-
-        if (!ctx) {
-            console.error('❌ No context found for booking:', apptransid);
-            Alert.alert('Lỗi', 'Không tìm thấy thông tin đặt xe.');
-            return;
-        }
-
-        navigation.replace('DigitalContract', {
-            vehicleId: ctx.vehicleId,
-            vehicleName: ctx.vehicleName,
-            vehicleImageUrl: ctx.vehicleImageUrl || '',
-            startDate: ctx.startDate,
-            endDate: ctx.endDate,
-            duration: ctx.duration,
-            rentalDays: ctx.rentalDays,
-            branchName: ctx.branchName,
-            insurancePlan: ctx.insurancePlan,
-            totalAmount: ctx.totalAmount,
-            securityDeposit: ctx.securityDeposit,
-            contractNumber: apptransid || 'N/A',
-        });
-
-        await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
-    };
-
+    // ==================== RETRY PAYMENT ====================
     const handleRetry = () => {
+        console.log('🔄 [RETRY] User clicked retry, going back...');
         navigation.goBack();
     };
 
-    const handleBackToHome = () => {
-        navigation.navigate('ConfirmRentalDuration' as any);
+    // ==================== GO HOME ====================
+    const handleGoHome = () => {
+        console.log('🏠 [HOME] User clicked go home, navigating to Trips...');
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Trips' }],
+        });
     };
 
-    if (loading) {
+    // ==================== RENDER ====================
+    if (paymentStatus === 'success') {
         return (
             <View style={styles.container}>
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#00a650" />
-                    <Text style={styles.loadingText}>Chờ thanh toán ZaloPay...</Text>
-                    <Text style={styles.subText}>Vui lòng hoàn tất thanh toán trong ứng dụng ZaloPay</Text>
+                <View style={styles.successIcon}>
+                    <Text style={styles.iconText}>✓</Text>
                 </View>
-            </View>
-        );
-    }
-
-    if (paymentSuccess) {
-        return (
-            <View style={styles.container}>
-                <View style={styles.center}>
-                    <View style={styles.successIcon}>
-                        <Text style={styles.successIconText}>✓</Text>
-                    </View>
-                    <Text style={styles.successTitle}>Thanh toán thành công!</Text>
-                    <Text style={styles.successMessage}>
-                        Đang chuyển đến hợp đồng thuê xe...
+                <Text style={styles.successTitle}>Thanh toán thành công!</Text>
+                <Text style={styles.successMessage}>
+                    Đơn hàng của bạn đã được xác nhận
+                </Text>
+                {transactionId && (
+                    <Text style={styles.transactionId}>
+                        Mã giao dịch: {transactionId}
                     </Text>
-                </View>
+                )}
+                <ActivityIndicator size="small" color="#00ff00" style={{ marginTop: 20 }} />
+                <Text style={styles.redirectText}>Đang chuyển đến hợp đồng...</Text>
             </View>
         );
     }
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.center}>
-                <View style={styles.failureIcon}>
-                    <Text style={styles.failureIconText}>✕</Text>
+    if (paymentStatus === 'failed') {
+        return (
+            <View style={styles.container}>
+                <View style={styles.errorIcon}>
+                    <Text style={styles.iconText}>✕</Text>
                 </View>
-                <Text style={styles.failureTitle}>Thanh toán thất bại</Text>
-                <Text style={styles.failureMessage}>{errorMessage}</Text>
+                <Text style={styles.errorTitle}>Thanh toán thất bại</Text>
+                <Text style={styles.errorMessage}>{errorMessage || 'Đã có lỗi xảy ra'}</Text>
                 
                 <View style={styles.buttonContainer}>
-                    <PrimaryButton 
-                        title="Thử lại" 
+                    <PrimaryButton
+                        title="Thử lại"
                         onPress={handleRetry}
                         style={styles.button}
                     />
-                    <PrimaryButton 
-                        title="Về trang chủ" 
-                        onPress={handleBackToHome}
-                        style={StyleSheet.flatten([styles.button, styles.secondaryButton])}
-                        textStyle={styles.secondaryButtonText}
+                    <SecondaryButton
+                        title="Về trang chủ"
+                        onPress={handleGoHome}
+                        style={styles.button}
                     />
                 </View>
             </View>
+        );
+    }
+
+    // Pending state
+    return (
+        <View style={styles.container}>
+            <ActivityIndicator size="large" color="#00ff00" />
+            <Text style={styles.waitingTitle}>Chờ thanh toán...</Text>
+            <Text style={styles.waitingMessage}>
+                Vui lòng hoàn tất thanh toán trong ứng dụng ZaloPay
+            </Text>
+            {transactionId && (
+                <Text style={styles.transactionId}>
+                    Mã giao dịch: {transactionId}
+                </Text>
+            )}
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#000' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-    loadingText: { color: '#fff', fontSize: 16, marginTop: 16 },
-    subText: { color: '#999', fontSize: 14, marginTop: 8, textAlign: 'center' },
+    container: {
+        flex: 1,
+        backgroundColor: '#000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
     successIcon: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#22c55e',
-        alignItems: 'center',
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#00ff00',
         justifyContent: 'center',
-        marginBottom: 24,
-    },
-    successIconText: { fontSize: 48, color: '#fff', fontWeight: '700' },
-    successTitle: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 12 },
-    successMessage: { color: '#999', fontSize: 16, textAlign: 'center' },
-    failureIcon: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#ef4444',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 24,
+        marginBottom: 20,
     },
-    failureIconText: { fontSize: 48, color: '#fff', fontWeight: '700' },
-    failureTitle: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 12 },
-    failureMessage: { color: '#999', fontSize: 16, textAlign: 'center', marginBottom: 32 },
-    buttonContainer: { width: '100%', marginBottom: 24 },
-    button: { marginBottom: 12 },
-    secondaryButton: { backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: '#00a650' },
-    secondaryButtonText: { color: '#00a650' },
+    errorIcon: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#ff4444',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    iconText: {
+        fontSize: 60,
+        color: '#000',
+        fontWeight: 'bold',
+    },
+    successTitle: {
+        color: '#00ff00',
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginTop: 20,
+        textAlign: 'center',
+    },
+    successMessage: {
+        color: '#fff',
+        fontSize: 16,
+        marginTop: 10,
+        textAlign: 'center',
+    },
+    errorTitle: {
+        color: '#ff4444',
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginTop: 20,
+        textAlign: 'center',
+    },
+    errorMessage: {
+        color: '#999',
+        fontSize: 16,
+        marginTop: 10,
+        textAlign: 'center',
+        paddingHorizontal: 20,
+    },
+    waitingTitle: {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: '600',
+        marginTop: 20,
+        textAlign: 'center',
+    },
+    waitingMessage: {
+        color: '#999',
+        fontSize: 14,
+        marginTop: 10,
+        textAlign: 'center',
+        paddingHorizontal: 40,
+    },
+    transactionId: {
+        color: '#666',
+        fontSize: 12,
+        marginTop: 20,
+        textAlign: 'center',
+    },
+    redirectText: {
+        color: '#999',
+        fontSize: 14,
+        marginTop: 10,
+    },
+    buttonContainer: {
+        marginTop: 40,
+        width: '100%',
+        gap: 12,
+    },
+    button: {
+        marginBottom: 12,
+    },
 });

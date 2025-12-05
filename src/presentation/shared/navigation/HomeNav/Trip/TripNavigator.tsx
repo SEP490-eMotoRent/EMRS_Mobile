@@ -1,8 +1,24 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { BookingDetailsScreen, HandoverReceiptReportScreen, RentedVehicleDetailsScreen } from '../../../../features/staff/handover/ui/screens';
-import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
 import { TripStackParamList } from '../../StackParameters/types';
+
+// ============================================================================
+// RENTER SCREENS (Trip Listing & Booking Details)
+// ============================================================================
+import { TripsScreen } from '../../../../features/tripListing/ui/screens/TripsScreen';
+import { BookingDetailsScreen } from '../../../../features/tripDetails/ui/screens/BookingDetailsScreen';
+
+// ============================================================================
+// STAFF SCREENS (kept for reference/future use)
+// ============================================================================
+import { 
+  HandoverReceiptReportScreen, 
+  RentedVehicleDetailsScreen 
+} from '../../../../features/staff/handover/ui/screens';
+
+// ============================================================================
+// SHARED SCREENS (Used by both Renter and Staff)
+// ============================================================================
 import { SignContractScreen } from '../../../../features/contract/ui/screens/SignContractScreen';
 import { EmergencyContactScreen } from '../../../../features/insuranceClaim/ui/screens/EmergencyContactScreen';
 import { IncidentReportScreen } from '../../../../features/insuranceClaim/ui/screens/IncidentReportScreen';
@@ -29,7 +45,9 @@ export const TripNavigator: React.FC = () => {
         gestureDirection: "horizontal",
       }}
     >
-      {/* ROOT: Trips List */}
+      {/* ====================================================================== */}
+      {/* ROOT: Trips List Screen */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="Trip"
         component={TripsScreen}
@@ -38,7 +56,9 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Booking Details */}
+      {/* ====================================================================== */}
+      {/* RENTER: Booking Details Screen */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="BookingDetails"
         component={BookingDetailsScreen}
@@ -59,7 +79,9 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Sign Contract */}
+      {/* ====================================================================== */}
+      {/* CONTRACT & SIGNING */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="SignContract"
         component={SignContractScreen}
@@ -68,7 +90,9 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Emergency Contact */}
+      {/* ====================================================================== */}
+      {/* EMERGENCY & SUPPORT */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="EmergencyContact"
         component={EmergencyContactScreen}
@@ -90,7 +114,9 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Create Ticket */}
+      {/* ====================================================================== */}
+      {/* TICKET MANAGEMENT */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="CreateTicket"
         component={CreateTicketScreen}
@@ -112,7 +138,6 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Ticket List */}
       <Stack.Screen
         name="TicketList"
         component={TicketListScreen}
@@ -134,7 +159,6 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Ticket Detail */}
       <Stack.Screen
         name="TicketDetail"
         component={TicketDetailScreen}
@@ -156,7 +180,9 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Incident Report */}
+      {/* ====================================================================== */}
+      {/* INCIDENT REPORTING */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="IncidentReport"
         component={IncidentReportScreen}
@@ -178,7 +204,6 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* Incident Photo Capture (Modal-style) */}
       <Stack.Screen
         name="IncidentPhotoCapture"
         component={IncidentPhotoCaptureScreen}
@@ -202,7 +227,9 @@ export const TripNavigator: React.FC = () => {
         }}
       />
 
-      {/* GPS Tracking */}
+      {/* ====================================================================== */}
+      {/* GPS TRACKING */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="TrackingGPS"
         component={TrackingGPSScreen}
@@ -211,14 +238,10 @@ export const TripNavigator: React.FC = () => {
           gestureEnabled: true,
         }}
       />
-      <Stack.Screen
-        name="ReturnReceiptReport"
-        component={ReturnReceiptReportScreen}
-        options={{
-          headerShown: false,
-          gestureEnabled: true,
-        }}
-      />
+
+      {/* ====================================================================== */}
+      {/* RECEIPTS & REPORTS */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="HandoverReceiptReport"
         component={HandoverReceiptReportScreen}
@@ -227,6 +250,19 @@ export const TripNavigator: React.FC = () => {
           gestureEnabled: true,
         }}
       />
+
+      <Stack.Screen
+        name="ReturnReceiptReport"
+        component={ReturnReceiptReportScreen}
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      />
+
+      {/* ====================================================================== */}
+      {/* RETURN COMPLETE */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="ReturnComplete"
         component={ReturnCompleteScreen}
@@ -235,6 +271,10 @@ export const TripNavigator: React.FC = () => {
           gestureEnabled: false,
         }}
       />
+
+      {/* ====================================================================== */}
+      {/* VEHICLE DETAILS */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="RentedVehicleDetails"
         component={RentedVehicleDetailsScreen}
@@ -243,6 +283,10 @@ export const TripNavigator: React.FC = () => {
           gestureEnabled: true,
         }}
       />
+
+      {/* ====================================================================== */}
+      {/* CHARGING */}
+      {/* ====================================================================== */}
       <Stack.Screen
         name="ChargingListBooking"
         component={ChargingListBookingScreen}

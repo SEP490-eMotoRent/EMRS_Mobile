@@ -49,6 +49,7 @@ export const ApiEndpoints = {
     createVNPay: "/Booking/vnpay",
     vnpayIPN: "/Booking/vnpay/ipn",
     createZaloPay: "/Booking/zalopay",
+    zaloPayCallback: "/Booking/zalopay/callback",
     detail: (id: string) => `/Booking/${id}`,
     byRenter: (renterId: string) => `/Booking/renter/${renterId}`,
     byCurrentRenter: "/Booking/renter/get",
