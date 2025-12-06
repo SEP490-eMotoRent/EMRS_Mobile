@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
-import { parseTime, validateRentalDuration, calculateRentalDuration, formatDuration, calculateRentalDays } from "../utils/RentalDurationValidator";
-
+import {
+    parseTime,
+    validateRentalDuration,
+    calculateRentalDuration,
+    formatDuration,
+    calculateProgressiveTiers,
+} from "../utils/RentalDurationValidator";
 
 /**
  * Hook for managing rental duration state and validation
  * 
  * Handles:
- * - Duration calculation from date range strings
- * - Validation against business rules
+ * - Duration calculation with exact hours (hourly pricing)
+ * - Validation against business rules (minimum 24 hours)
+ * - Progressive tier calculation for discounts
  * - Date/time parsing and formatting
  * - Error state management
  * 
@@ -18,7 +24,7 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
     const [duration, setDuration] = useState<string>("");
-    const [rentalDays, setRentalDays] = useState<number>(0);
+    const [totalHours, setTotalHours] = useState<number>(0);
     const [startDateTime, setStartDateTime] = useState<Date>(new Date());
     const [endDateTime, setEndDateTime] = useState<Date>(new Date());
     const [startDateISO, setStartDateISO] = useState<string | null>(null);
@@ -83,7 +89,7 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
         if (!validation.isValid) {
             setDurationError(validation.error);
             setDuration("--");
-            setRentalDays(0);
+            setTotalHours(0);
             console.warn("⚠️ Invalid duration:", validation.error);
             return;
         }
@@ -92,12 +98,21 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
         setDurationError(null);
         const rentalDuration = calculateRentalDuration(newStartDate, newEndDate);
         setDuration(formatDuration(rentalDuration.days, rentalDuration.hours));
-        setRentalDays(calculateRentalDays(rentalDuration.days));
+        setTotalHours(rentalDuration.totalHours);
+
+        // Calculate progressive tiers for logging
+        const tiers = calculateProgressiveTiers(rentalDuration.totalHours);
 
         console.log("✅ Duration calculated:", {
             days: rentalDuration.days,
             hours: rentalDuration.hours,
-            rentalDays: calculateRentalDays(rentalDuration.days),
+            totalHours: rentalDuration.totalHours,
+            progressiveTiers: {
+                tier: tiers.discountTier,
+                discountedHours: tiers.discountedHours,
+                regularHours: tiers.regularHours,
+                fullPeriods: tiers.fullPeriods,
+            },
         });
     };
 
@@ -132,7 +147,7 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
         startDate,
         endDate,
         duration,
-        rentalDays,
+        totalHours, // For hourly pricing
 
         // Date objects
         startDateTime,
@@ -144,7 +159,7 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
 
         // Validation
         durationError,
-        isValid: durationError === null && rentalDays > 0,
+        isValid: durationError === null && totalHours > 0,
 
         // Handlers
         handleDateRangeChange,
