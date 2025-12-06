@@ -293,7 +293,7 @@ export const InsurancePlansScreen: React.FC = () => {
                             <View style={styles.tooltipContent}>
                                 <Text style={styles.tooltipIcon}>ⓘ</Text>
                                 <Text style={styles.tooltipText}>
-                                    * Tiền đặt cọc sẽ được hoàn trả trong vòng 7 ngày làm việc sau khi trả xe
+                                    Hủy đặt xe trong vòng 24 giờ sẽ được hoàn 100% tiền đặt cọc.
                                 </Text>
                             </View>
                         </Animated.View>

@@ -31,7 +31,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
             // Auto hide after 5 seconds
             const timer = setTimeout(() => {
                 handleHideTooltip();
-            }, 5000);
+            }, 1250);
 
             return () => clearTimeout(timer);
         }
@@ -45,7 +45,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         // Fade out
         Animated.timing(fadeAnim, {
             toValue: 0,
-            duration: 300,
+            duration: 200,
             useNativeDriver: true,
         }).start(() => {
             setShowTooltip(false);
@@ -99,7 +99,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                     <View style={styles.tooltipContent}>
                         <Text style={styles.tooltipIcon}>ⓘ</Text>
                         <Text style={styles.tooltipText}>
-                            Tiền đặt cọc sẽ được hoàn trả trong vòng 7 ngày làm việc sau khi trả xe
+                            Hủy đặt xe trong vòng 24 giờ sẽ được hoàn 100% tiền đặt cọc.
                         </Text>
                     </View>
                 </Animated.View>
