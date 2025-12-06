@@ -1,10 +1,11 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { DateHelper } from "../../../../../../domain/helpers/DateHelper";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { useRentalDuration } from "../../../hooks/useRentalDuration";
 import { useRentalPricing } from "../../../hooks/useRentalPricing";
 import { VehicleCategory } from "../../../hooks/useRentingRate";
 import { DateTimeSelector } from "../../molecules/DateTimeSelector";
@@ -32,6 +33,11 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     } = route.params;
     const navigation = useNavigation<NavigationPropType>();
     
+    const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
+
+    /**
+     * Convert 24-hour time to Vietnamese 12-hour format (SA/CH)
+     */
     const convertTo12HourFormat = (time24: string): string => {
         const [hourStr, minute] = time24.split(':');
         let hour = parseInt(hourStr);
@@ -49,6 +55,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const branchOpenTimeSACH = branchOpenTime ? convertTo12HourFormat(branchOpenTime) : "6:00 SA";
     const branchCloseTimeSACH = branchCloseTime ? convertTo12HourFormat(branchCloseTime) : "10:00 CH";
 
+    /**
+     * Parse initial date range from route params or use defaults
+     */
     const initialDateRangeISO = useMemo(() => {
         if (dateRange) {
             console.log('📅 Parsing Vietnamese dateRange:', dateRange);
@@ -58,100 +67,29 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         return DateHelper.getDefaultDateRangeForBooking();
     }, [dateRange]);
 
-    const parseInitialDates = (isoRange: string) => {
-        const match = isoRange.match(/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})\s*\((.+?)\s*-\s*(.+?)\)/);
-        
-        if (match) {
-            const [, startDateStr, endDateStr, startTimeStr, endTimeStr] = match;
-            
-            const startDate = new Date(startDateStr);
-            const endDate = new Date(endDateStr);
-            
-            const parseTime = (timeStr: string) => {
-                const match = timeStr.match(/(\d+):(\d+)\s*(SA|CH)/);
-                if (!match) return { hours: 10, minutes: 0 };
-                
-                let hours = parseInt(match[1]);
-                const minutes = parseInt(match[2]);
-                const period = match[3];
-                
-                if (period === 'CH' && hours !== 12) {
-                    hours += 12;
-                } else if (period === 'SA' && hours === 12) {
-                    hours = 0;
-                }
-                
-                return { hours, minutes };
-            };
-            
-            const startTime = parseTime(startTimeStr);
-            const endTime = parseTime(endTimeStr);
-            
-            startDate.setHours(startTime.hours, startTime.minutes, 0, 0);
-            endDate.setHours(endTime.hours, endTime.minutes, 0, 0);
-            
-            const diffMs = endDate.getTime() - startDate.getTime();
-            const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-            const days = Math.floor(totalHours / 24);
-            const hours = totalHours % 24;
-            
-            return {
-                startDate,
-                endDate,
-                startDateISO: startDateStr,
-                endDateISO: endDateStr,
-                days: days > 0 ? days : 1,
-                hours,
-            };
-        }
-        
-        const now = new Date();
-        const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        return {
-            startDate: now,
-            endDate: weekLater,
-            startDateISO: now.toISOString().split('T')[0],
-            endDateISO: weekLater.toISOString().split('T')[0],
-            days: 7,
-            hours: 0,
-        };
-    };
-
-    const initialData = useMemo(() => parseInitialDates(initialDateRangeISO), [initialDateRangeISO]);
-    
-    const formatInitialDate = (date: Date) => {
-        const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", 
-                        "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const period = hours >= 12 ? 'CH' : 'SA';
-        const displayHours = hours % 12 || 12;
-        const timeStr = `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`;
-        return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')} ${timeStr}`;
-    };
-    
-    const [startDate, setStartDate] = useState(formatInitialDate(initialData.startDate));
-    const [endDate, setEndDate] = useState(formatInitialDate(initialData.endDate));
-    const [duration, setDuration] = useState(`${initialData.days} Ngày ${initialData.hours} Giờ`);
-    const [rentalDays, setRentalDays] = useState(initialData.days);
-    
-    const [startDateTime, setStartDateTime] = useState<Date>(initialData.startDate);
-    const [endDateTime, setEndDateTime] = useState<Date>(initialData.endDate);
-    
-    const [startDateISO, setStartDateISO] = useState<string | null>(initialData.startDateISO);
-    const [endDateISO, setEndDateISO] = useState<string | null>(initialData.endDateISO);
-    
-    const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
-
-    useEffect(() => {
-        if (dateRange && initialDateRangeISO) {
-            console.log('🔄 Auto-populating dates from search:', initialDateRangeISO);
-            handleDateRangeChange(initialDateRangeISO);
-        }
-    }, [dateRange, initialDateRangeISO]);
+    /**
+     * Use rental duration hook for state management and validation
+     */
+    const {
+        startDate,
+        endDate,
+        duration,
+        rentalDays,
+        startDateTime,
+        endDateTime,
+        startDateISO,
+        endDateISO,
+        durationError,
+        isValid,
+        handleDateRangeChange,
+        validateCurrentDuration,
+    } = useRentalDuration(initialDateRangeISO);
 
     const category = (vehicleCategory?.toUpperCase() || "ECONOMY") as VehicleCategory;
 
+    /**
+     * Use rental pricing hook for all pricing calculations
+     */
     const {
         rentingRate,
         discountPercentage,
@@ -176,7 +114,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     );
 
     const total = useMemo(() => totalRentalFee + securityDeposit, [totalRentalFee, securityDeposit]);
-
     const hasDiscount = discountPercentage > 0;
     const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
@@ -200,85 +137,17 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         navigation.goBack();
     };
 
-    const parseTime = (timeStr: string) => {
-        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
-        if (!match) return { hours: 0, minutes: 0 };
-        
-        let hours = parseInt(match[1]);
-        const minutes = parseInt(match[2]);
-        const period = match[3].toUpperCase();
-        
-        if ((period === 'PM' || period === 'CH') && hours !== 12) {
-            hours += 12;
-        } else if ((period === 'AM' || period === 'SA') && hours === 12) {
-            hours = 0;
-        }
-        
-        return { hours, minutes };
-    };
-
-    const calculateDuration = (startDateStr: string, endDateStr: string, startTimeStr: string, endTimeStr: string) => {
-        const startTime = parseTime(startTimeStr);
-        const endTime = parseTime(endTimeStr);
-        
-        const start = new Date(startDateStr);
-        start.setHours(startTime.hours, startTime.minutes, 0, 0);
-        
-        const end = new Date(endDateStr);
-        end.setHours(endTime.hours, endTime.minutes, 0, 0);
-        
-        const diffMs = end.getTime() - start.getTime();
-        const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const days = Math.floor(totalHours / 24);
-        const hours = totalHours % 24;
-        
-        return { days, hours };
-    };
-
-    const formatDateDisplay = (dateStr: string, timeStr: string) => {
-        const date = new Date(dateStr);
-        const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", 
-                       "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
-        return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')} ${timeStr}`;
-    };
-
-    const handleDateRangeChange = (dateRange: string) => {
-        console.log("Date range changed:", dateRange);
-        
-        const match = dateRange.match(/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})\s*\((.+?)\s*-\s*(.+?)\)/);
-        
-        if (match) {
-            const [, startDateStr, endDateStr, startTimeStr, endTimeStr] = match;
-            
-            setStartDateISO(startDateStr);
-            setEndDateISO(endDateStr);
-            
-            const formattedStart = formatDateDisplay(startDateStr, startTimeStr);
-            const formattedEnd = formatDateDisplay(endDateStr, endTimeStr);
-            
-            setStartDate(formattedStart);
-            setEndDate(formattedEnd);
-            
-            const startTime = parseTime(startTimeStr);
-            const endTime = parseTime(endTimeStr);
-            
-            const newStartDate = new Date(startDateStr);
-            newStartDate.setHours(startTime.hours, startTime.minutes, 0, 0);
-            setStartDateTime(newStartDate);
-            
-            const newEndDate = new Date(endDateStr);
-            newEndDate.setHours(endTime.hours, endTime.minutes, 0, 0);
-            setEndDateTime(newEndDate);
-            
-            const { days, hours } = calculateDuration(startDateStr, endDateStr, startTimeStr, endTimeStr);
-            
-            setDuration(`${days} Ngày ${hours} Giờ`);
-            setRentalDays(days > 0 ? days : 1);
-        }
-    };
-
+    /**
+     * Navigate to insurance plans with final validation
+     */
     const handleContinue = () => {
-        console.log("Continue to next step for vehicle:", vehicleId);
+        // Final validation before navigation
+        if (!validateCurrentDuration()) {
+            console.warn("⚠️ Cannot continue with invalid duration");
+            return;
+        }
+
+        console.log("✅ Continuing to insurance plans for vehicle:", vehicleId);
         navigation.navigate('InsurancePlans', { 
             vehicleId,
             vehicleName,
@@ -304,6 +173,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         });
     };
 
+    /**
+     * UI Helper Functions
+     */
     const getDiscountLabel = (): string => {
         if (durationType === "monthly") return "Giảm giá thuê tháng";
         if (durationType === "yearly") return "Giảm giá thuê năm";
@@ -370,6 +242,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         setIsHolidayListExpanded(!isHolidayListExpanded);
     };
     
+    // Determine if continue button should be disabled
+    const isContinueDisabled = loading || !isValid;
+    
     return (
         <View style={styles.container}>
             <PageHeader title="Thời gian thuê" onBack={handleBack} />
@@ -391,6 +266,18 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     startDateISO={startDateISO}
                     endDateISO={endDateISO}
                 />
+
+                {durationError && (
+                    <View style={styles.errorBanner}>
+                        <View style={styles.errorIconContainer}>
+                            <Text style={styles.errorIcon}>⚠️</Text>
+                        </View>
+                        <View style={styles.errorContent}>
+                            <Text style={styles.errorTitle}>Thời gian không hợp lệ</Text>
+                            <Text style={styles.errorText}>{durationError}</Text>
+                        </View>
+                    </View>
+                )}
 
                 <View style={styles.membershipIndicator}>
                     <Text style={styles.membershipIndicatorIcon}>
@@ -505,7 +392,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 <PrimaryButton 
                     title="Tiếp tục" 
                     onPress={handleContinue}
-                    disabled={loading}
+                    disabled={isContinueDisabled}
                 />
             </View>
         </View>
@@ -530,6 +417,41 @@ const styles = StyleSheet.create({
         backgroundColor: "#000",
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
+    },
+    errorBanner: {
+        backgroundColor: "#2e1a1a",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#ef4444",
+    },
+    errorIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#ef444420",
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 12,
+    },
+    errorIcon: {
+        fontSize: 20,
+    },
+    errorContent: {
+        flex: 1,
+    },
+    errorTitle: {
+        color: "#ef4444",
+        fontSize: 14,
+        fontWeight: "700",
+        marginBottom: 4,
+    },
+    errorText: {
+        color: "#fca5a5",
+        fontSize: 13,
     },
     membershipIndicator: {
         flexDirection: "row",
