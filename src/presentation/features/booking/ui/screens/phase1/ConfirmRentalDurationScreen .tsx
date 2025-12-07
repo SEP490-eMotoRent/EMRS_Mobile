@@ -74,7 +74,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         startDate,
         endDate,
         duration,
-        rentalDays,
+        totalHours, // For hourly pricing
         startDateTime,
         endDateTime,
         startDateISO,
@@ -88,12 +88,13 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const category = (vehicleCategory?.toUpperCase() || "ECONOMY") as VehicleCategory;
 
     /**
-     * Use rental pricing hook for all pricing calculations
+     * Use rental pricing hook for progressive tier hourly pricing
      */
     const {
         rentingRate,
         discountPercentage,
         durationType,
+        progressiveTierBreakdown,
         membershipDiscountPercentage,
         membershipTier,
         membershipDiscountAmount,
@@ -109,7 +110,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         startDateTime,
         endDateTime,
         pricePerDay,
-        rentalDays,
+        totalHours, // Pass total hours for hourly pricing
         category
     );
 
@@ -117,12 +118,17 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const hasDiscount = discountPercentage > 0;
     const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
+    // Calculate display days for booking summary
+    const displayDays = Math.ceil(totalHours / 24);
+
     console.log("📊 Rental calculation:", {
         category,
-        rentalDays,
+        totalHours,
+        displayDays,
         durationType,
         rentingRate,
         discountPercentage: `${discountPercentage}%`,
+        progressiveTiers: progressiveTierBreakdown,
         membershipTier,
         membershipDiscountPercentage: `${membershipDiscountPercentage}%`,
         membershipDiscountAmount,
@@ -159,7 +165,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             startDate,
             endDate,
             duration,
-            rentalDays,
+            rentalDays: displayDays,
             rentalPrice: totalRentalFee,
             baseRentalFee,
             rentingRate,
@@ -219,21 +225,34 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         return Math.round((maxMultiplier - 1) * 100);
     };
 
-    const getGroupedHolidays = (): { name: string; count: number; multiplier: number; totalSurcharge: number }[] => {
+    const getGroupedHolidays = (): { 
+        name: string; 
+        count: number; 
+        surchargePercentage: number; 
+        totalPricePerDay: number;
+        totalSurcharge: number;
+    }[] => {
         const grouped = holidayDays.reduce((acc, day) => {
             const name = day.holiday.holidayName;
             if (!acc[name]) {
                 acc[name] = {
                     name,
                     count: 0,
-                    multiplier: day.holiday.priceMultiplier,
+                    surchargePercentage: Math.round((day.holiday.priceMultiplier - 1) * 100),
+                    totalPricePerDay: day.totalPrice, // Base + surcharge for one day
                     totalSurcharge: 0,
                 };
             }
             acc[name].count++;
             acc[name].totalSurcharge += day.surchargeAmount;
             return acc;
-        }, {} as Record<string, { name: string; count: number; multiplier: number; totalSurcharge: number }>);
+        }, {} as Record<string, { 
+            name: string; 
+            count: number; 
+            surchargePercentage: number; 
+            totalPricePerDay: number;
+            totalSurcharge: number;
+        }>);
         
         return Object.values(grouped);
     };
@@ -305,6 +324,12 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                             <Text style={styles.discountText}>
                                 Giảm {discountPercentage}% cho xe {getCategoryLabel(category)}
                             </Text>
+                            {progressiveTierBreakdown.discountTier !== "none" && (
+                                <Text style={styles.discountDetails}>
+                                    {Math.floor(progressiveTierBreakdown.discountedHours / 24)} ngày giảm giá, {" "}
+                                    {Math.ceil(progressiveTierBreakdown.regularHours / 24)} ngày giá thường
+                                </Text>
+                            )}
                             <Text style={styles.discountSavings}>
                                 Tiết kiệm: {discountAmount.toLocaleString()}đ
                             </Text>
@@ -366,12 +391,16 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                             <View style={styles.holidayList}>
                                 {getGroupedHolidays().map((item, index) => (
                                     <View key={index} style={styles.holidayListItem}>
-                                        <Text style={styles.holidayBullet}>•</Text>
-                                        <Text style={styles.holidayItemText}>
-                                            {item.name} {item.count > 1 ? `(${item.count} ngày)` : ''}
-                                        </Text>
-                                        <Text style={styles.holidayItemAmount}>
-                                            +{item.totalSurcharge.toLocaleString()}đ
+                                        <View style={styles.holidayItemContent}>
+                                            <Text style={styles.holidayItemName}>
+                                                • {item.name} {item.count > 1 ? `(${item.count} ngày)` : ''}
+                                            </Text>
+                                            <Text style={styles.holidayItemSurcharge}>
+                                                Phụ thu {item.surchargePercentage}%
+                                            </Text>
+                                        </View>
+                                        <Text style={styles.holidayItemTotal}>
+                                            {item.totalPricePerDay.toLocaleString()}đ/ngày
                                         </Text>
                                     </View>
                                 ))}
@@ -381,7 +410,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 )}
                 
                 <BookingSummary
-                    rentalDays={rentalDays}
+                    rentalDays={displayDays}
                     rentalPrice={`${totalRentalFee.toLocaleString()}đ`}
                     securityDeposit={`${securityDeposit.toLocaleString()}đ`}
                     total={`${total.toLocaleString()}đ`}
@@ -522,6 +551,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         marginBottom: 4,
     },
+    discountDetails: {
+        color: "#86efac",
+        fontSize: 12,
+        marginBottom: 4,
+        fontStyle: "italic",
+    },
     discountSavings: {
         color: "#fff",
         fontSize: 15,
@@ -636,25 +671,29 @@ const styles = StyleSheet.create({
     },
     holidayListItem: {
         flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 4,
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        paddingVertical: 8,
     },
-    holidayBullet: {
-        color: "#fca5a5",
-        fontSize: 12,
-        marginRight: 8,
-        width: 12,
+    holidayItemContent: {
+        flex: 1,
+        marginRight: 12,
     },
-    holidayItemText: {
+    holidayItemName: {
         color: "#fca5a5",
         fontSize: 13,
-        flex: 1,
-    },
-    holidayItemAmount: {
-        color: "#ef4444",
-        fontSize: 12,
         fontWeight: "600",
-        minWidth: 80,
+        marginBottom: 4,
+    },
+    holidayItemSurcharge: {
+        color: "#fca5a5",
+        fontSize: 11,
+        opacity: 0.7,
+    },
+    holidayItemTotal: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "700",
         textAlign: "right",
     },
 });

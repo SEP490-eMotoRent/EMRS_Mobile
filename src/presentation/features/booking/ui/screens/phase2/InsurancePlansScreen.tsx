@@ -1,9 +1,8 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { 
     ActivityIndicator, 
-    Animated,
     ScrollView, 
     StyleSheet, 
     Text, 
@@ -17,6 +16,7 @@ import { useInsurancePackages } from "../../../hooks/useInsurancePackages";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { VehicleInfoHeader } from "../../molecules/VehicleInfoHeader";
+import { InfoTooltip } from "../../molecules/InfoTooltip";
 import { InsurancePlan, InsurancePlanCard } from "../../organisms/insurance/InsurancePlanCard";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
@@ -35,6 +35,12 @@ const noProtectionPlan: InsurancePlan = {
     ],
 };
 
+/**
+ * InsurancePlansScreen - Screen Component
+ * 
+ * Insurance plan selection screen following Atomic Design principles.
+ * Uses InfoTooltip molecule for cancellation policy display.
+ */
 export const InsurancePlansScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
@@ -58,7 +64,6 @@ export const InsurancePlansScreen: React.FC = () => {
         vehicleCategory,
         holidaySurcharge,
         holidayDayCount,
-        // ✅ FIXED: Receive membership data
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
@@ -66,39 +71,8 @@ export const InsurancePlansScreen: React.FC = () => {
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
     const [showTooltip, setShowTooltip] = useState(false);
-    const fadeAnim = useState(new Animated.Value(0))[0];
 
     const { packages, loading, error, refetch } = useInsurancePackages();
-
-    useEffect(() => {
-        if (showTooltip) {
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-            }).start();
-
-            const timer = setTimeout(() => {
-                handleHideTooltip();
-            }, 5000);
-
-            return () => clearTimeout(timer);
-        }
-    }, [showTooltip]);
-
-    const handleShowTooltip = () => {
-        setShowTooltip(true);
-    };
-
-    const handleHideTooltip = () => {
-        Animated.timing(fadeAnim, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-        }).start(() => {
-            setShowTooltip(false);
-        });
-    };
 
     const insurancePlans: InsurancePlan[] = useMemo(() => {
         const apiPlans = packages.map(pkg => transformToInsurancePlan(pkg));
@@ -107,6 +81,14 @@ export const InsurancePlansScreen: React.FC = () => {
 
     const handleBack = () => {
         navigation.goBack();
+    };
+
+    const handleShowTooltip = () => {
+        setShowTooltip(true);
+    };
+
+    const handleHideTooltip = () => {
+        setShowTooltip(false);
     };
 
     const selectedPlan = insurancePlans.find(p => p.id === selectedPlanId);
@@ -150,7 +132,6 @@ export const InsurancePlansScreen: React.FC = () => {
             vehicleCategory,
             holidaySurcharge,
             holidayDayCount,
-            // ✅ FIXED: Pass membership data through
             membershipDiscountPercentage,
             membershipDiscountAmount,
             membershipTier,
@@ -235,7 +216,6 @@ export const InsurancePlansScreen: React.FC = () => {
                         <Text style={styles.summaryValue}>{rentalFee}</Text>
                     </View>
 
-                    {/* ✅ Show holiday surcharge if applicable */}
                     {holidaySurcharge > 0 && (
                         <View style={styles.summaryRow}>
                             <Text style={styles.summaryLabelHoliday}>
@@ -275,29 +255,12 @@ export const InsurancePlansScreen: React.FC = () => {
                         <Text style={styles.totalValue}>{fullTotal}</Text>
                     </View>
 
-                    {showTooltip && (
-                        <Animated.View 
-                            style={[
-                                styles.tooltip,
-                                {
-                                    opacity: fadeAnim,
-                                    transform: [{
-                                        translateY: fadeAnim.interpolate({
-                                            inputRange: [0, 1],
-                                            outputRange: [-10, 0]
-                                        })
-                                    }]
-                                }
-                            ]}
-                        >
-                            <View style={styles.tooltipContent}>
-                                <Text style={styles.tooltipIcon}>ⓘ</Text>
-                                <Text style={styles.tooltipText}>
-                                    * Tiền đặt cọc sẽ được hoàn trả trong vòng 7 ngày làm việc sau khi trả xe
-                                </Text>
-                            </View>
-                        </Animated.View>
-                    )}
+                    {/* ✅ Using reusable InfoTooltip component (Atomic Design) */}
+                    <InfoTooltip
+                        message="Hủy đặt xe trong vòng 24 giờ sẽ được hoàn 100% tiền đặt cọc."
+                        isVisible={showTooltip}
+                        onHide={handleHideTooltip}
+                    />
                 </View>
             </ScrollView>
 
@@ -448,39 +411,5 @@ const styles = StyleSheet.create({
         color: "#00ff00",
         fontSize: 18,
         fontWeight: "700",
-    },
-    tooltip: {
-        position: "absolute",
-        bottom: "100%",
-        left: 16,
-        right: 16,
-        marginBottom: 8,
-        backgroundColor: "#2a2a2a",
-        borderRadius: 12,
-        padding: 12,
-        borderWidth: 1,
-        borderColor: "#d4c5f9",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.5,
-        shadowRadius: 8,
-        elevation: 8,
-        zIndex: 1000,
-    },
-    tooltipContent: {
-        flexDirection: "row",
-        alignItems: "flex-start",
-        gap: 8,
-    },
-    tooltipIcon: {
-        fontSize: 16,
-        color: "#d4c5f9",
-        marginTop: 1,
-    },
-    tooltipText: {
-        flex: 1,
-        color: "#fff",
-        fontSize: 13,
-        lineHeight: 18,
     },
 });

@@ -8,11 +8,7 @@ export const PaymentNotices: React.FC = () => {
         <View style={styles.container}>
             <View style={styles.notice}>
                 <StatusIcon type="info" />
-                <InfoBullet text="Deposit will be refunded after vehicle return" />
-            </View>
-            <View style={styles.notice}>
-                <StatusIcon type="info" />
-                <InfoBullet text="Payment will be processed from your wallet" />
+                <InfoBullet text="Tiền cọc sẽ được trả về sau khi trả xe" />
             </View>
         </View>
     );

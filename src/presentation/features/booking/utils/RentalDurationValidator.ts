@@ -1,8 +1,8 @@
 /**
- * Rental Duration Validator
+ * Rental Duration Validator - Hourly Pricing System
  * 
  * Pure utility functions for validating and calculating rental durations.
- * Handles business rules like minimum rental periods and date range validation.
+ * Supports hourly pricing with progressive tier discounts.
  */
 
 export interface DurationValidationResult {
@@ -23,20 +23,30 @@ export interface TimeComponents {
 }
 
 /**
- * Business rule: Minimum rental duration in hours
+ * Business rule: Minimum rental duration in hours (24 hours = 1 day)
  */
-export const MINIMUM_RENTAL_HOURS = 3;
+export const MINIMUM_RENTAL_HOURS = 24;
+
+/**
+ * Threshold for monthly discount (30 days)
+ */
+export const MONTHLY_THRESHOLD_DAYS = 30;
+
+/**
+ * Threshold for yearly discount (365 days)
+ */
+export const YEARLY_THRESHOLD_DAYS = 365;
 
 /**
  * Validate rental duration against business rules
  * 
  * Rules:
  * - End date/time must be after start date/time (no negative durations)
- * - Minimum rental duration must be met
+ * - Minimum rental duration must be met (24 hours / 1 day)
  * 
  * @param startDate - Rental start date/time
  * @param endDate - Rental end date/time
- * @param minHours - Minimum required hours (default: 3)
+ * @param minHours - Minimum required hours (default: 24)
  * @returns Validation result with error message if invalid
  */
 export const validateRentalDuration = (
@@ -56,11 +66,12 @@ export const validateRentalDuration = (
         };
     }
 
-    // Rule 2: Minimum rental duration
+    // Rule 2: Minimum rental duration (24 hours = 1 day)
     if (totalHours < minHours) {
+        const minDays = Math.floor(minHours / 24);
         return {
             isValid: false,
-            error: `Thời gian thuê tối thiểu là ${minHours} giờ`,
+            error: `Thời gian thuê tối thiểu là ${minDays} ngày`,
             totalHours,
         };
     }
@@ -77,21 +88,79 @@ export const validateRentalDuration = (
  * 
  * @param startDate - Rental start date/time
  * @param endDate - Rental end date/time
- * @returns Duration broken down into days and hours
+ * @returns Duration broken down into days, hours, and total hours
  */
 export const calculateRentalDuration = (
     startDate: Date,
     endDate: Date
 ): RentalDuration => {
     const diffMs = endDate.getTime() - startDate.getTime();
-    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const totalHours = diffMs / (1000 * 60 * 60);
     const days = Math.floor(totalHours / 24);
-    const hours = totalHours % 24;
+    const hours = Math.floor(totalHours % 24);
 
     return {
         days,
         hours,
-        totalHours,
+        totalHours, // Exact hours (can be decimal)
+    };
+};
+
+/**
+ * Calculate progressive tier breakdown for discounts
+ * 
+ * Examples:
+ * - 70 days → 60 days discounted (2 months), 10 days regular
+ * - 400 days → 365 days discounted (1 year), 35 days regular
+ * - 45 days → 30 days discounted (1 month), 15 days regular
+ * 
+ * @param totalHours - Total rental hours
+ * @returns Breakdown of discounted and regular hours with applicable discount rate
+ */
+export const calculateProgressiveTiers = (
+    totalHours: number
+): {
+    discountedHours: number;
+    regularHours: number;
+    discountTier: "yearly" | "monthly" | "none";
+    fullPeriods: number;
+} => {
+    const totalDays = totalHours / 24;
+
+    // Check for yearly discount (365+ days)
+    if (totalDays >= YEARLY_THRESHOLD_DAYS) {
+        const fullYears = Math.floor(totalDays / YEARLY_THRESHOLD_DAYS);
+        const discountedDays = fullYears * YEARLY_THRESHOLD_DAYS;
+        const remainingDays = totalDays - discountedDays;
+
+        return {
+            discountedHours: discountedDays * 24,
+            regularHours: remainingDays * 24,
+            discountTier: "yearly",
+            fullPeriods: fullYears,
+        };
+    }
+
+    // Check for monthly discount (30-364 days)
+    if (totalDays >= MONTHLY_THRESHOLD_DAYS) {
+        const fullMonths = Math.floor(totalDays / MONTHLY_THRESHOLD_DAYS);
+        const discountedDays = fullMonths * MONTHLY_THRESHOLD_DAYS;
+        const remainingDays = totalDays - discountedDays;
+
+        return {
+            discountedHours: discountedDays * 24,
+            regularHours: remainingDays * 24,
+            discountTier: "monthly",
+            fullPeriods: fullMonths,
+        };
+    }
+
+    // No discount (< 30 days)
+    return {
+        discountedHours: 0,
+        regularHours: totalHours,
+        discountTier: "none",
+        fullPeriods: 0,
     };
 };
 
@@ -137,14 +206,4 @@ export const parseTime = (timeStr: string): TimeComponents => {
  */
 export const formatDuration = (days: number, hours: number): string => {
     return `${days} Ngày ${hours} Giờ`;
-};
-
-/**
- * Calculate rental days for pricing (minimum 1 day)
- * 
- * @param days - Calculated days from duration
- * @returns Rental days for pricing (never less than 1)
- */
-export const calculateRentalDays = (days: number): number => {
-    return days > 0 ? days : 1;
 };
