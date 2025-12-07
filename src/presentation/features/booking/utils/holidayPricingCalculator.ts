@@ -52,7 +52,15 @@ const isSameDay = (date1: Date, date2: Date): boolean => {
 };
 
 /**
- * Get all dates in a range (inclusive of start, exclusive of end for rental logic)
+ * Get all dates in a range (inclusive of any day the rental touches)
+ * 
+ * Business rule: If the rental period overlaps with a day even partially,
+ * that day should be included for holiday calculations.
+ * 
+ * Example:
+ * - Pickup: April 30, 10:00 AM
+ * - Return: May 1, 10:00 PM
+ * - Result: [April 30, May 1] ✅ Both days included
  */
 const getDatesInRange = (startDate: Date, endDate: Date): Date[] => {
     const dates: Date[] = [];
@@ -62,7 +70,8 @@ const getDatesInRange = (startDate: Date, endDate: Date): Date[] => {
     const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
 
-    while (current < end) {
+    // Use <= to include the end date if rental extends into it
+    while (current <= end) {
         dates.push(new Date(current));
         current.setDate(current.getDate() + 1);
     }
