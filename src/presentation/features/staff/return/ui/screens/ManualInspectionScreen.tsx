@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Animated,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, Entypo } from "@expo/vector-icons";
@@ -59,6 +60,13 @@ export const ManualInspectionScreen: React.FC = () => {
   const [returnReceiptData, setReturnReceiptData] =
     useState<CreateReceiptResponse | null>(null);
   const [checklistUri, setChecklistUri] = useState<string | null>(null);
+  const [odometerError, setOdometerError] = useState<string | null>(null);
+  const [batteryError, setBatteryError] = useState<string | null>(null);
+  const odometerShakeAnim = useRef(new Animated.Value(0)).current;
+  const batteryShakeAnim = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const statusInputsCardRef = useRef<View>(null);
+  const [statusInputsCardY, setStatusInputsCardY] = useState<number>(0);
   const [categories, setCategories] = useState<InspectionCategory[]>([
     {
       id: "body-paint",
@@ -126,7 +134,70 @@ export const ManualInspectionScreen: React.FC = () => {
   ]);
   const checklistRef = useRef<View>(null);
 
-  const { getLastReceipt } = useGetLastReceipt({ bookingId });
+  const { getLastReceipt, booking } = useGetLastReceipt({ bookingId });
+
+  // Set default odometer value from startOdometerKm
+  useEffect(() => {
+    const lastReceipt = getLastReceipt();
+    if (lastReceipt?.startOdometerKm && !endOdometerKm) {
+      setEndOdometerKm(lastReceipt.startOdometerKm.toString());
+    }
+  }, [booking, getLastReceipt]);
+
+  // Auto-clear odometer error when value becomes valid
+  useEffect(() => {
+    if (odometerError && endOdometerKm) {
+      const lastReceipt = getLastReceipt();
+      const endOdometerNum = parseInt(endOdometerKm);
+      const isValid = !isNaN(endOdometerNum) && endOdometerNum >= 0;
+      const isGreaterThanStart =
+        lastReceipt?.startOdometerKm === undefined ||
+        endOdometerNum > lastReceipt.startOdometerKm;
+
+      if (isValid && isGreaterThanStart) {
+        setOdometerError(null);
+      }
+    }
+  }, [endOdometerKm, odometerError, getLastReceipt]);
+
+  // Auto-clear battery error when value becomes valid
+  useEffect(() => {
+    if (batteryError && endBatteryPercentage) {
+      const endBatteryNum = parseInt(endBatteryPercentage);
+      const isValid =
+        !isNaN(endBatteryNum) && endBatteryNum >= 0 && endBatteryNum <= 100;
+
+      if (isValid) {
+        setBatteryError(null);
+      }
+    }
+  }, [endBatteryPercentage, batteryError]);
+
+  const shakeError = (animValue: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const toggleCategory = (categoryId: string) => {
     setCategories((prev) =>
       prev.map((cat) =>
@@ -165,18 +236,77 @@ export const ManualInspectionScreen: React.FC = () => {
     return category.items.filter((item) => item.checked).length;
   };
 
+  const validate = (): boolean => {
+    const newErrors: { odometer?: string; battery?: string } = {};
+    let isValid = true;
+
+    // Validate odometer
+    if (!endOdometerKm || endOdometerKm.trim() === "") {
+      newErrors.odometer = "Vui lòng nhập số km cuối";
+      isValid = false;
+      shakeError(odometerShakeAnim);
+    } else {
+      const lastReceipt = getLastReceipt();
+      const endOdometerNum = parseInt(endOdometerKm);
+      if (isNaN(endOdometerNum) || endOdometerNum < 0) {
+        newErrors.odometer = "Số km phải là số hợp lệ (≥ 0)";
+        isValid = false;
+        shakeError(odometerShakeAnim);
+      } else if (
+        lastReceipt?.startOdometerKm !== undefined &&
+        endOdometerNum < lastReceipt.startOdometerKm
+      ) {
+        newErrors.odometer = `Số km cuối phải lớn hơn hoặc bằng số km đầu (${lastReceipt.startOdometerKm} km)`;
+        isValid = false;
+        shakeError(odometerShakeAnim);
+      }
+    }
+
+    // Validate battery
+    if (!endBatteryPercentage || endBatteryPercentage.trim() === "") {
+      newErrors.battery = "Vui lòng nhập % pin cuối";
+      isValid = false;
+      shakeError(batteryShakeAnim);
+    } else {
+      const endBatteryNum = parseInt(endBatteryPercentage);
+      if (isNaN(endBatteryNum) || endBatteryNum < 0 || endBatteryNum > 100) {
+        newErrors.battery = "Pin phải là số từ 0 đến 100";
+        isValid = false;
+        shakeError(batteryShakeAnim);
+      }
+    }
+
+    // Set all errors at once
+    setOdometerError(newErrors.odometer || null);
+    setBatteryError(newErrors.battery || null);
+
+    // Scroll to first error
+    if (!isValid && scrollViewRef.current) {
+      setTimeout(() => {
+        if (statusInputsCardY > 0) {
+          scrollViewRef.current?.scrollTo({
+            y: statusInputsCardY - 20,
+            animated: true,
+          });
+        }
+      }, 100);
+    }
+
+    return isValid;
+  };
 
   const handleCompleteInspection = async () => {
     if (isSubmitting) return;
     try {
       setIsSubmitting(true);
 
-      // Validate required fields
-      if (!endOdometerKm || !endBatteryPercentage) {
-        Alert.alert("Lỗi", "Vui lòng nhập số km và % pin cuối");
+      // Validate all fields
+      if (!validate()) {
         setIsSubmitting(false);
         return;
       }
+
+      const lastReceipt = getLastReceipt();
 
       let capturedChecklistUri: string | null = null;
       if (checklistRef.current) {
@@ -191,8 +321,6 @@ export const ManualInspectionScreen: React.FC = () => {
       const createReturnReceiptUseCase = new RentalReturnCreateReceiptUseCase(
         sl.get("RentalReturnRepository")
       );
-
-      const lastReceipt = getLastReceipt();
 
       const returnReceiptResponse = await createReturnReceiptUseCase.execute({
         notes: "Kiểm tra thủ công",
@@ -229,7 +357,10 @@ export const ManualInspectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.scrollContent}
+      >
         <ScreenHeader
           title="Kiểm tra thủ công"
           subtitle=""
@@ -297,7 +428,14 @@ export const ManualInspectionScreen: React.FC = () => {
         </View>
 
         {/* Vehicle Status Inputs */}
-        <View style={styles.statusInputsCard}>
+        <View
+          ref={statusInputsCardRef}
+          style={styles.statusInputsCard}
+          onLayout={(event) => {
+            const { y } = event.nativeEvent.layout;
+            setStatusInputsCardY(y);
+          }}
+        >
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
               <View style={styles.cardHeaderIcon}>
@@ -315,13 +453,26 @@ export const ManualInspectionScreen: React.FC = () => {
                 <AntDesign name="thunderbolt" size={14} color="#67D16C" />
                 <Text style={styles.inputLabel}>Pin</Text>
               </View>
-              <View style={styles.inputWithUnit}>
+              <Animated.View
+                style={[
+                  styles.inputWithUnit,
+                  { transform: [{ translateX: batteryShakeAnim }] },
+                ]}
+              >
                 <TextInput
-                  style={styles.numberInput}
+                  style={[
+                    styles.numberInput,
+                    batteryError && styles.numberInputError,
+                  ]}
                   placeholder="0"
                   placeholderTextColor={colors.text.secondary}
                   value={endBatteryPercentage}
-                  onChangeText={setEndBatteryPercentage}
+                  onChangeText={(text) => {
+                    setEndBatteryPercentage(text);
+                    if (batteryError) {
+                      setBatteryError(null);
+                    }
+                  }}
                   keyboardType="numeric"
                 />
                 <View
@@ -334,7 +485,13 @@ export const ManualInspectionScreen: React.FC = () => {
                     %
                   </Text>
                 </View>
-              </View>
+              </Animated.View>
+              {batteryError && (
+                <View style={styles.errorContainer}>
+                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <Text style={styles.errorText}>{batteryError}</Text>
+                </View>
+              )}
             </View>
 
             {/* Odometer Input */}
@@ -343,19 +500,38 @@ export const ManualInspectionScreen: React.FC = () => {
                 <AntDesign name="dashboard" size={14} color="#7DB3FF" />
                 <Text style={styles.inputLabel}>Số km</Text>
               </View>
-              <View style={styles.inputWithUnit}>
+              <Animated.View
+                style={[
+                  styles.inputWithUnit,
+                  { transform: [{ translateX: odometerShakeAnim }] },
+                ]}
+              >
                 <TextInput
-                  style={styles.numberInput}
+                  style={[
+                    styles.numberInput,
+                    odometerError && styles.numberInputError,
+                  ]}
                   placeholder="0"
                   placeholderTextColor={colors.text.secondary}
                   value={endOdometerKm}
-                  onChangeText={setEndOdometerKm}
+                  onChangeText={(text) => {
+                    setEndOdometerKm(text);
+                    if (odometerError) {
+                      setOdometerError(null);
+                    }
+                  }}
                   keyboardType="numeric"
                 />
                 <View style={styles.unitBadge}>
                   <Text style={styles.inputUnit}>km</Text>
                 </View>
-              </View>
+              </Animated.View>
+              {odometerError && (
+                <View style={styles.errorContainer}>
+                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <Text style={styles.errorText}>{odometerError}</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -826,6 +1002,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     overflow: "hidden",
+    marginHorizontal: 16,
   },
   primaryCtaDisabled: {
     backgroundColor: "#2F3545",
@@ -863,6 +1040,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
     overflow: "hidden",
+    marginHorizontal: 16,
   },
   secondaryCtaContent: {
     flexDirection: "row",
@@ -875,5 +1053,28 @@ const styles = StyleSheet.create({
     color: "#FFD666",
     fontWeight: "700",
     fontSize: 16,
+  },
+  numberInputError: {
+    borderColor: "#FF6B6B",
+    borderWidth: 2,
+    backgroundColor: "rgba(255,107,107,0.05)",
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,107,107,0.1)",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,107,107,0.3)",
+  },
+  errorText: {
+    color: "#FF6B6B",
+    fontSize: 12,
+    fontWeight: "600",
+    flex: 1,
   },
 });
