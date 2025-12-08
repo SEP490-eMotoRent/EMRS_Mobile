@@ -37,6 +37,7 @@ export class RentalReturnRepositoryImpl implements RentalReturnRepository {
   ): Promise<ApiResponse<CreateReceiptResponse>> {
     const request: CreateReceiptRequest = {
       bookingId: input.bookingId,
+      returnReceiptId: input.returnReceiptId,
       actualReturnDatetime: input.actualReturnDatetime,
       endOdometerKm: input.endOdometerKm,
       endBatteryPercentage: input.endBatteryPercentage,

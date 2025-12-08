@@ -152,7 +152,7 @@ export const BookingDetailsScreen: React.FC = () => {
           text: "Có, hủy đặt xe",
           style: "destructive",
           onPress: async () => {
-            try {
+    try {
               const cancelBookingUseCase = sl.getCancelBookingUseCase();
               const cancelledBooking = await cancelBookingUseCase.execute(
                 bookingId
@@ -173,7 +173,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 text2:
                   error.message || "Không thể hủy đặt xe. Vui lòng thử lại.",
               });
-            }
+    }
           },
         },
       ]
@@ -528,16 +528,16 @@ export const BookingDetailsScreen: React.FC = () => {
             {/* Vehicle Model */}
             {booking?.vehicle?.id && (
               <>
-                <View style={styles.iconRow}>
-                  <View style={styles.iconLeft}>
+            <View style={styles.iconRow}>
+              <View style={styles.iconLeft}>
                     <AntDesign name="idcard" size={14} color="#7DB3FF" />
-                    <Text style={styles.iconLabel}>Mã xe thuê</Text>
-                  </View>
-                  <Text style={styles.iconValue}>
-                    #{booking?.vehicle?.id.slice(-12) || "-"}
-                  </Text>
-                </View>
-                <View style={styles.divider} />
+                <Text style={styles.iconLabel}>Mã xe thuê</Text>
+              </View>
+              <Text style={styles.iconValue}>
+                #{booking?.vehicle?.id.slice(-12) || "-"}
+              </Text>
+            </View>
+            <View style={styles.divider} />
               </>
             )}
             <View style={styles.iconRow}>
@@ -729,29 +729,29 @@ export const BookingDetailsScreen: React.FC = () => {
         </View>
         {booking?.vehicle?.id && (
           <>
-            <TouchableOpacity
-              style={styles.vehicleDetailsBtn}
-              activeOpacity={0.85}
-              onPress={openVehicleDetails}
-            >
-              <View style={styles.vehicleDetailsLeft}>
-                <View style={styles.vehicleIconBadge}>
-                  <AntDesign name="car" size={18} color="#000" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.vehicleDetailsTitle}>
-                    Xem thông tin xe đang thuê
-                  </Text>
-                  <Text style={styles.vehicleDetailsSubtitle}>
-                    {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
-                    {booking?.vehicleModel?.modelName ||
-                      booking?.vehicle?.vehicleModel?.modelName ||
-                      "Đang cập nhật"}
-                  </Text>
-                </View>
+          <TouchableOpacity
+            style={styles.vehicleDetailsBtn}
+            activeOpacity={0.85}
+            onPress={openVehicleDetails}
+          >
+            <View style={styles.vehicleDetailsLeft}>
+              <View style={styles.vehicleIconBadge}>
+                <AntDesign name="car" size={18} color="#000" />
               </View>
-              <AntDesign name="arrow-right" size={18} color="#fff" />
-            </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.vehicleDetailsTitle}>
+                  Xem thông tin xe đang thuê
+                </Text>
+                <Text style={styles.vehicleDetailsSubtitle}>
+                  {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
+                  {booking?.vehicleModel?.modelName ||
+                    booking?.vehicle?.vehicleModel?.modelName ||
+                    "Đang cập nhật"}
+                </Text>
+              </View>
+            </View>
+            <AntDesign name="arrow-right" size={18} color="#fff" />
+          </TouchableOpacity>
 
             {/* Charging history CTA - navigate to booking charging list */}
             <TouchableOpacity
@@ -869,116 +869,116 @@ export const BookingDetailsScreen: React.FC = () => {
 
         {/* Return Summary */}
         {booking?.bookingStatus === "Completed" && (
-          <View style={styles.section}>
-            <SectionHeader title="Tóm tắt trả xe" icon="profile" />
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryHeaderRow}>
-                <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
-                <View style={styles.summaryPill}>
-                  <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
-                </View>
+        <View style={styles.section}>
+          <SectionHeader title="Tóm tắt trả xe" icon="profile" />
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryHeaderRow}>
+              <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
+              <View style={styles.summaryPill}>
+                <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
               </View>
+            </View>
 
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryKey}>Phí thuê xe</Text>
+              <Text style={styles.summaryVal}>
+                {formatVnd(summary?.baseRentalFee || 0)}
+              </Text>
+            </View>
+            {summary?.totalChargingFee !== 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí thuê xe</Text>
+                <Text style={styles.summaryKey}>Phí sạc pin</Text>
                 <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.baseRentalFee || 0)}
+                  {formatVnd(summary?.totalChargingFee || 0)}
                 </Text>
               </View>
-              {summary?.totalChargingFee !== 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Phí sạc pin</Text>
-                  <Text style={styles.summaryVal}>
-                    {formatVnd(summary?.totalChargingFee || 0)}
-                  </Text>
-                </View>
-              )}
+            )}
               {summary?.feesBreakdown?.damageDetails.length > 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Phí hư hỏng</Text>
-                  <Text style={styles.summaryVal}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí hư hỏng</Text>
+                <Text style={styles.summaryVal}>
                     {formatVnd(
                       summary?.feesBreakdown.damageDetails.reduce(
                         (acc, detail) => acc + detail.amount,
                         0
                       ) || 0
                     )}
-                  </Text>
-                </View>
-              )}
-              {summary?.feesBreakdown?.cleaningFee !== 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Phí vệ sinh</Text>
-                  <Text style={styles.summaryVal}>
-                    {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
-                  </Text>
-                </View>
-              )}
-              {summary?.feesBreakdown?.crossBranchFee !== 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
-                  <Text style={styles.summaryVal}>
-                    {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
-                  </Text>
-                </View>
-              )}
-              {summary?.feesBreakdown?.excessKmFee !== 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
-                  <Text style={styles.summaryVal}>
-                    {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
-                  </Text>
-                </View>
-              )}
-              {summary?.feesBreakdown?.lateReturnFee !== 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Trả muộn</Text>
-                  <Text style={styles.summaryVal}>
-                    {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.divider} />
+                </Text>
+              </View>
+            )}
+            {summary?.feesBreakdown?.cleaningFee !== 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Tổng phụ phí</Text>
+                <Text style={styles.summaryKey}>Phí vệ sinh</Text>
                 <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.totalAmount || 0)}
+                  {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
                 </Text>
               </View>
-
+            )}
+            {summary?.feesBreakdown?.crossBranchFee !== 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Tiền cọc</Text>
+                <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
                 <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.depositAmount || 0)}
+                  {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
                 </Text>
               </View>
+            )}
+            {summary?.feesBreakdown?.excessKmFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
+                </Text>
+              </View>
+            )}
+            {summary?.feesBreakdown?.lateReturnFee !== 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>Trả muộn</Text>
+                <Text style={styles.summaryVal}>
+                  {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
+                </Text>
+              </View>
+            )}
 
-              <View style={styles.divider} />
-              <View style={[styles.summaryRow]}>
-                <Text style={styles.summaryTotalLabel}>
-                  {summary?.refundAmount >= 0
-                    ? "Số tiền hoàn lại"
-                    : "Số tiền cần thanh toán thêm"}
-                </Text>
-                <Text
-                  style={[
-                    styles.summaryTotalValue,
-                    {
-                      color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
-                    },
-                  ]}
-                >
-                  {formatVnd(Math.abs(summary?.refundAmount || 0))}
-                </Text>
-              </View>
-              {summary?.refundAmount < 0 && (
-                <Text style={styles.paymentNote}>
-                  Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
-                </Text>
-              )}
+            <View style={styles.divider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryKey}>Tổng phụ phí</Text>
+              <Text style={styles.summaryVal}>
+                {formatVnd(summary?.totalAmount || 0)}
+              </Text>
             </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryKey}>Tiền cọc</Text>
+              <Text style={styles.summaryVal}>
+                {formatVnd(summary?.depositAmount || 0)}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+            <View style={[styles.summaryRow]}>
+              <Text style={styles.summaryTotalLabel}>
+                {summary?.refundAmount >= 0
+                  ? "Số tiền hoàn lại"
+                  : "Số tiền cần thanh toán thêm"}
+              </Text>
+              <Text
+                style={[
+                  styles.summaryTotalValue,
+                  {
+                    color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
+                  },
+                ]}
+              >
+                {formatVnd(Math.abs(summary?.refundAmount || 0))}
+              </Text>
+            </View>
+            {summary?.refundAmount < 0 && (
+              <Text style={styles.paymentNote}>
+                Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
+              </Text>
+            )}
           </View>
+        </View>
         )}
 
         {hasRentalReceipt && (
@@ -1009,15 +1009,15 @@ export const BookingDetailsScreen: React.FC = () => {
                 (booking?.bookingStatus === "Returned" &&
                   rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
                     // rentalReceipts?.[0]?.checkListReturnFile &&
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.returnReportBtn]}
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.returnReportBtn]}
                       onPress={openReturnReceiptReport}
-                    >
-                      <AntDesign name="file-text" size={18} color="#000" />
-                      <Text style={styles.returnReportBtnText}>
-                        Xem biên bản trả xe
-                      </Text>
-                    </TouchableOpacity>
+                >
+                  <AntDesign name="file-text" size={18} color="#000" />
+                  <Text style={styles.returnReportBtnText}>
+                    Xem biên bản trả xe
+                  </Text>
+                </TouchableOpacity>
                   ))}
             </InfoCard>
           </View>

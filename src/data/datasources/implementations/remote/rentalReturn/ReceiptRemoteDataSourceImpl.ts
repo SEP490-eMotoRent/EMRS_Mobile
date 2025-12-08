@@ -51,6 +51,7 @@ export class RentalReturnRemoteDataSourceImpl
       const formData = new FormData();
 
       formData.append("BookingId", request.bookingId);
+      formData.append("RentalReceiptId", request.returnReceiptId);
       formData.append("ActualReturnDatetime", request.actualReturnDatetime);
       formData.append("EndOdometerKm", request.endOdometerKm.toString());
       formData.append(

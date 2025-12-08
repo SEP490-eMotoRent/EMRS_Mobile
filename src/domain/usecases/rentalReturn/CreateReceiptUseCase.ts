@@ -1,10 +1,10 @@
 import { ApiResponse } from "../../../core/network/APIResponse";
-import { AdditionalFeesBreakdown } from "../../../data/models/rentalReturn/CreateReceiptRequest";
 import { CreateReceiptResponse } from "../../../data/models/rentalReturn/CreateReceiptResponse";
 import { RentalReturnRepository } from "../../repositories/rentalReturn/RentalReturnRepository";
 
 export interface RentalReturnCreateReceiptUseCaseInput {
     bookingId: string;
+    returnReceiptId: string;
     actualReturnDatetime: string;
     endOdometerKm: number;
     endBatteryPercentage: number;
