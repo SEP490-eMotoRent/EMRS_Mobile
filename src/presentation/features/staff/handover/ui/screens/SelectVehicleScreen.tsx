@@ -18,7 +18,6 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Vehicle } from "../../../../../../domain/entities/vehicle/Vehicle";
 import { GetVehicleListUseCase } from "../../../../../../domain/usecases/vehicle/GetVehicleListUseCase";
 import { RootState } from "../../../../authentication/store";
 import { useAppSelector } from "../../../../authentication/store/hooks";

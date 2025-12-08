@@ -8,6 +8,8 @@ import { CreateReceiptResponse } from "../../../../models/rentalReturn/CreateRec
 import { FinalizeReturnRequest } from "../../../../models/rentalReturn/FinalizeReturnRequest";
 import { FinalizeReturnResponse } from "../../../../models/rentalReturn/FinalizeReturnResponse";
 import { SummaryResponse } from "../../../../models/rentalReturn/SummaryResponse";
+import { VehicleSwapRequest } from "../../../../models/rentalReturn/VehicleSwapRequest";
+import { VehicleSwapResponse } from "../../../../models/rentalReturn/VehicleSwapResponse";
 import { RentalReturnRemoteDataSource } from "../../../interfaces/remote/rentalReturn/RentalReturnRemoteDataSource";
 
 export class RentalReturnRemoteDataSourceImpl
@@ -122,6 +124,45 @@ export class RentalReturnRemoteDataSourceImpl
       };
     } catch (error: any) {
       console.error("Error finalizing return:", error);
+      throw error;
+    }
+  }
+
+  async swapVehicleReturn(request: VehicleSwapRequest): Promise<ApiResponse<VehicleSwapResponse>> {
+    try {
+      const formData = new FormData();
+
+      formData.append("BookingId", request.bookingId);
+      formData.append("RentalReceiptId", request.returnReceiptId);
+      formData.append("EndOdometerKm", request.endOdometerKm.toString());
+      formData.append(
+        "EndBatteryPercentage",
+        request.endBatteryPercentage.toString()
+      );
+      formData.append("Notes", request.notes);
+      formData.append(
+        "ReturnImageUrls",
+        JSON.stringify(request.returnImageUrls)
+      );
+      formData.append("ChecklistImage", request.checkListImage);
+
+      console.log("=== FormData Content ===");
+      (formData as any)._parts.forEach(([key, value]: [string, any]) => {
+        console.log(`${key}:`, value);
+      });
+      const response = await this.axiosClient.post<
+        ApiResponse<VehicleSwapResponse>
+      >(ApiEndpoints.rentalReturn.vehicleSwap, formData);
+
+      return {
+        success: true,
+        message: "Vehicle swapped successfully",
+        data: response.data.data,
+        code: response.status,
+      };
+    }
+    catch (error: any) {
+      console.error("Error swapping vehicle:", error);
       throw error;
     }
   }

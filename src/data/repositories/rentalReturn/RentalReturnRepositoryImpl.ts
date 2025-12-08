@@ -10,6 +10,9 @@ import { CreateReceiptResponse } from "../../models/rentalReturn/CreateReceiptRe
 import { SummaryResponse } from "../../models/rentalReturn/SummaryResponse";
 import { FinalizeReturnRequest } from "../../models/rentalReturn/FinalizeReturnRequest";
 import { FinalizeReturnResponse } from "../../models/rentalReturn/FinalizeReturnResponse";
+import { VehicleSwapResponse } from "../../models/rentalReturn/VehicleSwapResponse";
+import { VehicleSwapRequest } from "../../models/rentalReturn/VehicleSwapRequest";
+import { SwapVehicleReturnUseCaseInput } from "../../../domain/usecases/rentalReturn/SwapVehicleReturnUseCase";
 
 export class RentalReturnRepositoryImpl implements RentalReturnRepository {
   constructor(private remote: RentalReturnRemoteDataSource) {}
@@ -59,5 +62,22 @@ export class RentalReturnRepositoryImpl implements RentalReturnRepository {
 
   async finalizeReturn(request: FinalizeReturnRequest): Promise<ApiResponse<FinalizeReturnResponse>> {
     return await this.remote.finalizeReturn(request);
+  }
+
+  async swapVehicleReturn(input: SwapVehicleReturnUseCaseInput): Promise<ApiResponse<VehicleSwapResponse>> {
+    const request: VehicleSwapRequest = {
+      bookingId: input.bookingId,
+      returnReceiptId: input.returnReceiptId,
+      endOdometerKm: input.endOdometerKm,
+      endBatteryPercentage: input.endBatteryPercentage,
+      notes: input.notes,
+      returnImageUrls: input.returnImageUrls,
+      checkListImage: {
+        uri: input.checkListImage,
+        type: "image/png",
+        name: `checklist_${Date.now()}.png`,
+      } as any,
+    };
+    return await this.remote.swapVehicleReturn(request);
   }
 }

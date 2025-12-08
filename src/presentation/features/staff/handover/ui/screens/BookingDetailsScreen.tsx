@@ -38,6 +38,7 @@ import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/r
 import { GpsSharingInviteUseCase } from "../../../../../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
 import Toast from "react-native-toast-message";
 import { useAppSelector } from "../../../../authentication/store/hooks";
+import { useGetLastReceipt } from "../../../return/ui/hooks/useGetLastReceipt";
 
 type BookingDetailsScreenNavigationProp = any;
 
@@ -49,7 +50,7 @@ type BookingDetailsScreenRouteProp = RouteProp<
 export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<BookingDetailsScreenRouteProp>();
   const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
-  const user = useAppSelector((state: RootState) => state.auth.user);
+  const user = useAppSelector((state) => state.auth.user);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [contract, setContract] = useState<RentalContract | null>(null);
   const [rentalReceipts, setRentalReceipts] = useState<RentalReceipt[] | null>(
@@ -63,7 +64,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [showReceiptListModal, setShowReceiptListModal] = useState(false);
-  const [isRefetching, setIsRefetching] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);  
 
   useFocusEffect(
     useCallback(() => {
@@ -1110,12 +1111,15 @@ export const BookingDetailsScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.actionBtn, styles.changeBtn]}
               onPress={() => {
-                navigation.navigate("SelectVehicle", {
+                navigation.navigate("SwapSelectVehicle", {
                   bookingId: bookingId,
-                  renterName: booking?.renter?.fullName?.() ?? "",
-                  vehicleModel: booking?.vehicleModel,
-                  vehicleStatus: "Available",
-                  isChangeVehicle: true,
+                  returnReceiptId: getLastReceipt()?.id,
+                  currentVehicleId: booking?.vehicle?.id,
+                  licensePlate: booking?.vehicle?.licensePlate,
+                  startOldVehicleOdometerKm: getLastReceipt()?.startOdometerKm,
+                  modelName:
+                    booking?.vehicleModel?.modelName ||
+                    booking?.vehicle?.vehicleModel?.modelName,
                 });
               }}
             >

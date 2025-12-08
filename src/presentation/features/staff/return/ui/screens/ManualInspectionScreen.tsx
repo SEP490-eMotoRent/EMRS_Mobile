@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { RentalReturnCreateReceiptUseCase } from "../../../../../../domain/useca
 import sl from "../../../../../../core/di/InjectionContainer";
 import { CreateReceiptResponse } from "../../../../../../data/models/rentalReturn/CreateReceiptResponse";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import { useGetLastReceipt } from "../hooks/useGetLastReceipt";
 
 type ManualInspectionScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -58,7 +59,6 @@ export const ManualInspectionScreen: React.FC = () => {
   const [returnReceiptData, setReturnReceiptData] =
     useState<CreateReceiptResponse | null>(null);
   const [checklistUri, setChecklistUri] = useState<string | null>(null);
-
   const [categories, setCategories] = useState<InspectionCategory[]>([
     {
       id: "body-paint",
@@ -124,9 +124,9 @@ export const ManualInspectionScreen: React.FC = () => {
       ],
     },
   ]);
-
   const checklistRef = useRef<View>(null);
 
+  const { getLastReceipt } = useGetLastReceipt({ bookingId });
   const toggleCategory = (categoryId: string) => {
     setCategories((prev) =>
       prev.map((cat) =>
@@ -165,6 +165,7 @@ export const ManualInspectionScreen: React.FC = () => {
     return category.items.filter((item) => item.checked).length;
   };
 
+
   const handleCompleteInspection = async () => {
     if (isSubmitting) return;
     try {
@@ -191,8 +192,11 @@ export const ManualInspectionScreen: React.FC = () => {
         sl.get("RentalReturnRepository")
       );
 
+      const lastReceipt = getLastReceipt();
+
       const returnReceiptResponse = await createReturnReceiptUseCase.execute({
         notes: "Kiểm tra thủ công",
+        returnReceiptId: lastReceipt?.id,
         actualReturnDatetime: new Date().toISOString(),
         endOdometerKm: parseInt(endOdometerKm),
         endBatteryPercentage: parseInt(endBatteryPercentage),
