@@ -3,6 +3,7 @@ import { HolidayPricing } from "../../../../domain/entities/financial/HolidayPri
 import {
     calculateCombinedRentalFee,
     HolidayDay,
+    ProgressiveTierBreakdown,
 } from "../utils/holidayPricingCalculator";
 import { useHolidayPricing } from "./useHolidayPricing";
 import { useRentingRate, VehicleCategory } from "./useRentingRate";
@@ -13,6 +14,9 @@ export interface RentalPricingResult {
     rentingRate: number;
     discountPercentage: number;
     durationType: "daily" | "monthly" | "yearly";
+
+    // Progressive tier breakdown
+    progressiveTierBreakdown: ProgressiveTierBreakdown;
 
     // Membership discount
     membershipDiscountPercentage: number;
@@ -36,20 +40,38 @@ export interface RentalPricingResult {
     error: string | null;
 }
 
+/**
+ * Hook for calculating rental pricing with progressive tier hourly pricing
+ * 
+ * Progressive Tier Formula:
+ * - 70 days → 60 days discounted (2 months), 10 days regular
+ * - Base = (Hourly_Rate × Discounted_Hours × 0.90) + (Hourly_Rate × Regular_Hours)
+ * - Holiday surcharge applied to the rate of each specific day
+ * - Membership discount applied on top of everything
+ * 
+ * @param startDate - Rental start date/time
+ * @param endDate - Rental end date/time
+ * @param dailyRate - Price per day (24 hours)
+ * @param totalHours - Total rental hours (from useRentalDuration)
+ * @param vehicleCategory - Vehicle category for discount calculation
+ */
 export const useRentalPricing = (
     startDate: Date,
     endDate: Date,
     dailyRate: number,
-    rentalDays: number,
+    totalHours: number,
     vehicleCategory: VehicleCategory
 ): RentalPricingResult => {
-    // Fetch configuration discount
+    // Calculate equivalent days for discount tier determination
+    const equivalentDays = Math.floor(totalHours / 24);
+
+    // Fetch configuration discount based on total days
     const {
         rentingRate,
         discountPercentage,
         durationType,
         loading: rateLoading,
-    } = useRentingRate(rentalDays, vehicleCategory);
+    } = useRentingRate(equivalentDays, vehicleCategory);
 
     // Fetch membership discount
     const {
@@ -65,42 +87,77 @@ export const useRentalPricing = (
         error: holidayError,
     } = useHolidayPricing();
 
-    // Calculate combined pricing
+    // Calculate combined pricing with progressive tiers
     const pricing = useMemo(() => {
         if (rateLoading || membershipLoading || holidayLoading) {
+            const hourlyRate = dailyRate / 24;
+            const baseEstimate = Math.round(hourlyRate * totalHours);
+
             return {
-                baseRentalFee: rentalDays * dailyRate,
+                baseRentalFee: baseEstimate,
                 discountAmount: 0,
                 holidaySurcharge: 0,
-                totalRentalFee: rentalDays * dailyRate,
+                totalRentalFee: baseEstimate,
                 holidayDays: [] as HolidayDay[],
                 membershipDiscountAmount: 0,
+                progressiveTierBreakdown: {
+                    discountedHours: 0,
+                    regularHours: totalHours,
+                    discountTier: "none" as const,
+                },
             };
         }
 
-        // Step 1: Original calculation (config discount + holiday surcharge)
+        // Step 1: Calculate with progressive tier + holiday surcharge
         const basePricing = calculateCombinedRentalFee(
             startDate,
             endDate,
             dailyRate,
+            totalHours,
             holidays,
             rentingRate
         );
 
         // Step 2: Apply membership discount on top (sequential)
         const membershipRate = 1 - (membershipDiscountPercentage / 100);
-        const membershipDiscountAmount = basePricing.totalRentalFee * (membershipDiscountPercentage / 100);
-        const finalTotalRentalFee = basePricing.totalRentalFee * membershipRate;
+        const membershipDiscountAmount = Math.round(basePricing.totalRentalFee * (membershipDiscountPercentage / 100));
+        const finalTotalRentalFee = Math.round(basePricing.totalRentalFee * membershipRate);
+
+        console.log("💰 Pricing breakdown:", {
+            totalHours,
+            equivalentDays,
+            durationType,
+            discountPercentage: `${discountPercentage}%`,
+            progressiveTiers: basePricing.progressiveTierBreakdown,
+            baseRentalFee: basePricing.baseRentalFee,
+            discountAmount: basePricing.discountAmount,
+            holidaySurcharge: basePricing.holidaySurcharge,
+            beforeMembership: basePricing.totalRentalFee,
+            membershipDiscount: membershipDiscountAmount,
+            finalTotal: finalTotalRentalFee,
+        });
 
         return {
             ...basePricing,
             totalRentalFee: finalTotalRentalFee,
             membershipDiscountAmount,
         };
-    }, [startDate, endDate, dailyRate, holidays, rentingRate, membershipDiscountPercentage, rateLoading, membershipLoading, holidayLoading, rentalDays]);
+    }, [
+        startDate,
+        endDate,
+        dailyRate,
+        totalHours,
+        holidays,
+        rentingRate,
+        membershipDiscountPercentage,
+        rateLoading,
+        membershipLoading,
+        holidayLoading,
+    ]);
 
-    const averageRentalPrice = rentalDays > 0 
-        ? Math.round(pricing.totalRentalFee / rentalDays) 
+    // Calculate average price per day for display
+    const averageRentalPrice = equivalentDays > 0
+        ? Math.round(pricing.totalRentalFee / equivalentDays)
         : dailyRate;
 
     return {
@@ -108,6 +165,9 @@ export const useRentalPricing = (
         rentingRate,
         discountPercentage,
         durationType,
+
+        // Progressive tier breakdown
+        progressiveTierBreakdown: pricing.progressiveTierBreakdown,
 
         // Membership discount
         membershipDiscountPercentage,
