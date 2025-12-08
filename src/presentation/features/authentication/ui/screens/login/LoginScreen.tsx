@@ -1,29 +1,25 @@
-import { CompositeNavigationProp, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState } from "react";
+import React from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
-import sl from "../../../../../../core/di/InjectionContainer";
-import { unwrapResponse } from "../../../../../../core/network/APIResponse";
-import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
-import { LoginUseCase } from "../../../../../../domain/usecases/account/LoginUseCase";
 import { colors } from "../../../../../common/theme/colors";
-import { AuthStackParamList, RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { useAppDispatch } from "../../../store/hooks";
-import { addAuth } from "../../../store/slices/authSlice";
 import { BrandTitle } from "../../atoms/BrandTitle";
 import { EmailPromptModal } from "../../atoms/OTPVerify/EmailPromptModal";
 import { PrivacyNotice } from "../../atoms/PrivacyNotice";
 import { SignUpPrompt } from "../../atoms/register/SignUpPrompt";
 import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
 import { LoginForm } from "../../organism/login/LoginForm";
+import { CompositeNavigationProp } from "@react-navigation/native";
+import { AuthStackParamList, RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
+import { useGoogleLogin } from "../../../store/hooks/useGoogleLogin";
+import { useLogin } from "../../../store/hooks/useLogin";
+import { useOtpVerification } from "../../../store/hooks/useOTPVerification";
 
 type LoginScreenNavigationProp = CompositeNavigationProp<
   StackNavigationProp<AuthStackParamList, 'Login'>,
@@ -45,143 +41,38 @@ const isUnverifiedEmailError = (message: string): boolean => {
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [pendingUsername, setPendingUsername] = useState('');
-  const [resendingOtp, setResendingOtp] = useState(false);
-  const [loginError, setLoginError] = useState<string>('');
+  
+  // Custom hooks
+  const { loading: loginLoading, error: loginError, login, clearError } = useLogin();
+  const { loading: googleLoading, error: googleError, googleSignIn, clearError: clearGoogleError } = useGoogleLogin();
+  const { 
+    showEmailModal, 
+    pendingUsername, 
+    resendingOtp, 
+    openEmailModal, 
+    closeEmailModal, 
+    resendOtp 
+  } = useOtpVerification();
 
-  const handleContinue = async (data: {
-    username: string;
-    password: string;
-  }) => {
+  const handleContinue = async (data: { username: string; password: string }) => {
     try {
-      setLoading(true);
-      setLoginError(''); // Clear previous errors
-
-      const loginUseCase = new LoginUseCase(sl.get("AccountRepository"));
-      const response = await loginUseCase.execute({
-        username: data.username,
-        password: data.password,
-      });
-
-      const loginData: LoginResponseData = unwrapResponse(response);
-
-      dispatch(
-        addAuth({
-          token: loginData.accessToken,
-          user: {
-            id: loginData.user.id,
-            username: loginData.user.username,
-            role: loginData.user.role,
-            fullName: loginData.user.fullName,
-            branchId: loginData.user.branchId,
-            branchName: loginData.user.branchName,
-          },
-        })
-      );
-
-      Toast.show({
-        type: "success",
-        text1: "Đăng nhập thành công",
-        text2: "Chào mừng bạn đến với eMotoRent",
-      });
+      await login(data);
     } catch (error: any) {
       const errorMessage = error.message || "Tên đăng nhập hoặc mật khẩu không đúng";
       
+      // Check if it's an unverified email error
       if (isUnverifiedEmailError(errorMessage)) {
-        setPendingUsername(data.username);
-        Alert.alert(
-          'Xác minh email',
-          'Tài khoản của bạn chưa được xác minh. Vui lòng nhập mã OTP đã gửi đến email của bạn.',
-          [
-            {
-              text: 'Xác minh ngay',
-              onPress: () => setShowEmailModal(true),
-            },
-            {
-              text: 'Hủy',
-              style: 'cancel',
-            },
-          ]
-        );
-      } else {
-        // Set inline error instead of Alert - clean message without technical details
-        setLoginError("Tên đăng nhập hoặc mật khẩu không đúng");
+        openEmailModal(data.username);
       }
-      
-      console.error("Login error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEmailSubmit = async (email: string) => {
-    try {
-      setResendingOtp(true);
-      
-      const resendOtpUseCase = sl.getResendOtpUseCase();
-      await resendOtpUseCase.execute(email);
-      
-      setShowEmailModal(false);
-      
-      Toast.show({
-        type: 'info',
-        text1: 'Đã gửi mã OTP',
-        text2: 'Vui lòng kiểm tra email của bạn',
-      });
-
-      navigation.navigate('OTPVerification', {
-        email: email,
-        userId: pendingUsername,
-      });
-    } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Không thể gửi mã OTP');
-    } finally {
-      setResendingOtp(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      setLoginError(''); // Clear previous errors
+    await googleSignIn();
+  };
 
-      const googleSignInUseCase = sl.getGoogleSignInUseCase();
-      const { idToken, email, name } = await googleSignInUseCase.execute();
-
-      const googleLoginUseCase = sl.getGoogleLoginUseCase();
-      const response = await googleLoginUseCase.execute(idToken);
-
-      const loginData: LoginResponseData = unwrapResponse(response);
-
-      dispatch(
-        addAuth({
-          token: loginData.accessToken,
-          user: {
-            id: loginData.user.id,
-            username: loginData.user.username,
-            role: loginData.user.role,
-            fullName: loginData.user.fullName,
-            branchId: loginData.user.branchId,
-            branchName: loginData.user.branchName,
-          },
-        })
-      );
-
-      Toast.show({
-        type: "success",
-        text1: "Đăng nhập thành công",
-        text2: `Chào mừng ${name}`,
-      });
-
-    } catch (error: any) {
-      setLoginError('Đăng nhập Google thất bại. Vui lòng thử lại.');
-      console.error('Google Sign-In error:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleEmailSubmit = async (email: string) => {
+    await resendOtp(email);
   };
 
   const handleSignUpNow = () => {
@@ -194,6 +85,16 @@ export const LoginScreen: React.FC = () => {
 
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPassword');
+  };
+
+  // Combine loading states
+  const isLoading = loginLoading || googleLoading;
+  
+  // Combine error states (prioritize login error)
+  const displayError = loginError || googleError;
+  const handleErrorDismiss = () => {
+    clearError();
+    clearGoogleError();
   };
 
   return (
@@ -212,9 +113,9 @@ export const LoginScreen: React.FC = () => {
           <LoginForm 
             onContinue={handleContinue} 
             onForgotPassword={handleForgotPassword}
-            loading={loading}
-            error={loginError}
-            onErrorDismiss={() => setLoginError('')}
+            loading={isLoading}
+            error={displayError}
+            onErrorDismiss={handleErrorDismiss}
           />
           
           <SocialAuthGroup onGooglePress={handleGoogleSignIn} />
@@ -227,7 +128,7 @@ export const LoginScreen: React.FC = () => {
 
       <EmailPromptModal
         visible={showEmailModal}
-        onClose={() => setShowEmailModal(false)}
+        onClose={closeEmailModal}
         onSubmit={handleEmailSubmit}
         loading={resendingOtp}
       />

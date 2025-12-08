@@ -167,7 +167,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         </View>
 
                         {/* Model Selection */}
-                        <View style={styles.section}>
+                        {/* <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Dòng Xe</Text>
                             <View style={styles.chipContainer}>
                                 <FilterChip
@@ -219,7 +219,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                                     }}
                                 />
                             </View>
-                        </View>
+                        </View> */}
 
                         {/* ✅ COMMENTED: Features section - not needed anymore */}
                         {/* <View style={styles.section}>

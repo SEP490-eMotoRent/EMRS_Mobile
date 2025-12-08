@@ -4,7 +4,7 @@ import { InfoTooltip } from "../../molecules/InfoTooltip";
 import { SummaryRow } from "../../atoms/text/SummaryRow";
 
 interface BookingSummaryProps {
-    rentalDays: number;
+    rentalDuration: string; // "1 Ngày 8 Giờ" instead of rounded number
     rentalPrice: string;
     securityDeposit: string;
     total: string;
@@ -17,7 +17,7 @@ interface BookingSummaryProps {
  * Follows Atomic Design: Composes SummaryRow atoms and InfoTooltip molecule.
  */
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
-    rentalDays,
+    rentalDuration,
     rentalPrice,
     securityDeposit,
     total,
@@ -43,7 +43,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
             
             <View style={styles.content}>
                 <SummaryRow 
-                    label={`Phí thuê (${rentalDays} ngày)`} 
+                    label={`Phí thuê (${rentalDuration})`} 
                     value={rentalPrice}
                 />
                 <SummaryRow 

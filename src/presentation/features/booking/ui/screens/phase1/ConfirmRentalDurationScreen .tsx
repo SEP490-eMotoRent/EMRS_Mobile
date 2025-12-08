@@ -35,9 +35,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     
     const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
 
-    /**
-     * Convert 24-hour time to Vietnamese 12-hour format (SA/CH)
-     */
     const convertTo12HourFormat = (time24: string): string => {
         const [hourStr, minute] = time24.split(':');
         let hour = parseInt(hourStr);
@@ -55,9 +52,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const branchOpenTimeSACH = branchOpenTime ? convertTo12HourFormat(branchOpenTime) : "6:00 SA";
     const branchCloseTimeSACH = branchCloseTime ? convertTo12HourFormat(branchCloseTime) : "10:00 CH";
 
-    /**
-     * Parse initial date range from route params or use defaults
-     */
     const initialDateRangeISO = useMemo(() => {
         if (dateRange) {
             console.log('📅 Parsing Vietnamese dateRange:', dateRange);
@@ -67,14 +61,11 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         return DateHelper.getDefaultDateRangeForBooking();
     }, [dateRange]);
 
-    /**
-     * Use rental duration hook for state management and validation
-     */
     const {
         startDate,
         endDate,
         duration,
-        totalHours, // For hourly pricing
+        totalHours,
         startDateTime,
         endDateTime,
         startDateISO,
@@ -87,9 +78,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const category = (vehicleCategory?.toUpperCase() || "ECONOMY") as VehicleCategory;
 
-    /**
-     * Use rental pricing hook for progressive tier hourly pricing
-     */
     const {
         rentingRate,
         discountPercentage,
@@ -110,7 +98,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         startDateTime,
         endDateTime,
         pricePerDay,
-        totalHours, // Pass total hours for hourly pricing
+        totalHours,
         category
     );
 
@@ -118,13 +106,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const hasDiscount = discountPercentage > 0;
     const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
-    // Calculate display days for booking summary
-    const displayDays = Math.ceil(totalHours / 24);
-
     console.log("📊 Rental calculation:", {
         category,
         totalHours,
-        displayDays,
         durationType,
         rentingRate,
         discountPercentage: `${discountPercentage}%`,
@@ -143,11 +127,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         navigation.goBack();
     };
 
-    /**
-     * Navigate to insurance plans with final validation
-     */
     const handleContinue = () => {
-        // Final validation before navigation
         if (!validateCurrentDuration()) {
             console.warn("⚠️ Cannot continue with invalid duration");
             return;
@@ -165,7 +145,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             startDate,
             endDate,
             duration,
-            rentalDays: displayDays,
+            rentalDays: Math.ceil(totalHours / 24),
             rentalPrice: totalRentalFee,
             baseRentalFee,
             rentingRate,
@@ -179,9 +159,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         });
     };
 
-    /**
-     * UI Helper Functions
-     */
     const getDiscountLabel = (): string => {
         if (durationType === "monthly") return "Giảm giá thuê tháng";
         if (durationType === "yearly") return "Giảm giá thuê năm";
@@ -227,31 +204,31 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const getGroupedHolidays = (): { 
         name: string; 
-        count: number; 
+        hours: number;
         surchargePercentage: number; 
-        totalPricePerDay: number;
-        totalSurcharge: number;
+        ratePerHour: number;
+        totalCost: number;
     }[] => {
         const grouped = holidayDays.reduce((acc, day) => {
             const name = day.holiday.holidayName;
             if (!acc[name]) {
                 acc[name] = {
                     name,
-                    count: 0,
+                    hours: 0,
                     surchargePercentage: Math.round((day.holiday.priceMultiplier - 1) * 100),
-                    totalPricePerDay: day.totalPrice, // Base + surcharge for one day
-                    totalSurcharge: 0,
+                    ratePerHour: day.holidayHourlyRate,
+                    totalCost: 0,
                 };
             }
-            acc[name].count++;
-            acc[name].totalSurcharge += day.surchargeAmount;
+            acc[name].hours += day.hoursOnThisDay;
+            acc[name].totalCost += day.totalPrice;
             return acc;
         }, {} as Record<string, { 
             name: string; 
-            count: number; 
+            hours: number;
             surchargePercentage: number; 
-            totalPricePerDay: number;
-            totalSurcharge: number;
+            ratePerHour: number;
+            totalCost: number;
         }>);
         
         return Object.values(grouped);
@@ -261,7 +238,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         setIsHolidayListExpanded(!isHolidayListExpanded);
     };
     
-    // Determine if continue button should be disabled
     const isContinueDisabled = loading || !isValid;
     
     return (
@@ -393,14 +369,14 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                                     <View key={index} style={styles.holidayListItem}>
                                         <View style={styles.holidayItemContent}>
                                             <Text style={styles.holidayItemName}>
-                                                • {item.name} {item.count > 1 ? `(${item.count} ngày)` : ''}
+                                                • {item.name} ({Math.round(item.hours)}h)
                                             </Text>
                                             <Text style={styles.holidayItemSurcharge}>
-                                                Phụ thu {item.surchargePercentage}%
+                                                {item.ratePerHour.toLocaleString()}đ/giờ (Phụ thu {item.surchargePercentage}%)
                                             </Text>
                                         </View>
                                         <Text style={styles.holidayItemTotal}>
-                                            {item.totalPricePerDay.toLocaleString()}đ/ngày
+                                            {item.totalCost.toLocaleString()}đ
                                         </Text>
                                     </View>
                                 ))}
@@ -410,7 +386,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 )}
                 
                 <BookingSummary
-                    rentalDays={displayDays}
+                    rentalDuration={duration}
                     rentalPrice={`${totalRentalFee.toLocaleString()}đ`}
                     securityDeposit={`${securityDeposit.toLocaleString()}đ`}
                     total={`${total.toLocaleString()}đ`}
@@ -429,17 +405,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: "#000" 
-    },
-    scrollView: { 
-        flex: 1 
-    },
-    content: { 
-        padding: 16, 
-        paddingBottom: 100 
-    },
+    container: { flex: 1, backgroundColor: "#000" },
+    scrollView: { flex: 1 },
+    content: { padding: 16, paddingBottom: 100 },
     footer: {
         padding: 16,
         paddingBottom: 32,
@@ -466,22 +434,15 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginRight: 12,
     },
-    errorIcon: {
-        fontSize: 20,
-    },
-    errorContent: {
-        flex: 1,
-    },
+    errorIcon: { fontSize: 20 },
+    errorContent: { flex: 1 },
     errorTitle: {
         color: "#ef4444",
         fontSize: 14,
         fontWeight: "700",
         marginBottom: 4,
     },
-    errorText: {
-        color: "#fca5a5",
-        fontSize: 13,
-    },
+    errorText: { color: "#fca5a5", fontSize: 13 },
     membershipIndicator: {
         flexDirection: "row",
         alignItems: "center",
@@ -494,10 +455,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#333",
     },
-    membershipIndicatorIcon: {
-        fontSize: 14,
-        marginRight: 6,
-    },
+    membershipIndicatorIcon: { fontSize: 14, marginRight: 6 },
     membershipIndicatorText: {
         color: "#999",
         fontSize: 12,
@@ -534,12 +492,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginRight: 12,
     },
-    discountIcon: {
-        fontSize: 24,
-    },
-    discountContent: {
-        flex: 1,
-    },
+    discountIcon: { fontSize: 24 },
+    discountContent: { flex: 1 },
     discountTitle: {
         color: "#22c55e",
         fontSize: 14,
@@ -581,12 +535,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginRight: 12,
     },
-    membershipIcon: {
-        fontSize: 24,
-    },
-    membershipContent: {
-        flex: 1,
-    },
+    membershipIcon: { fontSize: 24 },
+    membershipContent: { flex: 1 },
     membershipTitle: {
         color: "#6366f1",
         fontSize: 14,
@@ -624,12 +574,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginRight: 12,
     },
-    holidayIcon: {
-        fontSize: 20,
-    },
-    holidayHeaderText: {
-        flex: 1,
-    },
+    holidayIcon: { fontSize: 20 },
+    holidayHeaderText: { flex: 1 },
     holidayTitle: {
         color: "#ef4444",
         fontSize: 14,
@@ -645,9 +591,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
     },
-    holidayRightSection: {
-        alignItems: "flex-end",
-    },
+    holidayRightSection: { alignItems: "flex-end" },
     holidayToggleButton: {
         flexDirection: "row",
         alignItems: "center",
@@ -659,10 +603,7 @@ const styles = StyleSheet.create({
         fontWeight: "500",
         marginRight: 4,
     },
-    holidayToggleIcon: {
-        color: "#fca5a5",
-        fontSize: 9,
-    },
+    holidayToggleIcon: { color: "#fca5a5", fontSize: 9 },
     holidayList: {
         marginTop: 8,
         paddingTop: 8,
