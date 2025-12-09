@@ -1,12 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
-import sl from "../../../../../core/di/InjectionContainer";
+import { container } from "../../../../../core/di/ServiceContainer";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
-import { CancelBookingUseCase } from "../../../../../domain/usecases/booking/CancelBookingUseCase";
-import { GetCurrentRenterBookingsUseCase } from "../../../../../domain/usecases/booking/GetCurrentRenterBookingsUseCase";
-import { GetFeedbackByBookingIdUseCase } from "../../../../../domain/usecases/feedback/GetFeedbackByBookingIdUseCase";
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { useRenterProfile } from "../../../profile/hooks/profile/useRenterProfile";
 import { useCancelBooking } from "../../hooks/useCancelBooking";
@@ -51,23 +48,14 @@ export const TripsScreen: React.FC = () => {
     const { renter } = useRenterProfile();
     const currentRenterName = renter?.account?.fullname || renter?.email || "Bạn";
 
-    const getCurrentRenterBookingsUseCase = useMemo(
-        () => sl.get<GetCurrentRenterBookingsUseCase>("GetCurrentRenterBookingsUseCase"),
-        []
+    // ✅ MIGRATED: Get use cases from new container
+    const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(
+        container.booking.get.currentRenter
     );
     
-    const cancelBookingUseCase = useMemo(
-        () => sl.get<CancelBookingUseCase>("CancelBookingUseCase"),
-        []
+    const { cancelBooking, cancelling } = useCancelBooking(
+        container.booking.cancel
     );
-
-    const getFeedbackByBookingIdUseCase = useMemo(
-        () => sl.get<GetFeedbackByBookingIdUseCase>("GetFeedbackByBookingIdUseCase"),
-        []
-    );
-    
-    const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(getCurrentRenterBookingsUseCase);
-    const { cancelBooking, cancelling } = useCancelBooking(cancelBookingUseCase);
 
     const checkBookingFeedbacks = useCallback(async (bookingIds: string[]) => {
         const feedbackMap: Record<string, Feedback | null> = {};
@@ -75,7 +63,7 @@ export const TripsScreen: React.FC = () => {
         await Promise.all(
             bookingIds.map(async (bookingId) => {
                 try {
-                    const feedbacks = await getFeedbackByBookingIdUseCase.execute(bookingId);
+                    const feedbacks = await container.feedback.get.byBookingId.execute(bookingId);
                     feedbackMap[bookingId] = feedbacks.length > 0 ? feedbacks[0] : null;
                 } catch {
                     feedbackMap[bookingId] = null;
@@ -84,7 +72,7 @@ export const TripsScreen: React.FC = () => {
         );
         
         setBookingFeedbacks(prev => ({ ...prev, ...feedbackMap }));
-    }, [getFeedbackByBookingIdUseCase]);
+    }, []);
 
     React.useEffect(() => {
         const completedBookingIds = bookings
@@ -227,12 +215,12 @@ export const TripsScreen: React.FC = () => {
         };
     };
 
-    const currentTrips = useMemo(() => 
+    const currentTrips = React.useMemo(() => 
         bookings.map(mapBookingToCurrentTrip).filter((t): t is CurrentTrip => t !== null),
         [bookings]
     );
 
-    const pastTrips = useMemo(() => 
+    const pastTrips = React.useMemo(() => 
         bookings.map(mapBookingToPastTrip).filter((t): t is PastTrip => t !== null),
         [bookings, bookingFeedbacks]
     );

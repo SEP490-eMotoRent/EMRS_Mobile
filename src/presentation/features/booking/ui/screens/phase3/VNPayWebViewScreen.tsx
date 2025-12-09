@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, StyleSheet, Text, View } from 'react-native';
-import { WebView, WebViewNavigation } from 'react-native-webview';
-import sl from '../../../../../../core/di/InjectionContainer';
-import { ConfirmVNPayPaymentUseCase } from '../../../../../../domain/usecases/booking/ConfirmVNPayPaymentUseCase';
+import { WebView } from 'react-native-webview';
+import { container } from '../../../../../../core/di/ServiceContainer';
 import { BookingStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { PageHeader } from '../../molecules/PageHeader';
 
@@ -53,11 +52,6 @@ export const VNPayWebViewScreen: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const expiryTimer = useRef<NodeJS.Timeout | null>(null);
     const hasHandled = useRef(false);
-
-    const confirmVNPayPayment = useMemo(
-        () => sl.get<ConfirmVNPayPaymentUseCase>("ConfirmVNPayPaymentUseCase"),
-        []
-    );
 
     const STORAGE_KEY = `vnpay_payment_context_${bookingId}`;
 
@@ -160,7 +154,6 @@ export const VNPayWebViewScreen: React.FC = () => {
 
             hasHandled.current = true;
 
-            // Stop WebView from trying to navigate
             webviewRef.current?.stopLoading();
             setLoading(true);
 
@@ -174,31 +167,24 @@ export const VNPayWebViewScreen: React.FC = () => {
 
             console.log('📦 VNPay callback data:', dto);
 
-            // Payment failed
             if (dto.responseCode !== '00') {
                 console.error('❌ Payment failed:', dto.message);
                 showFailure(dto.message || "Thanh toán thất bại");
                 return;
             }
 
-            // ✅ Payment successful
             console.log('✅ Payment successful, confirming with backend...');
 
             try {
-                // Call callback API to confirm payment
-                await confirmVNPayPayment.execute(dto);
+                await container.booking.payment.confirmVNPay.execute(dto);
                 console.log('✅ Backend confirmed payment successfully');
 
-                // Wait for backend to process
                 await new Promise(resolve => setTimeout(resolve, 1500));
-
-                // Navigate to contract
                 await navigateToContract();
 
             } catch (error: any) {
                 console.error('❌ Callback API failed:', error);
 
-                // Show error with retry option
                 Alert.alert(
                     'Lỗi xác nhận',
                     'Thanh toán thành công nhưng không thể xác nhận với hệ thống. Vui lòng kiểm tra mục "Chuyến đi" sau vài phút.',
@@ -218,10 +204,10 @@ export const VNPayWebViewScreen: React.FC = () => {
                 );
             }
         },
-        [confirmVNPayPayment, navigateToContract, navigation]
+        [navigateToContract, navigation]
     );
 
-    // ✅ CRITICAL: Listen for deep links globally
+    // Listen for deep links globally
     useEffect(() => {
         const handleDeepLinkEvent = (event: { url: string }) => {
             console.log('🔗 Deep link event received:', event.url);
@@ -231,10 +217,8 @@ export const VNPayWebViewScreen: React.FC = () => {
             }
         };
 
-        // Listen for deep link events
         const subscription = Linking.addEventListener('url', handleDeepLinkEvent);
 
-        // Check if app was opened with a deep link
         Linking.getInitialURL().then(url => {
             if (url && url.startsWith('emrs://payment/callback')) {
                 console.log('🎯 App opened with VNPay callback:', url);
@@ -265,21 +249,18 @@ export const VNPayWebViewScreen: React.FC = () => {
         };
     }, [expiresAt]);
 
-    // ✅ SIMPLE: Just block deep link navigation in WebView
+    // Block deep link navigation in WebView
     const onShouldStartLoadWithRequest = useCallback(
         (request: any): boolean => {
             const url = request.url || '';
             console.log('🚦 WebView wants to load:', url);
             
-            // If it's our deep link, DON'T let WebView try to load it
             if (url.startsWith('emrs://')) {
                 console.log('🛑 Blocking WebView from loading deep link');
                 console.log('✅ Deep link will be handled by Linking API');
-                // The Linking listener above will handle it
-                return false; // Block WebView navigation
+                return false;
             }
 
-            // Allow all other URLs (VNPay pages, bank pages, etc.)
             return true;
         },
         []

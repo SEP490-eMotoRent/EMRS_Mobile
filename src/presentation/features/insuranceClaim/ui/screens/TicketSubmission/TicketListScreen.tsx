@@ -1,6 +1,6 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useMemo } from "react";
+import React from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -11,12 +11,10 @@ import {
 } from "react-native";
 import { TicketResponse } from "../../../../../../data/models/ticket/TicketResponse";
 import { TicketTypeDisplay, TicketStatusDisplay } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
-import { GetTicketsByBookingIdUseCase } from "../../../../../../domain/usecases/ticket/GetTicketsByBookingIdUseCase";
 import { BackButton } from "../../../../../common/components";
 import { TripStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useGetTicketsByBookingId } from "../../../hooks/Ticket/useGetTicketsByBookingId";
-import sl from "../../../../../../core/di/InjectionContainer";
-
+import { container } from "../../../../../../core/di/ServiceContainer";
 
 type RoutePropType = RouteProp<TripStackParamList, "TicketList">;
 type NavigationPropType = StackNavigationProp<TripStackParamList, "TicketList">;
@@ -54,11 +52,6 @@ export const TicketListScreen: React.FC = () => {
     const navigation = useNavigation<NavigationPropType>();
     const { bookingId } = route.params;
 
-    const getTicketsByBookingIdUseCase = useMemo(
-        () => sl.get<GetTicketsByBookingIdUseCase>("GetTicketsByBookingIdUseCase"),
-        []
-    );
-
     const {
         tickets,
         loading,
@@ -67,7 +60,7 @@ export const TicketListScreen: React.FC = () => {
         refetch,
         loadMore,
         hasMore,
-    } = useGetTicketsByBookingId(bookingId, getTicketsByBookingIdUseCase);
+    } = useGetTicketsByBookingId(bookingId, container.support.tickets.getByBookingId);
 
     const handleBack = () => {
         if (navigation.canGoBack()) {

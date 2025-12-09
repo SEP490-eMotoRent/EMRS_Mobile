@@ -14,8 +14,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BookingStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
-import sl from '../../../../../../core/di/InjectionContainer';
 import { SecondaryButton } from '../../../../homepage/ui/atoms/buttons/SecondaryButton';
+import { container } from '../../../../../../core/di/ServiceContainer';
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ZaloPayResult'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ZaloPayResult'>;
@@ -50,8 +50,6 @@ export const ZaloPayResultScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
     const appState = useRef(AppState.currentState);
-
-    const verifyZaloPayPaymentUseCase = sl.getVerifyZaloPayPaymentUseCase();
 
     const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
     const [errorMessage, setErrorMessage] = useState<string>('');
@@ -99,7 +97,6 @@ export const ZaloPayResultScreen: React.FC = () => {
         setIsProcessing(true);
 
         try {
-            // Parse URL parameters
             const params = parseCallbackUrl(url);
             console.log('📋 [CALLBACK] Parsed params:', JSON.stringify(params, null, 2));
 
@@ -114,7 +111,6 @@ export const ZaloPayResultScreen: React.FC = () => {
 
             setTransactionId(params.apptransid || '');
             
-            // Verify payment
             console.log('🔄 [CALLBACK] Starting payment verification...');
             await verifyPaymentWithBackend(params);
 
@@ -166,7 +162,6 @@ export const ZaloPayResultScreen: React.FC = () => {
         console.log('═══════════════════════════════════════════════════');
         
         try {
-            // Parse parameters
             const appId = params.appid ? parseInt(params.appid) : 0;
             const appTransId = params.apptransid || '';
             const pmcId = params.pmcid ? parseInt(params.pmcid) : 0;
@@ -186,9 +181,9 @@ export const ZaloPayResultScreen: React.FC = () => {
             console.log('   - Status:', status, status === 1 ? '(SUCCESS)' : '(FAILED)');
             console.log('   - Checksum:', checksum);
 
-            console.log('🎯 [VERIFY] Calling verifyZaloPayPaymentUseCase.execute()...');
+            console.log('🎯 [VERIFY] Calling container.booking.payment.verifyZaloPay.execute()...');
             
-            const isVerified = await verifyZaloPayPaymentUseCase.execute(
+            const isVerified = await container.booking.payment.verifyZaloPay.execute(
                 appId,
                 appTransId,
                 pmcId,
@@ -292,7 +287,6 @@ export const ZaloPayResultScreen: React.FC = () => {
         const subscription = Linking.addEventListener('url', handleDeepLinkEvent);
         console.log('✅ [LISTENER] Event listener registered');
 
-        // Check initial URL
         console.log('🔍 [LISTENER] Checking for initial URL...');
         Linking.getInitialURL().then(url => {
             if (url) {
@@ -401,7 +395,6 @@ export const ZaloPayResultScreen: React.FC = () => {
         );
     }
 
-    // Pending state
     return (
         <View style={styles.container}>
             <ActivityIndicator size="large" color="#00ff00" />

@@ -8,6 +8,7 @@ import { RentalReturnRepositoryImpl } from '../../../data/repositories/rentalRet
 
 // Use Cases
 import { AiAnalyzeUseCase } from '../../../domain/usecases/rentalReturn/AiAnalyzeUseCase';
+import { RentalReturnSummaryUseCase } from '../../../domain/usecases/rentalReturn/SummaryReceiptUseCase';
 
 /**
  * RentalReturnModule - Complete Rental Return Domain
@@ -25,7 +26,8 @@ export class RentalReturnModule {
 
     // ==================== USE CASES ====================
     private _aiAnalyzeUseCase: AiAnalyzeUseCase | null = null;
-
+    private _summaryUseCase: RentalReturnSummaryUseCase | null = null;
+    
     constructor(private axiosClient: AxiosClient) {}
 
     static create(axiosClient: AxiosClient): RentalReturnModule {
@@ -53,5 +55,12 @@ export class RentalReturnModule {
         this._aiAnalyzeUseCase = new AiAnalyzeUseCase(this.repository);
         }
         return this._aiAnalyzeUseCase;
+    }
+
+    get summary(): RentalReturnSummaryUseCase {
+        if (!this._summaryUseCase) {
+            this._summaryUseCase = new RentalReturnSummaryUseCase(this.repository);
+        }
+        return this._summaryUseCase;
     }
 }

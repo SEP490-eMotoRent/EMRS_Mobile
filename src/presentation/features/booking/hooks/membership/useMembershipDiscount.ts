@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import sl from "../../../../../core/di/InjectionContainer";
+import { container } from "../../../../../core/di/ServiceContainer";
 
 interface MembershipDiscountResult {
     discountPercentage: number;
@@ -18,8 +18,7 @@ export const useMembershipDiscount = (): MembershipDiscountResult => {
         const fetchMembership = async () => {
             try {
                 setLoading(true);
-                const getCurrentRenterUseCase = sl.getGetCurrentRenterUseCase();
-                const result = await getCurrentRenterUseCase.execute();
+                const result = await container.account.profile.getCurrent.execute();
                 
                 const membership = result.rawResponse.membership;
                 if (membership) {
@@ -29,7 +28,6 @@ export const useMembershipDiscount = (): MembershipDiscountResult => {
             } catch (err: any) {
                 console.error("Failed to fetch membership:", err);
                 setError(err.message);
-                // Default to no discount on error
                 setDiscountPercentage(0);
             } finally {
                 setLoading(false);

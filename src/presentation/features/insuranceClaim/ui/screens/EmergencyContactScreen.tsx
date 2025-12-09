@@ -1,17 +1,16 @@
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { StyleSheet, View, ActivityIndicator, Text, Linking, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { 
     RentalDetailsSection, 
     SafetyChecklistSection 
 } from '../organisms';
-import sl from '../../../../../core/di/InjectionContainer';
-import { GetBookingByIdUseCase } from '../../../../../domain/usecases/booking/GetBookingByIdUseCase';
 import { useEmergencyContactData } from '../../hooks/useEmergencyContactData';
 import { ActionButton } from '../atoms/buttons/ActionButton';
 import { BackButton } from '../../../../common/components/atoms/buttons/BackButton';
+import { container } from '../../../../../core/di/ServiceContainer';
 
 type NavigationProp = StackNavigationProp<TripStackParamList, 'EmergencyContact'>;
 type EmergencyContactRouteProp = RouteProp<TripStackParamList, 'EmergencyContact'>;
@@ -34,14 +33,9 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
 
     const { bookingId, rentalDetails: routeRentalDetails } = route.params ?? {};
 
-    const getBookingByIdUseCase = useMemo(
-        () => new GetBookingByIdUseCase(sl.get("BookingRepository")),
-        []
-    );
-
     const { data: emergencyData, loading, error } = useEmergencyContactData(
         bookingId || '',
-        getBookingByIdUseCase
+        container.booking.get.byId
     );
 
     const finalRentalDetails = emergencyData?.vehicleInfo
@@ -233,7 +227,6 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContentContainer}
             >
-                {/* ✅ Ticket Summary Card */}
                 <TouchableOpacity
                     style={styles.ticketSummaryCard}
                     onPress={handleViewTickets}
@@ -424,7 +417,6 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         textAlign: 'center',
     },
-    // ✅ Ticket Summary Card
     ticketSummaryCard: {
         flexDirection: 'row',
         alignItems: 'center',

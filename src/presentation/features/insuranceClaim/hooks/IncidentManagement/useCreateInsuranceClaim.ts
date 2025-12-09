@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import sl from '../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../core/di/ServiceContainer';
 import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/insuranceClaim/CreateInsuranceClaimRequest';
 import { InsuranceClaimResponse } from '../../../../../data/models/insurance/insuranceClaim/InsuranceClaimResponse';
 
@@ -21,15 +21,14 @@ export const useCreateInsuranceClaim = (): UseCreateInsuranceClaimResult => {
         setError(null);
 
         try {
-        const createInsuranceClaimUseCase = sl.getCreateInsuranceClaimUseCase();
-        const result = await createInsuranceClaimUseCase.execute(request);
-        setIsLoading(false);
-        return result;
+            const result = await container.insurance.claims.create.execute(request);
+            setIsLoading(false);
+            return result;
         } catch (err: any) {
-        const errorMessage = err?.response?.data?.message || err?.message || 'Failed to create insurance claim';
-        setError(errorMessage);
-        setIsLoading(false);
-        return null;
+            const errorMessage = err?.response?.data?.message || err?.message || 'Failed to create insurance claim';
+            setError(errorMessage);
+            setIsLoading(false);
+            return null;
         }
     };
 

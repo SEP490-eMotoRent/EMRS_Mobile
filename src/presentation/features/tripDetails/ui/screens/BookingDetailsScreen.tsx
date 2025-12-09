@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, BackHandler, Linking, Text, View } from 'reac
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { BookingDetailsTemplate } from '../templates/BookingDetailsTemplate';
 import { useBookingDetails } from '../../hooks/useBookingDetails';
-import sl from '../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../core/di/ServiceContainer'; // ← THIS IS THE NEW ONE
 
 type BookingDetailsScreenRouteProp = RouteProp<TripStackParamList, 'BookingDetails'>;
 type BookingDetailsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'BookingDetails'>;
@@ -15,15 +15,13 @@ export const BookingDetailsScreen: React.FC = () => {
     const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
     
     const { bookingId } = route.params;
-    const bookingReference = (route.params as any).bookingReference; // Optional param
-    
-    // Use the custom hook to fetch booking details
+    const bookingReference = (route.params as any).bookingReference;
     const { bookingData, loading, error, refetch } = useBookingDetails(bookingId, bookingReference);
     
     useEffect(() => {
         const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
             navigation.goBack();
-            return true; // Prevent app from closing
+            return true;
         });
         return () => backHandler.remove();
     }, [navigation]);
@@ -41,25 +39,15 @@ export const BookingDetailsScreen: React.FC = () => {
 
     const handleViewFullContract = () => {
         Alert.alert('View Contract', 'Opening full contract...');
-        // TODO: Navigate to contract viewer or open PDF
     };
 
     const handleDownloadContract = async () => {
-        try {
-            Alert.alert('Download', 'Downloading contract PDF...');
-            // TODO: Implement contract download
-            // const getContractUseCase = sl.getGetContractUseCase();
-            // const contract = await getContractUseCase.execute(bookingId);
-        } catch (error) {
-            console.error('Error downloading contract:', error);
-            Alert.alert('Error', 'Failed to download contract');
-        }
+        Alert.alert('Download', 'Downloading contract PDF...');
     };
 
     const handleAddToCalendar = () => {
         if (!bookingData) return;
         Alert.alert('Calendar', 'Adding to calendar...');
-        // TODO: Implement calendar integration
     };
 
     const handleContactBranch = () => {
@@ -67,52 +55,48 @@ export const BookingDetailsScreen: React.FC = () => {
         Linking.openURL(`tel:${bookingData.branchPhone}`);
     };
 
+    // FIXED: Cancel booking using the NEW container
     const handleCancelBooking = () => {
         Alert.alert(
             'Cancel Booking',
             'Are you sure you want to cancel this booking? This action cannot be undone.',
             [
                 { text: 'No', style: 'cancel' },
-                { 
-                    text: 'Yes, Cancel', 
+                {
+                    text: 'Yes, Cancel',
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            console.log('🚫 Cancelling booking:', bookingId);
-                            
-                            const cancelBookingUseCase = sl.getCancelBookingUseCase();
-                            const cancelledBooking = await cancelBookingUseCase.execute(bookingId);
-                            
-                            console.log('✅ Booking cancelled successfully:', cancelledBooking.id);
-                            console.log('📊 New status:', cancelledBooking.bookingStatus);
-                            
+                            console.log('Cancelling booking:', bookingId);
+
+                            // This is the correct way now
+                            await container.booking.cancel.execute(bookingId);
+
+                            console.log('Booking cancelled successfully');
+
                             Alert.alert(
                                 'Success',
                                 'Your booking has been cancelled successfully.',
                                 [
                                     {
                                         text: 'OK',
-                                        onPress: () => {
-                                            // Navigate back or refresh the booking list
-                                            navigation.goBack();
-                                        }
+                                        onPress: () => navigation.goBack()
                                     }
                                 ]
                             );
                         } catch (error: any) {
-                            console.error('❌ Error cancelling booking:', error);
+                            console.error('Error cancelling booking:', error);
                             Alert.alert(
                                 'Error',
                                 error.message || 'Failed to cancel booking. Please try again.'
                             );
                         }
                     }
-                },
+                }
             ]
         );
     };
 
-    // Loading state
     if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1628' }}>
@@ -122,17 +106,13 @@ export const BookingDetailsScreen: React.FC = () => {
         );
     }
 
-    // Error state
     if (error || !bookingData) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1628', padding: 20 }}>
                 <Text style={{ color: '#FFFFFF', fontSize: 16, marginBottom: 20, textAlign: 'center' }}>
                     {error || 'No booking data available'}
                 </Text>
-                <Text 
-                    style={{ color: '#2196F3', fontSize: 14 }}
-                    onPress={() => refetch()}
-                >
+                <Text style={{ color: '#2196F3', fontSize: 14 }} onPress={refetch}>
                     Tap to retry
                 </Text>
             </View>
