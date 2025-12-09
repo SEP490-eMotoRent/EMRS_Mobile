@@ -2,7 +2,6 @@ import { ServerException } from "../../../../../core/errors/ServerException";
 import { ApiEndpoints } from "../../../../../core/network/APIEndpoint";
 import { ApiResponse } from "../../../../../core/network/APIResponse";
 import { AxiosClient } from "../../../../../core/network/AxiosClient";
-import { AppLogger } from "../../../../../core/utils/Logger";
 import { GoogleLoginRequest } from "../../../../models/account/accountDTO/GoogleLoginRequest";
 import { LoginRequest } from "../../../../models/account/accountDTO/LoginRequest";
 import { LoginResponseData } from "../../../../models/account/accountDTO/LoginResponse";
@@ -13,280 +12,171 @@ import { ChangePasswordRequest } from "../../../../models/account/password/Chang
 import { ForgotPasswordRequest } from "../../../../models/account/password/ForgotPasswordRequest";
 import { ResetPasswordRequest } from "../../../../models/account/password/ResetPasswordRequest";
 import { AccountRemoteDataSource } from "../../../interfaces/remote/account/AccountRemoteDataSource";
+import { ApiCallWrapper } from "../utils/ApiCallWrapper";
+import { ResponseMapper } from "../utils/ResponseMapper";
 
+/**
+ * Remote data source implementation for account operations
+ * Handles all account-related API communications
+ */
 export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
     private readonly apiClient: AxiosClient;
-    private readonly logger = AppLogger.getInstance();
+    private readonly apiWrapper: ApiCallWrapper;
 
     constructor(apiClient: AxiosClient) {
         this.apiClient = apiClient;
+        this.apiWrapper = new ApiCallWrapper();
     }
 
     async login(request: LoginRequest): Promise<ApiResponse<LoginResponseData>> {
-        try {
-            this.logger.info('🔄 Logging in user...');
-            
-            const response = await this.apiClient.post<ApiResponse<{ accessToken: string; user: any }>>(
-                '/auth/login',
-                request
-            );
-
-            this.logger.info('✅ Login successful');
-            
-            return {
-                success: response.data.success,
-                message: response.data.message,
-                code: response.data.code,
-                data: response.data.data
-            };
-        } catch (error: any) {
-            this.logger.error(`❌ Login failed: ${error.message}`);
-            
-            // If already a ServerException from interceptor, re-throw it
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Invalid username or password',
-                error.response?.status || 401
-            );
-        }
+        return this.apiWrapper.execute(
+            'Logging in user',
+            async () => {
+                const response = await this.apiClient.post<ApiResponse<LoginResponseData>>(
+                    '/auth/login',
+                    request
+                );
+                return ResponseMapper.mapApiResponse(response);
+            },
+            'Invalid username or password',
+            401
+        );
     }
 
     async create(request: RegisterUserRequest): Promise<RegisterUserRequest> {
-        try {
-            this.logger.info('🔄 Creating account via API...');
-            
-            const response = await this.apiClient.post<RegisterUserRequest>(
-                '/auth/register',
-                request
-            );
-
-            this.logger.info('✅ Account created successfully');
-            return response.data;
-        } catch (error: any) {
-            this.logger.error(`❌ Failed to create account: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Failed to register user',
-                error.response?.status || 500
-            );
-        }
+        return this.apiWrapper.execute(
+            'Creating account via API',
+            async () => {
+                const response = await this.apiClient.post<RegisterUserRequest>(
+                    '/auth/register',
+                    request
+                );
+                return ResponseMapper.extractData(response);
+            },
+            'Failed to register user'
+        );
     }
 
     async verifyOtp(request: VerifyOtpRequest): Promise<ApiResponse<string>> {
-        try {
-            this.logger.info('🔄 Verifying OTP...');
-            
-            const response = await this.apiClient.post<ApiResponse<string>>(
-                '/auth/verify-otp',
-                request
-            );
-
-            this.logger.info('✅ OTP verified successfully');
-            
-            return {
-                success: response.data.success,
-                message: response.data.message,
-                code: response.data.code,
-                data: response.data.data
-            };
-        } catch (error: any) {
-            this.logger.error(`❌ OTP verification failed: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'OTP verification failed',
-                error.response?.status || 400
-            );
-        }
+        return this.apiWrapper.execute(
+            'Verifying OTP',
+            async () => {
+                const response = await this.apiClient.post<ApiResponse<string>>(
+                    '/auth/verify-otp',
+                    request
+                );
+                return ResponseMapper.mapApiResponse(response);
+            },
+            'OTP verification failed',
+            400
+        );
     }
 
     async resendOtp(request: ResendOtpRequest): Promise<ApiResponse<string>> {
-        try {
-            this.logger.info('🔄 Resending OTP...');
-            
-            const response = await this.apiClient.post<ApiResponse<string>>(
-                '/auth/resend-otp',
-                request
-            );
-
-            this.logger.info('✅ OTP resent successfully');
-            
-            return {
-                success: response.data.success,
-                message: response.data.message,
-                code: response.data.code,
-                data: response.data.data
-            };
-        } catch (error: any) {
-            this.logger.error(`❌ Resend OTP failed: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Failed to resend OTP',
-                error.response?.status || 400
-            );
-        }
+        return this.apiWrapper.execute(
+            'Resending OTP',
+            async () => {
+                const response = await this.apiClient.post<ApiResponse<string>>(
+                    '/auth/resend-otp',
+                    request
+                );
+                return ResponseMapper.mapApiResponse(response);
+            },
+            'Failed to resend OTP',
+            400
+        );
     }
 
     async googleLogin(request: GoogleLoginRequest): Promise<ApiResponse<LoginResponseData>> {
-        try {
-            this.logger.info('🔄 Google login...');
-            
-            const response = await this.apiClient.post<ApiResponse<{ accessToken: string; user: any }>>(
-                '/auth/google-login',
-                request
-            );
-
-            this.logger.info('✅ Google login successful');
-            
-            return {
-                success: response.data.success,
-                message: response.data.message,
-                code: response.data.code,
-                data: response.data.data
-            };
-        } catch (error: any) {
-            this.logger.error(`❌ Google login failed: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Google login failed',
-                error.response?.status || 401
-            );
-        }
+        return this.apiWrapper.execute(
+            'Google login',
+            async () => {
+                const response = await this.apiClient.post<ApiResponse<LoginResponseData>>(
+                    '/auth/google-login',
+                    request
+                );
+                return ResponseMapper.mapApiResponse(response);
+            },
+            'Google login failed',
+            401
+        );
     }
 
     async getByEmail(email: string): Promise<RegisterUserRequest | null> {
         try {
-            this.logger.info(`🔄 Fetching account by email: ${email}`);
-            
-            const response = await this.apiClient.get<RegisterUserRequest>(
-                `/auth/user`,
-                { params: { email } }
+            return await this.apiWrapper.execute(
+                `Fetching account by email: ${email}`,
+                async () => {
+                    const response = await this.apiClient.get<RegisterUserRequest>(
+                        `/auth/user`,
+                        { params: { email } }
+                    );
+                    return ResponseMapper.extractData(response);
+                },
+                'Failed to fetch user'
             );
-
-            return response.data;
         } catch (error: any) {
+            // Special case: return null for 404 instead of throwing
             if (error.response?.status === 404 || error.code === 404) {
                 return null;
             }
-            this.logger.error(`❌ Failed to get account: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Failed to fetch user',
-                error.response?.status || 500
-            );
+            throw error;
         }
     }
 
     async getAll(): Promise<RegisterUserRequest[]> {
-        try {
-            this.logger.info('🔄 Fetching all accounts...');
-            
-            const response = await this.apiClient.get<RegisterUserRequest[]>('/auth/users');
-
-            return response.data;
-        } catch (error: any) {
-            this.logger.error(`❌ Failed to get accounts: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Failed to fetch users',
-                error.response?.status || 500
-            );
-        }
+        return this.apiWrapper.execute(
+            'Fetching all accounts',
+            async () => {
+                const response = await this.apiClient.get<RegisterUserRequest[]>('/auth/users');
+                return ResponseMapper.extractData(response);
+            },
+            'Failed to fetch users'
+        );
     }
 
     async changePassword(request: ChangePasswordRequest): Promise<ApiResponse<string>> {
-        const response = await this.apiClient.post<ApiResponse<string>>(
-            ApiEndpoints.auth.changePassword,
-            request
+        return this.apiWrapper.execute(
+            'Changing password',
+            async () => {
+                const response = await this.apiClient.post<ApiResponse<string>>(
+                    ApiEndpoints.auth.changePassword,
+                    request
+                );
+                return ResponseMapper.extractData(response);
+            },
+            'Failed to change password',
+            400
         );
-        return response.data;
     }
 
     async forgotPassword(request: ForgotPasswordRequest): Promise<ApiResponse<string>> {
-        try {
-            this.logger.info('🔄 Requesting password reset...');
-            
-            const response = await this.apiClient.post<ApiResponse<string>>(
-                ApiEndpoints.auth.forgotPassword,
-                request
-            );
-
-            this.logger.info('✅ Password reset OTP sent successfully');
-            
-            return {
-                success: response.data.success,
-                message: response.data.message,
-                code: response.data.code,
-                data: response.data.data
-            };
-        } catch (error: any) {
-            this.logger.error(`❌ Forgot password failed: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Failed to send reset password OTP',
-                error.response?.status || 400
-            );
-        }
+        return this.apiWrapper.execute(
+            'Requesting password reset',
+            async () => {
+                const response = await this.apiClient.post<ApiResponse<string>>(
+                    ApiEndpoints.auth.forgotPassword,
+                    request
+                );
+                return ResponseMapper.mapApiResponse(response);
+            },
+            'Failed to send reset password OTP',
+            400
+        );
     }
 
     async resetPassword(request: ResetPasswordRequest): Promise<ApiResponse<string>> {
-        try {
-            this.logger.info('🔄 Resetting password...');
-            
-            const response = await this.apiClient.post<ApiResponse<string>>(
-                ApiEndpoints.auth.resetPassword,
-                request
-            );
-
-            this.logger.info('✅ Password reset successful');
-            
-            return {
-                success: response.data.success,
-                message: response.data.message,
-                code: response.data.code,
-                data: response.data.data
-            };
-        } catch (error: any) {
-            this.logger.error(`❌ Reset password failed: ${error.message}`);
-            
-            if (error instanceof ServerException) {
-                throw error;
-            }
-            
-            throw new ServerException(
-                error.response?.data?.message || 'Failed to reset password',
-                error.response?.status || 400
-            );
-        }
+        return this.apiWrapper.execute(
+            'Resetting password',
+            async () => {
+                const response = await this.apiClient.post<ApiResponse<string>>(
+                    ApiEndpoints.auth.resetPassword,
+                    request
+                );
+                return ResponseMapper.mapApiResponse(response);
+            },
+            'Failed to reset password',
+            400
+        );
     }
 }

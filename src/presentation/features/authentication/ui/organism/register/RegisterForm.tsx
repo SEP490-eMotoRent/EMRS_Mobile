@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { Button } from '../../../../../common/components/atoms/buttons/Button';
 import { Input } from '../../../../../common/components/atoms/Input';
 
@@ -11,9 +11,16 @@ interface RegisterFormProps {
         confirmPassword: string;
     }) => void;
     loading?: boolean;
+    error?: string;
+    onErrorDismiss?: () => void;
 }
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({ onContinue, loading = false }) => {
+export const RegisterForm: React.FC<RegisterFormProps> = ({ 
+    onContinue, 
+    loading = false,
+    error,
+    onErrorDismiss
+}) => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -31,6 +38,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onContinue, loading 
 
     return (
         <View style={styles.container}>
+            {/* ✅ ERROR DISPLAY */}
+            {error && (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                    {onErrorDismiss && (
+                        <Text style={styles.dismissText} onPress={onErrorDismiss}>
+                            ✕
+                        </Text>
+                    )}
+                </View>
+            )}
+
             <View style={styles.inputContainer}>
                 <Input
                     placeholder="Tên đăng nhập"
@@ -80,6 +99,27 @@ const styles = StyleSheet.create({
         width: '100%',
         marginTop: 20,
         marginBottom: 0,
+    },
+    // ✅ ERROR STYLES
+    errorContainer: {
+        backgroundColor: '#FEE2E2',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    errorText: {
+        color: '#DC2626',
+        fontSize: 14,
+        flex: 1,
+    },
+    dismissText: {
+        color: '#DC2626',
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingLeft: 12,
     },
     inputContainer: {
         marginBottom: 16,

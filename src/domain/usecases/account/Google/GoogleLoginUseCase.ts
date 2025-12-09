@@ -6,14 +6,30 @@ export class GoogleLoginUseCase {
     constructor(private accountRepo: AccountRepository) {}
     
     async execute(idToken: string): Promise<ApiResponse<LoginResponseData>> {
-        console.log('==================== GOOGLE LOGIN TO BACKEND ====================');
-        console.log('Sending idToken to backend:', idToken.substring(0, 50) + '...');
-        console.log('===============================================================');
+        // Validate idToken
+        this.validateIdToken(idToken);
         
-        const response = await this.accountRepo.googleLogin(idToken);
+        // Call repository
+        return await this.accountRepo.googleLogin(idToken);
+    }
+    
+    private validateIdToken(idToken: string): void {
+        if (!idToken || idToken.trim().length === 0) {
+            throw new Error('Google ID Token không được để trống');
+        }
         
-        console.log('Backend response:', JSON.stringify(response, null, 2));
+        const parts = idToken.split('.');
+        if (parts.length !== 3) {
+            throw new Error('Google ID Token không hợp lệ');
+        }
         
-        return response;
+        // Check for empty segments (e.g., "a..c" has empty middle segment)
+        if (parts.some(part => part.length === 0)) {
+            throw new Error('Google ID Token không hợp lệ');
+        }
+        
+        if (idToken.length < 100) {
+            throw new Error('Google ID Token không hợp lệ');
+        }
     }
 }

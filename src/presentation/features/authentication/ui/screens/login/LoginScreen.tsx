@@ -1,203 +1,240 @@
-import { CompositeNavigationProp, useNavigation } from "@react-navigation/native";
+/**
+ * @fileoverview Main login screen component for user authentication
+ * @module features/account/presentation/pages/login/LoginScreen
+ *
+ * This screen provides the main authentication interface including:
+ * - Username/password login form
+ * - Google OAuth sign-in option
+ * - Email verification via OTP for unverified accounts
+ * - Navigation to registration and password recovery
+ * - Privacy policy access
+ */
+
+import { useNavigation } from "@react-navigation/native";
+import { CompositeNavigationProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
-import sl from "../../../../../../core/di/InjectionContainer";
-import { unwrapResponse } from "../../../../../../core/network/APIResponse";
-import { LoginResponseData } from "../../../../../../data/models/account/accountDTO/LoginResponse";
-import { LoginUseCase } from "../../../../../../domain/usecases/account/LoginUseCase";
 import { colors } from "../../../../../common/theme/colors";
 import { AuthStackParamList, RootStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { useAppDispatch } from "../../../store/hooks";
-import { addAuth } from "../../../store/slices/authSlice";
+
+// ==================== ATOMIC COMPONENTS ====================
 import { BrandTitle } from "../../atoms/BrandTitle";
 import { EmailPromptModal } from "../../atoms/OTPVerify/EmailPromptModal";
 import { PrivacyNotice } from "../../atoms/PrivacyNotice";
 import { SignUpPrompt } from "../../atoms/register/SignUpPrompt";
 import { SocialAuthGroup } from "../../atoms/SocialAuthGroup";
+
+// ==================== ORGANISM COMPONENTS ====================
 import { LoginForm } from "../../organism/login/LoginForm";
 
+// ==================== CUSTOM HOOKS ====================
+import { useGoogleLogin } from "../../../store/hooks/logins/useGoogleLogin";
+import { useLogin } from "../../../store/hooks/logins/useLogin";
+import { useOtpVerification } from "../../../store/hooks/otp/useOTPVerification";
+
+/**
+ * Navigation prop type for LoginScreen
+ * Combines AuthStack and RootStack navigation capabilities
+ * 
+ * @typedef {Object} LoginScreenNavigationProp
+ */
 type LoginScreenNavigationProp = CompositeNavigationProp<
   StackNavigationProp<AuthStackParamList, 'Login'>,
   StackNavigationProp<RootStackParamList>
 >;
 
-const UNVERIFIED_EMAIL_KEYWORDS = [
-  'verify your email',
-  'verification',
-  'otp',
-  'chưa xác minh',
-  'xác minh email',
-];
+/**
+ * Login form data structure
+ * 
+ * @interface LoginFormData
+ * @property {string} username - User's username or email
+ * @property {string} password - User's password
+ */
+interface LoginFormData {
+  username: string;
+  password: string;
+}
 
-const isUnverifiedEmailError = (message: string): boolean => {
-  const lowerMessage = message.toLowerCase();
-  return UNVERIFIED_EMAIL_KEYWORDS.some(keyword => lowerMessage.includes(keyword));
-};
-
+/**
+ * LoginScreen Component
+ * 
+ * Main authentication screen that orchestrates the complete login flow:
+ * 
+ * Features:
+ * - Standard username/password authentication
+ * - Google OAuth integration
+ * - Automatic OTP verification for unverified accounts
+ * - Error handling with user-friendly messages
+ * - Navigation to registration and password recovery
+ * - Responsive keyboard handling
+ * - Smooth scrolling for smaller screens
+ * 
+ * Authentication Flow:
+ * 1. User enters credentials or chooses Google Sign-In
+ * 2. Credentials validated by useLogin or useGoogleLogin hook
+ * 3. If account unverified, OTP modal automatically appears
+ * 4. Success: Redux updated, user redirected to home
+ * 5. Error: User-friendly message displayed
+ * 
+ * @component
+ * @returns {React.ReactElement} LoginScreen component
+ */
 export const LoginScreen: React.FC = () => {
+  // ==================== NAVIGATION ====================
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const dispatch = useAppDispatch();
-  const [loading, setLoading] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [pendingUsername, setPendingUsername] = useState('');
-  const [resendingOtp, setResendingOtp] = useState(false);
-  const [loginError, setLoginError] = useState<string>('');
+  
+  // ==================== AUTHENTICATION HOOKS ====================
+  
+  /**
+   * Standard login hook - handles username/password authentication
+   * Provides: loading state, error handling, verification detection
+   */
+  const {
+    loading: loginLoading,
+    error: loginError,
+    needsVerification,
+    unverifiedUsername,
+    login,
+    clearError
+  } = useLogin();
+  
+  /**
+   * Google authentication hook - handles OAuth flow
+   * Provides: loading state, error handling, Google sign-in execution
+   */
+  const { 
+    loading: googleLoading,
+    error: googleError,
+    googleSignIn,
+    clearError: clearGoogleError
+  } = useGoogleLogin();
+  
+  /**
+   * OTP verification hook - handles email verification modal
+   * Provides: modal state, resend functionality
+   */
+  const {
+    showEmailModal,
+    pendingUsername,
+    resendingOtp,
+    openEmailModal,
+    closeEmailModal,
+    resendOtp
+  } = useOtpVerification();
 
-  const handleContinue = async (data: {
-    username: string;
-    password: string;
-  }) => {
-    try {
-      setLoading(true);
-      setLoginError(''); // Clear previous errors
-
-      const loginUseCase = new LoginUseCase(sl.get("AccountRepository"));
-      const response = await loginUseCase.execute({
-        username: data.username,
-        password: data.password,
-      });
-
-      const loginData: LoginResponseData = unwrapResponse(response);
-
-      dispatch(
-        addAuth({
-          token: loginData.accessToken,
-          user: {
-            id: loginData.user.id,
-            username: loginData.user.username,
-            role: loginData.user.role,
-            fullName: loginData.user.fullName,
-            branchId: loginData.user.branchId,
-            branchName: loginData.user.branchName,
-          },
-        })
-      );
-
-      Toast.show({
-        type: "success",
-        text1: "Đăng nhập thành công",
-        text2: "Chào mừng bạn đến với eMotoRent",
-      });
-    } catch (error: any) {
-      const errorMessage = error.message || "Tên đăng nhập hoặc mật khẩu không đúng";
-      
-      if (isUnverifiedEmailError(errorMessage)) {
-        setPendingUsername(data.username);
-        Alert.alert(
-          'Xác minh email',
-          'Tài khoản của bạn chưa được xác minh. Vui lòng nhập mã OTP đã gửi đến email của bạn.',
-          [
-            {
-              text: 'Xác minh ngay',
-              onPress: () => setShowEmailModal(true),
-            },
-            {
-              text: 'Hủy',
-              style: 'cancel',
-            },
-          ]
-        );
-      } else {
-        // Set inline error instead of Alert - clean message without technical details
-        setLoginError("Tên đăng nhập hoặc mật khẩu không đúng");
-      }
-      
-      console.error("Login error:", error);
-    } finally {
-      setLoading(false);
+  // ==================== EVENT HANDLERS ====================
+  
+  /**
+   * Handles login form submission
+   * Flow:
+   * 1. Executes login with credentials
+   * 2. Checks if account needs verification
+   * 3. If unverified, opens OTP modal automatically
+   * 4. If verified, hook handles success (Redux update, navigation)
+   * @param {LoginFormData} data - Login credentials from form
+   * @returns {Promise<void>}
+   * @async
+   */
+  const handleContinue = useCallback(async (data: LoginFormData): Promise<void> => {
+    await login(data);
+    
+    // Check if account needs email verification
+    if (needsVerification && unverifiedUsername) {
+      openEmailModal(unverifiedUsername);
     }
-  };
+  }, [login, needsVerification, unverifiedUsername, openEmailModal]);
 
-  const handleEmailSubmit = async (email: string) => {
-    try {
-      setResendingOtp(true);
-      
-      const resendOtpUseCase = sl.getResendOtpUseCase();
-      await resendOtpUseCase.execute(email);
-      
-      setShowEmailModal(false);
-      
-      Toast.show({
-        type: 'info',
-        text1: 'Đã gửi mã OTP',
-        text2: 'Vui lòng kiểm tra email của bạn',
-      });
+  /**
+   * Handles Google Sign-In button press
+   * Initiates Google OAuth flow which includes:
+   * 1. Google account picker
+   * 2. Token retrieval
+   * 3. Backend authentication
+   * 4. Redux state update
+   * @returns {Promise<void>}
+   * @async
+   */
+  const handleGoogleSignIn = useCallback(async (): Promise<void> => {
+    await googleSignIn();
+  }, [googleSignIn]);
 
-      navigation.navigate('OTPVerification', {
-        email: email,
-        userId: pendingUsername,
-      });
-    } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Không thể gửi mã OTP');
-    } finally {
-      setResendingOtp(false);
-    }
-  };
+  /**
+   * Handles email submission in OTP verification modal
+   * Resends OTP code to provided email address for verification
+   * @param {string} email - Email address to send OTP to
+   * @returns {Promise<void>}
+   * @async
+   */
+  const handleEmailSubmit = useCallback(async (email: string): Promise<void> => {
+    await resendOtp(email);
+  }, [resendOtp]);
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      setLoginError(''); // Clear previous errors
-
-      const googleSignInUseCase = sl.getGoogleSignInUseCase();
-      const { idToken, email, name } = await googleSignInUseCase.execute();
-
-      const googleLoginUseCase = sl.getGoogleLoginUseCase();
-      const response = await googleLoginUseCase.execute(idToken);
-
-      const loginData: LoginResponseData = unwrapResponse(response);
-
-      dispatch(
-        addAuth({
-          token: loginData.accessToken,
-          user: {
-            id: loginData.user.id,
-            username: loginData.user.username,
-            role: loginData.user.role,
-            fullName: loginData.user.fullName,
-            branchId: loginData.user.branchId,
-            branchName: loginData.user.branchName,
-          },
-        })
-      );
-
-      Toast.show({
-        type: "success",
-        text1: "Đăng nhập thành công",
-        text2: `Chào mừng ${name}`,
-      });
-
-    } catch (error: any) {
-      setLoginError('Đăng nhập Google thất bại. Vui lòng thử lại.');
-      console.error('Google Sign-In error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignUpNow = () => {
+  /**
+   * Navigates to registration screen
+   * Triggered when user clicks "Sign up now" link
+   */
+  const handleSignUpNow = useCallback((): void => {
     navigation.navigate("Register");
-  };
+  }, [navigation]);
 
-  const handlePrivacyPolicy = () => {
+  /**
+   * Handles privacy policy link press
+   * TODO: Navigate to privacy policy screen or open webview
+   */
+  const handlePrivacyPolicy = useCallback((): void => {
     console.log("Privacy policy");
-  };
+    // TODO: Implement navigation to privacy policy
+  }, []);
 
-  const handleForgotPassword = () => {
+  /**
+   * Navigates to forgot password flow
+   * Triggered when user clicks "Forgot password?" link
+   */
+  const handleForgotPassword = useCallback((): void => {
     navigation.navigate('ForgotPassword');
-  };
+  }, [navigation]);
 
+  /**
+   * Clears all error states from both login methods
+   * Used when user dismisses error alert or starts new attempt
+   */
+  const handleErrorDismiss = useCallback((): void => {
+    clearError();
+    clearGoogleError();
+  }, [clearError, clearGoogleError]);
+
+  // ==================== COMPUTED VALUES ====================
+  
+  /**
+   * Combined loading state from both authentication methods
+   * True if either standard login or Google sign-in is in progress
+   */
+  const isLoading = useMemo(
+    () => loginLoading || googleLoading,
+    [loginLoading, googleLoading]
+  );
+  
+  /**
+   * Current error message to display
+   * Prioritizes standard login error over Google error
+   */
+  const displayError = useMemo(
+    () => loginError || googleError,
+    [loginError, googleError]
+  );
+
+  // ==================== RENDER ====================
+  
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Keyboard handling for iOS/Android */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
@@ -206,28 +243,35 @@ export const LoginScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={false}
+          keyboardShouldPersistTaps="handled"
         >
+          {/* Brand header with subtitle */}
           <BrandTitle subtitle="Đăng nhập vào tài khoản eMotoRent của bạn" />
 
+          {/* Main login form with username/password */}
           <LoginForm 
             onContinue={handleContinue} 
             onForgotPassword={handleForgotPassword}
-            loading={loading}
-            error={loginError}
-            onErrorDismiss={() => setLoginError('')}
+            loading={isLoading}
+            error={displayError}
+            onErrorDismiss={handleErrorDismiss}
           />
           
+          {/* Social authentication options (Google) */}
           <SocialAuthGroup onGooglePress={handleGoogleSignIn} />
 
+          {/* Registration prompt for new users */}
           <SignUpPrompt onSignUpPress={handleSignUpNow} />
 
+          {/* Privacy policy and terms notice */}
           <PrivacyNotice onPrivacyPolicyPress={handlePrivacyPolicy} />
         </ScrollView>
       </KeyboardAvoidingView>
 
+      {/* OTP verification modal for unverified accounts */}
       <EmailPromptModal
         visible={showEmailModal}
-        onClose={() => setShowEmailModal(false)}
+        onClose={closeEmailModal}
         onSubmit={handleEmailSubmit}
         loading={resendingOtp}
       />
