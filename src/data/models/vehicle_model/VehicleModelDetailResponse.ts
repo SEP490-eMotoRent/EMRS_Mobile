@@ -16,9 +16,9 @@
 // }
 
 export interface RentalPricingInfo {
-    id: string;
-    rentalPrice: number;
-    excessKmPrice: number;
+    id?: string;           // present in some responses, not in detail → sometimes missing
+    rentalPrice: number;   // always present
+    excessKmPrice?: number; // NOT returned in detail endpoint → must be optional
 }
 
 export interface VehicleModelDetailResponse {
@@ -30,6 +30,6 @@ export interface VehicleModelDetailResponse {
     maxSpeedKmh: number;
     description: string;
     depositAmount: number;
-    rentalPricing: RentalPricingInfo;
-    images: string[];
+    rentalPricing: RentalPricingInfo; // partial object is allowed now
+    images: string[]; // can be empty array []
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Vehicle } from '../../../../domain/entities/vehicle/Vehicle';
 import { GetAllVehiclesUseCase } from '../../../../domain/usecases/vehicle/GetAllVehicleUseCase';
-import sl from '../../../../core/di/InjectionContainer';
+import { container } from '../../../../core/di/ServiceContainer'; // ✅ NEW
 
 interface UseVehiclesResult {
     vehicles: Vehicle[];
@@ -26,8 +26,7 @@ export function useVehicles(): UseVehiclesResult {
         setError(null);
         
         try {
-            // Get repository from DI container
-            const vehicleRepo = sl.getVehicleRepository();
+            const vehicleRepo = container.vehicle.repository;
             
             // Create and execute use case
             const useCase = new GetAllVehiclesUseCase(vehicleRepo);

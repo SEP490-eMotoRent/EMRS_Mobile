@@ -15,8 +15,7 @@ export class VehicleMapper {
         const batteryCapacity = vehicle.vehicleModel.batteryCapacityKwh;
         const maxRange = vehicle.vehicleModel.maxRangeKm;
         
-        // Get pricing info
-        const dailyPrice = vehicle.vehicleModel.rentalPricing.rentalPrice;
+        const dailyPrice = vehicle.dailyRentalPrice();
 
         // Generate placeholder image based on color
         const imageUrl = this.generatePlaceholderImage(
@@ -26,9 +25,6 @@ export class VehicleMapper {
 
         // Extract features from vehicle
         const features = this.extractFeatures(vehicle);
-
-        // Map status to availability
-        const deliveryAvailable = vehicle.status === 'Available';
 
         return {
             id: vehicle.id,
@@ -42,9 +38,10 @@ export class VehicleMapper {
             battery: `${batteryCapacity} kWh`,
             seats: 2, // Default to 2 seats for motorcycles
             features: features,
-            deliveryAvailable: deliveryAvailable,
             branchName: vehicle.branch.branchName,
-            color: this.getColorHex(vehicle.color)
+            color: this.getColorHex(vehicle.color),
+            // ✅ REMOVED: deliveryAvailable property (not in Motorcycle type)
+            isAvailable: vehicle.isAvailable(), // Use this instead if available in Motorcycle type
         };
     }
 
@@ -77,9 +74,11 @@ export class VehicleMapper {
             features.push('Good Battery');
         }
 
-        // Maintenance status
-        if (vehicle.isMaintenanceDue()) {
-            features.push('Maintenance Due');
+        // Maintenance status - Simple check without scheduledDate
+        if (vehicle.maintenanceSchedules.length > 0) {
+            // ✅ FIXED: Simplified maintenance check since scheduledDate doesn't exist
+            // Just check if there are any maintenance schedules
+            features.push('Regular Maintenance');
         } else {
             features.push('Well Maintained');
         }

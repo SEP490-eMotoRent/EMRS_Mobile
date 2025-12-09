@@ -1,8 +1,7 @@
-// src/presentation/features/vehicleList/hooks/useVehicleModels.ts
 import { useState, useEffect } from 'react';
 import { VehicleModel } from '../../../../domain/entities/vehicle/VehicleModel';
 import { VehicleModelResponse } from '../../../../data/models/vehicle_model/VehicleModelResponse';
-import sl from '../../../../core/di/InjectionContainer';
+import { container } from '../../../../core/di/ServiceContainer';
 import { GetAllVehicleModelsUseCase } from '../../../../domain/usecases/vehicle/GetAllVehicleModelsUseCase ';
 
 interface UseVehicleModelsResult {
@@ -24,22 +23,23 @@ export function useVehicleModels(): UseVehicleModelsResult {
         setError(null);
 
         try {
-        const repo = sl.getVehicleModelRepository();
-        const useCase = new GetAllVehicleModelsUseCase(repo);
+            // ✅ UPDATED: Use new container instead of service locator
+            const repo = container.vehicle.modelRepository;
+            const useCase = new GetAllVehicleModelsUseCase(repo);
 
-        const [models, dtos] = await Promise.all([
-            useCase.execute(),
-            repo.getAllRaw()
-        ]);
+            const [models, dtos] = await Promise.all([
+                useCase.execute(),
+                repo.getAllRaw()
+            ]);
 
-        setVehicleModels(models);
-        setRawDtos(dtos);
+            setVehicleModels(models);
+            setRawDtos(dtos);
         } catch (err: any) {
-        const errorMessage = err.message || 'Failed to fetch vehicle models';
-        setError(errorMessage);
-        console.error('Error fetching vehicle models:', err);
+            const errorMessage = err.message || 'Failed to fetch vehicle models';
+            setError(errorMessage);
+            console.error('Error fetching vehicle models:', err);
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 
