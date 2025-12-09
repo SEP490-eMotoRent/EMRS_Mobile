@@ -1,27 +1,20 @@
-import { useMemo, useState } from 'react';
-import sl from '../../../../../core/di/InjectionContainer';
+import { useState } from 'react';
+import { container } from '../../../../../core/di/ServiceContainer';
 import { WalletTopUpResponse } from '../../../../../data/models/wallet/topUp/WalletTopUpResponse';
-import { CreateTopUpRequestUseCase } from '../../../../../domain/usecases/wallet/topUp/CreateTopUpRequestUseCase';
-
 
 export const useWalletTopUp = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createTopUpRequestUseCase = useMemo(
-        () => sl.get<CreateTopUpRequestUseCase>('CreateTopUpRequestUseCase'),
-        []
-    );
-
     const createTopUpRequest = async (amount: number): Promise<WalletTopUpResponse> => {
         try {
             setLoading(true);
             setError(null);
-            
             console.log('🚀 Creating top-up request:', amount);
-            const result = await createTopUpRequestUseCase.execute({ amount }); // ← Pass object
-            console.log('✅ Top-up request created:', result.transactionId);
             
+            const result = await container.wallet.topUp.create.execute({ amount });
+            console.log('✅ Top-up request created:', result.transactionId);
+
             return result;
         } catch (err: any) {
             console.error('❌ Top-up request error:', err);

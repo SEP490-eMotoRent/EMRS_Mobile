@@ -1,63 +1,111 @@
-import { AxiosClient } from "../../network/AxiosClient";
+import { AxiosClient } from '../../network/AxiosClient';
 
 // Data Sources
-import { AdditionalFeeRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/additionalFee/AdditionalFeeRemoteDataSourceImpl";
-import { HolidayPricingRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/financial/holidayPricing/HolidayPricingRemoteDataSourceImpl";
+import { AdditionalFeeRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/additionalFee/AdditionalFeeRemoteDataSourceImpl';
+import { HolidayPricingRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/financial/holidayPricing/HolidayPricingRemoteDataSourceImpl';
 
 // Repositories
-import { AdditionalFeeRepositoryImpl } from "../../../data/repositories/additionalFee/AdditionalFeeRepositoryImpl";
-import { HolidayPricingRepositoryImpl } from "../../../data/repositories/financial/HolidayPricingRepositoryImpl";
-import { HolidayPricingRepository } from "../../../domain/repositories/financial/HolidayPricingRepository";
+import { AdditionalFeeRepositoryImpl } from '../../../data/repositories/additionalFee/AdditionalFeeRepositoryImpl';
+import { HolidayPricingRepositoryImpl } from '../../../data/repositories/financial/HolidayPricingRepositoryImpl';
 
-// Use Cases
-import { GetDamageTypesUseCase } from "../../../domain/usecases/additionalFee/GetDamageTypesUseCase";
-import { GetAllHolidayPricingsUseCase } from "../../../domain/usecases/holidayPricing/GetAllHolidayPricingsUseCase";
-import { GetHolidayPricingByIdUseCase } from "../../../domain/usecases/holidayPricing/GetHolidayPricingByIdUseCase";
+// Use Cases - Holiday Pricing
+import { GetAllHolidayPricingsUseCase } from '../../../domain/usecases/holidayPricing/GetAllHolidayPricingsUseCase';
+import { GetHolidayPricingByIdUseCase } from '../../../domain/usecases/holidayPricing/GetHolidayPricingByIdUseCase';
+
+// Use Cases - Additional Fees
+import { GetDamageTypesUseCase } from '../../../domain/usecases/additionalFee/GetDamageTypesUseCase';
 
 /**
- * FinancialModule - All financial and pricing-related functionality
+ * FinancialModule - Complete Financial Domain
  * 
- * Includes:
- * - Holiday pricing
- * - Additional fees and charges
+ * Handles all financial configuration functionality:
+ * - Holiday pricing management
+ * - Additional fee structures
+ * - Damage type definitions
+ * 
+ * Migrated from InjectionContainer - 100% complete
  */
 export class FinancialModule {
-    // Data Sources
-    public readonly holidayPricingRemoteDataSource: HolidayPricingRemoteDataSourceImpl;
-    public readonly additionalFeeRemoteDataSource: AdditionalFeeRemoteDataSourceImpl;
+    // ==================== REPOSITORIES ====================
+    private _holidayPricingRepository: HolidayPricingRepositoryImpl | null = null;
+    private _additionalFeeRepository: AdditionalFeeRepositoryImpl | null = null;
 
-    // Repositories
-    public readonly holidayPricingRepository: HolidayPricingRepository;
-    public readonly additionalFeeRepository: AdditionalFeeRepositoryImpl;
+    // ==================== USE CASES - HOLIDAY PRICING ====================
+    private _getAllHolidayPricingsUseCase: GetAllHolidayPricingsUseCase | null = null;
+    private _getHolidayPricingByIdUseCase: GetHolidayPricingByIdUseCase | null = null;
 
-    // Use Cases - Organized by feature
-    public readonly holidayPricing = {
-        getAll: {} as GetAllHolidayPricingsUseCase,
-        getById: {} as GetHolidayPricingByIdUseCase,
-    };
+    // ==================== USE CASES - ADDITIONAL FEES ====================
+    private _getDamageTypesUseCase: GetDamageTypesUseCase | null = null;
 
-    public readonly additionalFees = {
-        getDamageTypes: {} as GetDamageTypesUseCase,
-    };
-
-    constructor(axiosClient: AxiosClient) {
-        // Initialize data sources
-        this.holidayPricingRemoteDataSource = new HolidayPricingRemoteDataSourceImpl(axiosClient);
-        this.additionalFeeRemoteDataSource = new AdditionalFeeRemoteDataSourceImpl(axiosClient);
-
-        // Initialize repositories
-        this.holidayPricingRepository = new HolidayPricingRepositoryImpl(this.holidayPricingRemoteDataSource);
-        this.additionalFeeRepository = new AdditionalFeeRepositoryImpl(this.additionalFeeRemoteDataSource);
-
-        // Initialize holiday pricing use cases
-        this.holidayPricing.getAll = new GetAllHolidayPricingsUseCase(this.holidayPricingRepository);
-        this.holidayPricing.getById = new GetHolidayPricingByIdUseCase(this.holidayPricingRepository);
-
-        // Initialize additional fees use cases
-        this.additionalFees.getDamageTypes = new GetDamageTypesUseCase(this.additionalFeeRepository);
-    }
+    constructor(private axiosClient: AxiosClient) {}
 
     static create(axiosClient: AxiosClient): FinancialModule {
         return new FinancialModule(axiosClient);
+    }
+
+    // ==================== PUBLIC API - REPOSITORIES ====================
+
+    get holidayPricingRepository(): HolidayPricingRepositoryImpl {
+        if (!this._holidayPricingRepository) {
+        const remoteDataSource = new HolidayPricingRemoteDataSourceImpl(this.axiosClient);
+        this._holidayPricingRepository = new HolidayPricingRepositoryImpl(remoteDataSource);
+        }
+        return this._holidayPricingRepository;
+    }
+
+    get additionalFeeRepository(): AdditionalFeeRepositoryImpl {
+        if (!this._additionalFeeRepository) {
+        const remoteDataSource = new AdditionalFeeRemoteDataSourceImpl(this.axiosClient);
+        this._additionalFeeRepository = new AdditionalFeeRepositoryImpl(remoteDataSource);
+        }
+        return this._additionalFeeRepository;
+    }
+
+    // ==================== PUBLIC API - USE CASES ====================
+
+    /**
+     * Holiday pricing use cases
+     * Usage: container.financial.holidayPricing.getAll.execute()
+     */
+    get holidayPricing() {
+        return {
+        getAll: this.getAllHolidayPricingsUseCase,
+        getById: this.getHolidayPricingByIdUseCase,
+        };
+    }
+
+    /**
+     * Additional fee use cases
+     * Usage: container.financial.fees.getDamageTypes.execute()
+     */
+    get fees() {
+        return {
+        getDamageTypes: this.getDamageTypesUseCase,
+        };
+    }
+
+    // ==================== PRIVATE GETTERS - HOLIDAY PRICING ====================
+
+    private get getAllHolidayPricingsUseCase(): GetAllHolidayPricingsUseCase {
+        if (!this._getAllHolidayPricingsUseCase) {
+        this._getAllHolidayPricingsUseCase = new GetAllHolidayPricingsUseCase(this.holidayPricingRepository);
+        }
+        return this._getAllHolidayPricingsUseCase;
+    }
+
+    private get getHolidayPricingByIdUseCase(): GetHolidayPricingByIdUseCase {
+        if (!this._getHolidayPricingByIdUseCase) {
+        this._getHolidayPricingByIdUseCase = new GetHolidayPricingByIdUseCase(this.holidayPricingRepository);
+        }
+        return this._getHolidayPricingByIdUseCase;
+    }
+
+    // ==================== PRIVATE GETTERS - ADDITIONAL FEES ====================
+
+    private get getDamageTypesUseCase(): GetDamageTypesUseCase {
+        if (!this._getDamageTypesUseCase) {
+        this._getDamageTypesUseCase = new GetDamageTypesUseCase(this.additionalFeeRepository);
+        }
+        return this._getDamageTypesUseCase;
     }
 }

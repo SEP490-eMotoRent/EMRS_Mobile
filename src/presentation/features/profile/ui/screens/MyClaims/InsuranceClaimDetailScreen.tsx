@@ -1,6 +1,6 @@
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
     ActivityIndicator,
     Image,
@@ -11,12 +11,10 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import sl from '../../../../../../core/di/InjectionContainer';
-import { InsuranceClaimDetailResponse } from '../../../../../../data/models/insurance/insuranceClaim/InsuranceClaimDetailResponse';
 import { ProfileStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { ClaimStatusBadge } from '../../atoms/Badges/ClaimStatusBadge';
 import { Icon } from '../../../../insuranceClaim/ui/atoms/icons/Icon';
-
+import { useInsuranceClaimDetail } from '../../../hooks/insuranceClaims/useInsuranceClaimDetail';
 
 type InsuranceClaimDetailScreenRouteProp = RouteProp<
     ProfileStackParamList,
@@ -38,26 +36,7 @@ export const InsuranceClaimDetailScreen: React.FC<InsuranceClaimDetailScreenProp
     navigation,
 }) => {
     const { claimId } = route.params;
-    const [claim, setClaim] = useState<InsuranceClaimDetailResponse | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetchClaimDetail();
-    }, [claimId]);
-
-    const fetchClaimDetail = async () => {
-        try {
-            setError(null);
-            const useCase = sl.getGetInsuranceClaimDetailUseCase();
-            const data = await useCase.execute(claimId);
-            setClaim(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Không thể tải chi tiết yêu cầu');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { claim, loading, error, refresh } = useInsuranceClaimDetail(claimId);
 
     const formatDate = (date: Date | null) => {
         if (!date) return 'N/A';
@@ -108,7 +87,7 @@ export const InsuranceClaimDetailScreen: React.FC<InsuranceClaimDetailScreenProp
                 </View>
                 <View style={styles.centerContent}>
                     <Text style={styles.errorText}>{error || 'Không tìm thấy yêu cầu'}</Text>
-                    <TouchableOpacity onPress={fetchClaimDetail} style={styles.retryButton}>
+                    <TouchableOpacity onPress={refresh} style={styles.retryButton}>
                         <Text style={styles.retryText}>Thử Lại</Text>
                     </TouchableOpacity>
                 </View>

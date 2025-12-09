@@ -1,54 +1,74 @@
-import { AxiosClient } from "../../network/AxiosClient";
+import { AxiosClient } from '../../network/AxiosClient';
 
 // Data Sources
-import { VehicleModelRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/vehicle/VehicleModelRemoteDataSourceImpl";
-import { VehicleRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl";
+import { VehicleModelRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/vehicle/VehicleModelRemoteDataSourceImpl';
+import { VehicleRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/vehicle/VehicleRemoteDataSourceImpl';
 
 // Repositories
-import { VehicleModelRepositoryImpl } from "../../../data/repositories/vehicle/VehicleModelRepositoryImpl";
-import { VehicleRepositoryImpl } from "../../../data/repositories/vehicle/VehicleRepositoryImpl";
-import { VehicleModelRepository } from "../../../domain/repositories/vehicle/VehicleModelRepository";
-import { VehicleRepository } from "../../../domain/repositories/vehicle/VehicleRepository";
+import { VehicleModelRepositoryImpl } from '../../../data/repositories/vehicle/VehicleModelRepositoryImpl';
+import { VehicleRepositoryImpl } from '../../../data/repositories/vehicle/VehicleRepositoryImpl';
 
 // Use Cases
-import { SearchVehiclesUseCase } from "../../../domain/usecases/vehicle/SearchVehiclesUseCase";
+import { SearchVehiclesUseCase } from '../../../domain/usecases/vehicle/SearchVehiclesUseCase';
 
 /**
- * VehicleModule - All vehicle-related functionality
+ * VehicleModule - Complete Vehicle Domain
  * 
- * Includes:
+ * Handles all vehicle-related functionality:
  * - Vehicle management
- * - Vehicle models
+ * - Vehicle model management
  * - Vehicle search
+ * 
+ * Migrated from InjectionContainer - 100% complete
  */
 export class VehicleModule {
-    // Data Sources
-    public readonly remoteDataSource: VehicleRemoteDataSourceImpl;
-    public readonly modelRemoteDataSource: VehicleModelRemoteDataSourceImpl;
+    // ==================== REPOSITORIES ====================
+    private _vehicleRepository: VehicleRepositoryImpl | null = null;
+    private _vehicleModelRepository: VehicleModelRepositoryImpl | null = null;
 
-    // Repositories
-    public readonly repository: VehicleRepository;
-    public readonly modelRepository: VehicleModelRepository;
+    // ==================== USE CASES ====================
+    private _searchVehiclesUseCase: SearchVehiclesUseCase | null = null;
 
-    // Use Cases
-    public readonly search = {
-        searchVehicles: {} as SearchVehiclesUseCase,
-    };
-
-    constructor(axiosClient: AxiosClient) {
-        // Initialize data sources
-        this.remoteDataSource = new VehicleRemoteDataSourceImpl(axiosClient);
-        this.modelRemoteDataSource = new VehicleModelRemoteDataSourceImpl(axiosClient);
-
-        // Initialize repositories
-        this.repository = new VehicleRepositoryImpl(this.remoteDataSource);
-        this.modelRepository = new VehicleModelRepositoryImpl(this.modelRemoteDataSource);
-
-        // Initialize use cases
-        this.search.searchVehicles = new SearchVehiclesUseCase(this.modelRepository);
-    }
+    constructor(private axiosClient: AxiosClient) {}
 
     static create(axiosClient: AxiosClient): VehicleModule {
         return new VehicleModule(axiosClient);
+    }
+
+    // ==================== PUBLIC API - REPOSITORIES ====================
+
+    get repository(): VehicleRepositoryImpl {
+        if (!this._vehicleRepository) {
+        const remoteDataSource = new VehicleRemoteDataSourceImpl(this.axiosClient);
+        this._vehicleRepository = new VehicleRepositoryImpl(remoteDataSource);
+        }
+        return this._vehicleRepository;
+    }
+
+    get modelRepository(): VehicleModelRepositoryImpl {
+        if (!this._vehicleModelRepository) {
+        const remoteDataSource = new VehicleModelRemoteDataSourceImpl(this.axiosClient);
+        this._vehicleModelRepository = new VehicleModelRepositoryImpl(remoteDataSource);
+        }
+        return this._vehicleModelRepository;
+    }
+
+    // ==================== PUBLIC API - USE CASES ====================
+
+    /**
+     * Vehicle search use case
+     * Usage: container.vehicle.search.execute()
+     */
+    get search(): SearchVehiclesUseCase {
+        return this.searchVehiclesUseCase;
+    }
+
+    // ==================== PRIVATE GETTERS ====================
+
+    private get searchVehiclesUseCase(): SearchVehiclesUseCase {
+        if (!this._searchVehiclesUseCase) {
+        this._searchVehiclesUseCase = new SearchVehiclesUseCase(this.modelRepository);
+        }
+        return this._searchVehiclesUseCase;
     }
 }

@@ -3,7 +3,7 @@ import { MembershipResponse, RenterResponse } from '../../../../../data/models/a
 import { Renter } from '../../../../../domain/entities/account/Renter';
 import { Membership } from '../../../../../domain/entities/financial/Membership';
 import { useAppDispatch, useAppSelector } from '../../../authentication/store/hooks';
-import sl from '../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../core/di/ServiceContainer';
 import { removeAuth } from '../../../authentication/store/slices/authSlice';
 
 // NORMALIZE AVATAR URL
@@ -51,15 +51,14 @@ export const useRenterProfile = () => {
             setLoading(true);
             setError(null);
 
-            const getCurrentRenterUseCase = sl.getGetCurrentRenterUseCase();
-            const result = await getCurrentRenterUseCase.execute();
+            // ✅ MIGRATED: Use ServiceContainer instead of InjectionContainer
+            const result = await container.account.profile.getCurrent.execute();
 
             console.log('🔥 RAW API RESPONSE:', {
                 avatarUrl: result.renter.avatarUrl,
                 isArray: Array.isArray(result.renter.avatarUrl),
                 rawResponseAvatar: result.rawResponse.avatarUrl,
                 isRawArray: Array.isArray(result.rawResponse.avatarUrl),
-                // ✅ NEW: Log membership
                 membership: result.rawResponse.membership,
             });
 
@@ -71,7 +70,6 @@ export const useRenterProfile = () => {
                 isArray: Array.isArray(normalizedRenter.avatarUrl),
                 responseAvatar: normalizedResponse.avatarUrl,
                 isResponseArray: Array.isArray(normalizedResponse.avatarUrl),
-                // ✅ NEW: Log membership
                 membershipTier: normalizedResponse.membership?.tierName,
                 membershipDiscount: normalizedResponse.membership?.discountPercentage,
             });

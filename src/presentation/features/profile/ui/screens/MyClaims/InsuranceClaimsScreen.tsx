@@ -1,5 +1,5 @@
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
     ActivityIndicator,
     Platform,
@@ -8,12 +8,10 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import sl from '../../../../../../core/di/InjectionContainer';
-import { InsuranceClaimResponse } from '../../../../../../data/models/insurance/insuranceClaim/InsuranceClaimResponse';
 import { ProfileStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { InsuranceClaimsList } from '../../organisms/List/InsuranceClaimsList';
 import { Icon } from '../../../../insuranceClaim/ui/atoms/icons/Icon';
-
+import { useInsuranceClaims } from '../../../hooks/insuranceClaims/useInsuranceClaims';
 
 type InsuranceClaimsScreenNavigationProp = StackNavigationProp<
     ProfileStackParamList,
@@ -27,33 +25,7 @@ interface InsuranceClaimsScreenProps {
 export const InsuranceClaimsScreen: React.FC<InsuranceClaimsScreenProps> = ({ 
     navigation 
 }) => {
-    const [claims, setClaims] = useState<InsuranceClaimResponse[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [refreshing, setRefreshing] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchClaims = async () => {
-        try {
-            setError(null);
-            const useCase = sl.getGetMyInsuranceClaimsUseCase();
-            const data = await useCase.execute();
-            setClaims(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Không thể tải danh sách yêu cầu');
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchClaims();
-    }, []);
-
-    const handleRefresh = () => {
-        setRefreshing(true);
-        fetchClaims();
-    };
+    const { claims, loading, error, refresh } = useInsuranceClaims();
 
     const handleClaimPress = (claimId: string) => {
         navigation.navigate('InsuranceClaimDetail', { claimId });
@@ -92,7 +64,7 @@ export const InsuranceClaimsScreen: React.FC<InsuranceClaimsScreenProps> = ({
                 </View>
                 <View style={styles.centerContent}>
                     <Text style={styles.errorText}>{error}</Text>
-                    <TouchableOpacity onPress={fetchClaims} style={styles.retryButton}>
+                    <TouchableOpacity onPress={refresh} style={styles.retryButton}>
                         <Text style={styles.retryText}>Thử Lại</Text>
                     </TouchableOpacity>
                 </View>

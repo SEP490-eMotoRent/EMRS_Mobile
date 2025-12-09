@@ -1,9 +1,14 @@
+/**
+ * @fileoverview Custom hook for handling OTP verification flow
+ * @module features/account/presentation/store/hooks/otp/useOTPVerification
+ */
+
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
-import sl from '../../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../../core/di/ServiceContainer';  // ✅ NEW
 import { AuthStackParamList, RootStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 
 type OtpNavigationProp = CompositeNavigationProp<
@@ -29,18 +34,18 @@ export const useOtpVerification = (): UseOtpVerificationReturn => {
     const openEmailModal = (username: string) => {
         setPendingUsername(username);
         Alert.alert(
-        'Xác minh email',
-        'Tài khoản của bạn chưa được xác minh. Vui lòng nhập mã OTP đã gửi đến email của bạn.',
-        [
-            {
-            text: 'Xác minh ngay',
-            onPress: () => setShowEmailModal(true),
-            },
-            {
-            text: 'Hủy',
-            style: 'cancel',
-            },
-        ]
+            'Xác minh email',
+            'Tài khoản của bạn chưa được xác minh. Vui lòng nhập mã OTP đã gửi đến email của bạn.',
+            [
+                {
+                    text: 'Xác minh ngay',
+                    onPress: () => setShowEmailModal(true),
+                },
+                {
+                    text: 'Hủy',
+                    style: 'cancel',
+                },
+            ]
         );
     };
 
@@ -50,27 +55,27 @@ export const useOtpVerification = (): UseOtpVerificationReturn => {
 
     const resendOtp = async (email: string): Promise<void> => {
         try {
-        setResendingOtp(true);
-        
-        const resendOtpUseCase = sl.getResendOtpUseCase();
-        await resendOtpUseCase.execute(email);
-        
-        setShowEmailModal(false);
-        
-        Toast.show({
-            type: 'info',
-            text1: 'Đã gửi mã OTP',
-            text2: 'Vui lòng kiểm tra email của bạn',
-        });
+            setResendingOtp(true);
+            
+            // ✅ NEW: Direct access to OTP resend use case
+            await container.account.otp.resend.execute(email);
+            
+            setShowEmailModal(false);
+            
+            Toast.show({
+                type: 'info',
+                text1: 'Đã gửi mã OTP',
+                text2: 'Vui lòng kiểm tra email của bạn',
+            });
 
-        navigation.navigate('OTPVerification', {
-            email: email,
-            userId: pendingUsername,
-        });
+            navigation.navigate('OTPVerification', {
+                email: email,
+                userId: pendingUsername,
+            });
         } catch (error: any) {
-        Alert.alert('Lỗi', error.message || 'Không thể gửi mã OTP');
+            Alert.alert('Lỗi', error.message || 'Không thể gửi mã OTP');
         } finally {
-        setResendingOtp(false);
+            setResendingOtp(false);
         }
     };
 
