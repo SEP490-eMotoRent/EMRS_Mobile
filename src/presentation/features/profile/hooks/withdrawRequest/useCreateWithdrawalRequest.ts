@@ -1,11 +1,9 @@
 import { useState } from "react";
-import sl from "../../../../../core/di/InjectionContainer";
+import { container } from "../../../../../core/di/ServiceContainer";
 
 export const useCreateWithdrawalRequest = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const createUseCase = sl.getCreateWithdrawalRequestUseCase();
 
     const createRequest = async (
         amount: number,
@@ -18,30 +16,30 @@ export const useCreateWithdrawalRequest = () => {
 
         console.log("🚀 [CREATE WITHDRAWAL] Starting request...");
         console.log("📊 [CREATE WITHDRAWAL] Params:", {
-        amount,
-        bankName,
-        bankAccountNumber,
-        bankAccountName,
-        });
-
-        try {
-        const result = await createUseCase.execute(
             amount,
             bankName,
             bankAccountNumber,
-            bankAccountName
-        );
-        console.log("✅ [CREATE WITHDRAWAL] Success:", result);
-        return result;
+            bankAccountName,
+        });
+
+        try {
+            const result = await container.wallet.withdrawal.create.execute(
+                amount,
+                bankName,
+                bankAccountNumber,
+                bankAccountName
+            );
+            console.log("✅ [CREATE WITHDRAWAL] Success:", result);
+            return result;
         } catch (err: any) {
-        console.error("❌ [CREATE WITHDRAWAL] Error:", err);
-        console.error("❌ [CREATE WITHDRAWAL] Error message:", err.message);
-        console.error("❌ [CREATE WITHDRAWAL] Error stack:", err.stack);
-        const errorMessage = err.message || "Không thể tạo yêu cầu rút tiền";
-        setError(errorMessage);
-        throw err;
+            console.error("❌ [CREATE WITHDRAWAL] Error:", err);
+            console.error("❌ [CREATE WITHDRAWAL] Error message:", err.message);
+            console.error("❌ [CREATE WITHDRAWAL] Error stack:", err.stack);
+            const errorMessage = err.message || "Không thể tạo yêu cầu rút tiền";
+            setError(errorMessage);
+            throw err;
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 

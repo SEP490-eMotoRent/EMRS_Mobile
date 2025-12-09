@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { VehicleModelSearchItem } from '../../../../data/models/vehicle_model/VehicleModelPaginatedSearchResponse';
-import sl from '../../../../core/di/InjectionContainer';
+import { container } from '../../../../core/di/ServiceContainer';
 
 interface UseVehicleModelsPaginatedResult {
     items: VehicleModelSearchItem[];
@@ -48,7 +48,7 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
         try {
             console.log("🔄 [PAGINATED HOOK] Loading initial page...");
             
-            const dataSource = sl.getVehicleModelRepository();
+            const dataSource = container.vehicle.modelRepository;
             const response = await dataSource.searchPaginated(
                 1, // First page
                 PAGE_SIZE,
@@ -88,7 +88,7 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
             const nextPage = currentPage + 1;
             console.log(`🔄 [PAGINATED HOOK] Loading page ${nextPage}...`);
             
-            const dataSource = sl.getVehicleModelRepository();
+            const dataSource = container.vehicle.modelRepository;
             const response = await dataSource.searchPaginated(
                 nextPage,
                 PAGE_SIZE,

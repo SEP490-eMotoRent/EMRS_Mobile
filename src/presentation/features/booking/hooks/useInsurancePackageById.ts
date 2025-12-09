@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import sl from '../../../../core/di/InjectionContainer';
 import { InsurancePackage } from '../../../../domain/entities/insurance/InsurancePackage';
+import { container } from '../../../../core/di/ServiceContainer';
 
 export interface UseInsurancePackageByIdResult {
     package: InsurancePackage | null;
@@ -25,9 +25,7 @@ export const useInsurancePackageById = (id: string | null): UseInsurancePackageB
                 setLoading(true);
                 setError(null);
 
-                const useCase = sl.getGetInsurancePackageByIdUseCase();
-                const result = await useCase.execute(id);
-
+                const result = await container.insurance.packages.getById.execute(id);
                 setPackageData(result);
             } catch (err: any) {
                 console.error(`Error fetching insurance package ${id}:`, err);

@@ -1,115 +1,190 @@
-import React, { useState } from 'react';
+/**
+ * @fileoverview Reset password screen with OTP verification
+ * @module features/account/presentation/pages/password/ResetPasswordScreen
+ * 
+ * This screen provides the password reset interface including:
+ * - OTP code input field
+ * - New password input fields
+ * - Password confirmation validation
+ * - Navigation back to login
+ * 
+ * @author eMotoRent Development Team
+ * @created 2025
+ */
+
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useCallback } from 'react';
 import {
-    StyleSheet,
-    SafeAreaView,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    StyleSheet,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import Toast from 'react-native-toast-message';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '../../../../../common/theme/colors';
 import { BackButton } from '../../../../../common/components/atoms/buttons/BackButton';
 import { PageTitle } from '../../../../../common/components/molecules/PageTitle';
-import { ResetPasswordForm } from '../../organism/password/ResetPasswordForm';
-import { BackToLogin } from '../../molecules/BackToLogin';
 import { AuthStackParamList } from '../../../../../shared/navigation/StackParameters/types';
-import sl from '../../../../../../core/di/InjectionContainer';
 
+// ==================== MOLECULE COMPONENTS ====================
+import { BackToLogin } from '../../molecules/BackToLogin';
+
+// ==================== ORGANISM COMPONENTS ====================
+import { ResetPasswordForm } from '../../organism/password/ResetPasswordForm';
+import { useResetPassword } from '../../../store/hooks/password/useResetPassword';
+
+// ==================== CUSTOM HOOKS ====================
+
+/**
+ * Navigation prop type for ResetPasswordScreen
+ */
 type ResetPasswordScreenNavigationProp = StackNavigationProp<
     AuthStackParamList,
     'ResetPassword'
 >;
 
-type ResetPasswordScreenRouteProp = RouteProp<
-    AuthStackParamList,
-    'ResetPassword'
->;
+/**
+ * Route prop type for ResetPasswordScreen
+ * Contains email parameter from ForgotPasswordScreen
+ */
+type ResetPasswordScreenRouteProp = RouteProp<AuthStackParamList, 'ResetPassword'>;
 
-export const ResetPasswordScreen: React.FC = () => {
+/**
+ * Reset password form data structure
+ * 
+ * @interface ResetPasswordFormData
+ * @property {string} otpCode - OTP code sent to user's email
+ * @property {string} newPassword - New password to set
+ * @property {string} confirmPassword - Password confirmation
+ */
+interface ResetPasswordFormData {
+    otpCode: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+/**
+ * ResetPasswordScreen Component
+ * 
+ * Password reset screen that orchestrates the complete reset flow:
+ * 
+ * Features:
+ * - OTP code verification
+ * - New password input with validation
+ * - Password confirmation matching
+ * - Error handling with user-friendly messages
+ * - Success navigation to login
+ * - Back navigation to forgot password
+ * 
+ * Reset Flow:
+ * 1. User receives email from ForgotPasswordScreen
+ * 2. User enters OTP code from email
+ * 3. User enters and confirms new password
+ * 4. Hook validates and submits to backend
+ * 5. Success: User redirected to login
+ * 6. Error: User-friendly message displayed
+ * 
+ * @component
+ * @returns {React.ReactElement} ResetPasswordScreen component
+ */
+    export const ResetPasswordScreen: React.FC = () => {
+    // ==================== NAVIGATION & ROUTING ====================
     const navigation = useNavigation<ResetPasswordScreenNavigationProp>();
     const route = useRoute<ResetPasswordScreenRouteProp>();
     const { email } = route.params;
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    // ==================== CUSTOM HOOKS ====================
+    
+    /**
+     * Reset password hook - handles all password reset business logic
+     * Provides: loading state, error handling, reset execution
+     */
+    const { loading, error, resetPassword, clearError } = useResetPassword();
 
-    const handleSubmit = async (data: {
-        otpCode: string;
-        newPassword: string;
-        confirmPassword: string;
-    }) => {
-        try {
-        setLoading(true);
-        setError('');
+    // ==================== EVENT HANDLERS ====================
 
-        const resetPasswordUseCase = sl.getResetPasswordUseCase();
-        const response = await resetPasswordUseCase.execute(
-            email,
-            data.otpCode,
-            data.newPassword,
-            data.confirmPassword
-        );
+    /**
+     * Handles reset password form submission
+     * 
+     * Flow:
+     * 1. Hook validates OTP and password
+     * 2. If valid, calls reset password API
+     * 3. On success, hook navigates to login
+     * 4. On failure, hook shows error message
+     * 
+     * @param {ResetPasswordFormData} data - Reset password form data
+     * @returns {Promise<void>}
+     * 
+     * @async
+     */
+    const handleSubmit = useCallback(
+        async (data: ResetPasswordFormData): Promise<void> => {
+        await resetPassword(email, data);
+        // Hook handles success navigation and error display
+        },
+        [email, resetPassword]
+    );
 
-        if (response.success) {
-            Toast.show({
-            type: 'success',
-            text1: 'Đặt lại mật khẩu thành công',
-            text2: 'Vui lòng đăng nhập lại',
-            });
-
-            // Navigate back to Login
-            navigation.navigate('Login');
-        } else {
-            setError(response.message || 'Không thể đặt lại mật khẩu');
-        }
-        } catch (err: any) {
-        console.error('Reset password error:', err);
-        setError(err.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
-        } finally {
-        setLoading(false);
-        }
-    };
-
-    const handleBackToLogin = () => {
+    /**
+     * Navigates back to login screen
+     * 
+     * Triggered when user clicks "Back to login" link
+     */
+    const handleBackToLogin = useCallback((): void => {
         navigation.navigate('Login');
-    };
+    }, [navigation]);
 
-    const handleGoBack = () => {
+    /**
+     * Navigates back to previous screen
+     * 
+     * Typically returns to ForgotPasswordScreen
+     */
+    const handleGoBack = useCallback((): void => {
         navigation.goBack();
-    };
+    }, [navigation]);
+
+    // ==================== RENDER ====================
 
     return (
         <SafeAreaView style={styles.container}>
+        {/* Keyboard handling for iOS/Android */}
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoidingView}>
+            style={styles.keyboardAvoidingView}
+        >
             <ScrollView
             contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}>
-            
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            >
+            {/* Back navigation button */}
             <BackButton onPress={handleGoBack} />
 
-            <PageTitle 
-                title="Đặt lại mật khẩu" 
+            {/* Page header with instructions */}
+            <PageTitle
+                title="Đặt lại mật khẩu"
                 subtitle="Nhập mã OTP và mật khẩu mới"
             />
 
-            <ResetPasswordForm 
+            {/* Reset password form with OTP and password inputs */}
+            <ResetPasswordForm
                 onSubmit={handleSubmit}
                 loading={loading}
                 error={error}
-                onErrorDismiss={() => setError('')}
+                onErrorDismiss={clearError}
             />
 
+            {/* Link back to login screen */}
             <BackToLogin onPress={handleBackToLogin} />
             </ScrollView>
         </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
+
+// ==================== STYLES ====================
 
 const styles = StyleSheet.create({
     container: {

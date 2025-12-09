@@ -1,6 +1,6 @@
 import { CompositeNavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -15,8 +15,6 @@ import {
 } from "../../../../shared/navigation/StackParameters/types";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-import sl from "../../../../../core/di/InjectionContainer";
-import { VehicleModelRemoteDataSource } from "../../../../../data/datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { ScreenHeader } from "../../../../common/components/organisms/ScreenHeader";
 import { useRenterProfile } from "../../../../features/profile/hooks/profile/useRenterProfile";
 import { useVehicleBranches } from "../../hooks/useVehicleBranches";
@@ -40,22 +38,13 @@ export const VehicleDetailsScreen: React.FC = () => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
 
-  const remote = useMemo(
-    () => sl.get<VehicleModelRemoteDataSource>("VehicleModelRemoteDataSource"),
-    []
-  );
-
-  const branchUseCase = useMemo(
-    () => sl.getBranchesByVehicleModelUseCase(),
-    []
-  );
-
-  const { data, loading, error } = useVehicleDetail(vehicleId, remote);
+  // ✅ UPDATED: Hooks no longer need parameters from service locator
+  const { data, loading, error } = useVehicleDetail(vehicleId);
   const {
     branches,
     loading: branchesLoading,
     error: branchesError,
-  } = useVehicleBranches(vehicleId, branchUseCase);
+  } = useVehicleBranches(vehicleId);
 
   const { renterResponse } = useRenterProfile();
 
@@ -519,7 +508,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  // Document verification section styles
   documentsWarning: {
     backgroundColor: "#1a1a2a",
     padding: 20,

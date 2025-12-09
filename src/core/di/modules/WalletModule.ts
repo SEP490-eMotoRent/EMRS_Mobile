@@ -1,101 +1,213 @@
-import { AxiosClient } from "../../network/AxiosClient";
+import { AxiosClient } from '../../network/AxiosClient';
 
 // Data Sources
-import { TransactionRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/transaction/TransactionRemoteDataSourceImpl";
-import { WalletRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/wallet/WalletRemoteDataSourceImpl";
-import { WithdrawalRequestRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/withdrawRequest/WithdrawalRequestRemoteDataSourceImpl";
+import { WalletRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/wallet/WalletRemoteDataSourceImpl';
+import { WithdrawalRequestRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/withdrawRequest/WithdrawalRequestRemoteDataSourceImpl';
+import { TransactionRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/transaction/TransactionRemoteDataSourceImpl';
 
 // Repositories
-import { TransactionRepositoryImpl } from "../../../data/repositories/financial/TransactionRepositoryImpl";
-import { WalletRepositoryImpl } from "../../../data/repositories/wallet/WalletRepositoryImpl";
-import { WithdrawalRequestRepositoryImpl } from "../../../data/repositories/withdrawRequest/WithdrawalRequestRepositoryImpl";
-import { TransactionRepository } from "../../../domain/repositories/financial/TransactionRepository";
-import { WalletRepository } from "../../../domain/repositories/wallet/WalletRepository";
-import { WithdrawalRequestRepository } from "../../../domain/repositories/withdrawRequest/WithdrawalRequestRepository";
+import { WalletRepositoryImpl } from '../../../data/repositories/wallet/WalletRepositoryImpl';
+import { WithdrawalRequestRepositoryImpl } from '../../../data/repositories/withdrawRequest/WithdrawalRequestRepositoryImpl';
+import { TransactionRepositoryImpl } from '../../../data/repositories/financial/TransactionRepositoryImpl';
 
-// Use Cases
-import { GetMyTransactionsUseCase } from "../../../domain/usecases/transaction/GetMyTransactionsUseCase";
-import { CreateWalletUseCase } from "../../../domain/usecases/wallet/CreateWalletUseCase";
-import { GetWalletBalanceUseCase } from "../../../domain/usecases/wallet/GetWalletBalanceUseCase";
-import { CreateTopUpRequestUseCase } from "../../../domain/usecases/wallet/topUp/CreateTopUpRequestUseCase";
-import { ProcessTopUpCallbackUseCase } from "../../../domain/usecases/wallet/topUp/ProcessTopUpCallbackUseCase";
-import { CancelWithdrawalRequestUseCase } from "../../../domain/usecases/withdrawRequest/CancelWithdrawalRequestUseCase";
-import { CreateWithdrawalRequestUseCase } from "../../../domain/usecases/withdrawRequest/CreateWithdrawalRequestUseCase";
-import { GetMyWithdrawalRequestsUseCase } from "../../../domain/usecases/withdrawRequest/GetMyWithdrawalRequestsUseCase";
-import { GetWithdrawalRequestDetailUseCase } from "../../../domain/usecases/withdrawRequest/GetWithdrawalRequestDetailUseCase";
+// Use Cases - Wallet
+import { CreateWalletUseCase } from '../../../domain/usecases/wallet/CreateWalletUseCase';
+import { GetWalletBalanceUseCase } from '../../../domain/usecases/wallet/GetWalletBalanceUseCase';
+
+// Use Cases - Top-up
+import { CreateTopUpRequestUseCase } from '../../../domain/usecases/wallet/topUp/CreateTopUpRequestUseCase';
+import { ProcessTopUpCallbackUseCase } from '../../../domain/usecases/wallet/topUp/ProcessTopUpCallbackUseCase';
+
+// Use Cases - Withdrawal
+import { CreateWithdrawalRequestUseCase } from '../../../domain/usecases/withdrawRequest/CreateWithdrawalRequestUseCase';
+import { GetMyWithdrawalRequestsUseCase } from '../../../domain/usecases/withdrawRequest/GetMyWithdrawalRequestsUseCase';
+import { GetWithdrawalRequestDetailUseCase } from '../../../domain/usecases/withdrawRequest/GetWithdrawalRequestDetailUseCase';
+import { CancelWithdrawalRequestUseCase } from '../../../domain/usecases/withdrawRequest/CancelWithdrawalRequestUseCase';
+
+// Use Cases - Transaction
+import { GetMyTransactionsUseCase } from '../../../domain/usecases/transaction/GetMyTransactionsUseCase';
 
 /**
- * WalletModule - All wallet-related functionality
+ * WalletModule - Complete Wallet Domain
  * 
- * Includes:
- * - Wallet balance management
- * - Top-up operations
+ * Handles all wallet-related functionality:
+ * - Wallet creation and balance management
+ * - Top-up requests (VNPay integration)
  * - Withdrawal requests
  * - Transaction history
+ * 
+ * Migrated from InjectionContainer - 100% complete
  */
 export class WalletModule {
-    // Data Sources
-    public readonly remoteDataSource: WalletRemoteDataSourceImpl;
-    public readonly transactionRemoteDataSource: TransactionRemoteDataSourceImpl;
-    public readonly withdrawalRequestRemoteDataSource: WithdrawalRequestRemoteDataSourceImpl;
+    // ==================== REPOSITORIES ====================
+    private _walletRepository: WalletRepositoryImpl | null = null;
+    private _withdrawalRequestRepository: WithdrawalRequestRepositoryImpl | null = null;
+    private _transactionRepository: TransactionRepositoryImpl | null = null;
 
-    // Repositories
-    public readonly repository: WalletRepository;
-    public readonly transactionRepository: TransactionRepository;
-    public readonly withdrawalRequestRepository: WithdrawalRequestRepository;
+    // ==================== USE CASES - WALLET ====================
+    private _createWalletUseCase: CreateWalletUseCase | null = null;
+    private _getWalletBalanceUseCase: GetWalletBalanceUseCase | null = null;
 
-    // Use Cases - Organized by feature
-    public readonly balance = {
-        get: {} as GetWalletBalanceUseCase,
-        create: {} as CreateWalletUseCase,
-    };
+    // ==================== USE CASES - TOP-UP ====================
+    private _createTopUpRequestUseCase: CreateTopUpRequestUseCase | null = null;
+    private _processTopUpCallbackUseCase: ProcessTopUpCallbackUseCase | null = null;
 
-    public readonly topUp = {
-        create: {} as CreateTopUpRequestUseCase,
-        processCallback: {} as ProcessTopUpCallbackUseCase,
-    };
+    // ==================== USE CASES - WITHDRAWAL ====================
+    private _createWithdrawalRequestUseCase: CreateWithdrawalRequestUseCase | null = null;
+    private _getMyWithdrawalRequestsUseCase: GetMyWithdrawalRequestsUseCase | null = null;
+    private _getWithdrawalRequestDetailUseCase: GetWithdrawalRequestDetailUseCase | null = null;
+    private _cancelWithdrawalRequestUseCase: CancelWithdrawalRequestUseCase | null = null;
 
-    public readonly withdrawal = {
-        create: {} as CreateWithdrawalRequestUseCase,
-        getRequests: {} as GetMyWithdrawalRequestsUseCase,
-        getDetail: {} as GetWithdrawalRequestDetailUseCase,
-        cancel: {} as CancelWithdrawalRequestUseCase,
-    };
+    // ==================== USE CASES - TRANSACTION ====================
+    private _getMyTransactionsUseCase: GetMyTransactionsUseCase | null = null;
 
-    public readonly transactions = {
-        getAll: {} as GetMyTransactionsUseCase,
-    };
-
-    constructor(axiosClient: AxiosClient) {
-        // Initialize data sources
-        this.remoteDataSource = new WalletRemoteDataSourceImpl(axiosClient);
-        this.transactionRemoteDataSource = new TransactionRemoteDataSourceImpl(axiosClient);
-        this.withdrawalRequestRemoteDataSource = new WithdrawalRequestRemoteDataSourceImpl(axiosClient);
-
-        // Initialize repositories
-        this.repository = new WalletRepositoryImpl(this.remoteDataSource);
-        this.transactionRepository = new TransactionRepositoryImpl(this.transactionRemoteDataSource);
-        this.withdrawalRequestRepository = new WithdrawalRequestRepositoryImpl(this.withdrawalRequestRemoteDataSource);
-
-        // Initialize balance use cases
-        this.balance.get = new GetWalletBalanceUseCase(this.repository);
-        this.balance.create = new CreateWalletUseCase(this.repository);
-
-        // Initialize top-up use cases
-        this.topUp.create = new CreateTopUpRequestUseCase(this.repository);
-        this.topUp.processCallback = new ProcessTopUpCallbackUseCase(this.repository);
-
-        // Initialize withdrawal use cases
-        this.withdrawal.create = new CreateWithdrawalRequestUseCase(this.withdrawalRequestRepository);
-        this.withdrawal.getRequests = new GetMyWithdrawalRequestsUseCase(this.withdrawalRequestRepository);
-        this.withdrawal.getDetail = new GetWithdrawalRequestDetailUseCase(this.withdrawalRequestRepository);
-        this.withdrawal.cancel = new CancelWithdrawalRequestUseCase(this.withdrawalRequestRepository);
-
-        // Initialize transaction use cases
-        this.transactions.getAll = new GetMyTransactionsUseCase(this.transactionRepository);
-    }
+    constructor(private axiosClient: AxiosClient) {}
 
     static create(axiosClient: AxiosClient): WalletModule {
         return new WalletModule(axiosClient);
+    }
+
+    // ==================== PUBLIC API - REPOSITORIES ====================
+
+    get repository(): WalletRepositoryImpl {
+        if (!this._walletRepository) {
+        const remoteDataSource = new WalletRemoteDataSourceImpl(this.axiosClient);
+        this._walletRepository = new WalletRepositoryImpl(remoteDataSource);
+        }
+        return this._walletRepository;
+    }
+
+    get withdrawalRepository(): WithdrawalRequestRepositoryImpl {
+        if (!this._withdrawalRequestRepository) {
+        const remoteDataSource = new WithdrawalRequestRemoteDataSourceImpl(this.axiosClient);
+        this._withdrawalRequestRepository = new WithdrawalRequestRepositoryImpl(remoteDataSource);
+        }
+        return this._withdrawalRequestRepository;
+    }
+
+    get transactionRepository(): TransactionRepositoryImpl {
+        if (!this._transactionRepository) {
+        const remoteDataSource = new TransactionRemoteDataSourceImpl(this.axiosClient);
+        this._transactionRepository = new TransactionRepositoryImpl(remoteDataSource);
+        }
+        return this._transactionRepository;
+    }
+
+    // ==================== PUBLIC API - USE CASES ====================
+
+    /**
+     * Wallet balance use cases
+     * Usage: container.wallet.balance.get.execute()
+     */
+    get balance() {
+        return {
+        get: this.getWalletBalanceUseCase,
+        create: this.createWalletUseCase,
+        };
+    }
+
+    /**
+     * Top-up use cases
+     * Usage: container.wallet.topUp.create.execute()
+     */
+    get topUp() {
+        return {
+        create: this.createTopUpRequestUseCase,
+        processCallback: this.processTopUpCallbackUseCase,
+        };
+    }
+
+    /**
+     * Withdrawal use cases
+     * Usage: container.wallet.withdrawal.create.execute()
+     */
+    get withdrawal() {
+        return {
+        create: this.createWithdrawalRequestUseCase,
+        getMy: this.getMyWithdrawalRequestsUseCase,
+        getDetail: this.getWithdrawalRequestDetailUseCase,
+        cancel: this.cancelWithdrawalRequestUseCase,
+        };
+    }
+
+    /**
+     * Transaction history use cases
+     * Usage: container.wallet.transactions.getMy.execute()
+     */
+    get transactions() {
+        return {
+        getMy: this.getMyTransactionsUseCase,
+        };
+    }
+
+    // ==================== PRIVATE GETTERS - WALLET ====================
+
+    private get createWalletUseCase(): CreateWalletUseCase {
+        if (!this._createWalletUseCase) {
+        this._createWalletUseCase = new CreateWalletUseCase(this.repository);
+        }
+        return this._createWalletUseCase;
+    }
+
+    private get getWalletBalanceUseCase(): GetWalletBalanceUseCase {
+        if (!this._getWalletBalanceUseCase) {
+        this._getWalletBalanceUseCase = new GetWalletBalanceUseCase(this.repository);
+        }
+        return this._getWalletBalanceUseCase;
+    }
+
+    // ==================== PRIVATE GETTERS - TOP-UP ====================
+
+    private get createTopUpRequestUseCase(): CreateTopUpRequestUseCase {
+        if (!this._createTopUpRequestUseCase) {
+        this._createTopUpRequestUseCase = new CreateTopUpRequestUseCase(this.repository);
+        }
+        return this._createTopUpRequestUseCase;
+    }
+
+    private get processTopUpCallbackUseCase(): ProcessTopUpCallbackUseCase {
+        if (!this._processTopUpCallbackUseCase) {
+        this._processTopUpCallbackUseCase = new ProcessTopUpCallbackUseCase(this.repository);
+        }
+        return this._processTopUpCallbackUseCase;
+    }
+
+    // ==================== PRIVATE GETTERS - WITHDRAWAL ====================
+
+    private get createWithdrawalRequestUseCase(): CreateWithdrawalRequestUseCase {
+        if (!this._createWithdrawalRequestUseCase) {
+        this._createWithdrawalRequestUseCase = new CreateWithdrawalRequestUseCase(this.withdrawalRepository);
+        }
+        return this._createWithdrawalRequestUseCase;
+    }
+
+    private get getMyWithdrawalRequestsUseCase(): GetMyWithdrawalRequestsUseCase {
+        if (!this._getMyWithdrawalRequestsUseCase) {
+        this._getMyWithdrawalRequestsUseCase = new GetMyWithdrawalRequestsUseCase(this.withdrawalRepository);
+        }
+        return this._getMyWithdrawalRequestsUseCase;
+    }
+
+    private get getWithdrawalRequestDetailUseCase(): GetWithdrawalRequestDetailUseCase {
+        if (!this._getWithdrawalRequestDetailUseCase) {
+        this._getWithdrawalRequestDetailUseCase = new GetWithdrawalRequestDetailUseCase(this.withdrawalRepository);
+        }
+        return this._getWithdrawalRequestDetailUseCase;
+    }
+
+    private get cancelWithdrawalRequestUseCase(): CancelWithdrawalRequestUseCase {
+        if (!this._cancelWithdrawalRequestUseCase) {
+        this._cancelWithdrawalRequestUseCase = new CancelWithdrawalRequestUseCase(this.withdrawalRepository);
+        }
+        return this._cancelWithdrawalRequestUseCase;
+    }
+
+    // ==================== PRIVATE GETTERS - TRANSACTION ====================
+
+    private get getMyTransactionsUseCase(): GetMyTransactionsUseCase {
+        if (!this._getMyTransactionsUseCase) {
+        this._getMyTransactionsUseCase = new GetMyTransactionsUseCase(this.transactionRepository);
+        }
+        return this._getMyTransactionsUseCase;
     }
 }

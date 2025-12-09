@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Modal,
     View,
@@ -12,9 +12,8 @@ import {
     Pressable,
     ScrollView,
 } from 'react-native';
-import { CreateFeedbackUseCase } from '../../../../../../domain/usecases/feedback/CreateFeedbackUseCase';
+import { container } from '../../../../../../core/di/ServiceContainer';
 import { useCreateFeedback } from '../../../hooks/feedbacks/useCreateFeedback';
-import sl from '../../../../../../core/di/InjectionContainer';
 import { Feedback } from '../../../../../../domain/entities/booking/Feedback';
 
 interface FeedbackModalProps {
@@ -131,12 +130,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
 
-    const createFeedbackUseCase = useMemo(
-        () => sl.get<CreateFeedbackUseCase>("CreateFeedbackUseCase"),
-        []
-    );
-
-    const { createFeedback, loading, error, success, reset } = useCreateFeedback(createFeedbackUseCase);
+    // ✅ FIXED: Use container instead of sl.get()
+    const { createFeedback, loading, error, success, reset } = useCreateFeedback(container.feedback.create);
 
     // Priority: existingFeedback.renterName (from GET) > renterName prop (from profile)
     const displayName = existingFeedback?.renterName || renterName;

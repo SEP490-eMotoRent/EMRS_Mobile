@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { GetBranchesByVehicleModelUseCase } from "../../../../domain/usecases/branch/GetBranchesByVehicleModelUseCase";
-import { Branch } from "../../../../domain/entities/operations/Branch";
+import { container } from "../../../../core/di/ServiceContainer";
 
 export interface BranchUI {
     id: string;
@@ -16,10 +15,7 @@ export interface BranchUI {
     vehicleCount?: number;
 }
 
-export const useVehicleBranches = (
-    vehicleModelId: string,
-    useCase: GetBranchesByVehicleModelUseCase
-) => {
+export const useVehicleBranches = (vehicleModelId: string) => {
     const [branches, setBranches] = useState<BranchUI[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -34,6 +30,7 @@ export const useVehicleBranches = (
                 setLoading(true);
                 setError(null);
 
+                const useCase = container.branch.get.byVehicleModel;
                 const branchEntities = await useCase.execute(vehicleModelId);
 
                 if (!mounted) return;
@@ -55,7 +52,7 @@ export const useVehicleBranches = (
                         longitude: branch.longitude,
                         openingTime: branch.openingTime,
                         closingTime: branch.closingTime,
-                        vehicleCount: branch.vehicleCount ?? 0, // ✅ Direct access to vehicleCount
+                        vehicleCount: branch.vehicleCount ?? 0,
                     };
                 });
 
@@ -82,7 +79,7 @@ export const useVehicleBranches = (
             mounted = false;
             abortController.current?.abort();
         };
-    }, [vehicleModelId, useCase]);
+    }, [vehicleModelId]);
 
     return { branches, loading, error };
 };

@@ -1,7 +1,7 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import * as ImagePicker from "expo-image-picker";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -15,9 +15,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import sl from "../../../../../../core/di/InjectionContainer";
+import { container } from "../../../../../../core/di/ServiceContainer";
 import { TicketTypeDisplay, TicketTypeEnum } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
-import { CreateTicketUseCase } from "../../../../../../domain/usecases/ticket/CreateTicketUseCase";
 import { BackButton } from "../../../../../common/components";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { TripStackParamList } from "../../../../../shared/navigation/StackParameters/types";
@@ -65,11 +64,7 @@ export const CreateTicketScreen: React.FC = () => {
     const navigation = useNavigation<NavigationPropType>();
     const { bookingId, vehicleName, licensePlate } = route.params;
 
-    const createTicketUseCase = useMemo(
-        () => sl.get<CreateTicketUseCase>("CreateTicketUseCase"),
-        []
-    );
-    const { createTicket, loading } = useCreateTicket(createTicketUseCase);
+    const { createTicket, loading } = useCreateTicket(container.support.tickets.create);
 
     const [selectedType, setSelectedType] = useState<TicketTypeEnum | null>(null);
     const [title, setTitle] = useState("");

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Transaction } from '../../../../../domain/entities/financial/Transaction';
-import sl from '../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../core/di/ServiceContainer';
 import { useAppSelector } from '../../../authentication/store/hooks';
 
 export const useTransactions = () => {
@@ -20,8 +20,7 @@ export const useTransactions = () => {
             setLoading(true);
             setError(null);
 
-            const getMyTransactionsUseCase = sl.getGetMyTransactionsUseCase();
-            const result = await getMyTransactionsUseCase.execute();
+            const result = await container.wallet.transactions.getMy.execute();
 
             console.log('✅ Transactions fetched:', result.length);
             setTransactions(result);

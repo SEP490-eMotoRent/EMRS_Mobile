@@ -1,21 +1,19 @@
 import { useState } from 'react';
-import sl from '../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../core/di/ServiceContainer';
 import { DocumentDetailResponse } from '../../../../../data/models/account/document/DocumentDetailResponse';
 import { DocumentUpdateRequest } from '../../../../../data/models/account/document/DocumentUpdateRequest';
 
 export const useUpdateDocument = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
-    const updateCitizenDocumentUseCase = sl.getUpdateCitizenDocumentUseCase();
-    const updateDrivingDocumentUseCase = sl.getUpdateDrivingDocumentUseCase();
 
     const updateCitizen = async (data: DocumentUpdateRequest): Promise<DocumentDetailResponse> => {
         setLoading(true);
         setError(null);
         
         try {
-            const response = await updateCitizenDocumentUseCase.execute(data);
+            // ✅ MIGRATED: Use ServiceContainer instead of InjectionContainer
+            const response = await container.account.documents.citizen.update.execute(data);
             return response;
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to update citizen document';
@@ -31,7 +29,8 @@ export const useUpdateDocument = () => {
         setError(null);
         
         try {
-            const response = await updateDrivingDocumentUseCase.execute(data);
+            // ✅ MIGRATED: Use ServiceContainer instead of InjectionContainer
+            const response = await container.account.documents.driving.update.execute(data);
             return response;
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to update driving document';

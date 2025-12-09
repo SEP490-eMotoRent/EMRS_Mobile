@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreateWalletResponse } from '../../../../../data/models/wallet/CreateWalletResponse';
 import { WalletBalanceResponse } from '../../../../../data/models/wallet/WalletBalanceResponse';
-import sl from '../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../core/di/ServiceContainer';
 
 interface UseWalletResult {
     balance: number | null;
@@ -35,10 +35,6 @@ export const useWallet = (): UseWalletResult => {
     const isMountedRef = useRef(true);
     const hasInitializedRef = useRef(false);
 
-    // Get use cases once - stable references
-    const getWalletBalanceUseCase = useRef(sl.getGetWalletBalanceUseCase()).current;
-    const createWalletUseCase = useRef(sl.getCreateWalletUseCase()).current;
-
     /**
      * Creates a new wallet
      * - Checks frontend flags to prevent duplicate creation
@@ -71,7 +67,7 @@ export const useWallet = (): UseWalletResult => {
             setCreateError(null);
             console.log('🔨 Creating wallet...');
 
-            const data = await createWalletUseCase.execute();
+            const data = await container.wallet.balance.create.execute();
             console.log('✅ Wallet created:', data.id);
 
             if (isMountedRef.current) {
@@ -102,7 +98,7 @@ export const useWallet = (): UseWalletResult => {
                 }
                 // Try to fetch the existing wallet
                 try {
-                    const existingWallet = await getWalletBalanceUseCase.execute();
+                    const existingWallet = await container.wallet.balance.get.execute();
                     if (isMountedRef.current) {
                         setWalletData(existingWallet);
                         setError(null);
@@ -145,7 +141,7 @@ export const useWallet = (): UseWalletResult => {
             setLoading(true);
             setError(null);
 
-            const data = await getWalletBalanceUseCase.execute();
+            const data = await container.wallet.balance.get.execute();
 
             if (isMountedRef.current) {
                 setWalletData(data);
@@ -183,7 +179,7 @@ export const useWallet = (): UseWalletResult => {
                 setLoading(false);
             }
         }
-    }, [getWalletBalanceUseCase, walletExists]);
+    }, [walletExists]);
 
     /**
      * Manual refresh - always fetches to get updated balance
@@ -196,7 +192,7 @@ export const useWallet = (): UseWalletResult => {
             setLoading(true);
             setError(null);
 
-            const data = await getWalletBalanceUseCase.execute();
+            const data = await container.wallet.balance.get.execute();
 
             if (isMountedRef.current) {
                 setWalletData(data);
@@ -217,7 +213,7 @@ export const useWallet = (): UseWalletResult => {
                 setLoading(false);
             }
         }
-    }, [getWalletBalanceUseCase, walletData]);
+    }, [walletData]);
 
     // Initial fetch on mount - only once
     useEffect(() => {

@@ -1,19 +1,13 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ReviewCard } from '../../molecules/cards/ReviewCard';
-import { GetAllFeedbacksUseCase } from '../../../../../../domain/usecases/feedback/GetAllFeedbacksUseCase';
 import { useGetAllFeedbacks } from '../../../hooks/useGetAllFeedbacks';
-import sl from '../../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../../core/di/ServiceContainer';
 import { Feedback } from '../../../../../../domain/entities/booking/Feedback';
 
 export const ReviewsSection: React.FC = () => {
-    const getAllFeedbacksUseCase = useMemo(
-        () => sl.get<GetAllFeedbacksUseCase>("GetAllFeedbacksUseCase"),
-        []
-    );
-
-    const { feedbacks, loading, error } = useGetAllFeedbacks(getAllFeedbacksUseCase);
+    const { feedbacks, loading, error } = useGetAllFeedbacks(container.feedback.get.all);
 
     const mapFeedbackToReview = (feedback: Feedback) => {
         return {
@@ -35,13 +29,11 @@ export const ReviewsSection: React.FC = () => {
         );
     }
 
-    // ✅ UPDATED: Both error and empty states show "Không có đánh giá nào"
     if (error || feedbacks.length === 0) {
         return (
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Đánh giá</Text>
                 <View style={styles.emptyContainer}>
-                    {/* ✅ UPDATED: Icon instead of emoji */}
                     <View style={styles.iconContainer}>
                         <Ionicons name="chatbox-ellipses-outline" size={48} color="#7C4DFF" />
                     </View>
@@ -99,7 +91,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 40,
     },
-    // ✅ NEW: Container for icon with background
     iconContainer: {
         width: 80,
         height: 80,

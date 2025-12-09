@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Booking } from "../../../../domain/entities/booking/Booking";
-import { GetBookingByIdUseCase } from "../../../../domain/usecases/booking/GetBookingByIdUseCase";
-import sl from "../../../../core/di/InjectionContainer";
-
+import { container } from "../../../../core/di/ServiceContainer";
 
 interface UseBookingStatusOptions {
     bookingId: string;
-    pollingInterval?: number; // milliseconds, default 3000
+    pollingInterval?: number;
     onStatusChange?: (status: string, booking: Booking) => void;
     enabled?: boolean;
 }
@@ -23,20 +21,15 @@ export const useBookingStatus = ({
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const previousStatusRef = useRef<string | null>(null);
 
-    const getBookingUseCase = useRef(
-        sl.get<GetBookingByIdUseCase>("GetBookingByIdUseCase")
-    ).current;
-
     const checkBookingStatus = async () => {
         try {
             setError(null);
-            const result = await getBookingUseCase.execute(bookingId);
+            const result = await container.booking.get.byId.execute(bookingId);
             
             if (result) {
                 setBooking(result);
                 setLoading(false);
 
-                // Check if status changed
                 const currentStatus = result.bookingStatus;
                 if (previousStatusRef.current !== null && 
                     previousStatusRef.current !== currentStatus) {
@@ -57,13 +50,9 @@ export const useBookingStatus = ({
             return;
         }
 
-        // Initial check
         checkBookingStatus();
-
-        // Start polling
         intervalRef.current = setInterval(checkBookingStatus, pollingInterval);
 
-        // Cleanup
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -90,20 +79,3 @@ export const useBookingStatus = ({
         refreshStatus,
     };
 };
-
-// Usage example in VNPayWebViewScreen:
-/*
-const { booking, stopPolling } = useBookingStatus({
-    bookingId,
-    pollingInterval: 3000,
-    onStatusChange: (status, booking) => {
-        if (status === "Booked") {
-            stopPolling();
-            handlePaymentSuccess();
-        } else if (status === "Cancelled") {
-            stopPolling();
-            handlePaymentFailure();
-        }
-    },
-});
-*/

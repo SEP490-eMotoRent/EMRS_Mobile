@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -12,12 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import sl from "../../../../../../core/di/InjectionContainer";
-import { CreateBookingUseCase } from "../../../../../../domain/usecases/booking/CreateBookingUseCase";
-import {
-    CreateVNPayBookingUseCase,
-    VNPayBookingResultWithExpiry,
-} from "../../../../../../domain/usecases/booking/CreateVNPayBookingUseCase";
+import { container } from "../../../../../../core/di/ServiceContainer";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useAppSelector } from "../../../../authentication/store/hooks";
@@ -29,7 +24,6 @@ import { BookingSummaryCard } from "../../organisms/booking/BookingSummaryCard";
 import { CostBreakdown } from "../../organisms/CostBreakdown";
 import { PaymentMethodCard } from "../../organisms/payment/PaymentMethodCard";
 import { PaymentNotices } from "../../organisms/payment/PaymentNotices";
-import { CreateZaloPayBookingUseCase } from '../../../../../../domain/usecases/booking/zaloPay/CreateZaloPayBookingUseCase';
 
 type RoutePropType = RouteProp<BookingStackParamList, 'PaymentConfirmation'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'PaymentConfirmation'>;
@@ -59,22 +53,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
     const user = useAppSelector((state) => state.auth.user);
     const userId = user?.id;
 
-    const createBookingUseCase = useMemo(
-        () => sl.get<CreateBookingUseCase>("CreateBookingUseCase"),
-        []
-    );
-
-    const createVNPayBookingUseCase = useMemo(
-        () => sl.get<CreateVNPayBookingUseCase>("CreateVNPayBookingUseCase"),
-        []
-    );
-
-    const createZaloPayBookingUseCase = useMemo(
-        () => sl.get<CreateZaloPayBookingUseCase>("CreateZaloPayBookingUseCase"),
-        []
-    );
-
-    const { createBooking, loading: bookingLoading } = useCreateBooking(createBookingUseCase);
+    const { createBooking, loading: bookingLoading } = useCreateBooking(container.booking.create.standard);
 
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"wallet" | "vnpay" | "zalopay">("wallet");
 
@@ -269,9 +248,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
             } 
             // ========== VNPAY PAYMENT ==========
             else if (selectedPaymentMethod === "vnpay") {
-                const result: VNPayBookingResultWithExpiry = await createVNPayBookingUseCase.execute({
-                    ...bookingInput,
-                });
+                const result = await container.booking.create.vnpay.execute(bookingInput);
 
                 console.log("✅ VNPay booking created:", {
                     bookingId: result.booking.id,
@@ -318,9 +295,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
             else if (selectedPaymentMethod === "zalopay") {
                 console.log("🔄 Creating ZaloPay booking...");
                 
-                const result = await createZaloPayBookingUseCase.execute({
-                    ...bookingInput,
-                });
+                const result = await container.booking.create.zalopay.execute(bookingInput);
 
                 console.log("✅ ZaloPay booking created:", {
                     bookingId: result.booking.id,
@@ -345,7 +320,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 const STORAGE_KEY = `zalopay_payment_context_${result.booking.id}`;
                 await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(context));
 
-                // Navigate to waiting screen FIRST
                 navigation.navigate("ZaloPayResult", {
                     bookingId: result.booking.id,
                     vehicleId,
@@ -361,7 +335,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     securityDeposit,
                 });
 
-                // THEN open ZaloPay app after short delay
                 setTimeout(async () => {
                     console.log("📱 Opening ZaloPay app with URL:", result.vnpayUrl);
                     

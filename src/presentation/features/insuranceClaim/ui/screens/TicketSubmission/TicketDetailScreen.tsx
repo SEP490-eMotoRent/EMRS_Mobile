@@ -1,6 +1,6 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useMemo } from "react";
+import React from "react";
 import {
     ActivityIndicator,
     Image,
@@ -11,12 +11,10 @@ import {
     View,
 } from "react-native";
 import { TicketStatusDisplay, TicketTypeDisplay } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
-import { GetTicketDetailUseCase } from "../../../../../../domain/usecases/ticket/GetTicketDetailUseCase";
 import { BackButton } from "../../../../../common/components";
 import { TripStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useGetTicketDetail } from "../../../hooks/Ticket/useGetTicketDetail";
-import sl from "../../../../../../core/di/InjectionContainer";
-
+import { container } from "../../../../../../core/di/ServiceContainer";
 
 type RoutePropType = RouteProp<TripStackParamList, "TicketDetail">;
 type NavigationPropType = StackNavigationProp<TripStackParamList, "TicketDetail">;
@@ -67,14 +65,9 @@ export const TicketDetailScreen: React.FC = () => {
     const navigation = useNavigation<NavigationPropType>();
     const { ticketId } = route.params;
 
-    const getTicketDetailUseCase = useMemo(
-        () => sl.get<GetTicketDetailUseCase>("GetTicketDetailUseCase"),
-        []
-    );
-
     const { ticket, loading, error, refetch } = useGetTicketDetail(
         ticketId,
-        getTicketDetailUseCase
+        container.support.tickets.getDetail
     );
 
     const handleBack = () => {
@@ -140,7 +133,6 @@ export const TicketDetailScreen: React.FC = () => {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Status Card */}
                 <View
                     style={[
                         styles.statusCard,
@@ -175,7 +167,6 @@ export const TicketDetailScreen: React.FC = () => {
                     </Text>
                 </View>
 
-                {/* Ticket Type */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Loại sự cố</Text>
                     <View style={styles.typeCard}>
@@ -188,13 +179,11 @@ export const TicketDetailScreen: React.FC = () => {
                     </View>
                 </View>
 
-                {/* Title */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Tiêu đề</Text>
                     <Text style={styles.ticketTitle}>{ticket.title}</Text>
                 </View>
 
-                {/* Description */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Mô tả chi tiết</Text>
                     <View style={styles.descriptionCard}>
@@ -202,7 +191,6 @@ export const TicketDetailScreen: React.FC = () => {
                     </View>
                 </View>
 
-                {/* Attachments */}
                 {ticket.attachments && ticket.attachments.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>
@@ -226,7 +214,6 @@ export const TicketDetailScreen: React.FC = () => {
                     </View>
                 )}
 
-                {/* Metadata */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Thông tin</Text>
                     <View style={styles.metadataCard}>
@@ -325,7 +312,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "600",
     },
-    // Status Card
     statusCard: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,
@@ -359,7 +345,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
     },
-    // Sections
     section: {
         marginBottom: 20,
     },
@@ -371,7 +356,6 @@ const styles = StyleSheet.create({
         textTransform: "uppercase",
         letterSpacing: 0.5,
     },
-    // Type Card
     typeCard: {
         flexDirection: "row",
         alignItems: "center",
@@ -388,14 +372,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
     },
-    // Title
     ticketTitle: {
         color: "#fff",
         fontSize: 18,
         fontWeight: "700",
         lineHeight: 24,
     },
-    // Description
     descriptionCard: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,
@@ -406,7 +388,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         lineHeight: 22,
     },
-    // Attachments
     attachmentScroll: {
         marginTop: 4,
     },
@@ -420,7 +401,6 @@ const styles = StyleSheet.create({
         height: 120,
         borderRadius: 8,
     },
-    // Metadata
     metadataCard: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,

@@ -1,45 +1,39 @@
+import { AntDesign } from "@expo/vector-icons";
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
   ActivityIndicator,
-  Modal as RNModal,
-  RefreshControl,
   Alert,
   Linking,
+  Modal,
+  Modal as RNModal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { colors } from "../../../../../common/theme/colors";
-import { AntDesign } from "@expo/vector-icons";
-import { SectionHeader } from "../molecules/SectionHeader";
-import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
-import { InfoItem } from "../../../../../common/components/molecules/InfoItem";
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import Pdf from "react-native-pdf";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
+import { WebView } from "react-native-webview";
 import sl from "../../../../../../core/di/InjectionContainer";
-import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import { container } from "../../../../../../core/di/ServiceContainer";
+import { unwrapResponse } from "../../../../../../core/network/APIResponse";
+import { SummaryResponse } from "../../../../../../data/models/rentalReturn/SummaryResponse";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 import { RentalContract } from "../../../../../../domain/entities/booking/RentalContract";
-import Pdf from "react-native-pdf";
-import { WebView } from "react-native-webview";
-import { RootState } from "../../../../authentication/store";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
-import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
-import { useFocusEffect } from "@react-navigation/native";
-import { RentalReturnSummaryUseCase } from "../../../../../../domain/usecases/rentalReturn/SummaryReceiptUseCase";
-import { SummaryResponse } from "../../../../../../data/models/rentalReturn/SummaryResponse";
-import { unwrapResponse } from "../../../../../../core/network/APIResponse";
-import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetListRentalReceipt";
 import { GpsSharingInviteUseCase } from "../../../../../../domain/usecases/gpsSharing/GpsSharingInviteUseCase";
-import Toast from "react-native-toast-message";
+import { RentalReturnSummaryUseCase } from "../../../../../../domain/usecases/rentalReturn/SummaryReceiptUseCase";
+import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
+import { InfoItem } from "../../../../../common/components/molecules/InfoItem";
+import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
+import { colors } from "../../../../../common/theme/colors";
+import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useAppSelector } from "../../../../authentication/store/hooks";
-import { useGetLastReceipt } from "../../../return/ui/hooks/useGetLastReceipt";
-
+import { SectionHeader } from "../molecules/SectionHeader";
 type BookingDetailsScreenNavigationProp = any;
 
 type BookingDetailsScreenRouteProp = RouteProp<
@@ -82,14 +76,15 @@ export const BookingDetailsScreen: React.FC = () => {
   const fetchBooking = async () => {
     try {
       setLoading(true);
-      const getBookingByIdUseCase = new GetBookingByIdUseCase(
-        sl.get("BookingRepository")
-      );
-      const booking = await getBookingByIdUseCase.execute(bookingId);
-      setBooking(booking);
-      setContract(booking?.rentalContract);
-    } catch (error) {
-      console.error("Error fetching booking:", error);
+      const data = await container.booking.get.byId.execute(bookingId);
+      setBooking(data);
+      setContract(data?.rentalContract ?? null);
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: error.message || "Không tải được booking",
+      });
     } finally {
       setLoading(false);
     }
@@ -97,47 +92,38 @@ export const BookingDetailsScreen: React.FC = () => {
 
   const fetchRentalReceipt = async () => {
     try {
-      const getListRentalReceiptUseCase = new GetListRentalReceiptUseCase(
-        sl.get("ReceiptRepository")
-      );
-      const rentalReceipts = await getListRentalReceiptUseCase.execute(
-        bookingId
-      );
-      setRentalReceipts(rentalReceipts.data);
+      const response = await container.booking.receiptRepository.getListRentalReceipt(bookingId);
+      setRentalReceipts(response.data || []);
     } catch (error) {
       console.error("Error fetching rental receipt:", error);
-      return null;
+      setRentalReceipts([]);
     }
   };
 
   const fetchSummary = async () => {
     try {
-      const getSummaryUseCase = new RentalReturnSummaryUseCase(
-        sl.get("RentalReturnRepository")
-      );
-      const summaryResponse = await getSummaryUseCase.execute(bookingId);
-      const summaryData: SummaryResponse = unwrapResponse(summaryResponse);
-      setSummary(summaryData);
+      const response = await container.rentalReturn.summary.execute(bookingId);
+      setSummary(response.data);
     } catch (error) {
       console.error("Error fetching summary:", error);
+      setSummary(null);
     }
   };
 
   const generateConstract = async () => {
     try {
       setIsLoading(true);
-      const generateContractUseCase = new GenerateContractUseCase(
-        sl.get("ReceiptRepository")
-      );
-      const response = await generateContractUseCase.execute(
+      await container.booking.contract.generate.execute(
         bookingId,
-        rentalReceipts?.[0]?.id || ""
+        rentalReceipts[0]?.id || ""
       );
-      // if (response.success) {
       navigation.navigate("AwaitingApproval");
-      // }
-    } catch (error) {
-      console.log("error", error);
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: error.message || "Không thể tạo hợp đồng",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -153,43 +139,36 @@ export const BookingDetailsScreen: React.FC = () => {
           text: "Có, hủy đặt xe",
           style: "destructive",
           onPress: async () => {
-    try {
-              const cancelBookingUseCase = sl.getCancelBookingUseCase();
-              const cancelledBooking = await cancelBookingUseCase.execute(
-                bookingId
-              );
-              console.log("cancelledBooking", cancelledBooking);
-              if (cancelledBooking.bookingStatus === "Cancelled") {
-                fetchBooking();
-                Toast.show({
-                  type: "success",
-                  text1: "Thành công",
-                  text2: "Đã hủy đặt xe",
-                });
-              }
+            try {
+              await container.booking.cancel.execute(bookingId);
+
+              Toast.show({
+                type: "success",
+                text1: "Thành công",
+                text2: "Đã hủy đặt xe",
+              });
+
+              // Refresh booking data
+              fetchBooking();
             } catch (error: any) {
               Toast.show({
                 type: "error",
                 text1: "Lỗi",
-                text2:
-                  error.message || "Không thể hủy đặt xe. Vui lòng thử lại.",
+                text2: error.message || "Không thể hủy đặt xe. Vui lòng thử lại.",
               });
-    }
+            }
           },
         },
       ]
     );
   };
 
-  const getLastReceipt = () => {
-    const receipts = rentalReceipts || [];
+const getLastReceipt = () => {
+    const receipts = rentalReceipts;
     const bookingVehicleId = booking?.vehicle?.id || booking?.vehicleId || null;
-
     const lastReceipt = receipts.length
       ? (() => {
-          if (!bookingVehicleId) {
-            return receipts[receipts.length - 1];
-          }
+          if (!bookingVehicleId) return receipts[receipts.length - 1];
           const matched = [...receipts].reverse().find((r) => {
             const id = r?.vehicle?.id || r?.booking?.vehicle?.id || null;
             return id === bookingVehicleId;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { InsurancePackage } from '../../../../domain/entities/insurance/InsurancePackage';
-import sl from '../../../../core/di/InjectionContainer';
+import { container } from '../../../../core/di/ServiceContainer';
 
 export interface UseInsurancePackagesResult {
     packages: InsurancePackage[];
@@ -19,9 +19,7 @@ export const useInsurancePackages = (activeOnly: boolean = true): UseInsurancePa
             setLoading(true);
             setError(null);
 
-            const useCase = sl.getGetAllInsurancePackagesUseCase();
-            const result = await useCase.execute({ activeOnly });
-
+            const result = await container.insurance.packages.getAll.execute({ activeOnly });
             setPackages(result);
         } catch (err: any) {
             console.error('Error fetching insurance packages:', err);

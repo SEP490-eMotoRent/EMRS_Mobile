@@ -1,45 +1,66 @@
-import { AxiosClient } from "../../network/AxiosClient";
+import { AxiosClient } from '../../network/AxiosClient';
 
 // Data Sources
-import { RentalReturnRemoteDataSourceImpl } from "../../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl";
+import { RentalReturnRemoteDataSourceImpl } from '../../../data/datasources/implementations/remote/rentalReturn/ReceiptRemoteDataSourceImpl';
 
 // Repositories
-import { RentalReturnRepositoryImpl } from "../../../data/repositories/rentalReturn/RentalReturnRepositoryImpl";
+import { RentalReturnRepositoryImpl } from '../../../data/repositories/rentalReturn/RentalReturnRepositoryImpl';
 
 // Use Cases
-import { AiAnalyzeUseCase } from "../../../domain/usecases/rentalReturn/AiAnalyzeUseCase";
+import { AiAnalyzeUseCase } from '../../../domain/usecases/rentalReturn/AiAnalyzeUseCase';
+import { RentalReturnSummaryUseCase } from '../../../domain/usecases/rentalReturn/SummaryReceiptUseCase';
 
 /**
- * RentalReturnModule - All rental return-related functionality
+ * RentalReturnModule - Complete Rental Return Domain
  * 
- * Includes:
- * - Rental returns
+ * Handles all rental return functionality:
+ * - Vehicle return processing
  * - AI damage analysis
+ * - Return receipt generation
+ * 
+ * Migrated from InjectionContainer - 100% complete
  */
 export class RentalReturnModule {
-    // Data Sources
-    public readonly remoteDataSource: RentalReturnRemoteDataSourceImpl;
+    // ==================== REPOSITORIES ====================
+    private _repository: RentalReturnRepositoryImpl | null = null;
 
-    // Repositories
-    public readonly repository: RentalReturnRepositoryImpl;
-
-    // Use Cases
-    public readonly analysis = {
-        aiAnalyze: {} as AiAnalyzeUseCase,
-    };
-
-    constructor(axiosClient: AxiosClient) {
-        // Initialize data sources
-        this.remoteDataSource = new RentalReturnRemoteDataSourceImpl(axiosClient);
-
-        // Initialize repositories
-        this.repository = new RentalReturnRepositoryImpl(this.remoteDataSource);
-
-        // Initialize use cases
-        this.analysis.aiAnalyze = new AiAnalyzeUseCase(this.repository);
-    }
+    // ==================== USE CASES ====================
+    private _aiAnalyzeUseCase: AiAnalyzeUseCase | null = null;
+    private _summaryUseCase: RentalReturnSummaryUseCase | null = null;
+    
+    constructor(private axiosClient: AxiosClient) {}
 
     static create(axiosClient: AxiosClient): RentalReturnModule {
         return new RentalReturnModule(axiosClient);
+    }
+
+    // ==================== PUBLIC API - REPOSITORIES ====================
+
+    get repository(): RentalReturnRepositoryImpl {
+        if (!this._repository) {
+        const remoteDataSource = new RentalReturnRemoteDataSourceImpl(this.axiosClient);
+        this._repository = new RentalReturnRepositoryImpl(remoteDataSource);
+        }
+        return this._repository;
+    }
+
+    // ==================== PUBLIC API - USE CASES ====================
+
+    /**
+     * AI damage analysis
+     * Usage: container.rentalReturn.aiAnalyze.execute()
+     */
+    get aiAnalyze(): AiAnalyzeUseCase {
+        if (!this._aiAnalyzeUseCase) {
+        this._aiAnalyzeUseCase = new AiAnalyzeUseCase(this.repository);
+        }
+        return this._aiAnalyzeUseCase;
+    }
+
+    get summary(): RentalReturnSummaryUseCase {
+        if (!this._summaryUseCase) {
+            this._summaryUseCase = new RentalReturnSummaryUseCase(this.repository);
+        }
+        return this._summaryUseCase;
     }
 }

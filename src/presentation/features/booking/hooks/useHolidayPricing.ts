@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import sl from "../../../../core/di/InjectionContainer";
 import { HolidayPricing } from "../../../../domain/entities/financial/HolidayPricing";
-import { GetAllHolidayPricingsUseCase } from "../../../../domain/usecases/holidayPricing/GetAllHolidayPricingsUseCase";
+import { container } from "../../../../core/di/ServiceContainer";
 
 interface UseHolidayPricingResult {
     holidays: HolidayPricing[];
@@ -15,16 +14,11 @@ export const useHolidayPricing = (): UseHolidayPricingResult => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const getAllHolidayPricingsUseCase = sl.get<GetAllHolidayPricingsUseCase>(
-        "GetAllHolidayPricingsUseCase"
-    );
-
     const fetchHolidays = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            const result = await getAllHolidayPricingsUseCase.execute();
-            // Only active holidays
+            const result = await container.financial.holidayPricing.getAll.execute();
             const activeHolidays = result.filter(h => h.isActive && !h.isDeleted);
             setHolidays(activeHolidays);
         } catch (err: any) {
@@ -33,7 +27,7 @@ export const useHolidayPricing = (): UseHolidayPricingResult => {
         } finally {
             setLoading(false);
         }
-    }, [getAllHolidayPricingsUseCase]);
+    }, []);
 
     useEffect(() => {
         fetchHolidays();

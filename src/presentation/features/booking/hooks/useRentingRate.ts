@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import sl from "../../../../core/di/InjectionContainer";
 import { Configuration } from "../../../../domain/entities/configuration/Configuration";
 import { ConfigurationType } from "../../../../domain/entities/configuration/ConfigurationType";
-import { GetConfigurationsByTypeUseCase } from "../../../../domain/usecases/configuration/GetConfigurationsByTypeUseCase";
+import { container } from "../../../../core/di/ServiceContainer";
 
 export type VehicleCategory = "ECONOMY" | "STANDARD" | "PREMIUM";
 export type DurationType = "daily" | "monthly" | "yearly";
@@ -32,17 +31,12 @@ export const useRentingRate = (
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const getConfigsByTypeUseCase = useMemo(
-        () => sl.get<GetConfigurationsByTypeUseCase>("GetConfigurationsByTypeUseCase"),
-        []
-    );
-
     useEffect(() => {
         const fetchConfigs = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const result = await getConfigsByTypeUseCase.execute(
+                const result = await container.configuration.getByType.execute(
                     ConfigurationType.RentingDurationRate
                 );
                 setConfigs(result);
@@ -56,7 +50,7 @@ export const useRentingRate = (
         };
 
         fetchConfigs();
-    }, [getConfigsByTypeUseCase]);
+    }, []);
 
     const durationType: DurationType = useMemo(() => {
         if (rentalDays >= 365) return "yearly";
@@ -105,9 +99,6 @@ export const useRentingRate = (
     };
 };
 
-/**
- * Helper function to calculate rental fees
- */
 export const calculateRentalFees = (
     pricePerDay: number,
     rentalDays: number,

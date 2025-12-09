@@ -99,25 +99,25 @@ export const ListView: React.FC = () => {
       address: "Thành phố Hồ Chí Minh, Việt Nam",
   };
 
-  // ✅ Load initial data with filters
+  // Load initial data with filters
   useEffect(() => {
     loadInitial({
       startTime: extractStartTime(dateRange),
       endTime: extractEndTime(dateRange),
       branchId: extractBranchId(location),
     });
-  }, [dateRange, location]);
+  }, [dateRange, location, loadInitial]);
 
-  // ✅ Map paginated search items to motorcycles WITH dateRange for price calculation
+  // Map paginated search items to motorcycles WITH dateRange for price calculation
   const motorcycles = useMemo(() => {
     return VehicleModelMapper.fromSearchItems(items, [], dateRange);
-  }, [items, dateRange]); // ✅ Added dateRange dependency
+  }, [items, dateRange]); // Added dateRange dependency
 
-  // ✅ Apply client-side filters
+  // Apply client-side filters
   const filteredMotorcycles = useMemo(() => {
     let filtered = [...motorcycles];
 
-    // ✅ ALWAYS hide unavailable bikes (no toggle needed)
+    // ALWAYS hide unavailable bikes (no toggle needed)
     filtered = filtered.filter(m => (m.countAvailable ?? 0) > 0);
 
     // Price filter
@@ -201,16 +201,6 @@ export const ListView: React.FC = () => {
   const handleApplyFilters = (newFilters: FilterState) => {
     console.log("🔄 [ListView] Applying filters:", newFilters);
     setFilters(newFilters);
-    
-    // Optionally reload data with server-side filters
-    // loadInitial({
-    //   startTime: extractStartTime(dateRange),
-    //   endTime: extractEndTime(dateRange),
-    //   branchId: extractBranchId(location),
-    //   minPrice: newFilters.priceRange[0],
-    //   maxPrice: newFilters.priceRange[1],
-    //   // ... other filter params
-    // });
   };
 
   // ✅ Infinite scroll handler

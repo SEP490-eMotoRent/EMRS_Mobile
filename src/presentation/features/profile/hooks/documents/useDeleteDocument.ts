@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import sl from '../../../../../core/di/InjectionContainer';
+import { container } from '../../../../../core/di/ServiceContainer';
 
 export const useDeleteDocument = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
-    const deleteDocumentUseCase = sl.getDeleteDocumentUseCase();
 
     const deleteDocument = async (documentId: string): Promise<string> => {
         setLoading(true);
         setError(null);
         
         try {
-            const response = await deleteDocumentUseCase.execute(documentId);
+            // ✅ MIGRATED: Use ServiceContainer instead of InjectionContainer
+            const response = await container.account.documents.delete.execute(documentId);
             return response;
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to delete document';
