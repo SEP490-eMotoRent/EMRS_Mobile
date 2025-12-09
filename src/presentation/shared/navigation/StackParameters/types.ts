@@ -464,6 +464,17 @@ export type StaffStackParamList = {
     bookingId: string;
     rentalReceiptId: string;
   };
+  SwapSelectVehicle: {
+    bookingId: string;
+    returnReceiptId?: string;
+    currentVehicleId?: string;
+    startOldVehicleOdometerKm?: number;
+    licensePlate?: string;
+    modelName?: string;
+  };
+  SwapOldVehicle: { startOldVehicleOdometerKm?: number, newVehicleOdometerKm?: number, newVehicleBatteryPercentage?: number };
+  SwapNewVehicle: { newVehicleOdometerKm?: number, newVehicleBatteryPercentage?: number };
+  SwapReview: undefined;
 };
 
 export type RootStackParamList = {

@@ -1,7 +1,6 @@
-export interface CreateReceiptRequest {
+export interface VehicleSwapRequest {
     bookingId: string;
     returnReceiptId: string;
-    actualReturnDatetime: string;
     endOdometerKm: number;
     endBatteryPercentage: number;
     notes: string;

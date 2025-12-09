@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   TextInput,
+  Animated,
 } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import { colors } from "../../../../../common/theme/colors";
@@ -116,7 +117,24 @@ export const VehicleInspectionScreen: React.FC = () => {
     batteryHealthPercentage?.toString() || ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{
+    photos?: string;
+    odometer?: string;
+    battery?: string;
+    checklist?: string;
+  }>({});
   const checklistRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const photosCardRef = useRef<View>(null);
+  const inputCardRef = useRef<View>(null);
+  const checklistContainerRef = useRef<View>(null);
+  const photosShakeAnim = useRef(new Animated.Value(0)).current;
+  const odometerShakeAnim = useRef(new Animated.Value(0)).current;
+  const batteryShakeAnim = useRef(new Animated.Value(0)).current;
+  const checklistShakeAnim = useRef(new Animated.Value(0)).current;
+  const [photosCardY, setPhotosCardY] = useState<number>(0);
+  const [inputCardY, setInputCardY] = useState<number>(0);
+  const [checklistContainerY, setChecklistContainerY] = useState<number>(0);
 
   const ensurePermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
@@ -295,6 +313,165 @@ export const VehicleInspectionScreen: React.FC = () => {
     );
   };
 
+  const shakeError = (animValue: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const validate = (): boolean => {
+    const newErrors: typeof errors = {};
+    let isValid = true;
+
+    // Validate photos
+    const photosCount = getPhotosCount();
+    if (photosCount < 4) {
+      newErrors.photos = "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)";
+      isValid = false;
+      shakeError(photosShakeAnim);
+    }
+    // Validate odometer
+    if (!startOdometerKm || startOdometerKm.trim() === "") {
+      newErrors.odometer = "Vui lòng nhập số km bắt đầu";
+      isValid = false;
+      shakeError(odometerShakeAnim);
+    } else {
+      const odometerNum = parseInt(startOdometerKm);
+      if (isNaN(odometerNum) || odometerNum < 0) {
+        newErrors.odometer = "Số km phải là số hợp lệ (≥ 0)";
+        isValid = false;
+        shakeError(odometerShakeAnim);
+      } else if (
+        currentOdometerKm !== undefined &&
+        odometerNum < currentOdometerKm
+      ) {
+        newErrors.odometer = `Số km bắt đầu phải lớn hơn hoặc bằng số km hiện tại (${currentOdometerKm} km)`;
+        isValid = false;
+        shakeError(odometerShakeAnim);
+      }
+    }
+
+    // Validate battery
+    if (!startBatteryPercentage || startBatteryPercentage.trim() === "") {
+      newErrors.battery = "Vui lòng nhập % pin bắt đầu";
+      isValid = false;
+      shakeError(batteryShakeAnim);
+    } else {
+      const batteryNum = parseInt(startBatteryPercentage);
+      if (isNaN(batteryNum) || batteryNum < 0 || batteryNum > 100) {
+        newErrors.battery = "Pin phải là số từ 0 đến 100";
+        isValid = false;
+        shakeError(batteryShakeAnim);
+      }
+    }
+
+    // Validate checklist
+    const totalChecklist = getTotalCount();
+    const completedChecklist = getCompletedCount();
+    if (completedChecklist < totalChecklist * 0.8) {
+      newErrors.checklist = "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra";
+      isValid = false;
+      shakeError(checklistShakeAnim);
+    }
+
+    setErrors(newErrors);
+
+    // Scroll to first error
+    if (!isValid && scrollViewRef.current) {
+      setTimeout(() => {
+        if (newErrors.photos && photosCardY > 0) {
+          scrollViewRef.current?.scrollTo({
+            y: photosCardY - 20,
+            animated: true,
+          });
+        } else if (
+          (newErrors.odometer || newErrors.battery) &&
+          inputCardY > 0
+        ) {
+          scrollViewRef.current?.scrollTo({
+            y: inputCardY - 20,
+            animated: true,
+          });
+        } else if (newErrors.checklist && checklistContainerY > 0) {
+          scrollViewRef.current?.scrollTo({
+            y: checklistContainerY - 20,
+            animated: true,
+          });
+        }
+      }, 100);
+    }
+
+    return isValid;
+  };
+
+  // Auto-clear errors when conditions are met
+  useEffect(() => {
+    // Clear photos error when 4 photos are uploaded
+    const photosCount = getPhotosCount();
+    if (photosCount === 4 && errors.photos) {
+      setErrors((prev) => ({ ...prev, photos: undefined }));
+    }
+  }, [photos, errors.photos]);
+
+  useEffect(() => {
+    // Clear checklist error when 80% is completed
+    const totalChecklist = getTotalCount();
+    const completedChecklist = getCompletedCount();
+    if (
+      totalChecklist > 0 &&
+      completedChecklist >= totalChecklist * 0.8 &&
+      errors.checklist
+    ) {
+      setErrors((prev) => ({ ...prev, checklist: undefined }));
+    }
+  }, [checklistItems, errors.checklist]);
+
+  useEffect(() => {
+    // Clear odometer error when value is valid
+    if (startOdometerKm && errors.odometer) {
+      const odometerNum = parseInt(startOdometerKm);
+      const isValid = !isNaN(odometerNum) && odometerNum >= 0;
+      const isGreaterThanCurrent =
+        currentOdometerKm === undefined || odometerNum >= currentOdometerKm;
+
+      if (isValid && isGreaterThanCurrent) {
+        setErrors((prev) => ({ ...prev, odometer: undefined }));
+      }
+    }
+  }, [startOdometerKm, currentOdometerKm, errors.odometer]);
+
+  useEffect(() => {
+    // Clear battery error when value is valid
+    if (startBatteryPercentage && errors.battery) {
+      const batteryNum = parseInt(startBatteryPercentage);
+      const isValid =
+        !isNaN(batteryNum) && batteryNum >= 0 && batteryNum <= 100;
+
+      if (isValid) {
+        setErrors((prev) => ({ ...prev, battery: undefined }));
+      }
+    }
+  }, [startBatteryPercentage, errors.battery]);
+
   const handleCompleteInspection = async () => {
     // Prevent multiple submissions
     if (isSubmitting) return;
@@ -302,27 +479,8 @@ export const VehicleInspectionScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // Validate required fields
-      if (!startOdometerKm || !startBatteryPercentage) {
-        Alert.alert("Lỗi", "Vui lòng nhập số km và % pin bắt đầu");
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (getPhotosCount() < 4) {
-        Alert.alert(
-          "Lỗi",
-          "Vui lòng chụp đủ 4 ảnh xe (trước, sau, trái, phải)"
-        );
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (getCompletedCount() < getTotalCount() * 0.8) {
-        Alert.alert(
-          "Lỗi",
-          "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra"
-        );
+      // Validate all fields
+      if (!validate()) {
         setIsSubmitting(false);
         return;
       }
@@ -433,7 +591,10 @@ export const VehicleInspectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.scrollContent}
+      >
         <ScreenHeader
           title="Kiểm tra xe"
           subtitle="Chế độ kiểm tra trước"
@@ -441,7 +602,17 @@ export const VehicleInspectionScreen: React.FC = () => {
         />
 
         {/* Required Photos */}
-        <View style={styles.photosCard}>
+        <Animated.View
+          ref={photosCardRef}
+          style={[
+            styles.photosCard,
+            { transform: [{ translateX: photosShakeAnim }] },
+          ]}
+          onLayout={(event) => {
+            const { y } = event.nativeEvent.layout;
+            setPhotosCardY(y);
+          }}
+        >
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
               <View style={styles.cardHeaderIcon}>
@@ -492,14 +663,30 @@ export const VehicleInspectionScreen: React.FC = () => {
               onPress={() => openPicker("right")}
             />
           </View>
-        </View>
+          {errors.photos && (
+            <View style={styles.errorContainer}>
+              <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+              <Text style={styles.errorText}>{errors.photos}</Text>
+            </View>
+          )}
+        </Animated.View>
 
         {/* Inspection Checklist - Accordions */}
-        <View
-          ref={checklistRef}
-          style={styles.checklistContainer}
-          collapsable={false}
+        <Animated.View
+          ref={checklistContainerRef}
+          style={[
+            { transform: [{ translateX: checklistShakeAnim }] },
+          ]}
+          onLayout={(event) => {
+            const { y } = event.nativeEvent.layout;
+            setChecklistContainerY(y);
+          }}
         >
+          <View
+            ref={checklistRef}
+            style={styles.checklistContainer}
+            collapsable={false}
+          >
           <View style={styles.checklistHeaderRow}>
             <View style={styles.checklistHeaderLeft}>
               <View style={styles.checklistHeaderIcon}>
@@ -595,10 +782,24 @@ export const VehicleInspectionScreen: React.FC = () => {
               </View>
             );
           })}
-        </View>
+          {errors.checklist && (
+            <View style={[styles.errorContainer, { marginHorizontal: 16 }]}>
+              <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+              <Text style={styles.errorText}>{errors.checklist}</Text>
+            </View>
+          )}
+          </View>
+        </Animated.View>
 
         {/* Inspection Inputs */}
-        <View style={styles.inputCard}>
+        <View
+          ref={inputCardRef}
+          style={styles.inputCard}
+          onLayout={(event) => {
+            const { y } = event.nativeEvent.layout;
+            setInputCardY(y);
+          }}
+        >
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
               <View style={styles.cardHeaderIcon}>
@@ -634,19 +835,38 @@ export const VehicleInspectionScreen: React.FC = () => {
                 <AntDesign name="dashboard" size={14} color="#7DB3FF" />
                 <Text style={styles.inputLabel}>Số km</Text>
               </View>
-              <View style={styles.inputWithUnit}>
+              <Animated.View
+                style={[
+                  styles.inputWithUnit,
+                  { transform: [{ translateX: odometerShakeAnim }] },
+                ]}
+              >
                 <TextInput
-                  style={styles.numberInput}
+                  style={[
+                    styles.numberInput,
+                    errors.odometer && styles.numberInputError,
+                  ]}
                   placeholder="0"
                   placeholderTextColor={colors.text.secondary}
                   value={startOdometerKm}
-                  onChangeText={setStartOdometerKm}
+                  onChangeText={(text) => {
+                    setStartOdometerKm(text);
+                    if (errors.odometer) {
+                      // Error clearing handled by useEffect
+                    }
+                  }}
                   keyboardType="numeric"
                 />
                 <View style={styles.unitBadge}>
                   <Text style={styles.inputUnit}>km</Text>
                 </View>
-              </View>
+              </Animated.View>
+              {errors.odometer && (
+                <View style={styles.errorContainer}>
+                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <Text style={styles.errorText}>{errors.odometer}</Text>
+                </View>
+              )}
             </View>
 
             {/* Battery Percentage Input */}
@@ -655,19 +875,38 @@ export const VehicleInspectionScreen: React.FC = () => {
                 <AntDesign name="thunderbolt" size={14} color={getBatteryCondition().color} />
                 <Text style={styles.inputLabel}>Pin</Text>
               </View>
-              <View style={styles.inputWithUnit}>
+              <Animated.View
+                style={[
+                  styles.inputWithUnit,
+                  { transform: [{ translateX: batteryShakeAnim }] },
+                ]}
+              >
                 <TextInput
-                  style={styles.numberInput}
+                  style={[
+                    styles.numberInput,
+                    errors.battery && styles.numberInputError,
+                  ]}
                   placeholder="0"
                   placeholderTextColor={colors.text.secondary}
                   value={startBatteryPercentage}
-                  onChangeText={setStartBatteryPercentage}
+                  onChangeText={(text) => {
+                    setStartBatteryPercentage(text);
+                    if (errors.battery) {
+                      // Error clearing handled by useEffect
+                    }
+                  }}
                   keyboardType="numeric"
                 />
                 <View style={[styles.unitBadge, { backgroundColor: getBatteryCondition().color === "#67D16C" ? "rgba(103,209,108,0.15)" : getBatteryCondition().color === "#FFD700" ? "rgba(255,211,102,0.15)" : "rgba(255,68,68,0.15)" }]}>
                   <Text style={[styles.inputUnit, { color: getBatteryCondition().color }]}>%</Text>
                 </View>
-              </View>
+              </Animated.View>
+              {errors.battery && (
+                <View style={styles.errorContainer}>
+                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <Text style={styles.errorText}>{errors.battery}</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -1493,5 +1732,28 @@ const styles = StyleSheet.create({
     color: "#7CFFCB",
     fontSize: 14,
     fontWeight: "700",
+  },
+  numberInputError: {
+    borderColor: "#FF6B6B",
+    borderWidth: 2,
+    backgroundColor: "rgba(255,107,107,0.05)",
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,107,107,0.1)",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,107,107,0.3)",
+  },
+  errorText: {
+    color: "#FF6B6B",
+    fontSize: 12,
+    fontWeight: "600",
+    flex: 1,
   },
 });

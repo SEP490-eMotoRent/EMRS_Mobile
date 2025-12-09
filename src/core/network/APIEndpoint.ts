@@ -165,6 +165,7 @@ export const ApiEndpoints = {
     summary: (bookingId: string) =>
       `/rental-return/return/${bookingId}/summary`,
     finalizeReturn: `/rental-return/return/finalize`,
+    vehicleSwap: "/rental-return/return/vehicle-swap",
   },
 
   // Insurance Package endpoints

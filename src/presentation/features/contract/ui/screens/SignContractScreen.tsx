@@ -24,6 +24,8 @@ import { RentalContract } from "../../../../../domain/entities/booking/RentalCon
 import { GenerateOtpContractUseCase } from "../../../../../domain/usecases/contract/GenerateOtpContractUseCase";
 import { SignContractUseCase } from "../../../../../domain/usecases/contract/SignContractUseCase";
 import Toast from "react-native-toast-message";
+import { useAppSelector } from "../../../authentication/store/hooks";
+import { RootState } from "../../../authentication/store";
 
 type SignContractScreenRouteProp = RouteProp<
   TripStackParamList,
@@ -35,6 +37,7 @@ type SignContractScreenNavigationProp = any;
 export const SignContractScreen: React.FC = () => {
   const route = useRoute<SignContractScreenRouteProp>();
   const navigation = useNavigation<SignContractScreenNavigationProp>();
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const { bookingId, email, fullName, receiptId } = route.params || {};
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [submitting, setSubmitting] = useState(false);

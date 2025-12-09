@@ -1,11 +1,10 @@
 import { ApiResponse } from "../../../core/network/APIResponse";
-import { CreateReceiptResponse } from "../../../data/models/rentalReturn/CreateReceiptResponse";
 import { RentalReturnRepository } from "../../repositories/rentalReturn/RentalReturnRepository";
+import { VehicleSwapResponse } from "../../../data/models/rentalReturn/VehicleSwapResponse";
 
-export interface RentalReturnCreateReceiptUseCaseInput {
+export interface SwapVehicleReturnUseCaseInput {
     bookingId: string;
     returnReceiptId: string;
-    actualReturnDatetime: string;
     endOdometerKm: number;
     endBatteryPercentage: number;
     notes: string;
@@ -13,10 +12,10 @@ export interface RentalReturnCreateReceiptUseCaseInput {
     checkListImage: string;
 }
 
-export class RentalReturnCreateReceiptUseCase {
+export class SwapVehicleReturnUseCase {
     constructor(private rentalReturnRepository: RentalReturnRepository) {}
     
-    async execute(input: RentalReturnCreateReceiptUseCaseInput): Promise<ApiResponse<CreateReceiptResponse>> {
-        return await this.rentalReturnRepository.createReceipt(input);
+    async execute(input: SwapVehicleReturnUseCaseInput): Promise<ApiResponse<VehicleSwapResponse>> {
+        return await this.rentalReturnRepository.swapVehicleReturn(input);
     }
 }

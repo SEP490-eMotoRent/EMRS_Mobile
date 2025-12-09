@@ -48,6 +48,12 @@ import {
   TicketListScreen,
 } from "../../../features/staff/ticket/ui/screens";
 import { ReturnReceiptReportScreen } from "../../../features/tripDetails/ui/screens/ReturnReceiptReportScreen";
+import {
+  SwapSelectVehicleScreen,
+  SwapOldVehicleScreen,
+  SwapNewVehicleScreen,
+  SwapReviewScreen,
+} from "../../../features/staff/swap/ui/screens";
 
 const Stack = createStackNavigator<StaffStackParamList>();
 
@@ -165,6 +171,13 @@ export const StaffNavigator: React.FC = () => {
           name="ChargingListBooking"
           component={ChargingListBookingScreen}
         />
+        <Stack.Screen
+          name="SwapSelectVehicle"
+          component={SwapSelectVehicleScreen}
+        />
+        <Stack.Screen name="SwapOldVehicle" component={SwapOldVehicleScreen} />
+        <Stack.Screen name="SwapNewVehicle" component={SwapNewVehicleScreen} />
+        <Stack.Screen name="SwapReview" component={SwapReviewScreen} />
       </Stack.Navigator>
     </View>
   );
