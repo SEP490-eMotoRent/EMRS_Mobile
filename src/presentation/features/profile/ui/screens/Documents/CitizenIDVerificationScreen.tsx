@@ -276,7 +276,32 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
             setCitizenBackImage(undefined);
         } catch (error: any) {
             console.error('❌ Citizen document error:', error);
-            Alert.alert('Lỗi', error.message || 'Không thể gửi CCCD');
+            
+            // Parse user-friendly error message
+            let userMessage = 'Không thể xử lý CCCD. Vui lòng thử lại sau.';
+            
+            const errorMsg = error.message?.toLowerCase() || '';
+            
+            if (errorMsg.includes('face') || errorMsg.includes('detect')) {
+                userMessage = 'Không thể nhận diện khuôn mặt từ ảnh.\n\n' +
+                            '• Đảm bảo ảnh mặt trước rõ ràng\n' +
+                            '• Khuôn mặt nhìn thẳng, không bị che\n' +
+                            '• Đủ ánh sáng, không bị mờ';
+            } else if (errorMsg.includes('existed') || errorMsg.includes('duplicate')) {
+                userMessage = 'CCCD này đã được đăng ký trong hệ thống.\n\n' +
+                            'Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.';
+            } else if (errorMsg.includes('network') || errorMsg.includes('timeout')) {
+                userMessage = 'Mất kết nối mạng.\n\n' +
+                            'Vui lòng kiểm tra Internet và thử lại.';
+            } else if (errorMsg.includes('validation') || errorMsg.includes('required')) {
+                userMessage = 'Thông tin chưa đầy đủ.\n\n' +
+                            'Vui lòng kiểm tra và điền đầy đủ các trường bắt buộc.';
+            }
+            
+            Alert.alert('Không Thể Tải Lên', userMessage, [
+                { text: 'Đóng', style: 'cancel' },
+                { text: 'Thử Lại', onPress: () => handleCitizenDocumentSubmit() }
+            ]);
         }
     };
 
