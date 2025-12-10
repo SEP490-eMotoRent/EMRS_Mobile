@@ -59,6 +59,14 @@ export class TransactionTypeHelper {
     }
 
     /**
+     * Alias for isIncomeType() - determines if transaction is a credit (money IN)
+     * @returns true if transaction adds money to wallet, false if it removes money
+     */
+    static isCredit(transactionType: string): boolean {
+        return this.isIncomeType(transactionType);
+    }
+
+    /**
      * Get icon name based on transaction type
      */
     static getIconName(transactionType: string): 'plus' | 'minus' {

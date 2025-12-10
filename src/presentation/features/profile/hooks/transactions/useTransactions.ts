@@ -22,12 +22,15 @@ export const useTransactions = () => {
 
             const result = await container.wallet.transactions.getMy.execute();
 
-            console.log('✅ Transactions fetched:', result.length);
-            setTransactions(result);
+            // Filter out failed transactions - only show successful ones
+            const successfulTransactions = result.filter(t => t.status === 'Success');
+
+            console.log('✅ Transactions fetched:', successfulTransactions.length);
+            setTransactions(successfulTransactions);
         } catch (err: any) {
             console.error('❌ Failed to fetch transactions:', err);
             setError(err.message || 'Failed to load transactions');
-            setTransactions([]); // Set empty array on error
+            setTransactions([]);
         } finally {
             setLoading(false);
         }
