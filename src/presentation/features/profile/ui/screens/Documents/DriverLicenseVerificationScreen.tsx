@@ -240,6 +240,7 @@ export const DriverLicenseVerificationScreen = ({ navigation }: any) => {
                     expiryDate: convertDisplayToISO(licenseExpiryDate),
                     issuingAuthority: licenseAuthority,
                     verificationStatus: licenseDoc.verificationStatus,
+                    verifiedAt: licenseDoc.verifiedAt,  // ✅ FIXED: Preserve verification timestamp
                     idFileFront: licenseDoc.images[0].id,
                     idFileBack: licenseDoc.images[1].id,
                 };
