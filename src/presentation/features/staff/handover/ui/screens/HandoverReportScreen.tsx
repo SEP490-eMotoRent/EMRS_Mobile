@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, MaterialIcons } from "@expo/vector-icons";
@@ -19,6 +20,10 @@ import { useAppSelector } from "../../../../authentication/store/hooks";
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
 import sl from "../../../../../../core/di/InjectionContainer";
 import Toast from "react-native-toast-message";
+import { GetDetailRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
+import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetListRentalReceipt";
+import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
+import { useGetLastReceipt } from "../../../return/ui/hooks/useGetLastReceipt";
 
 type HandoverReportNav = StackNavigationProp<
   StaffStackParamList,
@@ -32,45 +37,35 @@ export const HandoverReportScreen: React.FC = () => {
   const navigation = useNavigation<HandoverReportNav>();
   const route = useRoute<HandoverReportRouteProp>();
   const {
-    receiptId,
-    notes,
-    startOdometerKm,
-    startBatteryPercentage,
+    // receiptId,
+    // notes,
+    // startOdometerKm,
+    // startBatteryPercentage,
     bookingId,
-    handOverVehicleImageFiles,
-    returnVehicleImageFiles,
-    checkListFile,
+    // handOverVehicleImageFiles,
+    // returnVehicleImageFiles,
+    // checkListFile,
   } = route.params || {};
+  const [rentalReceipts, setRentalReceipts] = useState<RentalReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { getLastReceipt } = useGetLastReceipt({ bookingId });
 
   // Handle array data from response
   const handOverImages = useMemo(() => {
-    if (Array.isArray(handOverVehicleImageFiles)) return handOverVehicleImageFiles;
-    if (handOverVehicleImageFiles) return [handOverVehicleImageFiles];
+    if (Array.isArray(getLastReceipt()?.handOverVehicleImageFiles))
+      return getLastReceipt()?.handOverVehicleImageFiles;
+    if (getLastReceipt()?.handOverVehicleImageFiles)
+      return [getLastReceipt()?.handOverVehicleImageFiles];
     return [];
-  }, [handOverVehicleImageFiles]);
+  }, [getLastReceipt()?.handOverVehicleImageFiles]);
 
   const checklistImages = useMemo(() => {
-    if (Array.isArray(checkListFile)) return checkListFile;
-    if (checkListFile) return [checkListFile];
+    if (Array.isArray(getLastReceipt()?.checkListHandoverFile))
+      return getLastReceipt()?.checkListHandoverFile;
+    if (getLastReceipt()?.checkListHandoverFile)
+      return [getLastReceipt()?.checkListHandoverFile];
     return [];
-  }, [checkListFile]);
-
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateString;
-    }
-  };
+  }, [getLastReceipt()?.checkListHandoverFile]);
 
   const getImageLabel = (index: number, total: number) => {
     const labels = ["Mặt trước", "Mặt sau", "Bên trái", "Bên phải"];
@@ -84,14 +79,14 @@ export const HandoverReportScreen: React.FC = () => {
       );
       const response = await generateContractUseCase.execute(
         bookingId,
-        receiptId
+        getLastReceipt()?.id || ""
       );
       // if (response.success) {
       Toast.show({
         text1: "Đã gửi báo cáo bàn giao cho khách hàng",
         type: "success",
       });
-      navigation.navigate("AwaitingApproval");
+      navigation.navigate("AwaitingApproval", { bookingId: bookingId });
       // }
     } catch (error) {
       console.log("error", error);
@@ -102,7 +97,7 @@ export const HandoverReportScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -129,11 +124,17 @@ export const HandoverReportScreen: React.FC = () => {
         <View style={styles.metricsRow}>
           <View style={[styles.metricCard, styles.batteryCard]}>
             <View style={styles.metricIconContainer}>
-              <MaterialIcons name="battery-charging-full" size={24} color="#67D16C" />
+              <MaterialIcons
+                name="battery-charging-full"
+                size={24}
+                color="#67D16C"
+              />
             </View>
             <View style={styles.metricContent}>
               <Text style={styles.metricLabel}>Mức pin</Text>
-              <Text style={styles.metricValue}>{startBatteryPercentage || 0}%</Text>
+              <Text style={styles.metricValue}>
+                {getLastReceipt()?.startBatteryPercentage || 0}%
+              </Text>
             </View>
           </View>
           <View style={[styles.metricCard, styles.odometerCard]}>
@@ -142,7 +143,9 @@ export const HandoverReportScreen: React.FC = () => {
             </View>
             <View style={styles.metricContent}>
               <Text style={styles.metricLabel}>Số km</Text>
-              <Text style={styles.metricValue}>{startOdometerKm || 0} km</Text>
+              <Text style={styles.metricValue}>
+                {getLastReceipt()?.startOdometerKm || 0} km
+              </Text>
             </View>
           </View>
         </View>
@@ -157,25 +160,41 @@ export const HandoverReportScreen: React.FC = () => {
           </View>
           <View style={styles.infoRow}>
             <View style={styles.infoLeft}>
-              <MaterialIcons name="confirmation-number" size={16} color={colors.text.secondary} />
+              <MaterialIcons
+                name="confirmation-number"
+                size={16}
+                color={colors.text.secondary}
+              />
               <Text style={styles.infoLabel}>Mã đặt chỗ</Text>
             </View>
-            <Text style={styles.infoValue}>#{bookingId?.substring(0, 8) || "N/A"}</Text>
+            <Text style={styles.infoValue}>
+              #{bookingId?.substring(0, 8) || "N/A"}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <View style={styles.infoLeft}>
-              <AntDesign name="idcard" size={16} color={colors.text.secondary} />
+              <AntDesign
+                name="idcard"
+                size={16}
+                color={colors.text.secondary}
+              />
               <Text style={styles.infoLabel}>Mã báo cáo</Text>
             </View>
-            <Text style={styles.infoValue}>#{receiptId?.substring(0, 8) || "N/A"}</Text>
+            <Text style={styles.infoValue}>
+              #{getLastReceipt()?.id?.substring(0, 8) || "N/A"}
+            </Text>
           </View>
-          {notes && (
-            <View style={[styles.infoRow, styles.notesRow]}>
+          {getLastReceipt()?.notes && (
+            <View style={[styles.infoRow]}>
               <View style={styles.infoLeft}>
-                <AntDesign name="file-text" size={16} color={colors.text.secondary} />
+                <AntDesign
+                  name="file-text"
+                  size={16}
+                  color={colors.text.secondary}
+                />
                 <Text style={styles.infoLabel}>Ghi chú</Text>
               </View>
-              <Text style={[styles.infoValue, styles.notesValue]}>{notes}</Text>
+              <Text style={[styles.infoValue]}>{getLastReceipt()?.notes}</Text>
             </View>
           )}
         </View>
@@ -252,7 +271,9 @@ export const HandoverReportScreen: React.FC = () => {
               </View>
               <View style={styles.verificationContent}>
                 <Text style={styles.verificationLabel}>Nhân viên</Text>
-                <Text style={styles.verificationValue}>{user?.fullName || "N/A"}</Text>
+                <Text style={styles.verificationValue}>
+                  {user?.fullName || "N/A"}
+                </Text>
               </View>
             </View>
             <View style={styles.verificationItem}>
@@ -261,7 +282,9 @@ export const HandoverReportScreen: React.FC = () => {
               </View>
               <View style={styles.verificationContent}>
                 <Text style={styles.verificationLabel}>Chi nhánh</Text>
-                <Text style={styles.verificationValue}>{user?.branchName || "N/A"}</Text>
+                <Text style={styles.verificationValue}>
+                  {user?.branchName || "N/A"}
+                </Text>
               </View>
             </View>
           </View>
@@ -285,9 +308,14 @@ export const HandoverReportScreen: React.FC = () => {
             )}
           </TouchableOpacity>
           <View style={styles.infoBox}>
-            <AntDesign name="info-circle" size={14} color={colors.text.secondary} />
+            <AntDesign
+              name="info-circle"
+              size={14}
+              color={colors.text.secondary}
+            />
             <Text style={styles.noteText}>
-              Khách hàng sẽ nhận được thông báo để phê duyệt. Báo cáo sẽ hết hạn sau 30 phút nếu không được xem xét.
+              Khách hàng sẽ nhận được thông báo để phê duyệt. Báo cáo sẽ hết hạn
+              sau 30 phút nếu không được xem xét.
             </Text>
           </View>
         </View>
@@ -301,7 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: { 
+  scrollContent: {
     paddingBottom: 40,
   },
   statusBanner: {

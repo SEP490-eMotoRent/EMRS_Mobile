@@ -57,54 +57,54 @@ export type BrowseStackParamList = {
     location?: string;
   };
 
-    // Document Management Screens
+  // Document Management Screens
   DocumentManagement: undefined;
   CitizenIDVerification: undefined;
   DriverLicenseVerification: undefined;
   DocumentCapture: {
-    documentType: 'citizen' | 'license';
-    side: 'front' | 'back';
-    onPhotoTaken: (uri: string, side: 'front' | 'back') => void;
+    documentType: "citizen" | "license";
+    side: "front" | "back";
+    onPhotoTaken: (uri: string, side: "front" | "back") => void;
   };
 };
 
 export type BookingStackParamList = {
-  ConfirmRentalDuration: { 
-      vehicleId: string;
-      vehicleName: string;
-      vehicleImageUrl?: string;
-      branchId: string;
-      branchName: string;
-      pricePerDay: number;
-      securityDeposit: number;
-      branchOpenTime?: string;
-      branchCloseTime?: string;
-      vehicleCategory: string;
-      dateRange?: string;
+  ConfirmRentalDuration: {
+    vehicleId: string;
+    vehicleName: string;
+    vehicleImageUrl?: string;
+    branchId: string;
+    branchName: string;
+    pricePerDay: number;
+    securityDeposit: number;
+    branchOpenTime?: string;
+    branchCloseTime?: string;
+    vehicleCategory: string;
+    dateRange?: string;
   };
   InsurancePlans: {
-      vehicleId: string;
-      vehicleName: string;
-      vehicleImageUrl?: string;
-      branchId: string;
-      branchName: string;
-      pricePerDay: number;
-      securityDeposit: number;
-      startDate: string;
-      endDate: string;
-      duration: string;
-      rentalDays: number;
-      rentalPrice: number;
-      baseRentalFee: number;
-      rentingRate: number;
-      averageRentalPrice: number;
-      vehicleCategory: string;
-      holidaySurcharge: number;
-      holidayDayCount: number;
-      // NEW: Membership data
-      membershipDiscountPercentage: number;
-      membershipDiscountAmount: number;
-      membershipTier: string;
+    vehicleId: string;
+    vehicleName: string;
+    vehicleImageUrl?: string;
+    branchId: string;
+    branchName: string;
+    pricePerDay: number;
+    securityDeposit: number;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+    rentalPrice: number;
+    baseRentalFee: number;
+    rentingRate: number;
+    averageRentalPrice: number;
+    vehicleCategory: string;
+    holidaySurcharge: number;
+    holidayDayCount: number;
+    // NEW: Membership data
+    membershipDiscountPercentage: number;
+    membershipDiscountAmount: number;
+    membershipTier: string;
   };
   PaymentConfirmation: {
     vehicleId: string;
@@ -134,20 +134,20 @@ export type BookingStackParamList = {
     membershipTier: string;
   };
   VNPayWebView: {
-      vnpayUrl: string;
-      bookingId: string;
-      expiresAt: string;
-      vehicleName: string;
-      totalAmount: string;
-      vehicleId: string;
-      vehicleImageUrl: string;
-      startDate: string;
-      endDate: string;
-      duration: string;
-      rentalDays: number;
-      branchName: string;
-      insurancePlan: string;
-      securityDeposit: string;
+    vnpayUrl: string;
+    bookingId: string;
+    expiresAt: string;
+    vehicleName: string;
+    totalAmount: string;
+    vehicleId: string;
+    vehicleImageUrl: string;
+    startDate: string;
+    endDate: string;
+    duration: string;
+    rentalDays: number;
+    branchName: string;
+    insurancePlan: string;
+    securityDeposit: string;
   };
   VNPayCallback: {
     vnp_ResponseCode?: string;
@@ -193,7 +193,6 @@ export type BookingStackParamList = {
   };
   Trips: undefined;
 
-
   ZaloPayWebView: {
     zaloPayUrl: string;
     bookingId: string;
@@ -210,7 +209,7 @@ export type BookingStackParamList = {
     insurancePlan: string;
     securityDeposit: string;
   };
-  
+
   ZaloPayResult: {
     amount?: string;
     appid?: string;
@@ -234,7 +233,6 @@ export type BookingStackParamList = {
     totalAmount: string;
     securityDeposit: string;
   };
-  
 };
 
 export type TripStackParamList = {
@@ -289,10 +287,10 @@ export type TripStackParamList = {
     licensePlate?: string;
   };
   TicketList: {
-      bookingId: string;
+    bookingId: string;
   };
   TicketDetail: {
-      ticketId: string;
+    ticketId: string;
   };
   IncidentReport: {
     bookingId: string;
@@ -327,9 +325,9 @@ export type ProfileStackParamList = {
   CitizenIDVerification: undefined;
   DriverLicenseVerification: undefined;
   DocumentCapture: {
-    documentType: 'citizen' | 'license';
-    side: 'front' | 'back';
-    onPhotoTaken: (uri: string, side: 'front' | 'back') => void;
+    documentType: "citizen" | "license";
+    side: "front" | "back";
+    onPhotoTaken: (uri: string, side: "front" | "back") => void;
   };
   //Coi những claims bảo hiểm của mình:
   InsuranceClaims: undefined;
@@ -343,19 +341,19 @@ export type ProfileStackParamList = {
   WithdrawalRequestDetail: {
     requestId: string;
   };
-  
+
   WalletTopUp: undefined;
   WalletVNPayWebView: {
-      vnpayUrl: string;
-      transactionId: string;
-      amount: number;
-      expiresAt: string;
+    vnpayUrl: string;
+    transactionId: string;
+    amount: number;
+    expiresAt: string;
   };
   WalletTopUpResult: {
-      success: boolean;
-      amount: number;
-      transactionId?: string;
-      errorMessage?: string;
+    success: boolean;
+    amount: number;
+    transactionId?: string;
+    errorMessage?: string;
   };
   AllTransactions: undefined;
 };
@@ -390,20 +388,13 @@ export type StaffStackParamList = {
     isChangeVehicle?: boolean;
   };
   HandoverReport: {
-    receiptId: string;
-    notes: string;
-    startOdometerKm: number;
-    startBatteryPercentage: number;
     bookingId: string;
-    handOverVehicleImageFiles: string[];
-    returnVehicleImageFiles: string[];
-    checkListFile: string;
   };
   HandoverReceiptReport: {
     bookingId: string;
     rentalReceiptId?: string;
   };
-  AwaitingApproval: { status?: "pending" | "approved" | "denied" } | undefined;
+  AwaitingApproval: { bookingId: string };
   HandoverDocument: undefined;
   HandoverComplete: undefined;
   BookingDetails: { bookingId?: string; booking?: any };
@@ -473,8 +464,15 @@ export type StaffStackParamList = {
     vehicleModelId?: string;
     modelName?: string;
   };
-  SwapOldVehicle: { startOldVehicleOdometerKm?: number, newVehicleOdometerKm?: number, newVehicleBatteryPercentage?: number };
-  SwapNewVehicle: { newVehicleOdometerKm?: number, newVehicleBatteryPercentage?: number };
+  SwapOldVehicle: {
+    startOldVehicleOdometerKm?: number;
+    newVehicleOdometerKm?: number;
+    newVehicleBatteryPercentage?: number;
+  };
+  SwapNewVehicle: {
+    newVehicleOdometerKm?: number;
+    newVehicleBatteryPercentage?: number;
+  };
   SwapReview: undefined;
 };
 
