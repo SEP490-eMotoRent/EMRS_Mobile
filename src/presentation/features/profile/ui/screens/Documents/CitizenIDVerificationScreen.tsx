@@ -11,6 +11,7 @@ import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icons/Icons';
 import { Text } from '../../atoms/Text';
 import { DocumentSection } from '../../organisms/ProfileOrganism/DocumentSection';
+import { DocumentDatePicker } from '../../molecules/Documents/DocumentDatePicker';
 
 // Helper: Normalize URI to string
 const normalizeUri = (uri: string | string[] | undefined): string | undefined => {
@@ -69,6 +70,10 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
 
     // OCR processing state
     const [citizenOCRProcessing, setCitizenOCRProcessing] = useState(false);
+
+    // Date picker state
+    const [showIssueDatePicker, setShowIssueDatePicker] = useState(false);
+    const [showExpiryDatePicker, setShowExpiryDatePicker] = useState(false);
 
     // Populate form when data is loaded
     useEffect(() => {
@@ -176,11 +181,11 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
     };
 
     const handleCitizenIssueDatePress = () => {
-        Alert.alert('Chọn Ngày', 'Chức năng chọn ngày cấp CCCD sẽ được bổ sung');
+        setShowIssueDatePicker(true);
     };
 
     const handleCitizenExpiryDatePress = () => {
-        Alert.alert('Chọn Ngày', 'Chức năng chọn ngày hết hạn CCCD sẽ được bổ sung');
+        setShowExpiryDatePicker(true);
     };
 
     const handleCitizenDocumentSubmit = async () => {
@@ -241,6 +246,7 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
                     expiryDate: convertDisplayToISO(citizenExpiryDate),
                     issuingAuthority: citizenAuthority,
                     verificationStatus: citizenDoc.verificationStatus,
+                    verifiedAt: citizenDoc.verifiedAt,
                     idFileFront: citizenDoc.images[0].id,
                     idFileBack: citizenDoc.images[1].id,
                 };
@@ -311,7 +317,7 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
     if (fetchLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#7C3AED" />
+                <ActivityIndicator size="large" color="#B8A4FF" />
             </View>
         );
     }
@@ -333,7 +339,7 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
                 <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                     {/* Info Banner */}
                     <View style={styles.infoBanner}>
-                        <Icon name="info" size={20} color="#7C3AED" />
+                        <Icon name="info" size={20} color="#B8A4FF" />
                         <Text style={styles.infoText}>
                             Vui lòng tải lên ảnh CCCD rõ ràng, đầy đủ cả mặt trước và mặt sau.
                         </Text>
@@ -371,10 +377,35 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
                 {/* Fixed Bottom Action */}
                 {isSaving && (
                     <View style={styles.savingOverlay}>
-                        <ActivityIndicator size="large" color="#7C3AED" />
+                        <ActivityIndicator size="large" color="#B8A4FF" />
                         <Text style={styles.savingText}>Đang xử lý...</Text>
                     </View>
                 )}
+
+                {/* Date Pickers */}
+                <DocumentDatePicker
+                    visible={showIssueDatePicker}
+                    onClose={() => setShowIssueDatePicker(false)}
+                    onConfirm={(date) => {
+                        setCitizenIssueDate(date);
+                        setShowIssueDatePicker(false);
+                    }}
+                    title="Chọn Ngày Phát Hành CCCD"
+                    mode="issue"
+                    initialDate={citizenIssueDate ? convertDisplayToISO(citizenIssueDate) : undefined}
+                />
+
+                <DocumentDatePicker
+                    visible={showExpiryDatePicker}
+                    onClose={() => setShowExpiryDatePicker(false)}
+                    onConfirm={(date) => {
+                        setCitizenExpiryDate(date);
+                        setShowExpiryDatePicker(false);
+                    }}
+                    title="Chọn Ngày Hết Hạn CCCD"
+                    mode="expiry"
+                    initialDate={citizenExpiryDate ? convertDisplayToISO(citizenExpiryDate) : undefined}
+                />
             </View>
         </SafeAreaView>
     );
@@ -402,7 +433,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#1A1A1A',
+        borderBottomColor: '#2A2A2A',
     },
     backButton: {
         padding: 8,
@@ -423,10 +454,12 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         gap: 12,
         alignItems: 'flex-start',
+        borderWidth: 1,
+        borderColor: '#2A2A2A',
     },
     infoText: {
         flex: 1,
-        color: '#AAAAAA',
+        color: '#9CA3AF',
         fontSize: 14,
         lineHeight: 20,
     },

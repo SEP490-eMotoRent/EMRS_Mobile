@@ -1,36 +1,27 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from '../atoms/Text';
+import { Icon } from '../atoms/Icons/Icons';
 
 interface DocumentUploadPlaceholderProps {
-    onUpload: (method: 'camera' | 'gallery') => void;
+    onUpload: () => void;
 }
 
 export const DocumentUploadPlaceholder: React.FC<DocumentUploadPlaceholderProps> = ({ 
     onUpload 
-    }) => {
-    const showOptions = () => {
-    Alert.alert(
-        'Tải Lên Giấy Tờ',
-        'Chọn một tùy chọn',
-        [
-            { text: 'Chụp Ảnh', onPress: () => onUpload('camera') },
-            { text: 'Chọn Từ Thư Viện', onPress: () => onUpload('gallery') },
-            { text: 'Hủy', style: 'cancel' },
-        ]
-    );
-    };
-
+}) => {
     return (
         <View style={styles.container}>
-        <TouchableOpacity style={styles.placeholder} onPress={showOptions}>
-            <Text style={styles.icon}>📷</Text>
-            <Text style={styles.text}>Nhấn để tải lên</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.placeholder} onPress={showOptions}>
-            <Text style={styles.icon}>📷</Text>
-            <Text style={styles.text}>Nhấn để tải lên</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.placeholder} onPress={onUpload}>
+                <Icon name="camera" size={32} color="#B8A4FF" />
+                <Text style={styles.text}>Nhấn để tải lên</Text>
+                <Text style={styles.subtext}>Mặt Trước</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.placeholder} onPress={onUpload}>
+                <Icon name="camera" size={32} color="#B8A4FF" />
+                <Text style={styles.text}>Nhấn để tải lên</Text>
+                <Text style={styles.subtext}>Mặt Sau</Text>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -53,11 +44,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8,
     },
-    icon: {
-        fontSize: 32,
-    },
     text: {
-        color: '#666666',
-        fontSize: 12,
+        color: '#9CA3AF',
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    subtext: {
+        color: '#6B7280',
+        fontSize: 11,
+        fontWeight: '500',
     },
 });
