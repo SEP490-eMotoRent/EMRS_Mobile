@@ -1,6 +1,5 @@
-// services/fptAIService.ts
-
-const FPT_API_KEY = 'bG5ABOoWAYiqWaYZU2CIyCm0Q8NDg0Kr';
+const FPT_API_KEY = 'JKMYZzL8SSY6CTzk0OvDgM7Aaw5rUYYd';
+// const FPT_API_KEY = 'bG5ABOoWAYiqWaYZU2CIyCm0Q8NDg0Kr';
 const CITIZEN_ID_URL = 'https://api.fpt.ai/vision/idr/vnm';
 const DRIVER_LICENSE_URL = 'https://api.fpt.ai/vision/dlr/vnm';
 
