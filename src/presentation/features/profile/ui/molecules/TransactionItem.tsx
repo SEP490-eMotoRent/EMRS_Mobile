@@ -8,16 +8,16 @@ export const TransactionItem: React.FC<Transaction> = ({ title, date, amount }) 
     
     return (
         <View style={styles.transactionItem}>
-        <View style={styles.transactionIcon}>
-            <Icon name={isPositive ? 'plus' : 'minus'} color={isPositive ? '#4ade80' : '#f87171'} />
-        </View>
-        <View style={styles.transactionInfo}>
-            <Text style={styles.transactionTitle}>{title}</Text>
-            <Text style={styles.transactionDate}>{date}</Text>
-        </View>
-        <Text style={[styles.transactionAmount, isPositive ? styles.positive : styles.negative]}>
-            {isPositive ? '+' : ''}{amount.toLocaleString()}đ
-        </Text>
+            <View style={styles.transactionIcon}>
+                <Icon name={isPositive ? 'plus' : 'minus'} color={isPositive ? '#4ade80' : '#f87171'} />
+            </View>
+            <View style={styles.transactionInfo}>
+                <Text style={styles.transactionTitle}>{title}</Text>
+                <Text style={styles.transactionDate}>{date}</Text>
+            </View>
+            <Text style={[styles.transactionAmount, isPositive ? styles.positive : styles.negative]}>
+                {isPositive ? '+' : ''}{amount.toLocaleString()}đ
+            </Text>
         </View>
     );
 };
@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
         color: '#4ade80',
     },
     negative: {
-        color: '#fff',
+        color: '#f87171',
     },
 });

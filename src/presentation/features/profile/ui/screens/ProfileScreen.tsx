@@ -1,5 +1,6 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React from "react";
+import React, { useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -55,6 +56,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     error: transactionsError,
     refresh: refreshTransactions 
   } = useTransactions();
+
+  // 🔄 Auto-refresh wallet & transactions when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log('📱 ProfileScreen focused - refreshing wallet & transactions');
+      refreshWallet();
+      refreshTransactions();
+    }, [])
+  );
 
   const handleEdit = () => navigation.navigate("EditProfile");
   
@@ -155,7 +165,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         month: 'short',
         day: '2-digit'
       }),
-      amount: t.amount,
+      // Apply negative sign for debits (money OUT)
+      amount: TransactionTypeHelper.isCredit(t.transactionType) ? t.amount : -t.amount,
   }));
 
   // === RENDER ===
