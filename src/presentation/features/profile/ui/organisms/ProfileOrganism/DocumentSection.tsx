@@ -1,11 +1,12 @@
-import React from 'react';
-import { ActivityIndicator, Image, StyleSheet, Switch, TouchableOpacity, View, Text as RNText } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Switch, TouchableOpacity, View, Text as RNText, Alert } from 'react-native';
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icons/Icons';
 import { Text } from '../../atoms/Text';
 import { DateInput } from '../../molecules/DateInput';
 import { DocumentUploadPlaceholder } from '../../molecules/DocumentUploadPlaceholder';
 import { TextInput } from '../../molecules/TextInput';
+import { ImagePickerModal } from '../../molecules/Documents/ImagePickerModal';
 
 interface DocumentData {
     id: string;
@@ -67,8 +68,12 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     onIssuingAuthorityChange,
     ocrProcessing = false,
 }) => {
+    const [showImagePicker, setShowImagePicker] = useState(false);
+    const [retakingSide, setRetakingSide] = useState<'front' | 'back' | null>(null);
+
     const hasDocument = !!existingDocument;
     const hasNewImages = !!(frontImage || backImage);
+    const isEditing = hasDocument && hasNewImages;
     
     const frontUrl = existingDocument?.images?.[0]?.fileUrl;
     const backUrl = existingDocument?.images?.[1]?.fileUrl;
@@ -90,22 +95,64 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
         ? existingDocument.issuingAuthority 
         : issuingAuthority || '';
 
+    const handleImagePickerSelect = (method: 'camera' | 'gallery') => {
+        setShowImagePicker(false);
+        if (retakingSide) {
+            // If retaking specific side, just upload that side
+            // This would require parent to handle individual side uploads
+            onUpload(method);
+            setRetakingSide(null);
+        } else {
+            onUpload(method);
+        }
+    };
+
+    const handleRetakeImage = (side: 'front' | 'back') => {
+        Alert.alert(
+            'Chụp Lại Ảnh',
+            `Bạn muốn chụp lại ảnh mặt ${side === 'front' ? 'trước' : 'sau'}?`,
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Chụp Lại',
+                    onPress: () => {
+                        setRetakingSide(side);
+                        setShowImagePicker(true);
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <View style={styles.container}>
+            {/* Mode Indicator */}
+            {isEditing && (
+                <View style={styles.editModeBanner}>
+                    <Icon name="edit" size={16} color="#F59E0B" />
+                    <Text style={styles.editModeText}>Chế độ chỉnh sửa - Nhấn "Cập Nhật" để lưu thay đổi</Text>
+                </View>
+            )}
+
             <View style={styles.header}>
                 <View style={styles.titleContainer}>
-                    <Icon name={iconName} size={20} color="#FFD700" />
+                    <Icon name={iconName} size={20} color="#B8A4FF" />
                     <Text variant="body" style={styles.title}>{title}</Text>
-                    {hasDocument && existingDocument.verificationStatus && (
+                    {hasDocument && existingDocument.verificationStatus === 'Approved' && (
                         <View style={styles.verifiedBadge}>
-                            <Icon name="check" size={12} color="#10B981" />
+                            <Icon name="checkmark" size={12} color="#10B981" />
                             <Text style={styles.verifiedText}>Đã duyệt</Text>
                         </View>
                     )}
                 </View>
                 <View style={styles.headerActions}>
-                    <Button onPress={onUpdate} style={styles.updateButton} variant="ghost">
-                        <Text style={styles.updateText}>Cập Nhập</Text>
+                    <Button 
+                        onPress={onUpdate} 
+                        style={styles.updateButton} 
+                        variant="ghost"
+                        disabled={!hasNewImages && !hasDocument}
+                    >
+                        <Text style={styles.updateText}>Cập Nhật</Text>
                     </Button>
                     {hasDocument && onDeleteDocument && (
                         <Button 
@@ -119,17 +166,18 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 </View>
             </View>
 
-            {/* ✅ OCR Processing Indicator */}
+            {/* OCR Processing Indicator */}
             {ocrProcessing && (
                 <View style={styles.ocrProcessingBanner}>
-                    <ActivityIndicator size="small" color="#7C3AED" />
+                    <ActivityIndicator size="small" color="#B8A4FF" />
                     <Text style={styles.ocrProcessingText}>
-                        Đang trích xuất dữ liệu từ ảnh...
+                        AI đang trích xuất dữ liệu từ ảnh...
                     </Text>
                 </View>
             )}
 
-            <View style={hasDocument ? styles.disabledInput : undefined}>
+            {/* Document Number */}
+            <View style={hasDocument ? styles.disabledField : undefined}>
                 <TextInput
                     label={numberLabel}
                     value={documentNumber}
@@ -139,8 +187,8 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 />
             </View>
 
-            {/* ✅ ALWAYS show input fields (disabled if existing document) */}
-            <View style={hasDocument ? styles.disabledInput : styles.editableFields}>
+            {/* Date & Authority Fields */}
+            <View style={hasDocument ? styles.disabledField : styles.editableFields}>
                 {onIssueDatePress && (
                     <DateInput
                         label="Ngày Phát Hành"
@@ -170,18 +218,29 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
 
             {additionalFields}
 
+            {/* Images Section */}
             <Text variant="label" style={styles.uploadLabel}>
                 {hasDocument || hasNewImages 
                     ? 'Hình Ảnh Giấy Tờ' 
                     : `Tải Lên Ảnh ${uploadLabel}`}
             </Text>
 
-            {/* Show images: either new uploaded ones or existing ones */}
             {(hasDocument || hasNewImages) ? (
                 <View style={styles.imagesContainer}>
                     {/* Front Image */}
                     <View style={styles.imageWrapper}>
-                        <RNText style={styles.imageLabel}>Mặt Trước</RNText>
+                        <View style={styles.imageLabelRow}>
+                            <RNText style={styles.imageLabel}>Mặt Trước</RNText>
+                            {(frontImage || frontUrl) && (
+                                <TouchableOpacity 
+                                    onPress={() => handleRetakeImage('front')}
+                                    style={styles.retakeButton}
+                                >
+                                    <Icon name="camera" size={14} color="#B8A4FF" />
+                                    <RNText style={styles.retakeText}>Chụp lại</RNText>
+                                </TouchableOpacity>
+                            )}
+                        </View>
                         {(frontImage || frontUrl) ? (
                             <TouchableOpacity 
                                 style={styles.documentImageContainer}
@@ -193,22 +252,38 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                                     style={styles.documentImage}
                                     resizeMode="cover"
                                 />
+                                {frontImage && !frontImage.startsWith('http') && (
+                                    <View style={styles.newImageBadge}>
+                                        <Icon name="check" size={12} color="#10B981" />
+                                        <RNText style={styles.newImageText}>Mới</RNText>
+                                    </View>
+                                )}
                                 <View style={styles.imageOverlay}>
                                     <Icon name="document" size={20} color="#FFF" />
-                                    <RNText style={styles.overlayText}>Trước</RNText>
                                 </View>
                             </TouchableOpacity>
                         ) : (
                             <View style={styles.placeholderBox}>
                                 <Icon name="image" size={32} color="#666" />
-                                <RNText style={styles.placeholderText}>Thiếu Ảnh Mặt Trước</RNText>
+                                <RNText style={styles.placeholderText}>Thiếu Ảnh</RNText>
                             </View>
                         )}
                     </View>
 
                     {/* Back Image */}
                     <View style={styles.imageWrapper}>
-                        <RNText style={styles.imageLabel}>Mặt Sau</RNText>
+                        <View style={styles.imageLabelRow}>
+                            <RNText style={styles.imageLabel}>Mặt Sau</RNText>
+                            {(backImage || backUrl) && (
+                                <TouchableOpacity 
+                                    onPress={() => handleRetakeImage('back')}
+                                    style={styles.retakeButton}
+                                >
+                                    <Icon name="camera" size={14} color="#B8A4FF" />
+                                    <RNText style={styles.retakeText}>Chụp lại</RNText>
+                                </TouchableOpacity>
+                            )}
+                        </View>
                         {(backImage || backUrl) ? (
                             <TouchableOpacity 
                                 style={styles.documentImageContainer}
@@ -220,52 +295,72 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                                     style={styles.documentImage}
                                     resizeMode="cover"
                                 />
+                                {backImage && !backImage.startsWith('http') && (
+                                    <View style={styles.newImageBadge}>
+                                        <Icon name="check" size={12} color="#10B981" />
+                                        <RNText style={styles.newImageText}>Mới</RNText>
+                                    </View>
+                                )}
                                 <View style={styles.imageOverlay}>
                                     <Icon name="document" size={20} color="#FFF" />
-                                    <RNText style={styles.overlayText}>Sau</RNText>
                                 </View>
                             </TouchableOpacity>
                         ) : (
                             <View style={styles.placeholderBox}>
                                 <Icon name="image" size={32} color="#666" />
-                                <RNText style={styles.placeholderText}>Thiếu Ảnh Mặt Sau</RNText>
+                                <RNText style={styles.placeholderText}>Thiếu Ảnh</RNText>
                             </View>
                         )}
                     </View>
                 </View>
             ) : (
-                <DocumentUploadPlaceholder onUpload={onUpload} />
+                <DocumentUploadPlaceholder onUpload={() => setShowImagePicker(true)} />
             )}
 
-            {/* Show status message if new images are uploaded */}
+            {/* Status Messages */}
             {hasNewImages && !ocrProcessing && (
                 <View style={styles.uploadedBadge}>
-                    <Icon name="check" size={16} color="#10B981" />
+                    <Icon name="info" size={16} color="#3B82F6" />
                     <Text style={styles.uploadedText}>
                         {frontImage && backImage 
-                            ? 'Cả 2 ảnh đã có. Nhấn "Cập Nhập" để lưu.'
+                            ? 'Cả 2 ảnh đã có. Nhấn "Cập Nhật" để lưu thay đổi.'
                             : 'Vui lòng chụp cả mặt trước lẫn sau.'}
                     </Text>
                 </View>
             )}
 
-            <View style={styles.autoFillContainer}>
-                <View style={styles.autoFillLeft}>
-                    <Text>Tự động điền từ ảnh</Text>
-                    {autoFill && (
-                        <View style={styles.autoFillBadge}>
-                            <Icon name="cross" size={12} color="#7C3AED" />
-                            <Text style={styles.autoFillBadgeText}>AI</Text>
-                        </View>
-                    )}
+            {/* Auto-fill Toggle */}
+            {!hasDocument && (
+                <View style={styles.autoFillContainer}>
+                    <View style={styles.autoFillLeft}>
+                        <Icon name="info" size={16} color="#B8A4FF" />
+                        <Text style={styles.autoFillLabel}>Tự động điền bằng AI</Text>
+                        {autoFill && (
+                            <View style={styles.autoFillBadge}>
+                                <Icon name="checkmark" size={10} color="#B8A4FF" />
+                                <Text style={styles.autoFillBadgeText}>BẬT</Text>
+                            </View>
+                        )}
+                    </View>
+                    <Switch 
+                        value={autoFill} 
+                        onValueChange={onAutoFillChange}
+                        trackColor={{ false: '#374151', true: '#B8A4FF50' }}
+                        thumbColor={autoFill ? '#B8A4FF' : '#9CA3AF'}
+                    />
                 </View>
-                <Switch 
-                    value={autoFill} 
-                    onValueChange={onAutoFillChange}
-                    trackColor={{ false: '#767577', true: '#7C3AED80' }}
-                    thumbColor={autoFill ? '#7C3AED' : '#f4f3f4'}
-                />
-            </View>
+            )}
+
+            {/* Image Picker Modal */}
+            <ImagePickerModal
+                visible={showImagePicker}
+                onClose={() => {
+                    setShowImagePicker(false);
+                    setRetakingSide(null);
+                }}
+                onSelect={handleImagePickerSelect}
+                title={retakingSide ? `Chụp Lại Mặt ${retakingSide === 'front' ? 'Trước' : 'Sau'}` : 'Tải Lên Giấy Tờ'}
+            />
         </View>
     );
 };
@@ -273,6 +368,23 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
 const styles = StyleSheet.create({
     container: {
         marginBottom: 24,
+    },
+    editModeBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F59E0B20',
+        padding: 12,
+        borderRadius: 8,
+        gap: 8,
+        marginBottom: 12,
+        borderLeftWidth: 3,
+        borderLeftColor: '#F59E0B',
+    },
+    editModeText: {
+        flex: 1,
+        color: '#F59E0B',
+        fontSize: 13,
+        fontWeight: '500',
     },
     header: {
         flexDirection: 'row',
@@ -287,7 +399,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        fontWeight: '500',
+        fontWeight: '600',
+        fontSize: 16,
     },
     verifiedBadge: {
         flexDirection: 'row',
@@ -300,7 +413,7 @@ const styles = StyleSheet.create({
     },
     verifiedText: {
         color: '#10B981',
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '600',
     },
     headerActions: {
@@ -312,8 +425,9 @@ const styles = StyleSheet.create({
         padding: 0,
     },
     updateText: {
-        color: '#7C3AED',
+        color: '#B8A4FF',
         fontSize: 14,
+        fontWeight: '600',
     },
     deleteButton: {
         padding: 8,
@@ -321,7 +435,7 @@ const styles = StyleSheet.create({
     ocrProcessingBanner: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#7C3AED20',
+        backgroundColor: '#B8A4FF20',
         padding: 12,
         borderRadius: 8,
         gap: 12,
@@ -329,17 +443,21 @@ const styles = StyleSheet.create({
     },
     ocrProcessingText: {
         flex: 1,
-        color: '#7C3AED',
+        color: '#B8A4FF',
         fontSize: 13,
         fontWeight: '500',
     },
     editableFields: {
-        gap: 12,
-        marginTop: 8,
+        gap: 0,
+    },
+    disabledField: {
+        opacity: 0.7,
+        pointerEvents: 'none',
     },
     uploadLabel: {
-        marginTop: 8,
-        marginBottom: 8,
+        marginTop: 16,
+        marginBottom: 12,
+        fontWeight: '600',
     },
     imagesContainer: {
         flexDirection: 'row',
@@ -349,54 +467,87 @@ const styles = StyleSheet.create({
     imageWrapper: {
         flex: 1,
     },
+    imageLabelRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
     imageLabel: {
         fontSize: 12,
         color: '#9CA3AF',
-        marginBottom: 6,
-        fontWeight: '500',
+        fontWeight: '600',
+    },
+    retakeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        backgroundColor: '#B8A4FF20',
+    },
+    retakeText: {
+        color: '#B8A4FF',
+        fontSize: 11,
+        fontWeight: '600',
     },
     documentImageContainer: {
         position: 'relative',
         borderRadius: 12,
         overflow: 'hidden',
-        backgroundColor: '#000',
-        height: 140,
+        backgroundColor: '#111',
+        height: 160,
+        borderWidth: 1,
+        borderColor: '#2A2A2A',
     },
     documentImage: {
         width: '100%',
         height: '100%',
     },
-    imageOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        justifyContent: 'center',
+    newImageBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#10B981',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
         gap: 4,
     },
-    overlayText: {
+    newImageText: {
         color: '#FFF',
-        fontSize: 12,
-        fontWeight: '500',
+        fontSize: 10,
+        fontWeight: '700',
+    },
+    imageOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     placeholderBox: {
-        height: 140,
+        height: 160,
         borderRadius: 12,
-        backgroundColor: '#1F2937',
-        borderWidth: 1,
-        borderColor: '#374151',
+        backgroundColor: '#111',
+        borderWidth: 2,
+        borderColor: '#2A2A2A',
         borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
         gap: 8,
     },
     placeholderText: {
-        color: '#9CA3AF',
+        color: '#666',
         fontSize: 12,
+        fontWeight: '500',
     },
     uploadedBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#10B98120',
+        backgroundColor: '#3B82F620',
         padding: 12,
         borderRadius: 8,
         gap: 8,
@@ -404,7 +555,7 @@ const styles = StyleSheet.create({
     },
     uploadedText: {
         flex: 1,
-        color: '#10B981',
+        color: '#3B82F6',
         fontSize: 13,
         fontWeight: '500',
     },
@@ -412,29 +563,34 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 12,
+        marginTop: 16,
+        padding: 12,
+        backgroundColor: '#1A1A1A',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#2A2A2A',
     },
     autoFillLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
+    autoFillLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
     autoFillBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#7C3AED20',
+        backgroundColor: '#B8A4FF30',
         paddingHorizontal: 6,
-        paddingVertical: 2,
+        paddingVertical: 3,
         borderRadius: 8,
         gap: 3,
     },
     autoFillBadgeText: {
-        color: '#7C3AED',
+        color: '#B8A4FF',
         fontSize: 10,
         fontWeight: '700',
-    },
-    disabledInput: {
-        opacity: 0.6,
-        pointerEvents: 'none',
     },
 });
