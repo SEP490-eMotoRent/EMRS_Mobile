@@ -10,9 +10,9 @@ import { useRenterProfile } from '../../../hooks/profile/useRenterProfile';
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icons/Icons';
 import { Text } from '../../atoms/Text';
+import { DocumentDatePicker } from '../../molecules/Documents/DocumentDatePicker';
 import { TextInput } from '../../molecules/TextInput';
 import { DocumentSection } from '../../organisms/ProfileOrganism/DocumentSection';
-import { DocumentDatePicker } from '../../molecules/Documents/DocumentDatePicker';
 
 // Helper: Normalize URI to string
 const normalizeUri = (uri: string | string[] | undefined): string | undefined => {
@@ -275,7 +275,30 @@ export const DriverLicenseVerificationScreen = ({ navigation }: any) => {
             setLicenseBackImage(undefined);
         } catch (error: any) {
             console.error('❌ License document error:', error);
-            Alert.alert('Lỗi', error.message || 'Không thể gửi bằng lái');
+            
+            // Parse user-friendly error message
+            let userMessage = 'Không thể xử lý bằng lái. Vui lòng thử lại sau.';
+            
+            const errorMsg = error.message?.toLowerCase() || '';
+            
+            if (errorMsg.includes('required') && errorMsg.includes('file')) {
+                userMessage = 'Hiện tại không thể cập nhật giấy tờ.\n\n' +
+                            'Backend yêu cầu tải lại ảnh. Tính năng này sẽ sớm được khắc phục.';
+            } else if (errorMsg.includes('network') || errorMsg.includes('timeout')) {
+                userMessage = 'Mất kết nối mạng.\n\n' +
+                            'Vui lòng kiểm tra Internet và thử lại.';
+            } else if (errorMsg.includes('validation') || errorMsg.includes('invalid')) {
+                userMessage = 'Thông tin chưa đầy đủ.\n\n' +
+                            'Vui lòng kiểm tra và điền đầy đủ các trường bắt buộc.';
+            } else if (errorMsg.includes('existed') || errorMsg.includes('duplicate')) {
+                userMessage = 'Bằng lái này đã được đăng ký trong hệ thống.\n\n' +
+                            'Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.';
+            }
+            
+            Alert.alert('Không Thể Tải Lên', userMessage, [
+                { text: 'Đóng', style: 'cancel' },
+                { text: 'Thử Lại', onPress: () => handleLicenseDocumentSubmit() }
+            ]);
         }
     };
 
