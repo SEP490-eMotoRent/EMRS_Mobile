@@ -1,3 +1,3 @@
 export interface ScanFaceRequest {
-    image: string;
+    image: File;
 }

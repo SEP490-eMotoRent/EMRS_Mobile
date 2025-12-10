@@ -60,6 +60,14 @@ export class RenterRepositoryImpl implements RenterRepository {
         }
     }
 
+    async getById(id: string): Promise<RenterResponse> {
+        try {
+            return await this.remote.getById(id);
+        } catch (error) {
+            throw error;
+        }
+    }
+
     /**
      * Update renter profile
      * @param request - Update request with profile data

@@ -19,7 +19,6 @@ import { Account } from "../../../../../domain/entities/account/Account";
 import { Renter } from "../../../../../domain/entities/account/Renter";
 import { Membership } from "../../../../../domain/entities/financial/Membership";
 import { GetRenterByCitizenIdResponse } from "../../../../models/account/renter/GetRenterByCitizenIdResponse";
-import { GetRenterByCitizenIdRequest } from "../../../../models/account/renter/GetRenterByCitizenIdRequest";
 
 interface JWTPayload {
   Id: string;
@@ -209,16 +208,8 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
   ): Promise<ApiResponse<ScanFaceResponse>> {
     try {
       this.logger.info("Scanning face...");
-      const fileUri = request.image.startsWith("file://")
-        ? request.image
-        : `file://${request.image}`;
       const formData = new FormData();
-      formData.append("image", {
-        uri: fileUri,
-        name: `face_${Date.now()}.jpg`,
-        type: "image/jpeg",
-      } as any);
-
+      formData.append("image", request.image)
       const response = await this.apiClient.post<ApiResponse<ScanFaceResponse>>(
         ApiEndpoints.renter.scanFace,
         formData

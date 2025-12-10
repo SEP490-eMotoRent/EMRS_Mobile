@@ -5,7 +5,6 @@ import { ScanFaceRequest } from "../../../../models/account/renter/ScanFaceReque
 import { ScanFaceResponse } from "../../../../models/account/renter/ScanFaceResponse";
 import { UpdateRenterResponse } from "../../../../models/account/renter/update/RenterAccountUpdateResponse";
 import { UpdateRenterRequest } from "../../../../models/account/renter/update/UpdateRenterRequest";
-import { GetRenterByCitizenIdRequest } from "../../../../models/account/renter/GetRenterByCitizenIdRequest";
 import { GetRenterByCitizenIdResponse } from "../../../../models/account/renter/GetRenterByCitizenIdResponse";
 
 export interface RenterRemoteDataSource {

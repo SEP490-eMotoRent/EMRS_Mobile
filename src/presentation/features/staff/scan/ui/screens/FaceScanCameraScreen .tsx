@@ -24,6 +24,9 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import Toast from "react-native-toast-message";
+import * as MediaLibrary from "expo-media-library";
+import { FlipType, manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system/legacy";
 type FaceStatus = {
   yaw: "Left" | "Right" | "Center";
   pitch: "Up" | "Down" | "Center";
@@ -42,15 +45,30 @@ export const FaceScanCameraScreen = () => {
   const [faceStatus, setFaceStatus] = useState<FaceStatus | null>(null);
   const stableTimer = useRef<NodeJS.Timeout | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const device = useCameraDevice("front");
+  const [isCameraActive, setIsCameraActive] = useState(true);
+  const device = useCameraDevice("back");
   const cameraRef = useRef<VisionCameraType>(null);
 
   useEffect(() => {
     (async () => {
       const status = await VisionCamera.requestCameraPermission();
       console.log(`Camera permission: ${status}`);
+
+      // Request media library permission for saving photos
+      const mediaStatus = await MediaLibrary.requestPermissionsAsync();
+      console.log(`Media library permission: ${mediaStatus.status}`);
     })();
   }, [device]);
+
+  // Cleanup: Close camera when component unmounts
+  useEffect(() => {
+    return () => {
+      setIsCameraActive(false);
+      if (stableTimer.current) {
+        clearTimeout(stableTimer.current);
+      }
+    };
+  }, []);
 
   const readableStatus = useMemo(() => {
     if (!faceStatus) {
@@ -87,20 +105,36 @@ export const FaceScanCameraScreen = () => {
     if (!cameraRef.current) return null;
 
     try {
-      console.log("📸 Taking picture…");
-
       const photo = await cameraRef.current.takePhoto({
         flash: "off",
       });
+      const fixed = await manipulateAsync(
+        "file://" + photo.path,
+        [{ flip: FlipType.Horizontal }],
+        { compress: 0.9, format: SaveFormat.JPEG }
+      );
 
-      console.log("📸 Photo captured:", photo);
+      const file = {
+        uri: fixed.uri, // 👈 bắt buộc
+        type: "image/jpeg", // 👈 bắt buộc
+        name: `photo_${Date.now()}.jpg`, // 👈 bắt buộc
+      };
+      console.log("📸 Photo to upload:", {
+        uri: fixed.uri,
+        fixedUri: fixed.uri.replace("file://", ""),
+        width: fixed.width,
+        height: fixed.height,
+      });
 
-      return photo; // { path, width, height, ... }
+      const info = await FileSystem.getInfoAsync(fixed.uri);
+      console.log("📦 Local file info:", info);
+      return file; // { path, width, height, ... }
     } catch (err) {
       console.error("takePicture error:", err);
       return null;
     }
   };
+
 
   const faceDetectionOptions = useRef<FaceDetectionOptions>({
     performanceMode: "accurate",
@@ -136,8 +170,8 @@ export const FaceScanCameraScreen = () => {
             : "Close",
       });
 
-       // kiểm tra mặt ổn định
-    if (isFaceStable(face)) {
+      // kiểm tra mặt ổn định
+      if (isFaceStable(face)) {
         if (!stableTimer.current) {
           stableTimer.current = setTimeout(() => {
             onFaceStable();
@@ -163,33 +197,32 @@ export const FaceScanCameraScreen = () => {
     // 1. Kiểm tra góc đầu
     const yawOK = Math.abs(face.yawAngle) < 5;
     const pitchOK = Math.abs(face.pitchAngle) < 5;
-  
+
     // 2. Kiểm tra mắt mở
     const eyesOK =
       face.leftEyeOpenProbability > 0.6 && face.rightEyeOpenProbability > 0.6;
-  
+
     // 3. Kiểm tra kích thước khuôn mặt (QUAN TRỌNG)
     const faceWidth = face.bounds.width;
     const faceHeight = face.bounds.height;
-  
+
     const minFaceWidth = width * 0.25; // >= 25% chiều rộng màn hình
     const minFaceHeight = height * 0.25; // >= 25% chiều cao màn hình
-  
+
     const sizeOK = faceWidth > minFaceWidth && faceHeight > minFaceHeight;
-  
+
     return yawOK && pitchOK && eyesOK && sizeOK;
   };
-  
+
   const onFaceStable = async () => {
     if (isProcessing) return; // tránh double trigger
-  
+
     setIsProcessing(true);
     // TODO: GỌI API / CHỤP ẢNH / XỬ LÝ TIẾP TỤC
 
     try {
-      const photo = await takePicture();
-
-      if (!photo) {
+      const file = await takePicture();
+      if (!file) {
         Toast.show({
           type: "error",
           text1: "Không thể chụp ảnh",
@@ -197,16 +230,20 @@ export const FaceScanCameraScreen = () => {
         });
         return;
       }
+      // console.log("Captured file:", photo.path);
 
-      console.log("Captured file:", photo.path);
       const scanFaceUseCase = new ScanFaceUseCase(sl.get("RenterRepository"));
       const response = await scanFaceUseCase.execute({
-        image: photo.path,
+        image: file as any,
       });
 
-      console.log("Scan face response:", response);
       if (response.success) {
-        navigation.navigate("ScanResult", { renter: response.data });
+        // Close camera before navigating
+        setIsCameraActive(false);
+        // Small delay to ensure camera is closed
+        setTimeout(() => {
+          navigation.navigate("ScanResult", { renter: response.data });
+        }, 100);
       } else {
         Toast.show({
           type: "error",
@@ -215,7 +252,6 @@ export const FaceScanCameraScreen = () => {
         });
       }
     } catch (error) {
-      console.error("Scan face error:", error);
       Toast.show({
         type: "error",
         text1: "Đã xảy ra lỗi",
@@ -237,7 +273,7 @@ export const FaceScanCameraScreen = () => {
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
+        isActive={isCameraActive}
         photo={true}
         faceDetectionCallback={handleFacesDetection}
         faceDetectionOptions={faceDetectionOptions}
@@ -251,12 +287,12 @@ export const FaceScanCameraScreen = () => {
             <Text style={styles.guideSubtitle}>
               Giữ thẳng, mở mắt và nhìn chính diện
             </Text>
-        </View>
+          </View>
           <View style={styles.statusGroup}>
             <Text style={styles.statusText}>{readableStatus.yaw}</Text>
             <Text style={styles.statusText}>{readableStatus.pitch}</Text>
             <Text style={styles.statusText}>{readableStatus.eye}</Text>
-        </View>
+          </View>
         </View>
       </View>
 
@@ -265,7 +301,9 @@ export const FaceScanCameraScreen = () => {
           <View style={styles.modalCard}>
             <ActivityIndicator size="large" color="#C9B6FF" />
             <Text style={styles.modalTitle}>Đang xử lý khuôn mặt...</Text>
-            <Text style={styles.modalSubtitle}>Vui lòng giữ yên trong giây lát</Text>
+            <Text style={styles.modalSubtitle}>
+              Vui lòng giữ yên trong giây lát
+            </Text>
           </View>
         </View>
       </Modal>

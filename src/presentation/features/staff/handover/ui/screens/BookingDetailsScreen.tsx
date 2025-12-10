@@ -1065,6 +1065,7 @@ const getLastReceipt = () => {
         )}
 
         {booking?.bookingStatus === "Booked" &&
+          user?.role === "RENTER" &&
           !hasRentalReceipt &&
           !hasContract && (
             <View style={styles.editRow}>
@@ -1096,6 +1097,7 @@ const getLastReceipt = () => {
                   currentVehicleId: booking?.vehicle?.id,
                   licensePlate: booking?.vehicle?.licensePlate,
                   startOldVehicleOdometerKm: getLastReceipt()?.startOdometerKm,
+                  vehicleModelId: booking?.vehicleModel?.id,
                   modelName:
                     booking?.vehicleModel?.modelName ||
                     booking?.vehicle?.vehicleModel?.modelName,
