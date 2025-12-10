@@ -73,6 +73,7 @@ export const SwapSelectVehicleScreen: React.FC = () => {
     currentVehicleId,
     startOldVehicleOdometerKm,
     licensePlate,
+    vehicleModelId,
     modelName,
   } = route.params;
 
@@ -81,9 +82,6 @@ export const SwapSelectVehicleScreen: React.FC = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [filterColor, setFilterColor] = useState("");
   const [filterBatteryMin, setFilterBatteryMin] = useState("");
-  const [filterStatus, setFilterStatus] = useState<
-    "Available" | "Booked" | "Rented" | ""
-  >("Available");
 
   useEffect(() => {
     vehicleSwapDraftStore.init({
@@ -100,9 +98,9 @@ export const SwapSelectVehicleScreen: React.FC = () => {
     startOldVehicleOdometerKm,
     licensePlate,
     modelName,
+    vehicleModelId,
     filterColor,
     filterBatteryMin,
-    filterStatus,
   ]);
 
   const fetchVehicles = async () => {
@@ -116,10 +114,10 @@ export const SwapSelectVehicleScreen: React.FC = () => {
         filterColor || "",
         filterBatteryMin ? Number(filterBatteryMin) : undefined,
         undefined,
-        filterStatus || "Available",
+        "Available",
         undefined,
         user?.branchId,
-        undefined,
+        vehicleModelId,
         20,
         1
       );
@@ -265,7 +263,7 @@ export const SwapSelectVehicleScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {(filterColor || filterBatteryMin || filterStatus) && (
+        {(filterColor || filterBatteryMin) && (
           <View style={styles.activeFiltersRow}>
             {filterColor ? (
               <View style={[styles.filterChip, styles.chipColor]}>
@@ -279,16 +277,6 @@ export const SwapSelectVehicleScreen: React.FC = () => {
               <View style={[styles.filterChip, styles.chipBattery]}>
                 <Text style={styles.filterChipText}>{filterBatteryMin}+ %</Text>
                 <TouchableOpacity onPress={() => setFilterBatteryMin("")}>
-                  <AntDesign name="close" size={12} color="#000" />
-                </TouchableOpacity>
-              </View>
-            ) : null}
-            {filterStatus ? (
-              <View style={[styles.filterChip, styles.chipStatus]}>
-                <Text style={styles.filterChipText}>
-                  {getStatusText(filterStatus)}
-                </Text>
-                <TouchableOpacity onPress={() => setFilterStatus("")}>
                   <AntDesign name="close" size={12} color="#000" />
                 </TouchableOpacity>
               </View>
@@ -348,41 +336,12 @@ export const SwapSelectVehicleScreen: React.FC = () => {
               />
             </View>
 
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Trạng thái</Text>
-              <View style={styles.statusRow}>
-                {["Available", "Booked", "Rented"].map((s) => {
-                  const active = filterStatus === s;
-                  return (
-                    <TouchableOpacity
-                      key={s}
-                      style={[
-                        styles.statusChip,
-                        active && styles.statusChipActive,
-                      ]}
-                      onPress={() => setFilterStatus(active ? "" : (s as any))}
-                    >
-                      <Text
-                        style={[
-                          styles.statusChipText,
-                          active && styles.statusChipTextActive,
-                        ]}
-                      >
-                        {getStatusText(s)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.resetBtn]}
                 onPress={() => {
                   setFilterColor("");
                   setFilterBatteryMin("");
-                  setFilterStatus("Available");
                   setShowFilter(false);
                 }}
               >

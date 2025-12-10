@@ -470,6 +470,7 @@ export type StaffStackParamList = {
     currentVehicleId?: string;
     startOldVehicleOdometerKm?: number;
     licensePlate?: string;
+    vehicleModelId?: string;
     modelName?: string;
   };
   SwapOldVehicle: { startOldVehicleOdometerKm?: number, newVehicleOdometerKm?: number, newVehicleBatteryPercentage?: number };

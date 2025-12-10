@@ -42,23 +42,30 @@ export class AxiosClient {
 
         // Let Axios set the multipart boundary automatically
         if (config.data instanceof FormData) {
-          // DO NOT delete Content-Type
-          // Axios will set: multipart/form-data; boundary=...
-          // @ts-ignore
-          for (const [key, value] of config.data._parts) {
-            // If value is a File/Blob, you can log name & type
-            if (value && typeof value === "object" && "uri" in value) {
-              // React Native file object from Expo/ImagePicker
-              console.log(
-                `${key}: File { uri: ${value.uri}, name: ${value.name}, type: ${value.type} }`
-              );
-            } else {
-              console.log(`${key}:`, value);
-            }
-          }
           config.headers["Content-Type"] = "multipart/form-data";
 
-          console.log("Request data:", config.data);
+          // Build CURL command
+          let curl = `curl -X ${config.method?.toUpperCase()} '${
+            config.baseURL
+          }${config.url}'`;
+
+          // Headers
+          Object.entries(config.headers || {}).forEach(([key, value]) => {
+            curl += ` \\\n  -H '${key}: ${value}'`;
+          });
+
+          // FormData
+          // @ts-ignore
+          for (const [key, value] of config.data._parts) {
+            if (value?.uri) {
+              const filePath = value.uri.replace("file://", "");
+              curl += ` \\\n  -F '${key}=@${filePath};type=${value.type}'`;
+            } else {
+              curl += ` \\\n  -F '${key}=${value}'`;
+            }
+          }
+
+          console.log("📌 Generated cURL:\n", curl);
         }
 
         AppLogger.getInstance().info(

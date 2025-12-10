@@ -21,7 +21,10 @@ import { Camera, CameraView } from "expo-camera";
 import Toast from "react-native-toast-message";
 import { GetByCitizenIdUseCase } from "../../../../../../domain/usecases/account/GetByCitizenIdUseCase";
 import sl from "../../../../../../core/di/InjectionContainer";
+import * as ImagePicker from "expo-image-picker";
 
+import { manipulateAsync, FlipType, SaveFormat } from "expo-image-manipulator";
+import { ScanFaceUseCase } from "../../../../../../domain/usecases/account/ScanFaceUseCase";
 type ScanFaceScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
   "ScanFace"
@@ -65,7 +68,11 @@ export const ScanFaceScreen: React.FC = () => {
   //     setLoading(true);
   //     const scanFaceUseCase = new ScanFaceUseCase(sl.get("RenterRepository"));
   //     const response = await scanFaceUseCase.execute({
-  //       image: flipped.uri,
+  //       image: {
+  //         uri: flipped.uri,
+  //         type: "image/jpeg",
+  //         name: `photo_${Date.now()}.jpg`,
+  //       } as any,
   //     });
 
   //     if (response.success) {
@@ -240,7 +247,7 @@ export const ScanFaceScreen: React.FC = () => {
             onPress={() =>
               navigation.navigate("ScanCitizenResult", {
                 renter: {
-                  id: "019ad548-22f9-76f0-a942-38180cb3d90c",
+                  id: "019ad54c-7180-726b-b212-488d91de195d",
                   email: "john.doe@example.com",
                   phone: "1234567890",
                   address: "123 Main St, Anytown, USA",
@@ -260,6 +267,8 @@ export const ScanFaceScreen: React.FC = () => {
         </View>
       </ScrollView>
 
+
+      
       <Modal transparent visible={loading} animationType="fade">
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
@@ -292,7 +301,6 @@ export const ScanFaceScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
-
           {hasPermission === null ? (
             <Text style={styles.guideText}>
               Đang yêu cầu quyền truy cập camera...

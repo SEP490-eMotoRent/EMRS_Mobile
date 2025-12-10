@@ -24,6 +24,9 @@ import { VehicleModel } from "../../../../../../domain/entities/vehicle/VehicleM
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { RootState } from "../../../../authentication/store";
+import { Renter } from "../../../../../../domain/entities/account/Renter";
+import { GetRenterByIdUseCase } from "../../../../../../domain/usecases/account/GetRenterByIdUseCase";
+import { RenterResponse } from "../../../../../../data/models/account/renter/RenterResponse";
 
 type BookingReturnListScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -50,9 +53,11 @@ export const BookingReturnListScreen: React.FC = () => {
   const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([]);
   const [showModelList, setShowModelList] = useState<boolean>(false);
   const [shouldRefetch, setShouldRefetch] = useState<boolean>(false);
+  const [renter, setRenter] = useState<RenterResponse | null>(null);
   useEffect(() => {
     fetchBookings(1);
     fetchVehicleModels();
+    fetchRenter();
   }, []);
 
   useEffect(() => {
@@ -64,6 +69,17 @@ export const BookingReturnListScreen: React.FC = () => {
       setShouldRefetch(false);
     }
   }, [shouldRefetch]);
+
+  const fetchRenter = async () => {
+    try {
+      const uc = new GetRenterByIdUseCase(sl.get("RenterRepository"));
+      const res = await uc.execute(renterId);
+      setRenter(res);
+    } catch (error) {
+      console.error("Error fetching renter:", error);
+      setRenter(null);
+    }
+  };
 
   const fetchVehicleModels = async () => {
     try {
@@ -290,21 +306,18 @@ export const BookingReturnListScreen: React.FC = () => {
       </View>
     );
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.scrollContent}>
         <ScreenHeader
           title="Trả xe khách hàng"
           subtitle={
-            bookings?.[0]?.renter?.account?.fullname
-              ? `Đặt chỗ trả của ${bookings?.[0]?.renter?.account?.fullname}`
+            renter?.account?.fullname
+              ? `Đặt chỗ trả của ${renter?.account?.fullname}`
               : "Đặt chỗ trả của khách hàng"
           }
           submeta={
-            bookings?.[0]
-              ? bookings?.[0]?.startDatetime?.toLocaleDateString("en-GB") || ""
-              : "Đang tải..."
+            new Date().toLocaleString("en-GB")
           }
           onBack={() => navigation.goBack()}
         />
@@ -340,7 +353,7 @@ export const BookingReturnListScreen: React.FC = () => {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
                 Danh sách trả của{" "}
-                {bookings?.[0]?.renter?.account?.fullname ?? "Khách hàng"}
+                {renter?.account?.fullname ?? "Khách hàng"}
               </Text>
               <View style={styles.countBadge}>
                 <Text style={styles.countText}>{bookings?.length ?? 0}</Text>

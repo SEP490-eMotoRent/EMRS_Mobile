@@ -357,13 +357,6 @@ export const RentedVehicleDetailsScreen: React.FC = () => {
                   {formatVnd(vehicle.vehicleModel.rentalPricing.rentalPrice)}
                 </Text>
               </View>
-              <View style={styles.pricingDivider} />
-              <View style={styles.pricingItem}>
-                <Text style={styles.pricingLabel}>Phí vượt km</Text>
-                <Text style={styles.pricingValue}>
-                  {formatVnd(vehicle.vehicleModel.rentalPricing.excessKmPrice)}
-                </Text>
-              </View>
             </View>
           </View>
         )}

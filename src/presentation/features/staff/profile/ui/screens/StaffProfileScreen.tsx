@@ -117,27 +117,6 @@ export const StaffProfileScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Stats Overview */}
-        <View style={styles.statsCard}>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{staffStats.totalHandovers}</Text>
-              <Text style={styles.statLabel}>Handovers</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{staffStats.totalReturns}</Text>
-              <Text style={styles.statLabel}>Returns</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{staffStats.totalScans}</Text>
-              <Text style={styles.statLabel}>Scans</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{staffStats.rating}</Text>
-              <Text style={styles.statLabel}>Rating</Text>
-            </View>
-          </View>
-        </View>
 
         {/* Quick Actions */}
         {quickActions.map((action) => (
