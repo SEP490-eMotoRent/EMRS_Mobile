@@ -115,7 +115,7 @@ export const BookingDetailsScreen: React.FC = () => {
       setIsLoading(true);
       await container.booking.contract.generate.execute(
         bookingId,
-        rentalReceipts[0]?.id || ""
+        getLastReceipt()?.id || ""
       );
       navigation.navigate("AwaitingApproval");
     } catch (error: any) {
@@ -166,14 +166,14 @@ export const BookingDetailsScreen: React.FC = () => {
 const getLastReceipt = () => {
     const receipts = rentalReceipts;
     const bookingVehicleId = booking?.vehicle?.id || booking?.vehicleId || null;
-    const lastReceipt = receipts.length
+    const lastReceipt = receipts?.length
       ? (() => {
-          if (!bookingVehicleId) return receipts[receipts.length - 1];
+          if (!bookingVehicleId) return receipts[receipts?.length - 1];
           const matched = [...receipts].reverse().find((r) => {
             const id = r?.vehicle?.id || r?.booking?.vehicle?.id || null;
             return id === bookingVehicleId;
           });
-          return matched || receipts[receipts.length - 1];
+          return matched || receipts[receipts?.length - 1];
         })()
       : null;
     return lastReceipt;
@@ -282,21 +282,6 @@ const getLastReceipt = () => {
   }, [booking?.bookingStatus]);
 
   // Temporary summary (will be replaced by API output when available)
-  const returnSummary = {
-    baseRentalFee: 3130000,
-    totalChargingFee: 0,
-    totalAdditionalFees: 0,
-    feesBreakdown: {
-      damageFee: 0,
-      cleaningFee: 0,
-      lateReturnFee: 0,
-      crossBranchFee: 0,
-      excessKmFee: 0,
-    },
-    totalAmount: 3130000,
-    depositAmount: 2000000,
-    refundAmount: -1130000,
-  } as const;
 
   const formatVnd = (n: number) =>
     new Intl.NumberFormat("vi-VN").format(n) + " VND";
@@ -393,7 +378,7 @@ const getLastReceipt = () => {
         {/* Payment Ready Banner - Show when return files exist and status is Renting */}
         {user?.role === "RENTER" &&
           booking?.bookingStatus === "Returned" &&
-          rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
+          getLastReceipt()?.returnVehicleImageFiles?.length > 0 && (
             // rentalReceipts?.[0]?.checkListFile &&
             <TouchableOpacity
               style={styles.paymentReadyBanner}
@@ -848,7 +833,7 @@ const getLastReceipt = () => {
         )}
 
         {/* Return Summary */}
-        {booking?.bookingStatus === "Completed" && (
+        {booking?.bookingStatus === "Returned" && (
         <View style={styles.section}>
           <SectionHeader title="Tóm tắt trả xe" icon="profile" />
           <View style={styles.summaryCard}>
@@ -873,7 +858,7 @@ const getLastReceipt = () => {
                 </Text>
               </View>
             )}
-              {summary?.feesBreakdown?.damageDetails.length > 0 && (
+              {summary?.feesBreakdown?.damageDetails?.length > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryKey}>Phí hư hỏng</Text>
                 <Text style={styles.summaryVal}>
@@ -965,10 +950,10 @@ const getLastReceipt = () => {
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <SectionHeader title="Biên bản bàn giao" icon="file-text" />
-              {rentalReceipts && rentalReceipts.length > 1 && (
+              {rentalReceipts && rentalReceipts?.length > 1 && (
                 <View style={styles.receiptCountBadge}>
                   <Text style={styles.receiptCountText}>
-                    {rentalReceipts.length} biên bản
+                    {rentalReceipts?.length} biên bản
                   </Text>
                 </View>
               )}
@@ -980,14 +965,14 @@ const getLastReceipt = () => {
               >
                 <AntDesign name="file-text" size={18} color="#000" />
                 <Text style={styles.actionBtnText}>
-                  {rentalReceipts && rentalReceipts.length > 1
-                    ? `Xem ${rentalReceipts.length} biên bản bàn giao`
+                  {rentalReceipts && rentalReceipts?.length > 1
+                    ? `Xem ${rentalReceipts?.length} biên bản bàn giao`
                     : "Xem biên bản bàn giao"}
                 </Text>
               </TouchableOpacity>
-              {booking?.bookingStatus === "Completed" ||
-                (booking?.bookingStatus === "Returned" &&
-                  rentalReceipts?.[0]?.returnVehicleImageFiles?.length > 0 && (
+              {(booking?.bookingStatus === "Completed" ||
+                booking?.bookingStatus === "Returned") &&
+                  getLastReceipt()?.returnVehicleImageFiles?.length > 0 && (
                     // rentalReceipts?.[0]?.checkListReturnFile &&
                 <TouchableOpacity
                   style={[styles.actionBtn, styles.returnReportBtn]}
@@ -998,7 +983,7 @@ const getLastReceipt = () => {
                     Xem biên bản trả xe
                   </Text>
                 </TouchableOpacity>
-                  ))}
+                  )}
             </InfoCard>
           </View>
         )}

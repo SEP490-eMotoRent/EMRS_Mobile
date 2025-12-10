@@ -52,7 +52,8 @@ export interface BookingRemoteDataSource {
     bookingStatus: string,
     date: string,
     pageNum: number,
-    pageSize: number
+    pageSize: number,
+    branchId?: string
   ): Promise<PaginatedBookingResponse>;
 
   /**

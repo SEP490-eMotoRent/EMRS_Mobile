@@ -102,7 +102,8 @@ export const CustomerRentalsScreen: React.FC = () => {
         filterStatus,
         undefined,
         page,
-        pageSize
+        pageSize,
+        user?.branchId
       );
 
       // const bookingsData = unwrapResponse(response);

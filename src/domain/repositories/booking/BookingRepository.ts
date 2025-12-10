@@ -61,7 +61,8 @@ export interface BookingRepository {
     bookingStatus: string,
     date: string,
     pageNum: number,
-    pageSize: number
+    pageSize: number,
+    branchId?: string
   ): Promise<PaginatedBooking>;
 
   /**
