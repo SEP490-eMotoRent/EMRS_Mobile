@@ -1,5 +1,6 @@
 import { StackNavigationProp } from '@react-navigation/stack';
-import React from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback } from 'react';
 import {
     ActivityIndicator,
     RefreshControl,
@@ -41,6 +42,14 @@ export const DocumentManagementHubScreen: React.FC<DocumentManagementHubScreenPr
 }) => {
     const { renter, renterResponse, loading, refresh } = useRenterProfile();
 
+    // 🔄 Auto-refresh documents when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            console.log('📱 DocumentManagementHub focused - refreshing documents');
+            refresh();
+        }, [])
+    );
+
     const getDocumentStatus = (doc?: DocumentResponse): DocumentStatus => {
         if (!doc) return 'needed';
         
@@ -68,7 +77,7 @@ export const DocumentManagementHubScreen: React.FC<DocumentManagementHubScreenPr
         });
     };
 
-    if (loading || !renterResponse) {
+    if (loading && !renterResponse) {
         return (
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.loadingContainer}>
@@ -79,10 +88,10 @@ export const DocumentManagementHubScreen: React.FC<DocumentManagementHubScreenPr
     }
 
     // Extract documents
-    const citizenDoc = renterResponse.documents.find(
+    const citizenDoc = renterResponse?.documents.find(
         (doc) => doc.documentType === 'Citizen'
     );
-    const licenseDoc = renterResponse.documents.find(
+    const licenseDoc = renterResponse?.documents.find(
         (doc) =>
             doc.documentType === 'Driving' ||
             doc.documentType === 'License' ||
