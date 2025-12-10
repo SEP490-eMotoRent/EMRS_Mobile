@@ -241,6 +241,7 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
                     expiryDate: convertDisplayToISO(citizenExpiryDate),
                     issuingAuthority: citizenAuthority,
                     verificationStatus: citizenDoc.verificationStatus,
+                    verifiedAt: citizenDoc.verifiedAt,
                     idFileFront: citizenDoc.images[0].id,
                     idFileBack: citizenDoc.images[1].id,
                 };
