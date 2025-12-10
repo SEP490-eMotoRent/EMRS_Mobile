@@ -149,7 +149,8 @@ export class BookingRepositoryImpl implements BookingRepository {
     bookingStatus: string,
     date: string,
     pageNum: number,
-    pageSize: number
+    pageSize: number,
+    branchId?: string
   ): Promise<PaginatedBooking> {
     const paginatedResponse: PaginatedBookingResponse =
       await this.remote.getBookings(
@@ -158,7 +159,8 @@ export class BookingRepositoryImpl implements BookingRepository {
         bookingStatus,
         date,
         pageNum,
-        pageSize
+        pageSize,
+        branchId
       );
 
     const items = paginatedResponse.items.map((item) => {

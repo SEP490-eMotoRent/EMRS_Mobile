@@ -198,7 +198,8 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     bookingStatus: string,
     date: string,
     pageNum: number,
-    pageSize: number
+    pageSize: number,
+    branchId?: string
   ): Promise<PaginatedBookingResponse> {
     try {
       const response = await this.axiosClient.get<
@@ -211,6 +212,7 @@ export class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
           date,
           pageNum,
           pageSize,
+          branchId,
         },
       });
       return unwrapResponse(response.data);

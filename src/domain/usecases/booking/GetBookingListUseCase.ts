@@ -10,7 +10,8 @@ export class GetBookingListUseCase {
     bookingStatus: string,
     date: string,
     pageNum: number,
-    pageSize: number
+    pageSize: number,
+    branchId?: string
   ): Promise<PaginatedBooking> {
     return await this.bookingRepository.getBookings(
         vehicleModelId,
@@ -18,7 +19,8 @@ export class GetBookingListUseCase {
         bookingStatus,
         date,
         pageNum,
-        pageSize
+        pageSize,
+        branchId
       );
   }
 }
