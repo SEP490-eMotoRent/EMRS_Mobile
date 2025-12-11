@@ -203,11 +203,11 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                         style={styles.primaryButton} 
                         onPress={(e) => {
                             e.stopPropagation();
-                            onBookSimilar?.();
+                            onViewDetails?.();
                         }}
                     >
-                        <Icon name="search" size={13} color="#000" solid />
-                        <Text style={styles.primaryButtonText}>Đặt xe tương tự</Text>
+                        <Icon name="file-alt" size={13} color="#000" solid />
+                        <Text style={styles.primaryButtonText}>Chi tiết</Text>
                     </TouchableOpacity>
                 )}
             </View>

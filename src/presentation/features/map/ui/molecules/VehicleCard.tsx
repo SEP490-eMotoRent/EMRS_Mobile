@@ -1,8 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
+import React from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
 export interface ElectricVehicle {
@@ -206,15 +206,17 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         width: "100%",
-        height: 120, // ✅ Slightly taller (was 110)
-        backgroundColor: "#141414", // ✅ Slightly lighter (was #1a1a1a)
+        height: 170,
+        backgroundColor: "#0f0f0f",
         justifyContent: "center",
         alignItems: "center",
         position: "relative",
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(157, 127, 245, 0.1)",
     },
     vehicleImage: {
-        width: "100%",
-        height: "100%",
+        width: "90%",
+        height: "90%",
     },
     imagePlaceholder: {
         width: "100%",
@@ -223,8 +225,8 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     placeholderIcon: {
-        fontSize: 48, // ✅ Larger (was 40)
-        opacity: 0.3, // ✅ More subtle (was 0.5)
+        fontSize: 64,
+        opacity: 0.25,
     },
     colorDotContainer: {
         position: "absolute",

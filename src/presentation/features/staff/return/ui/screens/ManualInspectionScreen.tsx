@@ -346,7 +346,12 @@ export const ManualInspectionScreen: React.FC = () => {
         type: "success",
       });
     } catch (error) {
-      Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
+      // Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
+      Toast.show({
+        text1: "Không thể gửi kiểm tra",
+        text2: error.message,
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -26,6 +26,8 @@ import { AssignVehicleToBookingUseCase } from "../../../../../../domain/usecases
 import { CreateReceiptUseCase } from "../../../../../../domain/usecases/receipt/CreateReceiptUseCase";
 import Toast from "react-native-toast-message";
 import { ChangeVehicleUseCase } from "../../../../../../domain/usecases/receipt/ChangeVehicleUseCase";
+import { UpdateHandoverReceiptUseCase } from "../../../../../../domain/usecases/receipt/UpdateHandoverReceiptUseCase";
+import { useGetLastReceipt } from "../../../return/ui/hooks/useGetLastReceipt";
 
 type PhotoTileProps = {
   uri: string | null;
@@ -135,6 +137,8 @@ export const VehicleInspectionScreen: React.FC = () => {
   const [photosCardY, setPhotosCardY] = useState<number>(0);
   const [inputCardY, setInputCardY] = useState<number>(0);
   const [checklistContainerY, setChecklistContainerY] = useState<number>(0);
+  const [hasFilledData, setHasFilledData] = useState(false);
+  const { getLastReceipt } = useGetLastReceipt({ bookingId });
 
   const ensurePermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
@@ -473,6 +477,44 @@ export const VehicleInspectionScreen: React.FC = () => {
     }
   }, [startBatteryPercentage, errors.battery]);
 
+  // Auto-fill data from last receipt when updating
+  useEffect(() => {
+    if (isUpdateReceipt && !hasFilledData) {
+      const lastReceipt = getLastReceipt();
+      if (lastReceipt) {
+        // Fill photos from handOverVehicleImageFiles
+        const vehicleFiles = lastReceipt.handOverVehicleImageFiles || [];
+        if (vehicleFiles.length > 0) {
+          setPhotos({
+            front: vehicleFiles[0] || null,
+            back: vehicleFiles[1] || null,
+            left: vehicleFiles[2] || null,
+            right: vehicleFiles[3] || null,
+          });
+        }
+
+        // Fill odometer
+        if (lastReceipt.startOdometerKm !== undefined) {
+          setStartOdometerKm(lastReceipt.startOdometerKm.toString());
+        }
+
+        // Fill battery percentage
+        if (lastReceipt.startBatteryPercentage !== undefined) {
+          setStartBatteryPercentage(
+            lastReceipt.startBatteryPercentage.toString()
+          );
+        }
+
+        // Fill notes
+        if (lastReceipt.notes) {
+          setNotes(lastReceipt.notes);
+        }
+
+        setHasFilledData(true);
+      }
+    }
+  }, [isUpdateReceipt, hasFilledData, getLastReceipt]);
+
   const handleCompleteInspection = async () => {
     // Prevent multiple submissions
     if (isSubmitting) return;
@@ -497,14 +539,14 @@ export const VehicleInspectionScreen: React.FC = () => {
       }
 
       if (isUpdateReceipt) {
-        const changeVehicleUseCase = new ChangeVehicleUseCase(
+        const updateHandoverReceiptUseCase = new UpdateHandoverReceiptUseCase(
           sl.get("ReceiptRepository")
         );
-        const changeVehicleResponse = await changeVehicleUseCase.execute({
+        const updateHandoverReceiptResponse = await updateHandoverReceiptUseCase.execute({
           notes,
           startOdometerKm: parseInt(startOdometerKm),
           startBatteryPercentage: parseInt(startBatteryPercentage),
-          bookingId,
+          id: getLastReceipt()?.id,
           vehicleFiles: [
             photos.front,
             photos.back,
@@ -512,23 +554,20 @@ export const VehicleInspectionScreen: React.FC = () => {
             photos.right,
           ].filter(Boolean) as string[],
           checkListFile: checklistUri,
-          vehicleId: vehicleId,
         });
-        if (changeVehicleResponse.success) {
+        console.log("updateHandoverReceiptResponse", updateHandoverReceiptResponse);
+        if (updateHandoverReceiptResponse.success) {
           Toast.show({
-            text1: "Xe đã được thay đổi",
+            text1: "Cập nhật thông tin bàn giao thành công",
             type: "success",
           });
-          navigation.reset({
-            index: 1,
-            routes: [
-              { name: "Rental" },
-              { name: "BookingDetails", params: { bookingId } },
-            ],
+          navigation.navigate("HandoverReport", {
+            bookingId,
           });
+
         } else {
           Toast.show({
-            text1: "Không thể thay đổi xe",
+            text1: updateHandoverReceiptResponse.message,
             type: "error",
           });
         }
@@ -1310,10 +1349,6 @@ export const VehicleInspectionScreen: React.FC = () => {
               </>
             )}
           </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tertiaryCta}>
-          <AntDesign name="save" size={16} color={colors.text.secondary} />
-          <Text style={styles.tertiaryCtaText}>Lưu & Tiếp tục sau</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

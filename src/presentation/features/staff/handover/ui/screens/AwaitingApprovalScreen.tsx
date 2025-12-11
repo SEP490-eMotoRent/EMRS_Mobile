@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
-import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
@@ -93,13 +92,13 @@ export const AwaitingApprovalScreen: React.FC = () => {
       };
     }
     return {
-      icon: "close-circle",
-      iconColor: "#FF6B6B",
-      bgColor: "rgba(255,107,107,0.15)",
-      title: "Đã bị từ chối",
-      subtitle: "Khách hàng không đồng ý với hợp đồng",
-      description: "Cần kiểm tra lại hợp đồng",
-      cardStyle: styles.cardDenied,
+      icon: "clock-circle",
+      iconColor: "#FFD700",
+      bgColor: "rgba(255,211,102,0.15)",
+      title: "Đang chờ ký hợp đồng",
+      subtitle: "Chờ khách hàng ký hợp đồng",
+      description: "Đang chờ khách hàng ký hợp đồng...",
+      cardStyle: styles.cardPending,
     };
   };
 

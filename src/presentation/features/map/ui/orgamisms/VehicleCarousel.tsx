@@ -1,12 +1,12 @@
 import React, { useRef, useState } from "react";
-import { 
-    Dimensions, 
-    NativeScrollEvent, 
-    NativeSyntheticEvent, 
-    ScrollView, 
-    StyleSheet, 
-    View,
-    Animated 
+import {
+    Animated,
+    Dimensions,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    ScrollView,
+    StyleSheet,
+    View
 } from "react-native";
 import { ElectricVehicle, VehicleCard } from "../molecules/VehicleCard";
 
@@ -72,7 +72,7 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
             </View>
 
             {/* Simple Pagination */}
-            {vehicles.length > 1 && (
+            {/* {vehicles.length > 1 && (
                 <View style={styles.paginationContainer}>
                     {vehicles.map((_, index) => {
                         const isActive = index === activeIndex;
@@ -87,7 +87,7 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
                         );
                     })}
                 </View>
-            )}
+            )} */}
         </View>
     );
 };
@@ -105,23 +105,23 @@ const styles = StyleSheet.create({
         paddingTop: 12, // ✅ Increased from 8 (more top padding)
         paddingBottom: 8, // ✅ Increased from 4 (more bottom padding)
     },
-    paginationContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingTop: 6, // ✅ Increased from 4
-        paddingBottom: 12, // ✅ Increased from 8 (more bottom space)
-    },
-    paginationDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: "#444",
-        marginHorizontal: 3,
-    },
-    activeDot: {
-        backgroundColor: "#d4c5f9",
-        width: 18,
-        borderRadius: 3,
-    },
+    // paginationContainer: {
+    //     flexDirection: "row",
+    //     justifyContent: "center",
+    //     alignItems: "center",
+    //     paddingTop: 6, // ✅ Increased from 4
+    //     paddingBottom: 12, // ✅ Increased from 8 (more bottom space)
+    // },
+    // paginationDot: {
+    //     width: 6,
+    //     height: 6,
+    //     borderRadius: 3,
+    //     backgroundColor: "#444",
+    //     marginHorizontal: 3,
+    // },
+    // activeDot: {
+    //     backgroundColor: "#d4c5f9",
+    //     width: 18,
+    //     borderRadius: 3,
+    // },
 });

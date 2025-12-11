@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Branch } from '../../../../domain/entities/operations/Branch';
 import { parseDateRange } from '../utils/dateParser';
 import { useVehicleSearch } from './useVehicleSearch';
@@ -12,49 +12,57 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInterac
     const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
     const [bookingModalVisible, setBookingModalVisible] = useState(false);
     
-    // ✅ THROTTLE instead of debounce - prevents rapid clicks
     const lastClickTimeRef = useRef<number>(0);
     const lastClickedBranchRef = useRef<string | null>(null);
+    const isOpeningRef = useRef(false);
 
     const { vehicles, loading, error, searchVehicles } = useVehicleSearch();
 
-    // ✅ ULTRA DEFENSIVE marker press handler with throttling
     const handleBranchMarkerPress = useCallback(async (branch: Branch) => {
         const now = Date.now();
         
-        // ✅ THROTTLE: Ignore clicks within 500ms of last click
-        if (now - lastClickTimeRef.current < 500) {
+        if (now - lastClickTimeRef.current < 800) {
             console.log('⏱️ Click throttled - too fast');
+            return;
+        }
+
+        if (isOpeningRef.current) {
+            console.log('🚫 Already opening - blocked');
             return;
         }
         
         lastClickTimeRef.current = now;
 
         try {
-            // ✅ Validate branch
             if (!branch?.id) {
-                console.warn('⚠️ Invalid branch:', branch);
+                console.warn('⚠️ Invalid branch');
                 return;
             }
 
-            // ✅ If same branch, toggle off
             if (lastClickedBranchRef.current === branch.id && bottomSheetVisible) {
-                console.log('👆 Toggling off same branch');
+                console.log('👆 Closing same branch');
                 setBottomSheetVisible(false);
                 setSelectedBranchId(null);
                 lastClickedBranchRef.current = null;
                 return;
             }
 
-            console.log('🎯 Branch clicked:', branch.id);
+            console.log('🎯 Opening branch:', branch.id);
             
+            isOpeningRef.current = true;
             lastClickedBranchRef.current = branch.id;
 
-            // ✅ Update UI FIRST (instant feedback)
+            if (bottomSheetVisible && selectedBranchId !== branch.id) {
+                console.log('🔄 Switching branches - full close');
+                setBottomSheetVisible(false);
+                setSelectedBranchId(null);
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
             setSelectedBranchId(branch.id);
             setBottomSheetVisible(true);
 
-            // ✅ Parse dates safely
             let startTime: string | undefined;
             let endTime: string | undefined;
             
@@ -66,42 +74,42 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInterac
                 console.warn('⚠️ Date parse failed:', parseError);
             }
 
-            // ✅ Search in background (async, won't block UI)
             searchVehicles(branch.id, dateRange, startTime, endTime)
                 .catch(err => {
                     console.error('❌ Search failed:', err);
-                    // Don't crash - just log it
+                })
+                .finally(() => {
+                    isOpeningRef.current = false;
                 });
             
         } catch (error) {
             console.error('❌ handleBranchMarkerPress error:', error);
-            // ✅ Don't crash app - recover gracefully
+            isOpeningRef.current = false;
         }
-    }, [dateRange, searchVehicles, bottomSheetVisible]);
+    }, [dateRange, searchVehicles, bottomSheetVisible, selectedBranchId]);
 
-    // ✅ Safe map press handler
     const handleMapPress = useCallback(() => {
         try {
             setSelectedBranchId(null);
             setBottomSheetVisible(false);
             lastClickedBranchRef.current = null;
+            isOpeningRef.current = false;
         } catch (error) {
             console.error('❌ handleMapPress error:', error);
         }
     }, []);
 
-    // ✅ Safe bottom sheet close
     const handleBottomSheetClose = useCallback(() => {
         try {
             setBottomSheetVisible(false);
             setSelectedBranchId(null);
             lastClickedBranchRef.current = null;
+            isOpeningRef.current = false;
         } catch (error) {
             console.error('❌ handleBottomSheetClose error:', error);
         }
     }, []);
 
-    // ✅ Safe search bar press
     const handleSearchBarPress = useCallback(() => {
         try {
             setBookingModalVisible(true);
@@ -110,7 +118,6 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInterac
         }
     }, []);
 
-    // ✅ Safe booking modal close
     const handleBookingModalClose = useCallback(() => {
         try {
             setBookingModalVisible(false);
@@ -119,7 +126,6 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInterac
         }
     }, []);
 
-    // ✅ Safe book vehicle handler
     const handleBookVehicle = useCallback((vehicleId: string) => {
         try {
             console.log("📱 Booking vehicle:", vehicleId);

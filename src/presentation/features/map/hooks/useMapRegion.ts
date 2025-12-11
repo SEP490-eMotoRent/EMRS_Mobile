@@ -15,6 +15,24 @@ const DEFAULT_REGION: Region = {
     longitudeDelta: 0.05,
 };
 
+// ✅ Helper: Calculate distance between two coordinates (Haversine formula)
+const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
 export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
     const [region, setRegion] = useState<Region>(DEFAULT_REGION);
     const [searchedLocation, setSearchedLocation] = useState<{
@@ -29,7 +47,54 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
     const lastGeocodedAddressRef = useRef<string>('');
     const isMountedRef = useRef<boolean>(true);
     const hasInitializedRef = useRef<boolean>(false);
-    const currentGeocodeIdRef = useRef<number>(0); // ✅ Track geocode requests
+    const currentGeocodeIdRef = useRef<number>(0);
+
+    // ✅ CRITICAL: Stable branch filtering - only filter once
+    const validBranches = useMemo(() => {
+        const filtered = branches.filter(b => {
+            const isValid = 
+                b.latitude !== 0 && 
+                b.longitude !== 0 && 
+                !isNaN(b.latitude) && 
+                !isNaN(b.longitude) &&
+                b.latitude >= -90 && 
+                b.latitude <= 90 &&
+                b.longitude >= -180 && 
+                b.longitude <= 180;
+            
+            return isValid;
+        });
+        
+        console.log(`✅ Valid branches: ${filtered.length}/${branches.length}`);
+        return filtered;
+    }, [branches]);
+
+    // ✅ NEW: Get closest N branches to current region center
+    const visibleBranches = useMemo(() => {
+        const MAX_VISIBLE = 15; // Show only 15 closest branches
+        
+        if (validBranches.length <= MAX_VISIBLE) {
+            return validBranches;
+        }
+
+        // Calculate distance from region center to each branch
+        const branchesWithDistance = validBranches.map(branch => ({
+            branch,
+            distance: calculateDistance(
+                region.latitude,
+                region.longitude,
+                branch.latitude,
+                branch.longitude
+            )
+        }));
+
+        // Sort by distance and take closest N
+        branchesWithDistance.sort((a, b) => a.distance - b.distance);
+        const closest = branchesWithDistance.slice(0, MAX_VISIBLE).map(item => item.branch);
+        
+        console.log(`📍 Showing ${closest.length} closest branches`);
+        return closest;
+    }, [validBranches, region.latitude, region.longitude]);
 
     const geocodeAddress = useCallback(async (addr: string, requestId: number) => {
         if (lastGeocodedAddressRef.current === addr) {
@@ -98,28 +163,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         };
     }, [address, geocodeAddress]);
 
-    const validBranches = useMemo(() => {
-        const filtered = branches.filter(b => {
-            const isValid = 
-                b.latitude !== 0 && 
-                b.longitude !== 0 && 
-                !isNaN(b.latitude) && 
-                !isNaN(b.longitude) &&
-                b.latitude >= -90 && 
-                b.latitude <= 90 &&
-                b.longitude >= -180 && 
-                b.longitude <= 180;
-            
-            if (!isValid) {
-                console.warn(`⚠️ Skipping invalid branch: ${b.branchName}`);
-            }
-            
-            return isValid;
-        });
-        
-        return filtered;
-    }, [branches]);
-
     // ✅ CRITICAL: Don't run if user has searched
     useEffect(() => {
         if (validBranches.length > 0 && !hasSearched && !hasInitializedRef.current) {
@@ -150,7 +193,7 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         setHasSearched(false);
         setError(null);
         lastGeocodedAddressRef.current = '';
-        hasInitializedRef.current = false; // ✅ Reset so branches can recenter
+        hasInitializedRef.current = false;
     }, []);
 
     useEffect(() => {
@@ -168,6 +211,7 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         searchedLocation,
         resetSearch,
         geocoding,
-        error
+        error,
+        visibleBranches,
     };
 };

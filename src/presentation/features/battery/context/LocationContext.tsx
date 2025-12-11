@@ -20,8 +20,8 @@ interface LocationProviderProps {
 
 const LocationContext = createContext<LocationContextValue | undefined>(undefined);
 
-// DEVELOPMENT MODE: Set to true to use mock location
-const USE_MOCK_LOCATION = __DEV__; // Automatically uses mock in dev mode
+// DEVELOPMENT MODE: Set to FALSE to use real GPS location
+const USE_MOCK_LOCATION = false; // Changed from __DEV__ to false
 
 // Mock location for testing (Ho Chi Minh City center)
 const MOCK_LOCATION: LocationData = {
@@ -30,19 +30,60 @@ const MOCK_LOCATION: LocationData = {
   timestamp: Date.now(),
 };
 
-// You can also set specific locations for testing:
-// District 1: { latitude: 10.7769, longitude: 106.7009 }
-// Cho Ben Thanh: { latitude: 10.7724, longitude: 106.6980 }
-// Crescent Mall area: { latitude: 10.7295, longitude: 106.7192 }
-
 export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) => {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const fetchRealLocation = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+
+      // Request permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Không có quyền truy cập vị trí');
+        setLoading(false);
+        return;
+      }
+
+      // Get current position with timeout and fallback
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        timeInterval: 5000,
+      }).catch(async (err) => {
+        console.log('⚠️ Trying last known position...', err);
+        // Fallback: try last known position
+        return await Location.getLastKnownPositionAsync();
+      });
+
+      if (!currentLocation) {
+        throw new Error('Không thể lấy vị trí');
+      }
+
+      setLocation({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+        timestamp: currentLocation.timestamp,
+      });
+      setErrorMsg(null);
+      console.log('✅ Location updated:', {
+        lat: currentLocation.coords.latitude,
+        lng: currentLocation.coords.longitude,
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setErrorMsg(`Lỗi khi lấy vị trí: ${errorMessage}`);
+      console.error('❌ Location error:', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
-      // Use mock location in development
+      // Use mock location in development (if enabled)
       if (USE_MOCK_LOCATION) {
         console.log('🧪 Using mock location:', MOCK_LOCATION);
         setLocation(MOCK_LOCATION);
@@ -51,63 +92,23 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         return;
       }
 
-      // Production: Get real location
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setErrorMsg('Không có quyền truy cập vị trí');
-          setLoading(false);
-          return;
-        }
-
-        const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        setLocation({
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
-          timestamp: currentLocation.timestamp,
-        });
-        setErrorMsg(null);
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setErrorMsg(`Lỗi khi lấy vị trí: ${errorMessage}`);
-      } finally {
-        setLoading(false);
-      }
+      // Production/Real GPS: Get real location
+      await fetchRealLocation();
     })();
   }, []);
 
   const updateLocation = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setErrorMsg(null);
-      
-      // Use mock location in development
-      if (USE_MOCK_LOCATION) {
-        setLocation({
-          ...MOCK_LOCATION,
-          timestamp: Date.now(),
-        });
-        setLoading(false);
-        return;
-      }
-
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      
+    // Use mock location in development (if enabled)
+    if (USE_MOCK_LOCATION) {
       setLocation({
-        latitude: currentLocation.coords.latitude,
-        longitude: currentLocation.coords.longitude,
-        timestamp: currentLocation.timestamp,
+        ...MOCK_LOCATION,
+        timestamp: Date.now(),
       });
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setErrorMsg(`Error updating location: ${errorMessage}`);
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    // Get real location
+    await fetchRealLocation();
   };
 
   const value: LocationContextValue = {
