@@ -542,20 +542,24 @@ export const VehicleInspectionScreen: React.FC = () => {
         const updateHandoverReceiptUseCase = new UpdateHandoverReceiptUseCase(
           sl.get("ReceiptRepository")
         );
-        const updateHandoverReceiptResponse = await updateHandoverReceiptUseCase.execute({
-          notes,
-          startOdometerKm: parseInt(startOdometerKm),
-          startBatteryPercentage: parseInt(startBatteryPercentage),
-          id: getLastReceipt()?.id,
-          vehicleFiles: [
-            photos.front,
-            photos.back,
-            photos.left,
-            photos.right,
-          ].filter(Boolean) as string[],
-          checkListFile: checklistUri,
-        });
-        console.log("updateHandoverReceiptResponse", updateHandoverReceiptResponse);
+        const updateHandoverReceiptResponse =
+          await updateHandoverReceiptUseCase.execute({
+            notes,
+            startOdometerKm: parseInt(startOdometerKm),
+            startBatteryPercentage: parseInt(startBatteryPercentage),
+            id: getLastReceipt()?.id,
+            vehicleFiles: [
+              photos.front,
+              photos.back,
+              photos.left,
+              photos.right,
+            ].filter(Boolean) as string[],
+            checkListFile: checklistUri,
+          });
+        console.log(
+          "updateHandoverReceiptResponse",
+          updateHandoverReceiptResponse
+        );
         if (updateHandoverReceiptResponse.success) {
           Toast.show({
             text1: "Cập nhật thông tin bàn giao thành công",
@@ -564,7 +568,6 @@ export const VehicleInspectionScreen: React.FC = () => {
           navigation.navigate("HandoverReport", {
             bookingId,
           });
-
         } else {
           Toast.show({
             text1: updateHandoverReceiptResponse.message,
@@ -717,6 +720,156 @@ export const VehicleInspectionScreen: React.FC = () => {
           )}
         </Animated.View>
 
+        {/* Inspection Inputs */}
+        <View
+          ref={inputCardRef}
+          style={styles.inputCard}
+          onLayout={(event) => {
+            const { y } = event.nativeEvent.layout;
+            setInputCardY(y);
+          }}
+        >
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardHeaderIcon}>
+                <AntDesign name="file-text" size={18} color="#FFD666" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>Thông tin kiểm tra</Text>
+            </View>
+          </View>
+
+          {/* Notes Input */}
+          <View style={styles.inputRow}>
+            <View style={styles.inputLabelRow}>
+              <AntDesign name="edit" size={14} color="#7CFFCB" />
+              <Text style={styles.inputLabel}>Ghi chú</Text>
+            </View>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Nhập ghi chú về tình trạng xe..."
+              placeholderTextColor={colors.text.secondary}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Metrics Row */}
+          <View style={styles.metricsRow}>
+            {/* Odometer Input */}
+            <View style={styles.metricInput}>
+              <View style={styles.inputLabelRow}>
+                <AntDesign name="dashboard" size={14} color="#7DB3FF" />
+                <Text style={styles.inputLabel}>Số km</Text>
+              </View>
+              <Animated.View
+                style={[
+                  styles.inputWithUnit,
+                  { transform: [{ translateX: odometerShakeAnim }] },
+                ]}
+              >
+                <TextInput
+                  style={[
+                    styles.numberInput,
+                    errors.odometer && styles.numberInputError,
+                  ]}
+                  placeholder="0"
+                  placeholderTextColor={colors.text.secondary}
+                  value={startOdometerKm}
+                  onChangeText={(text) => {
+                    setStartOdometerKm(text);
+                    if (errors.odometer) {
+                      // Error clearing handled by useEffect
+                    }
+                  }}
+                  keyboardType="numeric"
+                />
+                <View style={styles.unitBadge}>
+                  <Text style={styles.inputUnit}>km</Text>
+                </View>
+              </Animated.View>
+              {errors.odometer && (
+                <View style={styles.errorContainer}>
+                  <AntDesign
+                    name="exclamation-circle"
+                    size={14}
+                    color="#FF6B6B"
+                  />
+                  <Text style={styles.errorText}>{errors.odometer}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Battery Percentage Input */}
+            <View style={styles.metricInput}>
+              <View style={styles.inputLabelRow}>
+                <AntDesign
+                  name="thunderbolt"
+                  size={14}
+                  color={getBatteryCondition().color}
+                />
+                <Text style={styles.inputLabel}>Pin</Text>
+              </View>
+              <Animated.View
+                style={[
+                  styles.inputWithUnit,
+                  { transform: [{ translateX: batteryShakeAnim }] },
+                ]}
+              >
+                <TextInput
+                  style={[
+                    styles.numberInput,
+                    errors.battery && styles.numberInputError,
+                  ]}
+                  placeholder="0"
+                  placeholderTextColor={colors.text.secondary}
+                  value={startBatteryPercentage}
+                  onChangeText={(text) => {
+                    setStartBatteryPercentage(text);
+                    if (errors.battery) {
+                      // Error clearing handled by useEffect
+                    }
+                  }}
+                  keyboardType="numeric"
+                />
+                <View
+                  style={[
+                    styles.unitBadge,
+                    {
+                      backgroundColor:
+                        getBatteryCondition().color === "#67D16C"
+                          ? "rgba(103,209,108,0.15)"
+                          : getBatteryCondition().color === "#FFD700"
+                          ? "rgba(255,211,102,0.15)"
+                          : "rgba(255,68,68,0.15)",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.inputUnit,
+                      { color: getBatteryCondition().color },
+                    ]}
+                  >
+                    %
+                  </Text>
+                </View>
+              </Animated.View>
+              {errors.battery && (
+                <View style={styles.errorContainer}>
+                  <AntDesign
+                    name="exclamation-circle"
+                    size={14}
+                    color="#FF6B6B"
+                  />
+                  <Text style={styles.errorText}>{errors.battery}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
         {/* Inspection Checklist - Accordions */}
         <Animated.View
           ref={checklistContainerRef}
@@ -906,157 +1059,6 @@ export const VehicleInspectionScreen: React.FC = () => {
             )}
           </View>
         </Animated.View>
-
-        {/* Inspection Inputs */}
-        <View
-          ref={inputCardRef}
-          style={styles.inputCard}
-          onLayout={(event) => {
-            const { y } = event.nativeEvent.layout;
-            setInputCardY(y);
-          }}
-        >
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardHeaderLeft}>
-              <View style={styles.cardHeaderIcon}>
-                <AntDesign name="file-text" size={18} color="#FFD666" />
-              </View>
-              <Text style={styles.cardHeaderTitle}>Thông tin kiểm tra</Text>
-            </View>
-          </View>
-
-          {/* Notes Input */}
-          <View style={styles.inputRow}>
-            <View style={styles.inputLabelRow}>
-              <AntDesign name="edit" size={14} color="#7CFFCB" />
-              <Text style={styles.inputLabel}>Ghi chú</Text>
-            </View>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Nhập ghi chú về tình trạng xe..."
-              placeholderTextColor={colors.text.secondary}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Metrics Row */}
-          <View style={styles.metricsRow}>
-            {/* Odometer Input */}
-            <View style={styles.metricInput}>
-              <View style={styles.inputLabelRow}>
-                <AntDesign name="dashboard" size={14} color="#7DB3FF" />
-                <Text style={styles.inputLabel}>Số km</Text>
-              </View>
-              <Animated.View
-                style={[
-                  styles.inputWithUnit,
-                  { transform: [{ translateX: odometerShakeAnim }] },
-                ]}
-              >
-                <TextInput
-                  style={[
-                    styles.numberInput,
-                    errors.odometer && styles.numberInputError,
-                  ]}
-                  placeholder="0"
-                  placeholderTextColor={colors.text.secondary}
-                  value={startOdometerKm}
-                  onChangeText={(text) => {
-                    setStartOdometerKm(text);
-                    if (errors.odometer) {
-                      // Error clearing handled by useEffect
-                    }
-                  }}
-                  keyboardType="numeric"
-                />
-                <View style={styles.unitBadge}>
-                  <Text style={styles.inputUnit}>km</Text>
-                </View>
-              </Animated.View>
-              {errors.odometer && (
-                <View style={styles.errorContainer}>
-                  <AntDesign
-                    name="exclamation-circle"
-                    size={14}
-                    color="#FF6B6B"
-                  />
-                  <Text style={styles.errorText}>{errors.odometer}</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Battery Percentage Input */}
-            <View style={styles.metricInput}>
-              <View style={styles.inputLabelRow}>
-                <AntDesign
-                  name="thunderbolt"
-                  size={14}
-                  color={getBatteryCondition().color}
-                />
-                <Text style={styles.inputLabel}>Pin</Text>
-              </View>
-              <Animated.View
-                style={[
-                  styles.inputWithUnit,
-                  { transform: [{ translateX: batteryShakeAnim }] },
-                ]}
-              >
-                <TextInput
-                  style={[
-                    styles.numberInput,
-                    errors.battery && styles.numberInputError,
-                  ]}
-                  placeholder="0"
-                  placeholderTextColor={colors.text.secondary}
-                  value={startBatteryPercentage}
-                  onChangeText={(text) => {
-                    setStartBatteryPercentage(text);
-                    if (errors.battery) {
-                      // Error clearing handled by useEffect
-                    }
-                  }}
-                  keyboardType="numeric"
-                />
-                <View
-                  style={[
-                    styles.unitBadge,
-                    {
-                      backgroundColor:
-                        getBatteryCondition().color === "#67D16C"
-                          ? "rgba(103,209,108,0.15)"
-                          : getBatteryCondition().color === "#FFD700"
-                          ? "rgba(255,211,102,0.15)"
-                          : "rgba(255,68,68,0.15)",
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.inputUnit,
-                      { color: getBatteryCondition().color },
-                    ]}
-                  >
-                    %
-                  </Text>
-                </View>
-              </Animated.View>
-              {errors.battery && (
-                <View style={styles.errorContainer}>
-                  <AntDesign
-                    name="exclamation-circle"
-                    size={14}
-                    color="#FF6B6B"
-                  />
-                  <Text style={styles.errorText}>{errors.battery}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
 
         {/* Current Status Summary */}
         <View style={styles.statusCard}>
