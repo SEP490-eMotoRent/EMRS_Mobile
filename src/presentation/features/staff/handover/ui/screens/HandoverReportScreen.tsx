@@ -94,7 +94,6 @@ export const HandoverReportScreen: React.FC = () => {
       setIsLoading(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView

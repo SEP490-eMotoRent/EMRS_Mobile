@@ -96,7 +96,7 @@ export const VehicleInspectionScreen: React.FC = () => {
     bookingId,
     currentOdometerKm,
     batteryHealthPercentage,
-    isChangeVehicle,
+    isUpdateReceipt,
   } = route.params || {};
   const navigation = useNavigation<InspectionNav>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -496,7 +496,7 @@ export const VehicleInspectionScreen: React.FC = () => {
         });
       }
 
-      if (isChangeVehicle) {
+      if (isUpdateReceipt) {
         const changeVehicleUseCase = new ChangeVehicleUseCase(
           sl.get("ReceiptRepository")
         );

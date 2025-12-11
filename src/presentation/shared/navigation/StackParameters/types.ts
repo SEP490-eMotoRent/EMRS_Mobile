@@ -385,7 +385,7 @@ export type StaffStackParamList = {
     bookingId: string;
     currentOdometerKm: number;
     batteryHealthPercentage: number;
-    isChangeVehicle?: boolean;
+    isUpdateReceipt?: boolean;
   };
   HandoverReport: {
     bookingId: string;

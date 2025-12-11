@@ -473,8 +473,7 @@ export const SelectVehicleScreen: React.FC = () => {
                           bookingId: bookingId,
                           currentOdometerKm: vehicle.currentOdometerKm,
                           batteryHealthPercentage:
-                            vehicle.batteryHealthPercentage,
-                          isChangeVehicle: isChangeVehicle ?? false,
+                            vehicle.batteryHealthPercentage
                         })
                       }
                       disabled={vehicleCard.disabled}

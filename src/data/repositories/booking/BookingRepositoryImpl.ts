@@ -248,7 +248,6 @@ export class BookingRepositoryImpl implements BookingRepository {
     return cancelledBooking;
   }
 
-
   async createZaloPay(booking: Booking): Promise<VNPayBookingResult> {
     const request: CreateBookingRequest = {
       startDatetime: booking.startDatetime?.toISOString(),
@@ -299,8 +298,8 @@ export class BookingRepositoryImpl implements BookingRepository {
     checksum: string
   ): Promise<boolean> {
     try {
-      console.log('🔄 [Repository] Verifying ZaloPay payment');
-      console.log('📋 Transaction:', appTransId);
+      console.log("🔄 [Repository] Verifying ZaloPay payment");
+      console.log("📋 Transaction:", appTransId);
 
       const request: ZaloPayCallbackRequest = {
         AppId: appId,
@@ -311,21 +310,24 @@ export class BookingRepositoryImpl implements BookingRepository {
         DiscountAmount: discountAmount,
         Status: status,
         Checksum: checksum,
-        Message: status === 1 ? 'Payment successful' : 'Payment failed',
+        Message: status === 1 ? "Payment successful" : "Payment failed",
       };
 
-      console.log('📤 [ZaloPay Callback] Request:', JSON.stringify(request, null, 2));
+      console.log(
+        "📤 [ZaloPay Callback] Request:",
+        JSON.stringify(request, null, 2)
+      );
 
       const result = await this.remote.verifyZaloPayPayment(request);
 
-      console.log('✅ [Repository] Verification result:', result);
+      console.log("✅ [Repository] Verification result:", result);
       return result;
     } catch (error: any) {
-      console.error('❌ [Repository] Verification failed:', error);
+      console.error("❌ [Repository] Verification failed:", error);
       throw error;
     }
   }
-  
+
   // =========================================================================
   // TYPE GUARD
   // =========================================================================
@@ -533,9 +535,11 @@ export class BookingRepositoryImpl implements BookingRepository {
       ? this.mapRentalContractFromStaffResponse(dto.rentalContract)
       : undefined;
 
-    const rentalReceipts = dto.rentalReceipt?.map(receipt =>
-      this.mapRentalReceiptFromStaffResponse(receipt)
-    );
+    const rentalReceipts = dto.rentalReceipt?.length
+      ? dto.rentalReceipt.map((receipt) =>
+          this.mapRentalReceiptFromStaffResponse(receipt)
+        )
+      : [];
 
     const insurancePackage = dto.insurancePackage
       ? this.mapInsurancePackageFromStaffResponse(dto.insurancePackage)
@@ -550,7 +554,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       : undefined;
 
     // ✅ Map additional fees
-    const additionalFees = dto.additionalFees?.map(fee =>
+    const additionalFees = dto.additionalFees?.map((fee) =>
       this.mapAdditionalFeeFromResponse(fee)
     );
 
@@ -619,9 +623,11 @@ export class BookingRepositoryImpl implements BookingRepository {
       ? this.mapRentalContractFromStaffResponse(dto.rentalContract)
       : undefined;
 
-    const rentalReceipt = dto.rentalReceipt
-      ? this.mapRentalReceiptFromStaffResponse(dto.rentalReceipt)
-      : undefined;
+    const rentalReceipts = dto.rentalReceipt?.length
+      ? dto.rentalReceipt.map((receipt) =>
+          this.mapRentalReceiptFromStaffResponse(receipt)
+        )
+      : [];
 
     const insurancePackage = dto.insurancePackage
       ? this.mapInsurancePackageFromStaffResponse(dto.insurancePackage)
@@ -632,7 +638,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       : undefined;
 
     // ✅ Map additional fees if present
-    const additionalFees = dto.additionalFees?.map(fee =>
+    const additionalFees = dto.additionalFees?.map((fee) =>
       this.mapAdditionalFeeFromResponse(fee)
     );
 
@@ -668,7 +674,7 @@ export class BookingRepositoryImpl implements BookingRepository {
       insurancePackage?.id,
       insurancePackage,
       rentalContract,
-      rentalReceipt ? [rentalReceipt] : undefined,
+      rentalReceipts,
       handoverBranch?.id,
       handoverBranch,
       undefined, // returnBranchId
@@ -702,10 +708,10 @@ export class BookingRepositoryImpl implements BookingRepository {
       undefined,
       undefined,
       undefined,
-      undefined,
+      undefined
     );
   }
-      
+
   private mapVehicleModelFromListResponse(
     dto: VehicleModelResponse
   ): VehicleModel {
@@ -957,7 +963,9 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   // ✅ Map additional fee from response to entity
-  private mapAdditionalFeeFromResponse(dto: AdditionalFeeResponse): AdditionalFee {
+  private mapAdditionalFeeFromResponse(
+    dto: AdditionalFeeResponse
+  ): AdditionalFee {
     return new AdditionalFee(
       dto.id,
       dto.feeType,
