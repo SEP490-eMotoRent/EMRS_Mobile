@@ -129,22 +129,41 @@ export const TripsScreen: React.FC = () => {
         };
 
         const calculateTimeInfo = () => {
-            if (!booking.startDatetime) return undefined;
+            if (!booking.startDatetime || !booking.endDatetime) return undefined;
+            
             const now = new Date();
-            const end = booking.endDatetime ? new Date(booking.endDatetime) : null;
+            const start = new Date(booking.startDatetime);
+            const end = new Date(booking.endDatetime);
 
-            if (status === "renting" && end) {
+            // BOOKED: Show time until pickup
+            if (status === "booked" && now < start) {
+                const hoursUntilStart = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60));
+                
+                if (hoursUntilStart <= 2) {
+                    return "Sắp đến giờ nhận xe";
+                } else if (hoursUntilStart < 24) {
+                    return `Nhận xe sau ${hoursUntilStart} giờ`;
+                } else {
+                    const daysUntilStart = Math.ceil(hoursUntilStart / 24);
+                    return `Nhận xe sau ${daysUntilStart} ngày`;
+                }
+            }
+
+            // RENTING: Show time left until return
+            if (status === "renting") {
                 const hoursLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60));
+                
                 if (hoursLeft < 24) {
                     return `Còn ${hoursLeft} giờ`;
+                } else {
+                    const daysLeft = Math.ceil(hoursLeft / 24);
+                    return `Còn ${daysLeft} ngày`;
                 }
-                const daysLeft = Math.ceil(hoursLeft / 24);
-                return `Còn ${daysLeft} ngày`;
             }
             
             return undefined;
         };
-
+        
         const calculatePaymentExpiry = () => {
             if (status !== "pending") return undefined;
             // Assuming payment expires 30 minutes after booking creation
