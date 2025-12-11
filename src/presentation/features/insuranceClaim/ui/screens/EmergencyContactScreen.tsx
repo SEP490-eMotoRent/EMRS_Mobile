@@ -54,24 +54,25 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
         }
     };
 
-    const handleCallBranch = () => {
-        if (branchPhone && branchPhone !== '1900-XXXX' && branchPhone !== 'N/A') {
-            const phoneUrl = `tel:${branchPhone}`;
-            Linking.canOpenURL(phoneUrl)
-                .then((supported) => {
-                    if (supported) {
-                        return Linking.openURL(phoneUrl);
-                    } else {
-                        Alert.alert('Lỗi', `Không thể gọi: ${branchPhone}`);
-                    }
-                })
-                .catch(() => {
-                    Alert.alert('Lỗi', 'Không thể mở ứng dụng gọi');
-                });
-        } else {
-            Alert.alert('Liên hệ chi nhánh', 'Số điện thoại chi nhánh không khả dụng. Vui lòng liên hệ hỗ trợ.');
-        }
-    };
+    // ✅ COMMENTED OUT - Phone calling functionality
+    // const handleCallBranch = () => {
+    //     if (branchPhone && branchPhone !== '1900-XXXX' && branchPhone !== 'N/A') {
+    //         const phoneUrl = `tel:${branchPhone}`;
+    //         Linking.canOpenURL(phoneUrl)
+    //             .then((supported) => {
+    //                 if (supported) {
+    //                     return Linking.openURL(phoneUrl);
+    //                 } else {
+    //                     Alert.alert('Lỗi', `Không thể gọi: ${branchPhone}`);
+    //                 }
+    //             })
+    //             .catch(() => {
+    //                 Alert.alert('Lỗi', 'Không thể mở ứng dụng gọi');
+    //             });
+    //     } else {
+    //         Alert.alert('Liên hệ chi nhánh', 'Số điện thoại chi nhánh không khả dụng. Vui lòng liên hệ hỗ trợ.');
+    //     }
+    // };
 
     const handleReportClaim = () => {
         const now = new Date();
@@ -121,7 +122,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     <BackButton onPress={handleGoBack} label="Quay lại" />
                 </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#00ff00" />
+                    <ActivityIndicator size="large" color="#d4c5f9" />
                     <Text style={styles.loadingText}>Đang tải thông tin liên hệ khẩn cấp...</Text>
                 </View>
             </View>
@@ -150,7 +151,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                         <Text style={styles.errorIcon}>⚠️</Text>
                         <Text style={styles.errorText}>{error}</Text>
                         <Text style={styles.errorSubtext}>
-                            Bạn vẫn có thể gọi cứu hộ hoặc sử dụng danh sách kiểm tra an toàn bên dưới.
+                            Bạn vẫn có thể sử dụng danh sách kiểm tra an toàn bên dưới.
                         </Text>
                     </View>
                     <SafetyChecklistSection items={safetyItems} />
@@ -159,10 +160,10 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
 
                 <View style={styles.fixedButtonContainer}>
                     <ActionButton
-                        icon="phone"
-                        label="Gọi chi nhánh"
-                        onPress={handleCallBranch}
-                        variant="primary"
+                        icon="file-text"
+                        label="Báo cáo bảo hiểm"
+                        onPress={handleReportClaim}
+                        variant="danger"
                     />
                 </View>
             </View>
@@ -200,10 +201,10 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
 
                 <View style={styles.fixedButtonContainer}>
                     <ActionButton
-                        icon="phone"
-                        label="Gọi chi nhánh"
-                        onPress={handleCallBranch}
-                        variant="primary"
+                        icon="file-text"
+                        label="Báo cáo bảo hiểm"
+                        onPress={handleReportClaim}
+                        variant="danger"
                     />
                 </View>
             </View>
@@ -325,7 +326,16 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                     variant="warning"
                 />
                 
-                <View style={styles.buttonRow}>
+                {/* ✅ FULL WIDTH INSURANCE BUTTON */}
+                <ActionButton
+                    icon="file-text"
+                    label="Báo cáo bảo hiểm"
+                    onPress={handleReportClaim}
+                    variant="danger"
+                />
+
+                {/* ✅ COMMENTED OUT - Call branch button */}
+                {/* <View style={styles.buttonRow}>
                     <View style={styles.secondaryButton}>
                         <ActionButton
                             icon="file-text"
@@ -342,7 +352,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                             variant="primary"
                         />
                     </View>
-                </View>
+                </View> */}
             </View>
         </View>
     );
@@ -539,7 +549,7 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     bottomSpacing: {
-        height: 140,
+        height: 100,
     },
     fixedButtonContainer: {
         position: 'absolute',

@@ -1,38 +1,33 @@
-import React, { useState } from "react";
+import React from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface SearchBarProps {
     searchValue: string;
     onSearchChange: (value: string) => void;
-    sortValue: string;
-    onSortPress: () => void;
+    sortOption: "newest" | "oldest" | "price_high" | "price_low";
+    onSortChange: (option: "newest" | "oldest" | "price_high" | "price_low") => void;
 }
 
-type SortOption = {
-    id: string;
-    label: string;
-};
-
-const SORT_OPTIONS: SortOption[] = [
-    { id: "newest", label: "Mới nhất" },
-    { id: "oldest", label: "Cũ nhất" },
-    { id: "price_high", label: "Giá cao" },
-    { id: "price_low", label: "Giá thấp" },
+const SORT_OPTIONS = [
+    { id: "newest" as const, label: "Mới nhất" },
+    { id: "oldest" as const, label: "Cũ nhất" },
+    { id: "price_high" as const, label: "Giá cao" },
+    { id: "price_low" as const, label: "Giá thấp" },
 ];
 
 export const SearchBar: React.FC<SearchBarProps> = ({
     searchValue,
     onSearchChange,
-    sortValue,
-    onSortPress,
+    sortOption,
+    onSortChange,
 }) => {
-    const [currentSortIndex, setCurrentSortIndex] = useState(0);
-
     const handleSortToggle = () => {
-        const nextIndex = (currentSortIndex + 1) % SORT_OPTIONS.length;
-        setCurrentSortIndex(nextIndex);
-        onSortPress(); // Notify parent if needed
+        const currentIndex = SORT_OPTIONS.findIndex(opt => opt.id === sortOption);
+        const nextIndex = (currentIndex + 1) % SORT_OPTIONS.length;
+        onSortChange(SORT_OPTIONS[nextIndex].id);
     };
+
+    const currentLabel = SORT_OPTIONS.find(opt => opt.id === sortOption)?.label || "Mới nhất";
 
     return (
         <View style={styles.container}>
@@ -50,12 +45,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 onPress={handleSortToggle} 
                 activeOpacity={0.7}
             >
-                <View style={styles.sortContent}>
-                    <Text style={styles.sortText}>{SORT_OPTIONS[currentSortIndex].label}</Text>
-                    <View style={styles.sortIcon}>
-                        <View style={styles.chevron} />
-                    </View>
-                </View>
+                <Text style={styles.sortText}>{currentLabel}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -66,7 +56,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 12,
         paddingHorizontal: 16,
-        paddingTop: 4,      // ✅ Reduced from 12 to bring closer to header
+        paddingTop: 4,
         paddingBottom: 12,
         backgroundColor: "#000",
     },
@@ -94,33 +84,11 @@ const styles = StyleSheet.create({
         height: 48,
         justifyContent: "center",
         minWidth: 110,
-    },
-    sortContent: {
-        flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: 8,
     },
     sortText: {
         color: "#fff",
         fontSize: 14,
         fontWeight: "500",
-        padding: 0,
-    },
-    sortIcon: {
-        width: 16,
-        height: 16,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    chevron: {
-        width: 0,
-        height: 0,
-        borderLeftWidth: 4,
-        borderRightWidth: 4,
-        borderTopWidth: 5,
-        borderLeftColor: "transparent",
-        borderRightColor: "transparent",
-        borderTopColor: "#999",
     },
 });

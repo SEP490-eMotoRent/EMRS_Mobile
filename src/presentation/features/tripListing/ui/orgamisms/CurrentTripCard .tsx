@@ -17,13 +17,12 @@ export interface CurrentTrip {
     baseRentalFee?: string;
     hasInsurance?: boolean;
     vehicleAssigned?: boolean;
-    hasAdditionalFees?: boolean; // ✅ NEW
+    hasAdditionalFees?: boolean;
 }
 
 interface CurrentTripCardProps {
     trip: CurrentTrip;
     onViewDetails: () => void;
-    onExtendRental?: () => void;
     onReportIssue?: () => void;
     onCancel?: () => void;
 }
@@ -31,7 +30,6 @@ interface CurrentTripCardProps {
 export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
     trip,
     onViewDetails,
-    onExtendRental,
     onReportIssue,
     onCancel,
 }) => {
@@ -50,7 +48,6 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                             <Text style={styles.shieldIcon}>◈</Text>
                         </View>
                     )}
-                    {/* ✅ NEW: Additional Fees Indicator */}
                     {trip.hasAdditionalFees && (
                         <View style={styles.feeBadge}>
                             <Text style={styles.feeBadgeText}>+Phí</Text>
@@ -59,7 +56,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 </View>
             </View>
             
-            {/* Vehicle info - cleaner layout */}
+            {/* Vehicle info */}
             <View style={styles.vehicleSection}>
                 <View style={styles.vehicleIcon}>
                     <Text style={styles.iconText}>🏍</Text>
@@ -83,7 +80,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 </View>
             </View>
 
-            {/* Time info only for renting status - removed redundant start date */}
+            {/* Time info for renting status */}
             {trip.status === "renting" && trip.timeInfo && (
                 <View style={styles.timeAlert}>
                     <Text style={styles.timeAlertIcon}>⚠</Text>
@@ -91,7 +88,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 </View>
             )}
 
-            {/* Booking reference - subtle and minimal */}
+            {/* Booking reference */}
             <Text style={styles.reference}>Booking reference: {trip.reference}</Text>
             
             {/* Amount section - only for confirmed */}
@@ -135,32 +132,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                     </>
                 )}
 
-                {trip.status === "renting" && (
-                    <>
-                        <TouchableOpacity 
-                            style={styles.primaryButton} 
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                onViewDetails();
-                            }}
-                        >
-                            <Text style={styles.primaryButtonText}>Chi Tiết</Text>
-                        </TouchableOpacity>
-                        {onExtendRental && (
-                            <TouchableOpacity 
-                                style={styles.primaryButton} 
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    onExtendRental();
-                                }}
-                            >
-                                <Text style={styles.primaryButtonText}>Gia hạn</Text>
-                            </TouchableOpacity>
-                        )}
-                    </>
-                )}
-
-                {trip.status === "returned" && (
+                {(trip.status === "renting" || trip.status === "returned") && (
                     <TouchableOpacity 
                         style={styles.primaryButton} 
                         onPress={(e) => {
@@ -190,7 +162,6 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-    // ✅ Lighter visual weight - border instead of heavy background
     card: {
         backgroundColor: "#0a0a0a",
         borderWidth: 1,
@@ -205,12 +176,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 16,
     },
-    // ✅ NEW: Indicators container
     indicators: {
         flexDirection: "row",
         gap: 8,
     },
-    // ✅ Simplified insurance indicator
     insuranceIcon: {
         backgroundColor: "rgba(34, 197, 94, 0.1)",
         width: 32,
@@ -223,7 +192,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#22c55e",
     },
-    // ✅ NEW: Fee badge indicator
     feeBadge: {
         backgroundColor: "rgba(251, 191, 36, 0.1)",
         paddingHorizontal: 8,
@@ -238,7 +206,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "700",
     },
-    // ✅ Better vehicle info hierarchy
     vehicleSection: {
         flexDirection: "row",
         gap: 12,
@@ -301,7 +268,6 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 12,
     },
-    // ✅ Time alert for active rentals
     timeAlert: {
         flexDirection: "row",
         alignItems: "center",
@@ -321,13 +287,11 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "600",
     },
-    // ✅ Subtle reference
     reference: {
         color: "#666",
         fontSize: 11,
         marginBottom: 12,
     },
-    // ✅ Cleaner amount section
     amountSection: {
         paddingTop: 12,
         marginBottom: 12,
@@ -349,7 +313,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
     },
-    // ✅ Action buttons
     actions: {
         flexDirection: "row",
         gap: 12,
@@ -378,7 +341,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "600",
     },
-    // ✅ Report button with subtle styling
     reportButton: {
         backgroundColor: "rgba(239, 68, 68, 0.1)",
         paddingVertical: 12,

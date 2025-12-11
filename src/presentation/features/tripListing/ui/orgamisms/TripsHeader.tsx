@@ -1,20 +1,31 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { NotificationBell } from "../atoms/icons/NotificationBell";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Icon } from "../atoms/Icons/Icons";
 
 interface TripsHeaderProps {
-    onNotification: () => void;
-    notificationCount?: number;
+    onRefresh: () => void;
+    refreshing?: boolean;
 }
 
 export const TripsHeader: React.FC<TripsHeaderProps> = ({ 
-    onNotification, 
-    notificationCount 
+    onRefresh,
+    refreshing = false,
 }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Những chuyến xe đã đặt</Text>
-            <NotificationBell count={notificationCount} onPress={onNotification} />
+            <TouchableOpacity 
+                style={styles.refreshButton} 
+                onPress={onRefresh}
+                disabled={refreshing}
+                activeOpacity={0.7}
+            >
+                <Icon 
+                    name="refresh" 
+                    size={20} 
+                    color={refreshing ? "#666" : "#B8A4FF"} 
+                />
+            </TouchableOpacity>
         </View>
     );
 };
@@ -26,7 +37,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         paddingHorizontal: 16,
         paddingTop: 48,
-        paddingBottom: 8,  // ✅ Reduced from 16 to bring search bar closer
+        paddingBottom: 8,
         backgroundColor: "#000",
     },
     title: {
@@ -34,5 +45,15 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "700",
         letterSpacing: -0.5,
+    },
+    refreshButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#1a1a1a",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "#2a2a2a",
     },
 });

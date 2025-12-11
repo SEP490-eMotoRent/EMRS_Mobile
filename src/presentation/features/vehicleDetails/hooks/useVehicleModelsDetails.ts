@@ -10,62 +10,49 @@ export const useVehicleDetail = (id: string) => {
 
     useEffect(() => {
         if (!id) {
-        setError("ID xe không hợp lệ");
-        setLoading(false);
-        return;
+            setError("ID xe không hợp lệ");
+            setLoading(false);
+            return;
         }
 
         let mounted = true;
         abortController.current = new AbortController();
 
-        const fetchDetail = async () => {
+    const fetchDetail = async () => {
         try {
             setLoading(true);
             setError(null);
 
             const repository = container.vehicle.modelRepository;
-            const raw = await repository.getDetail(id); // returns VehicleModel (old type)
+            const raw = await repository.getDetailRaw(id); // ✅ CHANGED: use getDetailRaw instead of getDetail
 
-            if (!mounted) return;
+            if (!mounted || !raw) return;
 
-            // Safe cast — we know the real shape from API
-            const detailDto = raw as any as {
-            id: string;
-            modelName: string;
-            category: string;
-            batteryCapacityKwh: number;
-            maxRangeKm: number;
-            maxSpeedKmh: number;
-            description: string;
-            depositAmount: number;
-            rentalPricing: { rentalPrice: number; id?: string };
-            images: string[];
-            };
+            console.log('🔍 RAW API RESPONSE:', JSON.stringify(raw, null, 2));
 
             const uiData = VehicleDetailMapper.toUI({
-            ...detailDto,
-            // Ensure images is always an array with at least one image
-            images: detailDto.images?.length > 0
-                ? detailDto.images
-                : [`https://via.placeholder.com/800x500/1a1a1a/ffffff?text=${encodeURIComponent(detailDto.modelName)}`],
+                ...raw,
+                images: raw.images?.length > 0 
+                    ? raw.images 
+                    : [`https://via.placeholder.com/800x500/1a1a1a/ffffff?text=${encodeURIComponent(raw.modelName)}`],
             });
 
             setData(uiData);
         } catch (err: any) {
             if (mounted) {
-            setError(err.message || "Không thể tải thông tin xe");
-            console.error("[useVehicleDetail]", err);
+                setError(err.message || "Không thể tải thông tin xe");
+                console.error("[useVehicleDetail]", err);
             }
         } finally {
             if (mounted) setLoading(false);
         }
-        };
+    };
 
         fetchDetail();
 
         return () => {
-        mounted = false;
-        abortController.current?.abort();
+            mounted = false;
+            abortController.current?.abort();
         };
     }, [id]);
 

@@ -6,7 +6,6 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
-    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -49,7 +48,6 @@ export const WalletTopUpScreen: React.FC = () => {
     };
 
     const handleAmountChange = (text: string) => {
-        // Remove non-numeric characters
         const numericValue = text.replace(/[^0-9]/g, '');
         const parsed = parseInt(numericValue, 10) || 0;
         
@@ -71,10 +69,8 @@ export const WalletTopUpScreen: React.FC = () => {
         try {
             const result = await createTopUpRequest(parsedAmount);
 
-            // Calculate expiry (15 minutes from now)
             const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-            // Store context
             const context = {
                 transactionId: result.transactionId,
                 amount: parsedAmount,
@@ -85,7 +81,6 @@ export const WalletTopUpScreen: React.FC = () => {
                 JSON.stringify(context)
             );
 
-            // Navigate to VNPay WebView
             navigation.navigate('WalletVNPayWebView', {
                 vnpayUrl: result.vnPayUrl,
                 transactionId: result.transactionId,
@@ -105,11 +100,7 @@ export const WalletTopUpScreen: React.FC = () => {
                 style={styles.flex}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                <ScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={styles.content}
-                    keyboardShouldPersistTaps="handled"
-                >
+                <View style={styles.content}>
                     {/* Amount Input */}
                     <View style={styles.inputSection}>
                         <Text style={styles.label}>Số tiền nạp</Text>
@@ -153,19 +144,12 @@ export const WalletTopUpScreen: React.FC = () => {
                         </View>
                     </View>
 
-                    {/* Payment Method Info */}
+                    {/* Payment Method */}
                     <View style={styles.paymentInfo}>
-                        <View style={styles.paymentHeader}>
-                            <Text style={styles.paymentTitle}>Phương thức thanh toán</Text>
-                        </View>
-                        <View style={styles.paymentMethod}>
-                            <View style={styles.vnpayBadge}>
-                                <Text style={styles.vnpayText}>VNPay</Text>
-                            </View>
-                            <Text style={styles.paymentDesc}>
-                                ATM • Visa • MasterCard • JCB • QR Code
-                            </Text>
-                        </View>
+                        <Text style={styles.paymentTitle}>Thanh toán qua VNPay</Text>
+                        <Text style={styles.paymentDesc}>
+                            Cổng thanh toán trực tuyến an toàn và bảo mật
+                        </Text>
                     </View>
 
                     {/* Notice */}
@@ -177,11 +161,8 @@ export const WalletTopUpScreen: React.FC = () => {
                         <Text style={styles.noticeText}>
                             • Thời gian thanh toán: 15 phút
                         </Text>
-                        <Text style={styles.noticeText}>
-                            • Nếu gặp sự cố, vui lòng liên hệ hotline: 1900 xxxx
-                        </Text>
                     </View>
-                </ScrollView>
+                </View>
 
                 {/* Footer */}
                 <View style={styles.footer}>
@@ -205,8 +186,10 @@ export const WalletTopUpScreen: React.FC = () => {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#000' },
     flex: { flex: 1 },
-    scrollView: { flex: 1 },
-    content: { padding: 16, paddingBottom: 100 },
+    content: { 
+        flex: 1,
+        padding: 16,
+    },
 
     inputSection: { marginBottom: 24 },
     label: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 12 },
@@ -257,18 +240,20 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 16,
         marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#4169E1',
     },
-    paymentHeader: { marginBottom: 12 },
-    paymentTitle: { color: '#fff', fontSize: 15, fontWeight: '600' },
-    paymentMethod: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    vnpayBadge: {
-        backgroundColor: '#4169E1',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 6,
+    paymentTitle: {
+        color: '#4169E1',
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 6,
     },
-    vnpayText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-    paymentDesc: { color: '#999', fontSize: 13, flex: 1 },
+    paymentDesc: {
+        color: '#999',
+        fontSize: 13,
+        lineHeight: 18,
+    },
 
     notice: {
         backgroundColor: '#1a1a1a',

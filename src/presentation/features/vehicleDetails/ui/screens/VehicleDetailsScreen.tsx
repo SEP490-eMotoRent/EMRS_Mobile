@@ -22,6 +22,7 @@ import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
 import { BookingButtonWithPrice } from "../atoms/buttons/BookingButtonWithPrice";
 import { ImageGallery } from "../organisms/ImageGallery";
 import { PickupLocationSection } from "../organisms/PickupLocationSection";
+import { Icon } from "../atoms/Icons/Icons";
 
 type RoutePropType = RouteProp<BrowseStackParamList, "VehicleDetails">;
 type NavProp = CompositeNavigationProp<
@@ -38,7 +39,6 @@ export const VehicleDetailsScreen: React.FC = () => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
 
-  // ✅ UPDATED: Hooks no longer need parameters from service locator
   const { data, loading, error } = useVehicleDetail(vehicleId);
   const {
     branches,
@@ -88,7 +88,7 @@ export const VehicleDetailsScreen: React.FC = () => {
   if (loading || branchesLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#a78bfa" />
+        <ActivityIndicator size="large" color="#B8A4FF" />
       </View>
     );
   }
@@ -101,7 +101,15 @@ export const VehicleDetailsScreen: React.FC = () => {
     );
   }
 
-  const images = data.images;
+  // ✅ FIX: Convert single imageUrl to array, or use images array if it exists
+  const images = Array.isArray(data.images) 
+    ? data.images 
+    : data.imageUrl 
+      ? [data.imageUrl] 
+      : ['https://via.placeholder.com/400x300?text=No+Image'];
+
+  console.log('🖼️ Vehicle images:', images);
+
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
   const securityDeposit = data.depositAmount > 0 ? data.depositAmount : 2000000;
 
@@ -172,7 +180,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           {data.battery && (
             <View style={styles.specRow}>
               <View style={styles.specIconContainer}>
-                <Text style={styles.specIcon}>🔋</Text>
+                <Icon name="battery" size={20} color="#B8A4FF" />
               </View>
               <View style={styles.specContent}>
                 <Text style={styles.specLabel}>Pin</Text>
@@ -184,7 +192,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           {data.topSpeed && (
             <View style={styles.specRow}>
               <View style={styles.specIconContainer}>
-                <Text style={styles.specIcon}>⚡</Text>
+                <Icon name="flash" size={20} color="#B8A4FF" />
               </View>
               <View style={styles.specContent}>
                 <Text style={styles.specLabel}>Tốc Độ Tối Đa</Text>
@@ -195,7 +203,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           
           <View style={styles.specRow}>
             <View style={styles.specIconContainer}>
-              <Text style={styles.specIcon}>📍</Text>
+              <Icon name="location" size={20} color="#B8A4FF" />
             </View>
             <View style={styles.specContent}>
               <Text style={styles.specLabel}>Quãng Đường Tối Đa</Text>
@@ -205,7 +213,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           
           <View style={styles.specRow}>
             <View style={styles.specIconContainer}>
-              <Text style={styles.specIcon}>🏍️</Text>
+              <Icon name="vehicle" size={20} color="#B8A4FF" />
             </View>
             <View style={styles.specContent}>
               <Text style={styles.specLabel}>Loại Xe</Text>
@@ -217,7 +225,7 @@ export const VehicleDetailsScreen: React.FC = () => {
         {/* Security Deposit Card */}
         <View style={styles.depositCard}>
           <View style={styles.depositHeader}>
-            <Text style={styles.depositIcon}>💰</Text>
+            <Icon name="wallet" size={20} color="#B8A4FF" />
             <Text style={styles.depositLabel}>Đặt Cọc</Text>
           </View>
           <Text style={styles.depositAmount}>
@@ -255,7 +263,11 @@ export const VehicleDetailsScreen: React.FC = () => {
           documentsStatus.complete && styles.documentsWarningComplete
         ]}>
           <View style={styles.documentsWarningHeader}>
-            <Text style={styles.documentsWarningIcon}>📄</Text>
+            <Icon 
+              name="document" 
+              size={24} 
+              color={documentsStatus.complete ? "#10b981" : "#B8A4FF"} 
+            />
             <View style={styles.documentsWarningTextContainer}>
               <Text style={[
                 styles.documentsWarningTitle,
@@ -273,18 +285,22 @@ export const VehicleDetailsScreen: React.FC = () => {
           
           <View style={styles.documentsList}>
             <View style={styles.documentItem}>
-              <Text style={documentsStatus.hasCitizen ? styles.documentCheckComplete : styles.documentCheckMissing}>
-                {documentsStatus.hasCitizen ? '✓' : '✗'}
-              </Text>
+              <Icon 
+                name={documentsStatus.hasCitizen ? "checkmark" : "close"} 
+                size={18} 
+                color={documentsStatus.hasCitizen ? "#10b981" : "#ef4444"} 
+              />
               <Text style={documentsStatus.hasCitizen ? styles.documentTextComplete : styles.documentTextMissing}>
                 Căn Cước Công Dân (CCCD)
               </Text>
             </View>
             
             <View style={styles.documentItem}>
-              <Text style={documentsStatus.hasLicense ? styles.documentCheckComplete : styles.documentCheckMissing}>
-                {documentsStatus.hasLicense ? '✓' : '✗'}
-              </Text>
+              <Icon 
+                name={documentsStatus.hasLicense ? "checkmark" : "close"} 
+                size={18} 
+                color={documentsStatus.hasLicense ? "#10b981" : "#ef4444"} 
+              />
               <Text style={documentsStatus.hasLicense ? styles.documentTextComplete : styles.documentTextMissing}>
                 Giấy Phép Lái Xe
               </Text>
@@ -316,7 +332,7 @@ export const VehicleDetailsScreen: React.FC = () => {
         {/* Warning message when no vehicles available */}
         {selectedBranch && (selectedBranch.vehicleCount ?? 0) === 0 && (
           <View style={styles.unavailableWarning}>
-            <Text style={styles.unavailableIcon}>⚠️</Text>
+            <Icon name="warning" size={24} color="#ff6b6b" />
             <View style={styles.unavailableTextContainer}>
               <Text style={styles.unavailableTitle}>Xe Không Có Sẵn</Text>
               <Text style={styles.unavailableMessage}>
@@ -400,9 +416,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 16,
   },
-  specIcon: {
-    fontSize: 20,
-  },
   specContent: {
     flex: 1,
     flexDirection: "row",
@@ -433,9 +446,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  depositIcon: {
-    fontSize: 20,
-  },
   depositLabel: {
     color: "#999",
     fontSize: 14,
@@ -465,7 +475,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   showMoreButton: {
-    backgroundColor: "#a78bfa",
+    backgroundColor: "#B8A4FF",
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -490,12 +500,9 @@ const styles = StyleSheet.create({
     borderColor: "#4a2a2a",
     alignItems: "flex-start",
   },
-  unavailableIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
   unavailableTextContainer: {
     flex: 1,
+    marginLeft: 12,
   },
   unavailableTitle: {
     color: "#ff6b6b",
@@ -525,15 +532,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 16,
   },
-  documentsWarningIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
   documentsWarningTextContainer: {
     flex: 1,
+    marginLeft: 12,
   },
   documentsWarningTitle: {
-    color: "#a78bfa",
+    color: "#B8A4FF",
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 6,
@@ -555,16 +559,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  documentCheckComplete: {
-    fontSize: 18,
-    color: "#10b981",
-    fontWeight: "700",
-  },
-  documentCheckMissing: {
-    fontSize: 18,
-    color: "#ef4444",
-    fontWeight: "700",
-  },
   documentTextComplete: {
     color: "#10b981",
     fontSize: 15,
@@ -576,7 +570,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   uploadDocumentsButton: {
-    backgroundColor: "#a78bfa",
+    backgroundColor: "#B8A4FF",
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,

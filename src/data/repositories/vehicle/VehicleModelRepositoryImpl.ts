@@ -3,10 +3,10 @@ import { VehicleModel } from "../../../domain/entities/vehicle/VehicleModel";
 import { VehicleModelRepository } from "../../../domain/repositories/vehicle/VehicleModelRepository";
 import { VehicleModelRemoteDataSource } from "../../datasources/interfaces/remote/vehicle/VehicleModelRemoteDataSource";
 import { CreateVehicleModelRequest } from "../../models/vehicle_model/CreateVehicleModelRequest";
-import { VehicleModelResponse } from "../../models/vehicle_model/VehicleModelResponse";
 import { VehicleModelDetailResponse } from "../../models/vehicle_model/VehicleModelDetailResponse";
-import { VehicleModelSearchResponse } from "../../models/vehicle_model/VehicleModelSearchResponse";
 import { VehicleModelPaginatedSearchResponse } from "../../models/vehicle_model/VehicleModelPaginatedSearchResponse";
+import { VehicleModelResponse } from "../../models/vehicle_model/VehicleModelResponse";
+import { VehicleModelSearchResponse } from "../../models/vehicle_model/VehicleModelSearchResponse";
 
 export class VehicleModelRepositoryImpl implements VehicleModelRepository {
     constructor(private remote: VehicleModelRemoteDataSource) {}
@@ -86,6 +86,10 @@ export class VehicleModelRepositoryImpl implements VehicleModelRepository {
             null,
             false
         );
+    }
+
+    async getDetailRaw(id: string): Promise<VehicleModelDetailResponse | null> {
+        return this.remote.getDetail(id);
     }
 
     // Map DETAIL API response (VehicleModelDetailResponse) to entity

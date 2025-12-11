@@ -23,7 +23,8 @@ interface ScreenHeaderProps {
   onSearchPress?: () => void;
   showBell?: boolean;
   onBellPress?: () => void;
-  badgeText?: string; // e.g., 'ST'
+  showBadge?: boolean; // ✅ NEW PROP
+  badgeText?: string;
   onBack?: () => void;
   showBackButton?: boolean;
 }
@@ -38,8 +39,9 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   submetaStyle,
   showSearch = false,
   onSearchPress,
-  showBell = true,
+  showBell = false, // ✅ CHANGED: false by default
   onBellPress,
+  showBadge = false, // ✅ NEW: false by default
   badgeText = "ST",
   onBack,
   showBackButton = true,
@@ -77,9 +79,11 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
             <AntDesign name="bell" size={18} color={colors.text.primary} />
           </TouchableOpacity>
         )}
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{badgeText}</Text>
-        </View>
+        {showBadge && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badgeText}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
