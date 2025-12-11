@@ -10,7 +10,7 @@
  * - Privacy policy access
  * 
  * @author eMotoRent Development Team
- * @created 2024
+ * @created 2025
  */
 
 import { useNavigation } from '@react-navigation/native';

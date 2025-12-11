@@ -1,137 +1,80 @@
-import { useState, useCallback, useRef } from 'react';
-import { Branch } from '../../../../domain/entities/operations/Branch';
-import { parseDateRange } from '../utils/dateParser';
-import { useVehicleSearch } from './useVehicleSearch';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Branch } from "../../../../domain/entities/operations/Branch";
+import { parseDateRange } from "../utils/dateParser";
+import { useVehicleSearch } from "./useVehicleSearch";
 
-interface UseMapInteractionsParams {
-    dateRange?: string;
-}
-
-export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInteractionsParams = {}) => {
+export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?: string } = {}) => {
     const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
     const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
     const [bookingModalVisible, setBookingModalVisible] = useState(false);
-    
-    // ✅ THROTTLE instead of debounce - prevents rapid clicks
-    const lastClickTimeRef = useRef<number>(0);
-    const lastClickedBranchRef = useRef<string | null>(null);
+
+    // Prevent stale closures + rapid taps
+    const selectedBranchIdRef = useRef<string | null>(null);
+    const bottomSheetVisibleRef = useRef(false);
+    const isProcessingRef = useRef(false);
 
     const { vehicles, loading, error, searchVehicles } = useVehicleSearch();
 
-    // ✅ ULTRA DEFENSIVE marker press handler with throttling
-    const handleBranchMarkerPress = useCallback(async (branch: Branch) => {
-        const now = Date.now();
-        
-        // ✅ THROTTLE: Ignore clicks within 500ms of last click
-        if (now - lastClickTimeRef.current < 500) {
-            console.log('⏱️ Click throttled - too fast');
+    useEffect(() => {
+        selectedBranchIdRef.current = selectedBranchId;
+        bottomSheetVisibleRef.current = bottomSheetVisible;
+    }, [selectedBranchId, bottomSheetVisible]);
+
+    const handleBranchMarkerPress = useCallback(
+        async (branch: Branch) => {
+        if (!branch?.id || isProcessingRef.current) return;
+
+        const isSame = selectedBranchIdRef.current === branch.id;
+
+        if (isSame && bottomSheetVisibleRef.current) {
+            setBottomSheetVisible(false);
+            setSelectedBranchId(null);
             return;
         }
-        
-        lastClickTimeRef.current = now;
+
+        isProcessingRef.current = true;
+        setSelectedBranchId(branch.id);
+        setBottomSheetVisible(true);
 
         try {
-            // ✅ Validate branch
-            if (!branch?.id) {
-                console.warn('⚠️ Invalid branch:', branch);
-                return;
-            }
-
-            // ✅ If same branch, toggle off
-            if (lastClickedBranchRef.current === branch.id && bottomSheetVisible) {
-                console.log('👆 Toggling off same branch');
-                setBottomSheetVisible(false);
-                setSelectedBranchId(null);
-                lastClickedBranchRef.current = null;
-                return;
-            }
-
-            console.log('🎯 Branch clicked:', branch.id);
-            
-            lastClickedBranchRef.current = branch.id;
-
-            // ✅ Update UI FIRST (instant feedback)
-            setSelectedBranchId(branch.id);
-            setBottomSheetVisible(true);
-
-            // ✅ Parse dates safely
-            let startTime: string | undefined;
-            let endTime: string | undefined;
-            
-            try {
-                const parsed = parseDateRange(dateRange);
-                startTime = parsed.startTime;
-                endTime = parsed.endTime;
-            } catch (parseError) {
-                console.warn('⚠️ Date parse failed:', parseError);
-            }
-
-            // ✅ Search in background (async, won't block UI)
-            searchVehicles(branch.id, dateRange, startTime, endTime)
-                .catch(err => {
-                    console.error('❌ Search failed:', err);
-                    // Don't crash - just log it
-                });
-            
-        } catch (error) {
-            console.error('❌ handleBranchMarkerPress error:', error);
-            // ✅ Don't crash app - recover gracefully
+            const parsed = parseDateRange(dateRange);
+            // YOUR ACTUAL searchVehicles signature — ONLY 4 ARGS
+            await searchVehicles(branch.id, dateRange, parsed.startTime, parsed.endTime);
+        } catch (err) {
+            console.error("Search failed:", err);
+        } finally {
+            isProcessingRef.current = false;
         }
-    }, [dateRange, searchVehicles, bottomSheetVisible]);
+        },
+        [dateRange, searchVehicles]
+    );
 
-    // ✅ Safe map press handler
     const handleMapPress = useCallback(() => {
-        try {
-            setSelectedBranchId(null);
-            setBottomSheetVisible(false);
-            lastClickedBranchRef.current = null;
-        } catch (error) {
-            console.error('❌ handleMapPress error:', error);
-        }
+        setSelectedBranchId(null);
+        setBottomSheetVisible(false);
     }, []);
 
-    // ✅ Safe bottom sheet close
     const handleBottomSheetClose = useCallback(() => {
-        try {
-            setBottomSheetVisible(false);
-            setSelectedBranchId(null);
-            lastClickedBranchRef.current = null;
-        } catch (error) {
-            console.error('❌ handleBottomSheetClose error:', error);
-        }
+        setSelectedBranchId(null);
+        setBottomSheetVisible(false);
     }, []);
 
-    // ✅ Safe search bar press
     const handleSearchBarPress = useCallback(() => {
-        try {
-            setBookingModalVisible(true);
-        } catch (error) {
-            console.error('❌ handleSearchBarPress error:', error);
-        }
+        setBookingModalVisible(true);
     }, []);
 
-    // ✅ Safe booking modal close
     const handleBookingModalClose = useCallback(() => {
-        try {
-            setBookingModalVisible(false);
-        } catch (error) {
-            console.error('❌ handleBookingModalClose error:', error);
-        }
+        setBookingModalVisible(false);
     }, []);
 
-    // ✅ Safe book vehicle handler
     const handleBookVehicle = useCallback((vehicleId: string) => {
-        try {
-            console.log("📱 Booking vehicle:", vehicleId);
-        } catch (error) {
-            console.error('❌ handleBookVehicle error:', error);
-        }
+        console.log("Book vehicle:", vehicleId);
     }, []);
 
     return {
         selectedBranchId,
         bottomSheetVisible,
-        selectedVehicles: vehicles,
+        selectedVehicles: vehicles || [],
         bookingModalVisible,
         vehiclesLoading: loading,
         vehiclesError: error,

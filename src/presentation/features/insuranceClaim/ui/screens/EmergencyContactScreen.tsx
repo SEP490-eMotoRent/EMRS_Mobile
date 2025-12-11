@@ -54,26 +54,6 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
         }
     };
 
-    // ✅ COMMENTED OUT - Phone calling functionality
-    // const handleCallBranch = () => {
-    //     if (branchPhone && branchPhone !== '1900-XXXX' && branchPhone !== 'N/A') {
-    //         const phoneUrl = `tel:${branchPhone}`;
-    //         Linking.canOpenURL(phoneUrl)
-    //             .then((supported) => {
-    //                 if (supported) {
-    //                     return Linking.openURL(phoneUrl);
-    //                 } else {
-    //                     Alert.alert('Lỗi', `Không thể gọi: ${branchPhone}`);
-    //                 }
-    //             })
-    //             .catch(() => {
-    //                 Alert.alert('Lỗi', 'Không thể mở ứng dụng gọi');
-    //             });
-    //     } else {
-    //         Alert.alert('Liên hệ chi nhánh', 'Số điện thoại chi nhánh không khả dụng. Vui lòng liên hệ hỗ trợ.');
-    //     }
-    // };
-
     const handleReportClaim = () => {
         const now = new Date();
         const formattedDateTime = now.toLocaleString('vi-VN', {
@@ -159,12 +139,24 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                 </ScrollView>
 
                 <View style={styles.fixedButtonContainer}>
-                    <ActionButton
-                        icon="file-text"
-                        label="Báo cáo bảo hiểm"
-                        onPress={handleReportClaim}
-                        variant="danger"
-                    />
+                    <View style={styles.buttonRow}>
+                        <View style={styles.warningButton}>
+                            <ActionButton
+                                icon="tool"
+                                label="Sự cố kỹ thuật"
+                                onPress={handleReportTechnicalIssue}
+                                variant="warning"
+                            />
+                        </View>
+                        <View style={styles.dangerButton}>
+                            <ActionButton
+                                icon="file-text"
+                                label="Báo cáo bảo hiểm"
+                                onPress={handleReportClaim}
+                                variant="danger"
+                            />
+                        </View>
+                    </View>
                 </View>
             </View>
         );
@@ -200,12 +192,24 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                 </ScrollView>
 
                 <View style={styles.fixedButtonContainer}>
-                    <ActionButton
-                        icon="file-text"
-                        label="Báo cáo bảo hiểm"
-                        onPress={handleReportClaim}
-                        variant="danger"
-                    />
+                    <View style={styles.buttonRow}>
+                        <View style={styles.warningButton}>
+                            <ActionButton
+                                icon="tool"
+                                label="Sự cố kỹ thuật"
+                                onPress={handleReportTechnicalIssue}
+                                variant="warning"
+                            />
+                        </View>
+                        <View style={styles.dangerButton}>
+                            <ActionButton
+                                icon="file-text"
+                                label="Báo cáo bảo hiểm"
+                                onPress={handleReportClaim}
+                                variant="danger"
+                            />
+                        </View>
+                    </View>
                 </View>
             </View>
         );
@@ -319,24 +323,16 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
             </ScrollView>
 
             <View style={styles.fixedButtonContainer}>
-                <ActionButton
-                    icon="tool"
-                    label="Báo cáo sự cố kỹ thuật"
-                    onPress={handleReportTechnicalIssue}
-                    variant="warning"
-                />
-                
-                {/* ✅ FULL WIDTH INSURANCE BUTTON */}
-                <ActionButton
-                    icon="file-text"
-                    label="Báo cáo bảo hiểm"
-                    onPress={handleReportClaim}
-                    variant="danger"
-                />
-
-                {/* ✅ COMMENTED OUT - Call branch button */}
-                {/* <View style={styles.buttonRow}>
-                    <View style={styles.secondaryButton}>
+                <View style={styles.buttonRow}>
+                    <View style={styles.warningButton}>
+                        <ActionButton
+                            icon="tool"
+                            label="Sự cố kỹ thuật"
+                            onPress={handleReportTechnicalIssue}
+                            variant="warning"
+                        />
+                    </View>
+                    <View style={styles.dangerButton}>
                         <ActionButton
                             icon="file-text"
                             label="Báo cáo bảo hiểm"
@@ -344,15 +340,7 @@ export const EmergencyContactScreen: React.FC<EmergencyContactScreenProps> = ({
                             variant="danger"
                         />
                     </View>
-                    <View style={styles.primaryButton}>
-                        <ActionButton
-                            icon="phone"
-                            label="Gọi chi nhánh"
-                            onPress={handleCallBranch}
-                            variant="primary"
-                        />
-                    </View>
-                </View> */}
+                </View>
             </View>
         </View>
     );
@@ -567,16 +555,15 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 8,
-        gap: 12,
     },
     buttonRow: {
         flexDirection: 'row',
         gap: 12,
     },
-    secondaryButton: {
+    warningButton: {
         flex: 1,
     },
-    primaryButton: {
-        flex: 1.2,
+    dangerButton: {
+        flex: 1,
     },
 });

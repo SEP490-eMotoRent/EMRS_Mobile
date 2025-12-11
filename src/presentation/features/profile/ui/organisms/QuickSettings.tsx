@@ -47,8 +47,8 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
                     onPress={onInsuranceClaims}
                 />
             {/* <SettingItem icon="location" label="Địa Điểm Các Chi Nhánh" /> */}
-            <SettingItem icon="help" label="Chăm Sóc Khách Hàng" />
-            <SettingItem icon="terms" label="Điều Khoản và Chính Sách" />
+            {/* <SettingItem icon="help" label="Chăm Sóc Khách Hàng" />
+            <SettingItem icon="terms" label="Điều Khoản và Chính Sách" /> */}
         </View>
         
         <TouchableOpacity style={styles.signOutButton} onPress={onSignOut}>

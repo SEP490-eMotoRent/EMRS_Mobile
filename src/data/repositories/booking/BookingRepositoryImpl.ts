@@ -450,67 +450,78 @@ export class BookingRepositoryImpl implements BookingRepository {
     console.log("🔄 Mapping list booking response:", dto.id);
 
     const vehicle = dto.vehicle
-      ? this.mapVehicleFromListResponse(dto.vehicle)
-      : undefined;
+        ? this.mapVehicleFromListResponse(dto.vehicle)
+        : undefined;
 
     const vehicleModel = dto.vehicleModel
-      ? this.mapVehicleModelFromListResponse(dto.vehicleModel)
-      : undefined;
+        ? this.mapVehicleModelFromListResponse(dto.vehicleModel)
+        : undefined;
 
     const renter = dto.renter
-      ? this.mapRenterFromListResponse(dto.renter)
-      : undefined;
+        ? this.mapRenterFromListResponse(dto.renter)
+        : undefined;
 
     const insurancePackage = dto.insurancePackage
-      ? this.mapInsurancePackageFromResponse(dto.insurancePackage)
-      : undefined;
+        ? this.mapInsurancePackageFromResponse(dto.insurancePackage)
+        : undefined;
 
-    return new Booking(
-      dto.id,
-      dto.bookingCode,
-      dto.baseRentalFee,
-      dto.depositAmount,
-      dto.rentalDays,
-      dto.rentalHours,
-      dto.rentingRate,
-      dto.lateReturnFee || 0,
-      dto.averageRentalPrice,
-      0, // excessKmFee
-      0, // cleaningFee
-      0, // crossBranchFee
-      0, // totalChargingFee
-      0, // totalAdditionalFee
-      undefined, // earlyHandoverFee
-      dto.totalRentalFee,
-      dto.totalAmount,
-      0, // refundAmount
-      dto.bookingStatus,
-      dto.vehicleModelId,
-      dto.renterId,
-      renter,
-      vehicleModel,
-      dto.vehicleId,
-      vehicle, // vehicle - Not in list response
-      dto.startDatetime ? new Date(dto.startDatetime) : undefined,
-      dto.endDatetime ? new Date(dto.endDatetime) : undefined,
-      dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
-      insurancePackage?.id,
-      insurancePackage,
-      undefined, // rentalContract
-      undefined, // rentalReceipts
-      undefined, // handoverBranchId
-      undefined, // handoverBranch
-      undefined, // returnBranchId
-      undefined, // returnBranch
-      undefined, // feedback
-      undefined, // insuranceClaims
-      undefined, // additionalFees
-      undefined, // chargingRecords
-      new Date(),
-      null,
-      null,
-      false
+    // ✅ Extract vehicle model image URL
+    const vehicleImageUrl = dto.vehicleModelmediaResponse?.fileUrl;
+
+    const booking = new Booking(
+        dto.id,
+        dto.bookingCode,
+        dto.baseRentalFee,
+        dto.depositAmount,
+        dto.rentalDays,
+        dto.rentalHours,
+        dto.rentingRate,
+        dto.lateReturnFee || 0,
+        dto.averageRentalPrice,
+        0, // excessKmFee
+        0, // cleaningFee
+        0, // crossBranchFee
+        0, // totalChargingFee
+        0, // totalAdditionalFee
+        undefined, // earlyHandoverFee
+        dto.totalRentalFee,
+        dto.totalAmount,
+        0, // refundAmount
+        dto.bookingStatus,
+        dto.vehicleModelId,
+        dto.renterId,
+        renter,
+        vehicleModel,
+        dto.vehicleId,
+        vehicle,
+        dto.startDatetime ? new Date(dto.startDatetime) : undefined,
+        dto.endDatetime ? new Date(dto.endDatetime) : undefined,
+        dto.actualReturnDatetime ? new Date(dto.actualReturnDatetime) : undefined,
+        insurancePackage?.id,
+        insurancePackage,
+        undefined, // rentalContract
+        undefined, // rentalReceipts
+        undefined, // handoverBranchId
+        undefined, // handoverBranch
+        undefined, // returnBranchId
+        undefined, // returnBranch
+        undefined, // feedback
+        undefined, // insuranceClaims
+        undefined, // additionalFees
+        undefined, // chargingRecords
+        new Date(),
+        null,
+        null,
+        false
     );
+
+    // ✅ Store image URL using any cast
+    if (vehicleModel && vehicleImageUrl) {
+        (vehicleModel as any).imageUrl = vehicleImageUrl;
+        console.log("🖼️ Vehicle image URL attached:", vehicleImageUrl);
+    }
+
+    return booking;
   }
 
   // =========================================================================

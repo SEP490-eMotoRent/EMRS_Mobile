@@ -7,9 +7,11 @@
  * - API registration call
  * - Success navigation to OTP verification
  * - Error handling with Toast notifications
+ * - Backend error mapping (uniqueness validation)
  * 
  * @author eMotoRent Development Team
  * @created 2024
+ * @updated 2025-01-11
  */
 
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +22,7 @@ import { container } from '../../../../../../core/di/ServiceContainer';
 import { AuthStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import {
     DEFAULT_REGISTRATION_ERROR,
+    mapBackendErrorToUserMessage,
     RegistrationFormData,
     validateRegistrationForm,
 } from '../../utils/registrationValidation';
@@ -55,11 +58,17 @@ interface UseRegisterReturn {
  * Handles the complete registration flow:
  * 1. Validates form data (username, email, password, confirmation)
  * 2. Calls registration API
- * 3. Navigates to OTP verification on success
- * 4. Shows error messages on failure
+ * 3. Backend validates uniqueness (duplicate username/email)
+ * 4. Navigates to OTP verification on success
+ * 5. Shows error messages on failure (with backend error mapping)
  * 
  * Uses Toast for error messages (consistent with LoginScreen)
  * instead of Alert.alert from the original implementation.
+ * 
+ * Backend uniqueness validation:
+ * - Backend checks if username/email already exists (case-insensitive)
+ * - Returns error: "Email/Username is already in use."
+ * - This hook maps backend errors to Vietnamese messages
  * 
  * @returns {UseRegisterReturn} Registration state and methods
  * 
@@ -103,10 +112,11 @@ export const useRegister = (): UseRegisterReturn => {
    * handleContinue function from RegisterScreen.
    * 
    * Flow:
-   * 1. Validates form data (comprehensive validation vs original 3 checks)
+   * 1. Validates form data (format, length, password strength)
    * 2. Calls registration API via repository.create()
-   * 3. Shows success toast and navigates to OTP screen
-   * 4. Shows error toast on failure
+   * 3. Backend validates uniqueness (username/email)
+   * 4. Shows success toast and navigates to OTP screen
+   * 5. Shows error toast on failure (with backend error mapping)
    * 
    * @param {RegistrationFormData} data - Complete registration form data
    * @returns {Promise<void>}
@@ -117,8 +127,9 @@ export const useRegister = (): UseRegisterReturn => {
         setLoading(true);
         setError('');
 
-        // ==================== VALIDATION ====================
-        // Original had 3 inline checks, now using comprehensive utility
+        // ==================== FRONTEND VALIDATION ====================
+        // Validates format, length, password strength
+        // Does NOT check uniqueness (backend handles this)
         const validationResult = validateRegistrationForm(data);
         
         if (!validationResult.isValid) {
@@ -134,35 +145,37 @@ export const useRegister = (): UseRegisterReturn => {
           return;
         }
 
-        console.log('[useRegister] Validation passed, calling API...');
+        console.log('[useRegister] Frontend validation passed, calling API...');
 
         // ==================== API CALL ====================
-        // Original: new RegisterUseCase(sl.get('AccountRepository')).execute({...})
-        // Use case handles creating both Account + Renter entities with proper structure
+        // Backend will validate:
+        // - Username uniqueness (case-insensitive)
+        // - Email uniqueness (case-insensitive)
+        // - Default membership exists
         const registerUseCase = container.account.useCases.register;
         
         await registerUseCase.execute({
           username: data.username,
           email: data.email,
           password: data.password,
-          fullname: '',     // Optional
-          phone: '',        // Optional
-          address: '',      // Optional
-          dateOfBirth: '',  // Optional
-          avatarUrl: '',    // Optional
+          fullname: '',     // Optional - backend accepts empty string
+          phone: '',        // Optional - backend accepts empty string
+          address: '',      // Optional - backend accepts empty string
+          dateOfBirth: '',  // Optional - backend accepts empty string
+          avatarUrl: '',    // Optional - backend accepts empty string
         });
 
-        console.log('[useRegister] Registration successful');
+        console.log('[useRegister] Registration successful, navigating to OTP verification...');
 
         // ==================== SUCCESS ====================
-        // Show success toast (original didn't have this)
+        // Show success toast
         Toast.show({
           type: 'success',
           text1: 'Đăng ký thành công',
           text2: 'Vui lòng kiểm tra email để xác thực tài khoản',
         });
 
-        // Navigate to OTP verification (same as original)
+        // Navigate to OTP verification screen
         navigation.navigate('OTPVerification', {
           email: data.email,
           userId: data.username,
@@ -170,23 +183,48 @@ export const useRegister = (): UseRegisterReturn => {
 
       } catch (error: any) {
         // ==================== ERROR HANDLING ====================
-        // Original: Alert.alert('Đăng ký thất bại', error.message || 'Đã xảy ra lỗi')
-        // New: Toast.show + error state
-        const errorMessage = error.message || DEFAULT_REGISTRATION_ERROR;
-        setError(errorMessage);
+        // Backend errors we handle:
+        // 1. "Email/Username is already in use." → uniqueness violation
+        // 2. "User/Email already in use." → duplicate check (redundant but exists)
+        // 3. "Invalid user data." → validation failed
+        // 4. "Default membership not found." → system error
+        
+        // Extract error message from various error formats
+        let backendError = DEFAULT_REGISTRATION_ERROR;
+        
+        if (error?.response?.data?.message) {
+          backendError = error.response.data.message;
+        } else if (error?.response?.data?.error) {
+          backendError = error.response.data.error;
+        } else if (error?.message) {
+          backendError = error.message;
+        } else if (typeof error === 'string') {
+          backendError = error;
+        }
+        
+        console.log('[useRegister] Raw backend error:', backendError);
+        
+        // Map backend error to user-friendly Vietnamese message
+        const userFriendlyError = mapBackendErrorToUserMessage(backendError);
+        
+        console.log('[useRegister] Mapped Vietnamese error:', userFriendlyError);
+        
+        setError(userFriendlyError);
 
+        // Show error toast with mapped message
         Toast.show({
           type: 'error',
           text1: 'Đăng ký thất bại',
-          text2: errorMessage,
+          text2: userFriendlyError,
         });
 
-        // Structured logging (original had basic console.error)
+        // Structured logging for debugging
         console.error('[useRegister] Registration error:', {
-          message: errorMessage,
+          userMessage: userFriendlyError,
+          backendMessage: backendError,
           username: data.username,
           email: data.email,
-          error: error,
+          fullError: error,
         });
       } finally {
         setLoading(false);
@@ -200,16 +238,16 @@ export const useRegister = (): UseRegisterReturn => {
    * 
    * Use this when user dismisses error message or retries registration.
    */
-    const clearError = useCallback(() => {
-        setError('');
-    }, []);
+  const clearError = useCallback(() => {
+    setError('');
+  }, []);
 
   // ==================== RETURN ====================
 
-    return {
-        loading,
-        error,
-        register,
-        clearError,
-    };
+  return {
+    loading,
+    error,
+    register,
+    clearError,
+  };
 };
