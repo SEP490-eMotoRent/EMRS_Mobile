@@ -135,7 +135,7 @@ export const useRegister = (): UseRegisterReturn => {
         if (!validationResult.isValid) {
           setError(validationResult.error);
           
-          // Show validation error (Toast instead of Alert.alert)
+          // Show validation error via Toast (used throughout the app)
           Toast.show({
             type: 'error',
             text1: 'Lỗi xác thực',
