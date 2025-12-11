@@ -20,8 +20,6 @@ import { useAppSelector } from "../../../../authentication/store/hooks";
 import { GenerateContractUseCase } from "../../../../../../domain/usecases/contract/GenerateContractUseCase";
 import sl from "../../../../../../core/di/InjectionContainer";
 import Toast from "react-native-toast-message";
-import { GetDetailRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
-import { GetListRentalReceiptUseCase } from "../../../../../../domain/usecases/receipt/GetListRentalReceipt";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
 import { useGetLastReceipt } from "../../../return/ui/hooks/useGetLastReceipt";
 
@@ -48,7 +46,7 @@ export const HandoverReportScreen: React.FC = () => {
   } = route.params || {};
   const [rentalReceipts, setRentalReceipts] = useState<RentalReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { getLastReceipt } = useGetLastReceipt({ bookingId });
+  const { getLastReceipt, booking } = useGetLastReceipt({ bookingId });
 
   // Handle array data from response
   const handOverImages = useMemo(() => {
@@ -291,21 +289,48 @@ export const HandoverReportScreen: React.FC = () => {
 
         {/* Bottom CTA */}
         <View style={styles.ctaContainer}>
-          <TouchableOpacity
-            style={[styles.sendCta, isLoading && styles.sendCtaDisabled]}
-            onPress={generateConstract}
-            disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#000" />
-            ) : (
-              <>
-                <AntDesign name="send" size={18} color="#000" />
-                <Text style={styles.sendCtaText}>Gửi cho khách hàng</Text>
-              </>
+          {booking?.bookingStatus === "Booked" && !booking?.rentalContract && (
+            <TouchableOpacity
+              style={[styles.sendCta, isLoading && styles.sendCtaDisabled]}
+              onPress={generateConstract}
+              disabled={isLoading}
+              activeOpacity={0.8}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#000" />
+              ) : (
+                <>
+                  <AntDesign name="send" size={18} color="#000" />
+                  <Text style={styles.sendCtaText}>Gửi cho khách hàng</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+          {booking?.bookingStatus === "Booked" &&
+            booking?.rentalContract &&
+            booking?.rentalContract?.contractStatus === "Unsigned" && (
+              <TouchableOpacity
+                style={[styles.sendCta, isLoading && styles.sendCtaDisabled]}
+                onPress={() =>
+                  navigation.navigate("AwaitingApproval", {
+                    bookingId: bookingId,
+                  })
+                }
+                disabled={isLoading}
+                activeOpacity={0.8}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <>
+                    <AntDesign name="send" size={18} color="#000" />
+                    <Text style={styles.sendCtaText}>
+                      Xem trạng thái hợp đồng
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
           <View style={styles.infoBox}>
             <AntDesign
               name="info-circle"

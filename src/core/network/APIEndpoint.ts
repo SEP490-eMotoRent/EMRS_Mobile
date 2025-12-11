@@ -128,7 +128,7 @@ export const ApiEndpoints = {
       `/rental/contract/${contractId}/send-otp-code`,
     signContract: (contractId: string, receiptId: string, otpCode: string) =>
       `/rental/contract/${contractId}/${receiptId}/${otpCode}/confirm`,
-    updateRentalReceipt: "/rental/receipt",
+    updateHandoverReceipt: "/rental/receipt",
   },
 
   // Branch endpoints
