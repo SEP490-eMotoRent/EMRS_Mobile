@@ -8,6 +8,7 @@ import { CreateReceiptResponse } from "../../../../models/rentalReturn/CreateRec
 import { FinalizeReturnRequest } from "../../../../models/rentalReturn/FinalizeReturnRequest";
 import { FinalizeReturnResponse } from "../../../../models/rentalReturn/FinalizeReturnResponse";
 import { SummaryResponse } from "../../../../models/rentalReturn/SummaryResponse";
+import { UpdateReturnReceiptRequest } from "../../../../models/rentalReturn/UpdateReturnReceiptRequest";
 import { VehicleSwapRequest } from "../../../../models/rentalReturn/VehicleSwapRequest";
 import { VehicleSwapResponse } from "../../../../models/rentalReturn/VehicleSwapResponse";
 import { RentalReturnRemoteDataSource } from "../../../interfaces/remote/rentalReturn/RentalReturnRemoteDataSource";
@@ -128,7 +129,9 @@ export class RentalReturnRemoteDataSourceImpl
     }
   }
 
-  async swapVehicleReturn(request: VehicleSwapRequest): Promise<ApiResponse<VehicleSwapResponse>> {
+  async swapVehicleReturn(
+    request: VehicleSwapRequest
+  ): Promise<ApiResponse<VehicleSwapResponse>> {
     try {
       const formData = new FormData();
 
@@ -160,9 +163,47 @@ export class RentalReturnRemoteDataSourceImpl
         data: response.data.data,
         code: response.status,
       };
-    }
-    catch (error: any) {
+    } catch (error: any) {
       console.error("Error swapping vehicle:", error);
+      throw error;
+    }
+  }
+
+  async updateReturnReceipt(
+    request: UpdateReturnReceiptRequest
+  ): Promise<ApiResponse<void>> {
+    try {
+      const formData = new FormData();
+
+      formData.append("BookingId", request.bookingId);
+      formData.append("RentalReceiptId", request.rentalReceiptId);
+      formData.append("ActualReturnDatetime", request.actualReturnDatetime);
+      formData.append("EndOdometerKm", request.endOdometerKm.toString());
+      formData.append(
+        "EndBatteryPercentage",
+        request.endBatteryPercentage.toString()
+      );
+      formData.append("Notes", request.notes);
+      request.returnImageUrls.forEach((file, index) => {
+        formData.append("ReturnImageUrls", file);
+      });
+      formData.append("ChecklistImage", request.checkListImage);
+
+      console.log("=== FormData Content ===");
+      (formData as any)._parts.forEach(([key, value]: [string, any]) => {
+        console.log(`${key}:`, value);
+      });
+      const response = await this.axiosClient.put<
+        ApiResponse<void>
+      >(ApiEndpoints.rentalReturn.updateReturnReceipt, formData);
+      return {
+        success: true,
+        message: "Return receipt updated successfully",
+        data: response.data.data,
+        code: response.status,
+      };
+    } catch (error: any) {
+      console.error("Error updating return receipt:", error);
       throw error;
     }
   }
