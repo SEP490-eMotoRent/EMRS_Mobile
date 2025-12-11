@@ -1,31 +1,60 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
 import { BackButton } from "../../../../../common/components/atoms/buttons/BackButton";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GetBookingByIdUseCase } from "../../../../../../domain/usecases/booking/GetBookingByIdUseCase";
+import sl from "../../../../../../core/di/InjectionContainer";
+import { Booking } from "../../../../../../domain/entities/booking/Booking";
+import { useGetLastReceipt } from "./../../../return/ui/hooks/useGetLastReceipt";
 
 type AwaitingApprovalScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
   "AwaitingApproval"
 >;
 
+type AwaitingApprovalScreenRouteProp = RouteProp<
+  StaffStackParamList,
+  "AwaitingApproval"
+>;
+
 export const AwaitingApprovalScreen: React.FC = () => {
   const navigation = useNavigation<AwaitingApprovalScreenNavigationProp>();
-  const route = useRoute();
-  const status = (route.params as any)?.status as
-    | ("pending" | "approved" | "denied")
-    | undefined;
+  const route = useRoute<AwaitingApprovalScreenRouteProp>();
+  const { bookingId } = route.params;
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { getLastReceipt } = useGetLastReceipt({ bookingId });
+
+  useEffect(() => {
+    fetchBooking();
+  }, [bookingId]);
+
+  const fetchBooking = async () => {
+    try {
+      const booking = await new GetBookingByIdUseCase(
+        sl.get("BookingRepository")
+      );
+      const bookingData = await booking.execute(bookingId);
+      if (bookingData) {
+        setBooking(bookingData);
+      }
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+    }
+  };
 
   const handleBackToHome = () => {
     navigation.reset({
@@ -35,25 +64,31 @@ export const AwaitingApprovalScreen: React.FC = () => {
   };
 
   const getStatusConfig = () => {
-    if (!status || status === "pending") {
+    if (
+      booking?.bookingStatus === "Booked" &&
+      booking?.rentalContract?.contractStatus === "Unsigned"
+    ) {
       return {
         icon: "clock-circle",
         iconColor: "#FFD700",
         bgColor: "rgba(255,211,102,0.15)",
-        title: "Đang chờ phê duyệt",
-        subtitle: "Báo cáo đã được gửi tới khách hàng",
-        description: "Đang chờ khách hàng xác nhận...",
+        title: "Đang chờ ký hợp đồng",
+        subtitle: "Chờ khách hàng ký hợp đồng",
+        description: "Đang chờ khách hàng ký hợp đồng...",
         cardStyle: styles.cardPending,
       };
     }
-    if (status === "approved") {
+    if (
+      booking?.bookingStatus === "Renting" &&
+      booking?.rentalContract?.contractStatus === "Signed"
+    ) {
       return {
         icon: "check-circle",
         iconColor: "#67D16C",
         bgColor: "rgba(103,209,108,0.15)",
-        title: "Đã được phê duyệt",
-        subtitle: "Khách hàng đã xác nhận báo cáo",
-        description: "Chữ ký số đã được ghi nhận\nThời gian: 10:52 AM",
+        title: "Đã ký hợp đồng",
+        subtitle: "Khách hàng đã ký hợp đồng",
+        description: "Chữ ký số đã được ghi nhận",
         cardStyle: styles.cardApproved,
       };
     }
@@ -62,8 +97,8 @@ export const AwaitingApprovalScreen: React.FC = () => {
       iconColor: "#FF6B6B",
       bgColor: "rgba(255,107,107,0.15)",
       title: "Đã bị từ chối",
-      subtitle: "Khách hàng không đồng ý với báo cáo",
-      description: "Cần kiểm tra lại xe\nThời gian: 10:52 AM",
+      subtitle: "Khách hàng không đồng ý với hợp đồng",
+      description: "Cần kiểm tra lại hợp đồng",
       cardStyle: styles.cardDenied,
     };
   };
@@ -72,17 +107,27 @@ export const AwaitingApprovalScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={fetchBooking} />
+        }
+      >
         {/* Header */}
         <ScreenHeader
-          title="Chờ phê duyệt"
-          subtitle="John Nguyen"
+          title="Chờ ký hợp đồng"
+          subtitle={booking?.renter?.account?.fullname || ""}
           onBack={() => navigation.goBack()}
         />
 
         {/* Status card */}
         <View style={[styles.statusCard, statusConfig.cardStyle]}>
-          <View style={[styles.statusIconContainer, { backgroundColor: statusConfig.bgColor }]}>
+          <View
+            style={[
+              styles.statusIconContainer,
+              { backgroundColor: statusConfig.bgColor },
+            ]}
+          >
             <AntDesign
               name={statusConfig.icon as any}
               size={48}
@@ -91,14 +136,17 @@ export const AwaitingApprovalScreen: React.FC = () => {
           </View>
           <Text style={styles.statusTitle}>{statusConfig.title}</Text>
           <Text style={styles.statusSubtitle}>{statusConfig.subtitle}</Text>
-          <Text style={styles.statusDescription}>{statusConfig.description}</Text>
-          
-          {(!status || status === "pending") && (
-            <View style={styles.pendingIndicator}>
-              <View style={styles.pendingDot} />
-              <Text style={styles.pendingText}>Đang xử lý...</Text>
-            </View>
-          )}
+          <Text style={styles.statusDescription}>
+            {statusConfig.description}
+          </Text>
+
+          {booking?.bookingStatus === "Booked" &&
+            booking?.rentalContract?.contractStatus === "Unsigned" && (
+              <View style={styles.pendingIndicator}>
+                <View style={styles.pendingDot} />
+                <Text style={styles.pendingText}>Đang xử lý...</Text>
+              </View>
+            )}
         </View>
 
         {/* Report Summary */}
@@ -118,30 +166,40 @@ export const AwaitingApprovalScreen: React.FC = () => {
               </View>
               <Text style={styles.summaryLabel}>Xe</Text>
               <Text style={styles.summaryValue}>
-                VinFast Evo200
+                {booking?.vehicle?.vehicleModel?.modelName}
               </Text>
-              <Text style={styles.summarySubvalue}>59X1-12345</Text>
+              <Text style={styles.summarySubvalue}>
+                {booking?.vehicle?.licensePlate}
+              </Text>
             </View>
             <View style={styles.summaryBox}>
               <View style={styles.summaryBoxIcon}>
                 <AntDesign name="clock-circle" size={16} color="#FFD666" />
               </View>
-              <Text style={styles.summaryLabel}>Thời gian bắt đầu</Text>
-              <Text style={styles.summaryValue}>10:30 AM</Text>
+              <Text style={styles.summaryLabel}>Thời gian nhận xe</Text>
+              <Text style={styles.summaryValue}>
+                {booking?.startDatetime?.toLocaleString("en-GB")}
+              </Text>
             </View>
             <View style={styles.summaryBox}>
               <View style={styles.summaryBoxIcon}>
                 <AntDesign name="check-square" size={16} color="#67D16C" />
               </View>
               <Text style={styles.summaryLabel}>Danh sách kiểm tra</Text>
-              <Text style={styles.summaryValue}>Tuyệt vời</Text>
+              <Text style={styles.summaryValue}>
+                {getLastReceipt()?.checkListHandoverFile?.length || 0} mục đã
+                kiểm tra
+              </Text>
             </View>
             <View style={styles.summaryBox}>
               <View style={styles.summaryBoxIcon}>
                 <AntDesign name="camera" size={16} color="#7DB3FF" />
               </View>
-              <Text style={styles.summaryLabel}>Ảnh</Text>
-              <Text style={styles.summaryValue}>4 góc đã chụp</Text>
+              <Text style={styles.summaryLabel}>Ảnh xe bàn giao</Text>
+              <Text style={styles.summaryValue}>
+                {getLastReceipt()?.handOverVehicleImageFiles?.length || 0} góc
+                đã chụp
+              </Text>
             </View>
           </View>
         </View>
@@ -158,25 +216,68 @@ export const AwaitingApprovalScreen: React.FC = () => {
           </View>
           <View style={styles.timelineContainer}>
             {[
-              { label: "Đã chọn xe", completed: true },
-              { label: "Đã kiểm tra", completed: true },
-              { label: "Đã tạo báo cáo", completed: true },
-              { label: "Đang chờ phê duyệt...", completed: false },
+              {
+                label: `Đã chọn xe ${booking?.vehicle?.vehicleModel?.modelName}`,
+                completed: booking?.vehicle !== null,
+              },
+              {
+                label: `Đã kiểm tra ${
+                  getLastReceipt()?.checkListHandoverFile?.length || 0
+                } mục`,
+                completed: getLastReceipt()?.checkListHandoverFile?.length > 0,
+              },
+              {
+                label: `Đã chụp ${
+                  getLastReceipt()?.handOverVehicleImageFiles?.length || 0
+                } góc`,
+                completed:
+                  getLastReceipt()?.handOverVehicleImageFiles?.length > 0,
+              },
+              {
+                label: `Khách hàng ký hợp đồng`,
+                completed: booking?.rentalContract?.contractStatus === "Signed",
+              },
             ].map((item, idx) => (
               <View key={idx} style={styles.timelineItem}>
                 <View style={styles.timelineLine}>
-                  {idx > 0 && <View style={[styles.timelineConnector, item.completed && styles.timelineConnectorActive]} />}
-                  <View style={[styles.timelineDot, item.completed ? styles.timelineDotCompleted : styles.timelineDotPending]}>
+                  {idx > 0 && (
+                    <View
+                      style={[
+                        styles.timelineConnector,
+                        item.completed && styles.timelineConnectorActive,
+                      ]}
+                    />
+                  )}
+                  <View
+                    style={[
+                      styles.timelineDot,
+                      item.completed
+                        ? styles.timelineDotCompleted
+                        : styles.timelineDotPending,
+                    ]}
+                  >
                     {item.completed ? (
                       <AntDesign name="check" size={12} color="#FFFFFF" />
                     ) : (
                       <View style={styles.timelineDotInner} />
                     )}
                   </View>
-                  {idx < 3 && <View style={[styles.timelineConnector, item.completed && styles.timelineConnectorActive]} />}
+                  {idx < 3 && (
+                    <View
+                      style={[
+                        styles.timelineConnector,
+                        item.completed && styles.timelineConnectorActive,
+                      ]}
+                    />
+                  )}
                 </View>
                 <View style={styles.timelineContent}>
-                  <Text style={[styles.timelineText, item.completed && styles.timelineTextCompleted]}>
+                  <Text
+                    style={[
+                      styles.timelineText,
+                      item.completed && styles.timelineTextCompleted,
+                    ]}
+                  >
                     {item.label}
                   </Text>
                 </View>
@@ -187,52 +288,44 @@ export const AwaitingApprovalScreen: React.FC = () => {
 
         {/* Actions */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.refreshBtn}>
-            <View style={styles.refreshBtnContent}>
-              <AntDesign name="reload" size={16} color="#7CFFCB" />
-              <Text style={styles.refreshText}>Làm mới trạng thái</Text>
-            </View>
-          </TouchableOpacity>
+          {booking?.bookingStatus === "Booked" &&
+            booking?.rentalContract?.contractStatus === "Unsigned" && (
+              <TouchableOpacity
+                style={styles.refreshBtn}
+                onPress={() => fetchBooking()}
+              >
+                <View style={styles.refreshBtnContent}>
+                  <AntDesign name="reload" size={16} color="#7CFFCB" />
+                  <Text style={styles.refreshText}>Làm mới trạng thái</Text>
+                </View>
+              </TouchableOpacity>
+            )}
 
-          {(!status || status === "pending") && (
-            <TouchableOpacity
-              style={[styles.stateBtn, styles.pendingBtn]}
-              disabled
-            >
-              <View style={styles.stateBtnContent}>
-                <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
-                <Text style={styles.stateBtnTextPending}>Đang chờ...</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          
-          {status === "approved" && (
-            <TouchableOpacity
-              style={[styles.stateBtn, styles.approvedBtn]}
-              onPress={() => navigation.navigate("HandoverDocument")}
-            >
-              <View style={styles.stateBtnContent}>
-                <AntDesign name="check-circle" size={18} color="#0B0B0F" />
-                <Text style={styles.stateBtnText}>Hoàn tất bàn giao</Text>
-                <AntDesign name="right" size={14} color="#0B0B0F" />
-              </View>
-            </TouchableOpacity>
-          )}
-          
-          {status === "denied" && (
+          {booking?.bookingStatus === "Booked" &&
+            booking?.rentalContract &&
+            booking?.rentalContract?.contractStatus === "Unsigned" && (
+              <TouchableOpacity
+                style={[styles.stateBtn, styles.pendingBtn]}
+                disabled
+              >
+                <View style={styles.stateBtnContent}>
+                  <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
+                  <Text style={styles.stateBtnTextPending}>Đang chờ...</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+
+          {/* {booking?.bookingStatus === "Booked" && (
             <TouchableOpacity style={[styles.stateBtn, styles.deniedBtn]}>
               <View style={styles.stateBtnContent}>
                 <AntDesign name="reload" size={18} color="#FFFFFF" />
                 <Text style={styles.stateBtnTextDenied}>Kiểm tra lại</Text>
               </View>
             </TouchableOpacity>
-          )}
+          )} */}
 
           {/* Back to Home Button */}
-          <TouchableOpacity
-            style={styles.homeBtn}
-            onPress={handleBackToHome}
-          >
+          <TouchableOpacity style={styles.homeBtn} onPress={handleBackToHome}>
             <View style={styles.homeBtnContent}>
               <AntDesign name="home" size={18} color={colors.text.primary} />
               <Text style={styles.homeBtnText}>Về trang chủ</Text>
@@ -249,7 +342,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: { 
+  scrollContent: {
     paddingBottom: 40,
   },
   statusCard: {

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal,
   Platform,
+  TextInput,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, MaterialIcons } from "@expo/vector-icons";
@@ -34,6 +35,8 @@ export const ScanFaceScreen: React.FC = () => {
   const navigation = useNavigation<ScanFaceScreenNavigationProp>();
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showInputModal, setShowInputModal] = useState(false);
+  const [citizenIdInput, setCitizenIdInput] = useState("");
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [flashMode, setFlashMode] = useState("off");
@@ -104,6 +107,14 @@ export const ScanFaceScreen: React.FC = () => {
       accent: "#7C5DFA",
       action: () => setShowScanner(true),
     },
+    {
+      id: "input",
+      title: "Nhập số căn cước",
+      subtitle: "Nhập trực tiếp số CCCD/CMND",
+      icon: "edit",
+      accent: "#10B981",
+      action: () => setShowInputModal(true),
+    },
   ] as const;
 
   const guidanceItems = [
@@ -151,6 +162,47 @@ export const ScanFaceScreen: React.FC = () => {
 
   const toggleFlash = () => {
     setFlashMode(flashMode === "torch" ? "off" : "torch");
+  };
+
+  const handleInputCitizenId = async () => {
+    if (!citizenIdInput.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Vui lòng nhập số căn cước",
+        text2: "Số căn cước không được để trống",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const getByCitizenIdUseCase = new GetByCitizenIdUseCase(
+        sl.get("RenterRepository")
+      );
+      const response = await getByCitizenIdUseCase.execute(
+        citizenIdInput.trim()
+      );
+      if (response.success) {
+        setShowInputModal(false);
+        setCitizenIdInput("");
+        navigation.navigate("ScanCitizenResult", { renter: response.data });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Không tìm thấy thông tin",
+          text2: "Số căn cước không tồn tại trong hệ thống",
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Có lỗi xảy ra",
+        text2: "Số căn cước không hợp lệ",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -242,38 +294,16 @@ export const ScanFaceScreen: React.FC = () => {
               <AntDesign name="right" size={16} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
-          <PrimaryButton
-            title="Quát khuôn mặt"
-            onPress={() =>
-              navigation.navigate("ScanCitizenResult", {
-                renter: {
-                  id: "019ad548-22f9-76f0-a942-38180cb3d90c",
-                  email: "john.doe@example.com",
-                  phone: "1234567890",
-                  address: "123 Main St, Anytown, USA",
-                  dateOfBirth: "1990-01-01",
-                  avatarUrl: "https://example.com/avatar.jpg",
-                  faceScanUrl: "https://example.com/face-scan.jpg",
-                  account: {
-                    id: "1",
-                    username: "john.doe",
-                    role: "user",
-                    fullname: "John Doe",
-                  },
-                },
-              })
-            }
-          />
         </View>
       </ScrollView>
 
 
       
-      <Modal transparent visible={loading} animationType="fade">
+      <Modal transparent visible={loading && !showInputModal} animationType="fade">
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <ActivityIndicator size="large" color="#C9B6FF" />
-            <Text style={styles.modalTitle}>Đang quét khuôn mặt</Text>
+            <Text style={styles.modalTitle}>Đang tìm kiếm thông tin...</Text>
           </View>
         </View>
       </Modal>
@@ -281,7 +311,7 @@ export const ScanFaceScreen: React.FC = () => {
       {/* QR Scanner Modal */}
       <Modal
         visible={showScanner}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowScanner(false)}
       >
         <SafeAreaView style={styles.scannerContainer}>
@@ -349,6 +379,87 @@ export const ScanFaceScreen: React.FC = () => {
             </View>
           )}
         </SafeAreaView>
+      </Modal>
+
+      {/* Input Citizen ID Modal */}
+      <Modal
+        visible={showInputModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {
+          setShowInputModal(false);
+          setCitizenIdInput("");
+        }}
+      >
+        <View style={styles.inputModalBackdrop}>
+          <View style={styles.inputModalContainer}>
+            <View style={styles.inputModalHeader}>
+              <Text style={styles.inputModalTitle}>Nhập số căn cước</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowInputModal(false);
+                  setCitizenIdInput("");
+                }}
+                style={styles.inputModalCloseButton}
+              >
+                <AntDesign name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputModalContent}>
+              <Text style={styles.inputLabel}>
+                Nhập số CCCD/CMND của khách hàng
+              </Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="Ví dụ: 001234567890"
+                placeholderTextColor="#6B7280"
+                value={citizenIdInput}
+                onChangeText={setCitizenIdInput}
+                keyboardType="numeric"
+                autoFocus={true}
+                maxLength={12}
+                editable={!loading}
+              />
+              <Text style={styles.inputHint}>
+                Nhập đúng 12 số trên căn cước công dân
+              </Text>
+            </View>
+
+            <View style={styles.inputModalFooter}>
+              <TouchableOpacity
+                style={[
+                  styles.inputCancelButton,
+                  loading && styles.inputCancelButtonDisabled,
+                ]}
+                onPress={() => {
+                  if (!loading) {
+                    setShowInputModal(false);
+                    setCitizenIdInput("");
+                  }
+                }}
+                disabled={loading}
+              >
+                <Text style={styles.inputCancelText}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.inputSubmitButton,
+                  (!citizenIdInput.trim() || loading) &&
+                    styles.inputSubmitButtonDisabled,
+                ]}
+                onPress={handleInputCitizenId}
+                disabled={!citizenIdInput.trim() || loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.inputSubmitText}>Tìm kiếm</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -611,5 +722,107 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  inputModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "flex-end",
+  },
+  inputModalContainer: {
+    backgroundColor: "#11131A",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    paddingBottom: Platform.OS === "ios" ? 40 : 20,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    borderBottomWidth: 0,
+  },
+  inputModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1F2430",
+  },
+  inputModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: colors.text.primary,
+  },
+  inputModalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#1B1F2A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inputModalContent: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.text.primary,
+    marginBottom: 12,
+  },
+  inputField: {
+    backgroundColor: "#171B26",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: colors.text.primary,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+  },
+  inputHint: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    marginTop: 8,
+  },
+  inputModalFooter: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  inputCancelButton: {
+    flex: 1,
+    backgroundColor: "#1B1F2A",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#1F2430",
+  },
+  inputCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text.primary,
+  },
+  inputCancelButtonDisabled: {
+    opacity: 0.5,
+  },
+  inputSubmitButton: {
+    flex: 1,
+    backgroundColor: "#10B981",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  inputSubmitButtonDisabled: {
+    backgroundColor: "#1B1F2A",
+    opacity: 0.5,
+  },
+  inputSubmitText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

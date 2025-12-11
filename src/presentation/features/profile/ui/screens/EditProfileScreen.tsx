@@ -64,6 +64,12 @@ export const EditProfileScreen = ({ navigation }: any) => {
     const [address, setAddress] = useState('');
     const [profileImageUri, setProfileImageUri] = useState<string | undefined>(undefined);
 
+    // ✅ NEW: Track if we already have an avatar
+    const [hasExistingAvatar, setHasExistingAvatar] = useState(false);
+    
+    // ✅ NEW: Prevent concurrent image uploads
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
     // Date picker state
     const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -103,13 +109,8 @@ export const EditProfileScreen = ({ navigation }: any) => {
             setFullName(renter.account?.fullname || '');
             setEmail(renter.email || '');
 
-            let phone = renter.phone || '';
-            if (phone.startsWith('+84')) {
-                phone = phone.substring(3);
-            } else if (phone.startsWith('84')) {
-                phone = phone.substring(2);
-            }
-            setPhoneNumber(phone);
+            // ✅ FIXED: Keep Vietnamese phone format (no +84 conversion)
+            setPhoneNumber(renter.phone || '');
 
             if (renterResponse.dateOfBirth) {
                 setDateOfBirth(renterResponse.dateOfBirth);
@@ -120,8 +121,10 @@ export const EditProfileScreen = ({ navigation }: any) => {
             if (renter.avatarUrl) {
                 const normalized = normalizeUri(renter.avatarUrl);
                 setProfileImageUri(normalized);
+                setHasExistingAvatar(true); // ✅ Mark that we have an avatar
             } else {
                 setProfileImageUri(undefined);
+                setHasExistingAvatar(false);
             }
 
             // Extract documents
@@ -218,17 +221,51 @@ export const EditProfileScreen = ({ navigation }: any) => {
         processOCR();
     }, [licenseFrontImage, licenseBackImage, licenseAutoFill, licenseDoc]);
 
+    // ✅ IMPROVED: Avatar picker with duplicate prevention
     const pickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            allowsEditing: true,
-            quality: 0.8,
-        });
+        // ✅ Prevent concurrent uploads
+        if (isUploadingImage) {
+            Alert.alert('Vui lòng đợi', 'Đang xử lý ảnh hiện tại...');
+            return;
+        }
 
-        if (!result.canceled && result.assets?.[0]) {
-            const uri = normalizeUri(result.assets[0].uri);
-            if (uri) {
-                setProfileImageUri(uri);
+        try {
+            setIsUploadingImage(true);
+
+            // ✅ Warn user if replacing existing avatar
+            if (hasExistingAvatar && profileImageUri) {
+                const shouldReplace = await new Promise<boolean>((resolve) => {
+                    Alert.alert(
+                        'Thay đổi ảnh đại diện',
+                        'Bạn đã có ảnh đại diện. Thay thế ảnh mới sẽ tạo bản ghi mới trong hệ thống (backend không hỗ trợ cập nhật). Bạn có chắc chắn muốn tiếp tục?',
+                        [
+                            { text: 'Hủy', onPress: () => resolve(false), style: 'cancel' },
+                            { text: 'Thay thế', onPress: () => resolve(true) },
+                        ]
+                    );
+                });
+
+                if (!shouldReplace) {
+                    setIsUploadingImage(false);
+                    return;
+                }
             }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets?.[0]) {
+                const uri = normalizeUri(result.assets[0].uri);
+                if (uri) {
+                    setProfileImageUri(uri);
+                }
+            }
+        } catch (error) {
+            Alert.alert('Lỗi', 'Không thể chọn ảnh');
+        } finally {
+            setIsUploadingImage(false);
         }
     };
 
@@ -629,20 +666,22 @@ export const EditProfileScreen = ({ navigation }: any) => {
 
             const request: any = {
                 Email: email.trim(),
-                phone: phoneNumber.startsWith('0') 
-                    ? `+84${phoneNumber.substring(1).replace(/\s/g, '')}` 
-                    : `+84${phoneNumber.replace(/\s/g, '')}`,
+                // ✅ FIXED: Send phone as-is (Vietnamese format, no +84 conversion)
+                phone: phoneNumber.trim(),
                 Address: address.trim(),
                 DateOfBirth: formattedDate,
                 Fullname: fullName.trim(),
             };
 
+            // ✅ Only upload new image if user selected one
             if (profileImageUri && !profileImageUri.startsWith('http')) {
                 request.ProfilePicture = {
                     uri: profileImageUri,
                     name: 'profile.jpg',
                     type: 'image/jpeg',
                 };
+                // ⚠️ NOTE: We're NOT passing MediaId because backend doesn't provide it
+                // This will create a duplicate record - backend team needs to fix this
             }
 
             const response = await update(request);
@@ -650,6 +689,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
             if (response.AvatarUrl) {
                 const normalized = normalizeUri(response.AvatarUrl);
                 setProfileImageUri(normalized);
+                setHasExistingAvatar(true);
             }
 
             await refresh();
@@ -665,12 +705,12 @@ export const EditProfileScreen = ({ navigation }: any) => {
     if (fetchLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#7C3AED" />
+                <ActivityIndicator size="large" color="#d4c5f9" />
             </View>
         );
     }
 
-    const isSaving = updateLoading || createDocLoading || updateDocLoading || deleteLoading;
+    const isSaving = updateLoading || createDocLoading || updateDocLoading || deleteLoading || isUploadingImage;
     
     const getInitialDateForPicker = () => {
         if (!dateOfBirth) return undefined;

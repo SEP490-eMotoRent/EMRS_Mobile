@@ -96,7 +96,7 @@ export const VehicleInspectionScreen: React.FC = () => {
     bookingId,
     currentOdometerKm,
     batteryHealthPercentage,
-    isChangeVehicle,
+    isUpdateReceipt,
   } = route.params || {};
   const navigation = useNavigation<InspectionNav>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -388,7 +388,8 @@ export const VehicleInspectionScreen: React.FC = () => {
     const totalChecklist = getTotalCount();
     const completedChecklist = getCompletedCount();
     if (completedChecklist < totalChecklist * 0.8) {
-      newErrors.checklist = "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra";
+      newErrors.checklist =
+        "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra";
       isValid = false;
       shakeError(checklistShakeAnim);
     }
@@ -495,7 +496,7 @@ export const VehicleInspectionScreen: React.FC = () => {
         });
       }
 
-      if (isChangeVehicle) {
+      if (isUpdateReceipt) {
         const changeVehicleUseCase = new ChangeVehicleUseCase(
           sl.get("ReceiptRepository")
         );
@@ -536,7 +537,8 @@ export const VehicleInspectionScreen: React.FC = () => {
           sl.get("BookingRepository")
         );
 
-        const assignVehicleResponse = await assignVehicleToBookingUseCase.execute(vehicleId, bookingId);
+        const assignVehicleResponse =
+          await assignVehicleToBookingUseCase.execute(vehicleId, bookingId);
         if (!assignVehicleResponse.success) {
           Toast.show({
             text1: assignVehicleResponse.message,
@@ -572,14 +574,7 @@ export const VehicleInspectionScreen: React.FC = () => {
         });
 
         navigation.navigate("HandoverReport", {
-          receiptId: receiptData.id,
-          notes: receiptData.notes,
-          startOdometerKm: receiptData.startOdometerKm,
-          startBatteryPercentage: receiptData.startBatteryPercentage,
-          bookingId: receiptData.bookingId,
-          handOverVehicleImageFiles: receiptData.handOverVehicleImageFiles,
-          returnVehicleImageFiles: receiptData.returnVehicleImageFiles,
-          checkListFile: receiptData.checkListFile,
+          bookingId,
         });
       }
     } catch (error) {
@@ -625,13 +620,25 @@ export const VehicleInspectionScreen: React.FC = () => {
                 </Text>
               </View>
             </View>
-            <View style={[styles.photoStatusBadge, getPhotosCount() === 4 ? styles.photoStatusBadgeComplete : styles.photoStatusBadgeIncomplete]}>
-              <AntDesign 
-                name={getPhotosCount() === 4 ? "check-circle" : "clock-circle"} 
-                size={12} 
-                color={getPhotosCount() === 4 ? "#FFFFFF" : "#FFD700"} 
+            <View
+              style={[
+                styles.photoStatusBadge,
+                getPhotosCount() === 4
+                  ? styles.photoStatusBadgeComplete
+                  : styles.photoStatusBadgeIncomplete,
+              ]}
+            >
+              <AntDesign
+                name={getPhotosCount() === 4 ? "check-circle" : "clock-circle"}
+                size={12}
+                color={getPhotosCount() === 4 ? "#FFFFFF" : "#FFD700"}
               />
-              <Text style={[styles.photoStatusText, getPhotosCount() === 4 && styles.photoStatusTextComplete]}>
+              <Text
+                style={[
+                  styles.photoStatusText,
+                  getPhotosCount() === 4 && styles.photoStatusTextComplete,
+                ]}
+              >
                 {getPhotosCount() === 4 ? "Hoàn thành" : "Thiếu ảnh"}
               </Text>
             </View>
@@ -674,9 +681,7 @@ export const VehicleInspectionScreen: React.FC = () => {
         {/* Inspection Checklist - Accordions */}
         <Animated.View
           ref={checklistContainerRef}
-          style={[
-            { transform: [{ translateX: checklistShakeAnim }] },
-          ]}
+          style={[{ transform: [{ translateX: checklistShakeAnim }] }]}
           onLayout={(event) => {
             const { y } = event.nativeEvent.layout;
             setChecklistContainerY(y);
@@ -687,107 +692,179 @@ export const VehicleInspectionScreen: React.FC = () => {
             style={styles.checklistContainer}
             collapsable={false}
           >
-          <View style={styles.checklistHeaderRow}>
-            <View style={styles.checklistHeaderLeft}>
-              <View style={styles.checklistHeaderIcon}>
-                <AntDesign name="check-square" size={18} color="#C9B6FF" />
+            <View style={styles.checklistHeaderRow}>
+              <View style={styles.checklistHeaderLeft}>
+                <View style={styles.checklistHeaderIcon}>
+                  <AntDesign name="check-square" size={18} color="#C9B6FF" />
+                </View>
+                <View>
+                  <Text style={styles.checklistTitle}>Danh sách kiểm tra</Text>
+                  <Text style={styles.checklistSubtitle}>
+                    {getCompletedCount()}/{getTotalCount()} mục đã hoàn thành
+                  </Text>
+                </View>
               </View>
-              <View>
-                <Text style={styles.checklistTitle}>Danh sách kiểm tra</Text>
-                <Text style={styles.checklistSubtitle}>
-                  {getCompletedCount()}/{getTotalCount()} mục đã hoàn thành
+              <View
+                style={[
+                  styles.completionBadge,
+                  {
+                    backgroundColor:
+                      getCompletionPercentage() >= 80
+                        ? "rgba(103,209,108,0.15)"
+                        : "rgba(255,211,102,0.15)",
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.completionPercentage,
+                    {
+                      color:
+                        getCompletionPercentage() >= 80 ? "#67D16C" : "#FFD700",
+                    },
+                  ]}
+                >
+                  {getCompletionPercentage()}%
                 </Text>
               </View>
             </View>
-            <View style={[styles.completionBadge, { backgroundColor: getCompletionPercentage() >= 80 ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
-              <Text style={[styles.completionPercentage, { color: getCompletionPercentage() >= 80 ? "#67D16C" : "#FFD700" }]}>
-                {getCompletionPercentage()}%
-              </Text>
-            </View>
-          </View>
-          {sections.map((section) => {
-            const isOpen = !!expanded[section.key];
-            const sectionCompleted = section.items.filter(item => checklistItems[item.key]).length;
-            const sectionTotal = section.items.length;
-            const sectionProgress = sectionTotal > 0 ? Math.round((sectionCompleted / sectionTotal) * 100) : 0;
-            
-            return (
-              <View key={section.key} style={styles.categoryCard}>
-                <TouchableOpacity
-                  style={styles.categoryHeader}
-                  onPress={() =>
-                    setExpanded((prev) => ({
-                      ...prev,
-                      [section.key]: !prev[section.key],
-                    }))
-                  }
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.categoryHeaderLeft}>
-                    <View style={[styles.categoryIcon, { backgroundColor: sectionProgress === 100 ? "rgba(103,209,108,0.15)" : "rgba(201,182,255,0.15)" }]}>
-                      <AntDesign 
-                        name={sectionProgress === 100 ? "check-circle" : "file-text"} 
-                        size={16} 
-                        color={sectionProgress === 100 ? "#67D16C" : "#C9B6FF"} 
-                      />
-                    </View>
-                    <View style={styles.categoryTitleContainer}>
-                      <Text style={styles.categoryTitle}>{section.title}</Text>
-                      <Text style={styles.categoryProgress}>
-                        {sectionCompleted}/{sectionTotal} hoàn thành
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.categoryHeaderRight}>
-                    <View style={[styles.categoryProgressBar, { width: 60 }]}>
-                      <View style={[styles.categoryProgressFill, { width: `${sectionProgress}%`, backgroundColor: sectionProgress === 100 ? "#67D16C" : "#C9B6FF" }]} />
-                    </View>
-                    <AntDesign
-                      name={isOpen ? "up" : "down"}
-                      size={16}
-                      color={colors.text.secondary}
-                    />
-                  </View>
-                </TouchableOpacity>
+            {sections.map((section) => {
+              const isOpen = !!expanded[section.key];
+              const sectionCompleted = section.items.filter(
+                (item) => checklistItems[item.key]
+              ).length;
+              const sectionTotal = section.items.length;
+              const sectionProgress =
+                sectionTotal > 0
+                  ? Math.round((sectionCompleted / sectionTotal) * 100)
+                  : 0;
 
-                {isOpen && (
-                  <View style={styles.itemsContainer}>
-                    {section.items.map((item, idx) => (
-                      <TouchableOpacity
-                        key={idx}
-                        style={[styles.itemCard, checklistItems[item.key] && styles.itemCardChecked]}
-                        onPress={() => toggleChecklistItem(item.key)}
-                        activeOpacity={0.8}
+              return (
+                <View key={section.key} style={styles.categoryCard}>
+                  <TouchableOpacity
+                    style={styles.categoryHeader}
+                    onPress={() =>
+                      setExpanded((prev) => ({
+                        ...prev,
+                        [section.key]: !prev[section.key],
+                      }))
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.categoryHeaderLeft}>
+                      <View
+                        style={[
+                          styles.categoryIcon,
+                          {
+                            backgroundColor:
+                              sectionProgress === 100
+                                ? "rgba(103,209,108,0.15)"
+                                : "rgba(201,182,255,0.15)",
+                          },
+                        ]}
                       >
+                        <AntDesign
+                          name={
+                            sectionProgress === 100
+                              ? "check-circle"
+                              : "file-text"
+                          }
+                          size={16}
+                          color={
+                            sectionProgress === 100 ? "#67D16C" : "#C9B6FF"
+                          }
+                        />
+                      </View>
+                      <View style={styles.categoryTitleContainer}>
+                        <Text style={styles.categoryTitle}>
+                          {section.title}
+                        </Text>
+                        <Text style={styles.categoryProgress}>
+                          {sectionCompleted}/{sectionTotal} hoàn thành
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.categoryHeaderRight}>
+                      <View style={[styles.categoryProgressBar, { width: 60 }]}>
                         <View
                           style={[
-                            styles.checkboxCircle,
-                            checklistItems[item.key] && styles.checkboxChecked,
+                            styles.categoryProgressFill,
+                            {
+                              width: `${sectionProgress}%`,
+                              backgroundColor:
+                                sectionProgress === 100 ? "#67D16C" : "#C9B6FF",
+                            },
                           ]}
+                        />
+                      </View>
+                      <AntDesign
+                        name={isOpen ? "up" : "down"}
+                        size={16}
+                        color={colors.text.secondary}
+                      />
+                    </View>
+                  </TouchableOpacity>
+
+                  {isOpen && (
+                    <View style={styles.itemsContainer}>
+                      {section.items.map((item, idx) => (
+                        <TouchableOpacity
+                          key={idx}
+                          style={[
+                            styles.itemCard,
+                            checklistItems[item.key] && styles.itemCardChecked,
+                          ]}
+                          onPress={() => toggleChecklistItem(item.key)}
+                          activeOpacity={0.8}
                         >
+                          <View
+                            style={[
+                              styles.checkboxCircle,
+                              checklistItems[item.key] &&
+                                styles.checkboxChecked,
+                            ]}
+                          >
+                            {checklistItems[item.key] && (
+                              <AntDesign
+                                name="check"
+                                size={14}
+                                color="#FFFFFF"
+                              />
+                            )}
+                          </View>
+                          <Text
+                            style={[
+                              styles.itemText,
+                              checklistItems[item.key] &&
+                                styles.itemTextChecked,
+                            ]}
+                          >
+                            {item.label}
+                          </Text>
                           {checklistItems[item.key] && (
-                            <AntDesign name="check" size={14} color="#FFFFFF" />
+                            <AntDesign
+                              name="check-circle"
+                              size={16}
+                              color="#67D16C"
+                            />
                           )}
-                        </View>
-                        <Text style={[styles.itemText, checklistItems[item.key] && styles.itemTextChecked]}>
-                          {item.label}
-                        </Text>
-                        {checklistItems[item.key] && (
-                          <AntDesign name="check-circle" size={16} color="#67D16C" />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+            {errors.checklist && (
+              <View style={[styles.errorContainer, { marginHorizontal: 16 }]}>
+                <AntDesign
+                  name="exclamation-circle"
+                  size={14}
+                  color="#FF6B6B"
+                />
+                <Text style={styles.errorText}>{errors.checklist}</Text>
               </View>
-            );
-          })}
-          {errors.checklist && (
-            <View style={[styles.errorContainer, { marginHorizontal: 16 }]}>
-              <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
-              <Text style={styles.errorText}>{errors.checklist}</Text>
-            </View>
-          )}
+            )}
           </View>
         </Animated.View>
 
@@ -863,7 +940,11 @@ export const VehicleInspectionScreen: React.FC = () => {
               </Animated.View>
               {errors.odometer && (
                 <View style={styles.errorContainer}>
-                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <AntDesign
+                    name="exclamation-circle"
+                    size={14}
+                    color="#FF6B6B"
+                  />
                   <Text style={styles.errorText}>{errors.odometer}</Text>
                 </View>
               )}
@@ -872,7 +953,11 @@ export const VehicleInspectionScreen: React.FC = () => {
             {/* Battery Percentage Input */}
             <View style={styles.metricInput}>
               <View style={styles.inputLabelRow}>
-                <AntDesign name="thunderbolt" size={14} color={getBatteryCondition().color} />
+                <AntDesign
+                  name="thunderbolt"
+                  size={14}
+                  color={getBatteryCondition().color}
+                />
                 <Text style={styles.inputLabel}>Pin</Text>
               </View>
               <Animated.View
@@ -897,13 +982,36 @@ export const VehicleInspectionScreen: React.FC = () => {
                   }}
                   keyboardType="numeric"
                 />
-                <View style={[styles.unitBadge, { backgroundColor: getBatteryCondition().color === "#67D16C" ? "rgba(103,209,108,0.15)" : getBatteryCondition().color === "#FFD700" ? "rgba(255,211,102,0.15)" : "rgba(255,68,68,0.15)" }]}>
-                  <Text style={[styles.inputUnit, { color: getBatteryCondition().color }]}>%</Text>
+                <View
+                  style={[
+                    styles.unitBadge,
+                    {
+                      backgroundColor:
+                        getBatteryCondition().color === "#67D16C"
+                          ? "rgba(103,209,108,0.15)"
+                          : getBatteryCondition().color === "#FFD700"
+                          ? "rgba(255,211,102,0.15)"
+                          : "rgba(255,68,68,0.15)",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.inputUnit,
+                      { color: getBatteryCondition().color },
+                    ]}
+                  >
+                    %
+                  </Text>
                 </View>
               </Animated.View>
               {errors.battery && (
                 <View style={styles.errorContainer}>
-                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <AntDesign
+                    name="exclamation-circle"
+                    size={14}
+                    color="#FF6B6B"
+                  />
                   <Text style={styles.errorText}>{errors.battery}</Text>
                 </View>
               )}
@@ -915,7 +1023,12 @@ export const VehicleInspectionScreen: React.FC = () => {
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.statusItem}>
-              <View style={[styles.statusIconContainer, { backgroundColor: "rgba(103,209,108,0.15)" }]}>
+              <View
+                style={[
+                  styles.statusIconContainer,
+                  { backgroundColor: "rgba(103,209,108,0.15)" },
+                ]}
+              >
                 <AntDesign name="check-circle" size={20} color="#67D16C" />
               </View>
               <Text style={styles.statusNumber}>
@@ -924,11 +1037,23 @@ export const VehicleInspectionScreen: React.FC = () => {
               <Text style={styles.statusCaption}>Kiểm tra hoàn thành</Text>
             </View>
             <View style={styles.statusItem}>
-              <View style={[styles.statusIconContainer, { backgroundColor: getPhotosCount() === 4 ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
-                <AntDesign 
-                  name={getPhotosCount() === 4 ? "check-circle" : "clock-circle"} 
-                  size={20} 
-                  color={getPhotosCount() === 4 ? "#67D16C" : "#FFD700"} 
+              <View
+                style={[
+                  styles.statusIconContainer,
+                  {
+                    backgroundColor:
+                      getPhotosCount() === 4
+                        ? "rgba(103,209,108,0.15)"
+                        : "rgba(255,211,102,0.15)",
+                  },
+                ]}
+              >
+                <AntDesign
+                  name={
+                    getPhotosCount() === 4 ? "check-circle" : "clock-circle"
+                  }
+                  size={20}
+                  color={getPhotosCount() === 4 ? "#67D16C" : "#FFD700"}
                 />
               </View>
               <Text
@@ -946,16 +1071,30 @@ export const VehicleInspectionScreen: React.FC = () => {
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
               <View style={styles.readyLabelContainer}>
-                <AntDesign 
-                  name={isReadyForHandover() ? "check-circle" : "clock-circle"} 
-                  size={16} 
-                  color={isReadyForHandover() ? "#67D16C" : "#FFD700"} 
+                <AntDesign
+                  name={isReadyForHandover() ? "check-circle" : "clock-circle"}
+                  size={16}
+                  color={isReadyForHandover() ? "#67D16C" : "#FFD700"}
                 />
-                <Text style={[styles.readyLabel, { color: isReadyForHandover() ? "#67D16C" : "#FFD700" }]}>
+                <Text
+                  style={[
+                    styles.readyLabel,
+                    { color: isReadyForHandover() ? "#67D16C" : "#FFD700" },
+                  ]}
+                >
                   {isReadyForHandover() ? "Sẵn sàng bàn giao" : "Chưa sẵn sàng"}
                 </Text>
               </View>
-              <View style={[styles.progressBadge, { backgroundColor: isReadyForHandover() ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
+              <View
+                style={[
+                  styles.progressBadge,
+                  {
+                    backgroundColor: isReadyForHandover()
+                      ? "rgba(103,209,108,0.15)"
+                      : "rgba(255,211,102,0.15)",
+                  },
+                ]}
+              >
                 <Text
                   style={[
                     styles.progressPercentage,
@@ -1007,7 +1146,12 @@ export const VehicleInspectionScreen: React.FC = () => {
               <AntDesign name="star" size={14} color="#FFD666" />
               <Text style={styles.summaryLabel}>Tình trạng tổng thể</Text>
             </View>
-            <View style={[styles.summaryValueBadge, { backgroundColor: `${getOverallCondition().color}15` }]}>
+            <View
+              style={[
+                styles.summaryValueBadge,
+                { backgroundColor: `${getOverallCondition().color}15` },
+              ]}
+            >
               <Text
                 style={[
                   styles.summaryValue,
@@ -1021,10 +1165,19 @@ export const VehicleInspectionScreen: React.FC = () => {
 
           <View style={styles.summaryRow}>
             <View style={styles.summaryLabelContainer}>
-              <AntDesign name="thunderbolt" size={14} color={getBatteryCondition().color} />
+              <AntDesign
+                name="thunderbolt"
+                size={14}
+                color={getBatteryCondition().color}
+              />
               <Text style={styles.summaryLabel}>Tình trạng pin</Text>
             </View>
-            <View style={[styles.summaryValueBadge, { backgroundColor: `${getBatteryCondition().color}15` }]}>
+            <View
+              style={[
+                styles.summaryValueBadge,
+                { backgroundColor: `${getBatteryCondition().color}15` },
+              ]}
+            >
               <Text
                 style={[
                   styles.summaryValue,
@@ -1038,12 +1191,24 @@ export const VehicleInspectionScreen: React.FC = () => {
 
           <View style={styles.summaryRow}>
             <View style={styles.summaryLabelContainer}>
-              <AntDesign name="camera" size={14} color={getPhotosStatus().color} />
+              <AntDesign
+                name="camera"
+                size={14}
+                color={getPhotosStatus().color}
+              />
               <Text style={styles.summaryLabel}>Ảnh xe</Text>
             </View>
-            <View style={[styles.summaryValueBadge, { backgroundColor: `${getPhotosStatus().color}15` }]}>
+            <View
+              style={[
+                styles.summaryValueBadge,
+                { backgroundColor: `${getPhotosStatus().color}15` },
+              ]}
+            >
               <Text
-                style={[styles.summaryValue, { color: getPhotosStatus().color }]}
+                style={[
+                  styles.summaryValue,
+                  { color: getPhotosStatus().color },
+                ]}
               >
                 {getPhotosStatus().text}
               </Text>
@@ -1052,10 +1217,24 @@ export const VehicleInspectionScreen: React.FC = () => {
 
           <View style={styles.summaryRow}>
             <View style={styles.summaryLabelContainer}>
-              <AntDesign name="exclamation-circle" size={14} color={getIssuesCount() > 0 ? "#FF4444" : "#67D16C"} />
+              <AntDesign
+                name="exclamation-circle"
+                size={14}
+                color={getIssuesCount() > 0 ? "#FF4444" : "#67D16C"}
+              />
               <Text style={styles.summaryLabel}>Vấn đề phát hiện</Text>
             </View>
-            <View style={[styles.summaryValueBadge, { backgroundColor: getIssuesCount() > 0 ? "rgba(255,68,68,0.15)" : "rgba(103,209,108,0.15)" }]}>
+            <View
+              style={[
+                styles.summaryValueBadge,
+                {
+                  backgroundColor:
+                    getIssuesCount() > 0
+                      ? "rgba(255,68,68,0.15)"
+                      : "rgba(103,209,108,0.15)",
+                },
+              ]}
+            >
               <Text
                 style={[
                   styles.summaryValue,
@@ -1069,14 +1248,27 @@ export const VehicleInspectionScreen: React.FC = () => {
 
           <View style={[styles.summaryRow, styles.summaryRowLast]}>
             <View style={styles.summaryLabelContainer}>
-              <AntDesign name={isReadyForHandover() ? "check-circle" : "clock-circle"} size={14} color={isReadyForHandover() ? "#67D16C" : "#FFD700"} />
+              <AntDesign
+                name={isReadyForHandover() ? "check-circle" : "clock-circle"}
+                size={14}
+                color={isReadyForHandover() ? "#67D16C" : "#FFD700"}
+              />
               <Text style={styles.summaryLabel}>Trạng thái bàn giao</Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: isReadyForHandover() ? "rgba(103,209,108,0.15)" : "rgba(255,211,102,0.15)" }]}>
-              <AntDesign 
-                name={isReadyForHandover() ? "check" : "clock-circle"} 
-                size={12} 
-                color={isReadyForHandover() ? "#67D16C" : "#FFD700"} 
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor: isReadyForHandover()
+                    ? "rgba(103,209,108,0.15)"
+                    : "rgba(255,211,102,0.15)",
+                },
+              ]}
+            >
+              <AntDesign
+                name={isReadyForHandover() ? "check" : "clock-circle"}
+                size={12}
+                color={isReadyForHandover() ? "#67D16C" : "#FFD700"}
               />
               <Text
                 style={[
@@ -1234,15 +1426,15 @@ const styles = StyleSheet.create({
     borderColor: "#232838",
     borderStyle: "dashed",
   },
-  tilePrimary: { 
+  tilePrimary: {
     height: 140,
     borderColor: "#7CFFCB",
     borderStyle: "solid",
   },
   tileImage: { width: "100%", height: "100%", resizeMode: "cover" },
-  placeholderInner: { 
-    flex: 1, 
-    alignItems: "center", 
+  placeholderInner: {
+    flex: 1,
+    alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
@@ -1394,8 +1586,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  addIssueText: { 
-    color: "#C9B6FF", 
+  addIssueText: {
+    color: "#C9B6FF",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -1609,8 +1801,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#232838",
   },
-  tertiaryCtaText: { 
-    color: colors.text.secondary, 
+  tertiaryCtaText: {
+    color: colors.text.secondary,
     fontWeight: "600",
     fontSize: 14,
   },

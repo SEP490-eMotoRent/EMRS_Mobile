@@ -150,13 +150,55 @@ export const CustomerRentalsScreen: React.FC = () => {
     navigation.navigate("SelectVehicle", {
       bookingId: booking.id,
       renterName: booking.renter.account.fullname,
-      vehicleModel: booking.vehicleModel
+      vehicleModel: booking.vehicleModel,
+    });
+  };
+
+  const getLastReceipt = (booking: Booking) => {
+    const receipts = booking.rentalReceipts;
+    const bookingVehicleId = booking?.vehicle?.id || booking?.vehicleId || null;
+    const lastReceipt = receipts?.length
+      ? (() => {
+          if (!bookingVehicleId) return receipts[receipts?.length - 1];
+          const matched = [...receipts].reverse().find((r) => {
+            const id = r?.vehicle?.id || r?.booking?.vehicle?.id || null;
+            return id === bookingVehicleId;
+          });
+          return matched || receipts[receipts?.length - 1];
+        })()
+      : null;
+    return lastReceipt;
+  };
+
+  const handleSwapVehicle = (booking: Booking) => {
+    const lastReceipt = getLastReceipt(booking);
+    navigation.navigate("SwapSelectVehicle", {
+      bookingId: booking.id,
+      returnReceiptId: lastReceipt?.id,
+      currentVehicleId: booking?.vehicle?.id,
+      startOldVehicleOdometerKm: lastReceipt?.startOdometerKm,
+      licensePlate: booking?.vehicle?.licensePlate,
+      vehicleModelId: booking?.vehicleModel?.id,
+      modelName: booking?.vehicleModel?.modelName,
     });
   };
 
   const handleViewDetails = (booking: Booking) => {
-    console.log("View details:", booking.id);
     navigation.navigate("BookingDetails", { bookingId: booking.id });
+  };
+
+  const handleViewHandoverReport = (booking: Booking) => {
+    navigation.navigate("HandoverReport", { bookingId: booking.id });
+  };
+
+  const handleUpdateReceipt = (booking: Booking) => {
+    navigation.navigate("VehicleInspection", {
+      vehicleId: booking.vehicle?.id,
+      bookingId: booking.id,
+      currentOdometerKm: booking.vehicle?.currentOdometerKm,
+      batteryHealthPercentage: booking.vehicle?.batteryHealthPercentage,
+      isUpdateReceipt: true,
+    });
   };
 
   const renderBookingCard = (booking: Booking) => {
@@ -278,22 +320,50 @@ export const CustomerRentalsScreen: React.FC = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[
-              styles.selectButton,
-              !hasVehicle && styles.selectButtonPending,
-            ]}
-            onPress={() => handleSelectVehicle(booking)}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                !hasVehicle && styles.buttonTextPending,
-              ]}
-            >
-              {hasVehicle ? "Đổi xe" : "Chọn xe"}
-            </Text>
-          </TouchableOpacity>
+          {booking.bookingStatus === "Booked" &&
+            !booking.rentalContract &&
+            hasVehicle &&
+            booking.rentalReceipts.length > 0 && (
+              <TouchableOpacity
+                style={styles.viewButton}
+                onPress={() => handleViewHandoverReport(booking)}
+              >
+                <Text style={styles.buttonText}>Tạo hợp đồng thuê</Text>
+              </TouchableOpacity>
+            )}
+          {booking.bookingStatus === "Booked" &&
+            !booking.rentalContract &&
+            !hasVehicle &&
+            booking.rentalReceipts.length === 0 && (
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={() => handleSelectVehicle(booking)}
+              >
+                <Text style={styles.buttonText}>Chọn xe</Text>
+              </TouchableOpacity>
+            )}
+          {booking.bookingStatus === "Booked" &&
+            booking.rentalContract &&
+            hasVehicle &&
+            booking.rentalReceipts.length > 0 && (
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={() => handleUpdateReceipt(booking)}
+              >
+                <Text style={styles.buttonText}>Cập nhật biên bản</Text>
+              </TouchableOpacity>
+            )}
+          {booking.bookingStatus === "Renting" &&
+            booking.rentalContract &&
+            hasVehicle &&
+            booking.rentalReceipts.length > 0 && (
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={() => handleSwapVehicle(booking)}
+              >
+                <Text style={styles.buttonText}>Đổi xe</Text>
+              </TouchableOpacity>
+            )}
           <TouchableOpacity
             style={styles.viewButton}
             onPress={() => handleViewDetails(booking)}
@@ -315,9 +385,7 @@ export const CustomerRentalsScreen: React.FC = () => {
               ? `Đặt chỗ của ${renter?.account?.fullname}`
               : "Đặt chỗ khách hàng"
           }
-          submeta={
-            new Date().toLocaleString("en-GB")
-          }
+          submeta={new Date().toLocaleString("en-GB")}
           onBack={() => navigation.goBack()}
         />
 
@@ -349,8 +417,7 @@ export const CustomerRentalsScreen: React.FC = () => {
           <View style={styles.rentalSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                Danh sách thuê của{" "}
-                {renter?.account?.fullname ?? "Khách hàng"}
+                Danh sách thuê của {renter?.account?.fullname ?? "Khách hàng"}
               </Text>
               <View style={styles.countBadge}>
                 <Text style={styles.countText}>{bookings?.length ?? 0}</Text>
@@ -419,7 +486,9 @@ export const CustomerRentalsScreen: React.FC = () => {
                           setShowModelList(false);
                         }}
                       >
-                        <Text style={styles.dropdownItemText}>Tất cả mẫu xe</Text>
+                        <Text style={styles.dropdownItemText}>
+                          Tất cả mẫu xe
+                        </Text>
                       </TouchableOpacity>
                       {vehicleModels.map((m) => (
                         <TouchableOpacity
