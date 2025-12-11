@@ -38,8 +38,16 @@ export interface RenterResponse {
     phone: string;
     address: string;
     dateOfBirth: string;
-    avatarUrl: string | null;
+    avatar: AvatarMediaResponse | null;     // ← CHANGED: now object, not string
     account: AccountResponse;
     documents: DocumentResponse[];
     membership: MembershipResponse | null;
+}
+
+export interface AvatarMediaResponse {
+    id: string;
+    mediaType: string;
+    fileUrl: string;
+    docNo: string;
+    entityType: string;
 }

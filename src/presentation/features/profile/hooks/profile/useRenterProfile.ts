@@ -1,42 +1,22 @@
+// src/features/account/profile/hooks/useRenterProfile.ts
+
 import { useEffect, useState } from 'react';
-import { MembershipResponse, RenterResponse } from '../../../../../data/models/account/renter/RenterResponse';
+import { 
+    RenterResponse, 
+    AvatarMediaResponse 
+} from '../../../../../data/models/account/renter/RenterResponse';
 import { Renter } from '../../../../../domain/entities/account/Renter';
 import { Membership } from '../../../../../domain/entities/financial/Membership';
 import { useAppDispatch, useAppSelector } from '../../../authentication/store/hooks';
 import { container } from '../../../../../core/di/ServiceContainer';
 import { removeAuth } from '../../../authentication/store/slices/authSlice';
 
-// NORMALIZE AVATAR URL
-const normalizeAvatarUrl = (url: any): string | null => {
-    if (!url) return null;
-    if (typeof url === 'string') return url;
-    if (Array.isArray(url) && url.length > 0 && typeof url[0] === 'string') {
-        return url[0];
-    }
-    return null;
-};
-
-// NORMALIZE RENTER RESPONSE
-const normalizeRenterResponse = (response: any): RenterResponse => {
-    return {
-        ...response,
-        avatarUrl: normalizeAvatarUrl(response.avatarUrl)
-    };
-};
-
-// NORMALIZE RENTER ENTITY
-const normalizeRenter = (renter: any): Renter => {
-    return {
-        ...renter,
-        avatarUrl: normalizeAvatarUrl(renter.avatarUrl)
-    };
-};
-
 export const useRenterProfile = () => {
     const token = useAppSelector((state) => state.auth.token);
     const dispatch = useAppDispatch();
     const [renter, setRenter] = useState<Renter | null>(null);
     const [renterResponse, setRenterResponse] = useState<RenterResponse | null>(null);
+    const [avatarMediaId, setAvatarMediaId] = useState<string | null>(null); // NEW
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -51,33 +31,28 @@ export const useRenterProfile = () => {
             setLoading(true);
             setError(null);
 
-            // ✅ MIGRATED: Use ServiceContainer instead of InjectionContainer
             const result = await container.account.profile.getCurrent.execute();
 
-            console.log('🔥 RAW API RESPONSE:', {
-                avatarUrl: result.renter.avatarUrl,
-                isArray: Array.isArray(result.renter.avatarUrl),
-                rawResponseAvatar: result.rawResponse.avatarUrl,
-                isRawArray: Array.isArray(result.rawResponse.avatarUrl),
-                membership: result.rawResponse.membership,
-            });
+            const raw = result.rawResponse;
 
-            const normalizedRenter = normalizeRenter(result.renter);
-            const normalizedResponse = normalizeRenterResponse(result.rawResponse);
+            // Extract avatar info from new format
+            const avatarObj = raw.avatar as AvatarMediaResponse | null;
+            const avatarUrl = avatarObj?.fileUrl || null;
+            const mediaId = avatarObj?.id || null;
 
-            console.log('✅ NORMALIZED:', {
-                avatarUrl: normalizedRenter.avatarUrl,
-                isArray: Array.isArray(normalizedRenter.avatarUrl),
-                responseAvatar: normalizedResponse.avatarUrl,
-                isResponseArray: Array.isArray(normalizedResponse.avatarUrl),
-                membershipTier: normalizedResponse.membership?.tierName,
-                membershipDiscount: normalizedResponse.membership?.discountPercentage,
-            });
+            setAvatarMediaId(mediaId);
 
-            setRenter(normalizedRenter);
+            // Keep old fields for backward compatibility
+            const normalizedResponse: RenterResponse = {
+                ...raw,
+                avatar: avatarObj,
+            };
+
             setRenterResponse(normalizedResponse);
+            setRenter(result.renter);
+
         } catch (err: any) {
-            dispatch(removeAuth())
+            dispatch(removeAuth());
             console.error('Failed to fetch renter profile:', err);
             setError(err.message || 'Failed to load profile');
         } finally {
@@ -100,6 +75,7 @@ export const useRenterProfile = () => {
     return {
         renter,
         renterResponse,
+        avatarMediaId,
         loading,
         error,
         refresh,
