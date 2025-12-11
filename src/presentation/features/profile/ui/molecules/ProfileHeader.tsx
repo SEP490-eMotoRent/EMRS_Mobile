@@ -11,7 +11,7 @@ interface ProfileHeaderProps {
   memberSince: string;
   trips: string;
   documents: DocumentResponse[];
-  distance: string;
+  distance: string; // Now expects just the number (e.g., "0", "150")
   avatar: string;
   membership?: MembershipResponse | null;
   onEdit: () => void;
@@ -46,6 +46,9 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
+  // ✅ Format distance with proper spacing
+  const formattedDistance = `${distance} km`;
+
   return (
     <View style={styles.profileHeader}>
       {/* Account Verification Badge */}
@@ -74,11 +77,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <Text style={styles.profileName} numberOfLines={1}>
                 {name}
               </Text>
-              {/* Compact Membership Badge */}
+              {/* Improved Membership Badge */}
               <View style={[styles.compactBadge, { borderColor: getMembershipColor() }]}>
                 <FontAwesome5 
                   name="medal" 
-                  size={10} 
+                  size={11} 
                   color={getMembershipColor()} 
                 />
                 <Text style={[styles.badgeText, { color: getMembershipColor() }]}>
@@ -86,35 +89,40 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={onEdit} style={styles.editButton}>
+            <TouchableOpacity 
+              onPress={onEdit} 
+              style={styles.editButton}
+              activeOpacity={0.7}
+            >
               <Icon name="edit" />
             </TouchableOpacity>
           </View>
 
-          {/* Member Since */}
+          {/* Member Since - Improved spacing */}
           <Text style={styles.memberSince}>
             Thành viên kể từ: {memberSince}
           </Text>
         </View>
       </View>
 
-      {/* Stats Row */}
+      {/* Stats Row - Improved design */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <FontAwesome5 name="car" size={14} color="#fff" style={styles.statIcon} />
+          <FontAwesome5 name="car" size={16} color="#fff" style={styles.statIcon} />
           <Text style={styles.statText}>{trips} chuyến</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <FontAwesome5 name="map-marker-alt" size={14} color="#fff" style={styles.statIcon} />
-          <Text style={styles.statText}>{distance}</Text>
+          <FontAwesome5 name="map-marker-alt" size={16} color="#fff" style={styles.statIcon} />
+          {/* ✅ Now with proper spacing */}
+          <Text style={styles.statText}>{formattedDistance}</Text>
         </View>
       </View>
 
-      {/* Membership Discount Banner */}
+      {/* Membership Discount Banner - Improved design */}
       {discountPercentage > 0 && (
         <View style={styles.discountBanner}>
-          <FontAwesome5 name="gift" size={14} color="#22c55e" style={styles.discountIcon} />
+          <FontAwesome5 name="gift" size={16} color="#22c55e" style={styles.discountIcon} />
           <Text style={styles.discountText}>
             Giảm {discountPercentage}% mỗi lần đặt xe
           </Text>
@@ -135,22 +143,25 @@ const styles = StyleSheet.create({
   topSection: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 20, // Increased from 16 for better spacing
   },
   avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 72, // Slightly larger for better visual weight
+    height: 72,
+    borderRadius: 36,
     marginRight: 16,
+    // Add subtle border for better definition
+    borderWidth: 2,
+    borderColor: "#1a1a1a",
   },
   avatarPlaceholder: {
-    backgroundColor: "#333",
+    backgroundColor: "#1a1a1a", // Darker for better contrast
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
     color: "#fff",
-    fontSize: 28,
+    fontSize: 30, // Slightly larger
     fontWeight: "700",
   },
   profileInfo: {
@@ -167,50 +178,58 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    marginRight: 8,
+    marginRight: 12, // Increased for better spacing
     flexWrap: "wrap",
   },
   profileName: {
     color: "#fff",
-    fontSize: 24,
+    fontSize: 22, // Slightly smaller for better balance with badge
     fontWeight: "700",
-    marginRight: 8,
+    marginRight: 10, // Increased spacing
+    letterSpacing: -0.5, // Tighter letter spacing for cleaner look
   },
   compactBadge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    gap: 4,
+    paddingHorizontal: 10, // Slightly more padding
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1.5, // Thicker border for better visibility
+    backgroundColor: "rgba(0,0,0,0.5)", // Slightly more opaque
+    gap: 5,
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: 11, // Slightly larger
     fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8, // More letter spacing for premium feel
   },
   editButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#222",
+    width: 40, // Slightly larger touch target
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#1a1a1a", // Darker for better contrast
     justifyContent: "center",
     alignItems: "center",
+    // Add subtle border
+    borderWidth: 1,
+    borderColor: "#333",
   },
   memberSince: {
     color: "#999",
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 13, // Slightly larger for better readability
+    marginTop: 4,
+    letterSpacing: 0.3,
   },
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#111",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: 14, // More rounded for modern look
+    padding: 16, // More padding
+    marginBottom: 16, // Increased spacing
+    // Add subtle border for definition
+    borderWidth: 1,
+    borderColor: "#1a1a1a",
   },
   statItem: {
     flex: 1,
@@ -219,36 +238,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   statIcon: {
-    marginRight: 6,
+    marginRight: 8, // Increased spacing
   },
   statText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 15, // Slightly larger
     fontWeight: "600",
+    letterSpacing: 0.3,
   },
   statDivider: {
     width: 1,
-    height: 20,
+    height: 24, // Taller divider
     backgroundColor: "#333",
-    marginHorizontal: 8,
+    marginHorizontal: 12, // More space around divider
   },
   discountBanner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1a2e1a",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#22c55e40",
+    backgroundColor: "#0f1f0f", // Darker green for better contrast
+    paddingVertical: 12, // More padding
+    paddingHorizontal: 20,
+    borderRadius: 14, // More rounded
+    borderWidth: 1.5, // Thicker border
+    borderColor: "#22c55e60", // More visible border
   },
   discountIcon: {
-    marginRight: 8,
+    marginRight: 10, // Increased spacing
   },
   discountText: {
     color: "#22c55e",
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 15, // Slightly larger
+    fontWeight: "700", // Bolder
+    letterSpacing: 0.3,
   },
 });
