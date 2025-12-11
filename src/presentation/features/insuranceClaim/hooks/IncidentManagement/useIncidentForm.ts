@@ -152,33 +152,38 @@ export const useIncidentForm = (): UseIncidentFormResult => {
     const validate = (): boolean => {
         const newErrors: ValidationErrors = {};
 
+        // ✅ Location validation - Vietnamese
         if (!formData.incidentLocation.trim()) {
-            newErrors.incidentLocation = 'Incident location is required';
+            newErrors.incidentLocation = 'Vui lòng nhập địa điểm sự cố';
         }
 
+        // ✅ Description validation - Vietnamese
         if (!formData.description.trim()) {
-            newErrors.description = 'Description is required';
+            newErrors.description = 'Vui lòng nhập mô tả sự cố';
         } else if (formData.description.trim().length < 10) {
-            newErrors.description = 'Description must be at least 10 characters';
+            newErrors.description = 'Mô tả phải có ít nhất 10 ký tự';
         }
 
+        // ✅ Date validation - Vietnamese
         if (!formData.date) {
-            newErrors.date = 'Date is required';
+            newErrors.date = 'Vui lòng chọn ngày';
         } else if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) {
-            newErrors.date = 'Invalid date format';
+            newErrors.date = 'Định dạng ngày không hợp lệ';
         }
 
+        // ✅ Time validation - Vietnamese
         if (!formData.time) {
-            newErrors.time = 'Time is required';
+            newErrors.time = 'Vui lòng chọn giờ';
         } else if (!convertTo24Hour(formData.time)) {
-            newErrors.time = 'Invalid time format (use: 3:30 PM)';
+            newErrors.time = 'Định dạng giờ không hợp lệ (VD: 3:30 PM)';
         }
 
+        // ✅ DateTime validation - Vietnamese
         const incidentDate = getIncidentDateTime();
         if (!incidentDate) {
-            newErrors.date = 'Invalid date or time';
+            newErrors.date = 'Ngày hoặc giờ không hợp lệ';
         } else if (incidentDate > new Date()) {
-            newErrors.date = 'Incident date cannot be in the future';
+            newErrors.date = 'Ngày sự cố không thể ở tương lai';
         }
 
         setErrors(newErrors);

@@ -9,9 +9,9 @@ import {
     View
 } from 'react-native';
 import { ProfileStackParamList } from '../../../../../shared/navigation/StackParameters/types';
-import { InsuranceClaimsList } from '../../organisms/List/InsuranceClaimsList';
 import { Icon } from '../../../../insuranceClaim/ui/atoms/icons/Icon';
 import { useInsuranceClaims } from '../../../hooks/insuranceClaims/useInsuranceClaims';
+import { InsuranceClaimsList } from '../../organisms/List/InsuranceClaimsList';
 
 type InsuranceClaimsScreenNavigationProp = StackNavigationProp<
     ProfileStackParamList,

@@ -1,15 +1,14 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/insuranceClaim/CreateInsuranceClaimRequest';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { useCreateInsuranceClaim } from '../../hooks/IncidentManagement/useCreateInsuranceClaim';
 import { useFormProgress } from '../../hooks/IncidentManagement/useFormProgress';
 import { useIncidentForm } from '../../hooks/IncidentManagement/useIncidentForm';
 import { useLocation } from '../../hooks/IncidentManagement/useLocation';
-// ✅ COMMENTED OUT - Voice recording
-// import { useVoiceRecording } from '../../hooks/IncidentManagement/useVoiceRecording';
+import { BackButton } from '../../../../common/components/atoms/buttons/BackButton';
 import { ProgressBar } from '../atoms';
 import { SubmitButton } from '../molecules';
 import {
@@ -47,12 +46,9 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
     } = useIncidentForm();
 
     const { location, isLoading: isLoadingLocation, refreshLocation } = useLocation();
-    // ✅ COMMENTED OUT - Voice recording
-    // const { isRecording, recordingDuration, startRecording, stopRecording } = useVoiceRecording();
     const { progress } = useFormProgress(formData);
     const { isLoading, error: apiError, createClaim } = useCreateInsuranceClaim();
 
-    // ✅ Allow manual override of GPS location
     const [manualLocation, setManualLocation] = useState<string>('');
 
     useEffect(() => {
@@ -74,25 +70,15 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
         });
     };
 
-    // ✅ COMMENTED OUT - Voice note functionality
-    // const handleVoiceNote = async () => {
-    //     if (isRecording) {
-    //         const audioUri = await stopRecording();
-    //         if (audioUri) {
-    //             Alert.alert(
-    //                 'Ghi âm đã lưu',
-    //                 'Tính năng chuyển giọng nói thành văn bản sẽ sớm ra mắt. Vui lòng nhập mô tả bằng tay.',
-    //                 [{ text: 'OK' }]
-    //             );
-    //         }
-    //     } else {
-    //         await startRecording();
-    //     }
-    // };
-
     const handleLocationChange = (text: string) => {
         setManualLocation(text);
         setIncidentLocation(text);
+    };
+
+    const handleGoBack = () => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+        }
     };
 
     const handleSubmit = async () => {
@@ -134,7 +120,19 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
     return (
         <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.headerContainer}>
+                <View style={styles.headerTop}>
+                    <BackButton onPress={handleGoBack} label="Quay lại" />
+                </View>
+                <View style={styles.headerTextBlock}>
+                    <Text style={styles.headerTitle}>Báo cáo sự cố</Text>
+                    <Text style={styles.headerSubtitle}>Gửi thông tin chi tiết về sự cố</Text>
+                </View>
+            </View>
+
             <ScrollView
+                style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
@@ -171,10 +169,7 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
                 <DescriptionSection
                     value={formData.description}
                     onChangeText={setDescription}
-                    // onVoiceNote={handleVoiceNote}
                     error={errors.description}
-                    // isRecording={isRecording}
-                    // recordingDuration={recordingDuration}
                 />
 
                 {isLoading ? (
@@ -193,6 +188,31 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#000',
+    },
+    headerContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 12,
+        backgroundColor: '#000',
+        borderBottomWidth: 1,
+        borderBottomColor: '#1A1A1A',
+    },
+    headerTop: {
+        marginBottom: 12,
+    },
+    headerTextBlock: {},
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    headerSubtitle: {
+        fontSize: 15,
+        color: '#666',
+    },
+    scrollView: {
+        flex: 1,
     },
     scrollContent: {
         padding: 16,

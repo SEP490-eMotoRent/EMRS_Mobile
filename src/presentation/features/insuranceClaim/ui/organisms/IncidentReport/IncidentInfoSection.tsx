@@ -1,105 +1,157 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { Icon } from '../../atoms/icons/Icon';
 
-interface InfoRowProps {
-    label: string;
-    value: string;
-}
-
-const InfoRow: React.FC<InfoRowProps> = ({ label, value }) => (
-    <View style={styles.row}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>{value}</Text>
-    </View>
-);
-
-export interface IncidentInfoSectionProps {
+interface IncidentInfoSectionProps {
     dateTime: string;
     location: string;
     address: string;
-    isLoadingLocation?: boolean;
-    onRefreshLocation?: () => void;
+    isLoadingLocation: boolean;
+    onRefreshLocation: () => void;
 }
 
 export const IncidentInfoSection: React.FC<IncidentInfoSectionProps> = ({
     dateTime,
     location,
     address,
-    isLoadingLocation = false,
+    isLoadingLocation,
     onRefreshLocation,
-}) => (
-    <View style={styles.section}>
-        <View style={styles.header}>
-            <Text style={styles.icon}>📍</Text>
-            <Text style={styles.title}>Thời gian & Địa điểm sự cố</Text>
-            {onRefreshLocation && (
+}) => {
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                    <Icon name="location" size={20} color="#ef4444" />
+                    <Text style={styles.title}>Thời gian & Địa điểm sự cố</Text>
+                </View>
                 <TouchableOpacity 
-                    onPress={onRefreshLocation} 
-                    style={styles.refreshButton}
+                    style={[styles.refreshButton, isLoadingLocation && styles.refreshButtonDisabled]}
+                    onPress={onRefreshLocation}
                     disabled={isLoadingLocation}
+                    activeOpacity={0.7}
                 >
                     {isLoadingLocation ? (
-                        <ActivityIndicator size="small" color="#7C3AED" />
+                        <ActivityIndicator size="small" color="#d4c5f9" />
                     ) : (
-                        <Text style={styles.refreshIcon}>Refresh</Text>
+                        <>
+                            <Icon name="refresh" size={14} color="#d4c5f9" />
+                            <Text style={styles.refreshText}>Làm mới</Text>
+                        </>
                     )}
                 </TouchableOpacity>
-            )}
+            </View>
+
+            <View style={styles.infoRow}>
+                <View style={styles.labelContainer}>
+                    <Icon name="time" size={16} color="#666" />
+                    <Text style={styles.label}>Ngày & Giờ</Text>
+                </View>
+                <Text style={styles.value}>{dateTime}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+                <View style={styles.labelContainer}>
+                    <Icon name="location" size={16} color="#666" />
+                    <Text style={styles.label}>Vị trí</Text>
+                </View>
+                <Text style={styles.value} numberOfLines={2}>{location}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+                <View style={styles.labelContainer}>
+                    <Icon name="map" size={16} color="#666" />
+                    <Text style={styles.label}>Tọa độ GPS</Text>
+                </View>
+                <Text style={styles.valueSmall}>{address}</Text>
+            </View>
         </View>
-        <View style={styles.content}>
-            <InfoRow label="Ngày & Giờ" value={dateTime} />
-            <InfoRow label="Vị trí" value={location} />
-            <InfoRow label="Địa chỉ" value={address} />
-        </View>
-    </View>
-);
+    );
+};
 
 const styles = StyleSheet.create({
-    section: {
+    container: {
         backgroundColor: '#1A1A1A',
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#2A2A2A',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        justifyContent: 'space-between',
+        marginBottom: 16,
     },
-    icon: {
-        fontSize: 18,
-        marginRight: 8,
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flex: 1,
     },
     title: {
         fontSize: 16,
         fontWeight: '600',
         color: '#fff',
-        flex: 1,
     },
     refreshButton: {
-        padding: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        backgroundColor: '#2A2A2A',
+        minWidth: 80,
+        justifyContent: 'center',
     },
-    refreshIcon: {
-        fontSize: 16,
+    refreshButtonDisabled: {
+        opacity: 0.6,
     },
-    content: {
-        gap: 8,
+    refreshText: {
+        color: '#d4c5f9',
+        fontSize: 13,
+        fontWeight: '600',
     },
-    row: {
+    infoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 4,
+        alignItems: 'flex-start',
+        paddingVertical: 8,
+        gap: 12,
+    },
+    labelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        flex: 1,
     },
     label: {
         fontSize: 14,
-        color: '#999',
+        color: '#666',
     },
     value: {
         fontSize: 14,
         color: '#fff',
         fontWeight: '500',
+        flex: 1.5,
         textAlign: 'right',
-        flex: 1,
-        marginLeft: 16,
+    },
+    valueSmall: {
+        fontSize: 12,
+        color: '#999',
+        fontWeight: '500',
+        flex: 1.5,
+        textAlign: 'right',
+        fontFamily: 'monospace',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#2A2A2A',
+        marginVertical: 4,
     },
 });

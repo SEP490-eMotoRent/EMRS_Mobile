@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
 import { ProfileStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { useWallet } from '../../../hooks/wallet/useWallet';
+import { useTransactions } from '../../../hooks/transactions/useTransactions';
 
 type RoutePropType = RouteProp<ProfileStackParamList, 'WalletTopUpResult'>;
 type NavigationProp = StackNavigationProp<ProfileStackParamList, 'WalletTopUpResult'>;
@@ -14,7 +15,7 @@ export const WalletTopUpResultScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationProp>();
     const { refresh: refreshWallet } = useWallet();
-
+    const { refresh: refreshTransactions } = useTransactions();
     const { success, amount, transactionId, errorMessage } = route.params;
 
     const formatCurrency = (value: number): string => {
@@ -24,6 +25,7 @@ export const WalletTopUpResultScreen: React.FC = () => {
     const handleBackToWallet = async () => {
         if (success) {
             await refreshWallet();
+            await refreshTransactions();
         }
         navigation.popToTop();
     };
