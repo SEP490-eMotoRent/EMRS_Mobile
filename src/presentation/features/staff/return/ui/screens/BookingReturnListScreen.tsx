@@ -244,9 +244,6 @@ export const BookingReturnListScreen: React.FC = () => {
           <View style={styles.specsSection}>
             <View style={styles.specsHeader}>
               <Text style={styles.specsTitle}>Thông số kỹ thuật xe</Text>
-              <Text style={styles.branchText}>
-                {booking.vehicle?.branch?.branchName || "Chi nhánh không xác định"}
-              </Text>
             </View>
             <View style={styles.specsGrid}>
               <View style={styles.specCard}>

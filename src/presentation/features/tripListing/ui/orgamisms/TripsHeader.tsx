@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Icon } from "../atoms/Icons/Icons";
+import { Icon } from "../atoms/icons/Icons";
 
 interface TripsHeaderProps {
     onRefresh: () => void;
@@ -20,7 +20,7 @@ export const TripsHeader: React.FC<TripsHeaderProps> = ({
                 disabled={refreshing}
                 activeOpacity={0.7}
             >
-                <Icon 
+                <Icon
                     name="refresh" 
                     size={20} 
                     color={refreshing ? "#666" : "#B8A4FF"} 

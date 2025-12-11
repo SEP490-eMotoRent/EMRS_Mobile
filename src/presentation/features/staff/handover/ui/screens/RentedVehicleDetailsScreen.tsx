@@ -109,7 +109,6 @@ export const RentedVehicleDetailsScreen: React.FC = () => {
     Unavailable: "#fff",
     Maintenance: "#000",
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -266,24 +265,6 @@ export const RentedVehicleDetailsScreen: React.FC = () => {
               <Text style={styles.specLabel}>Pin</Text>
               <Text style={styles.specValue}>
                 {vehicle.batteryHealthPercentage || 0}%
-              </Text>
-            </View>
-            <View style={styles.specTile}>
-              <View style={styles.specIconWrap}>
-                <AntDesign name="calendar" size={14} color="#fff" />
-              </View>
-              <Text style={styles.specLabel}>Năm SX</Text>
-              <Text style={styles.specValue}>
-                {formatDate(vehicle.yearOfManufacture)}
-              </Text>
-            </View>
-            <View style={styles.specTile}>
-              <View style={styles.specIconWrap}>
-                <AntDesign name="shopping" size={14} color="#fff" />
-              </View>
-              <Text style={styles.specLabel}>Ngày mua</Text>
-              <Text style={styles.specValue}>
-                {formatDate(vehicle.purchaseDate)}
               </Text>
             </View>
             <View style={styles.specTile}>
