@@ -1,12 +1,12 @@
-export * from './icons/Icon';
 export * from './Checkmark';
+export * from './icons/Icon';
 export * from './texts/LabelText';
 export * from './texts/ValueText';
 export * from './ToggleSwitch';
 
-export * from './ProgressBar';
-export * from './inputs/TextInput';
 export * from './inputs/DateTimeInput';
+export * from './inputs/TextInput';
+export * from './ProgressBar';
 
 export { StatusIcon } from './icons/StatusIcon';
 export type { StatusIconProps } from './icons/StatusIcon';
@@ -22,3 +22,4 @@ export type { ValueProps } from './Value';
 
 export { Button } from './buttons/Button';
 export type { ButtonProps } from './buttons/Button';
+

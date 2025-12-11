@@ -12,9 +12,9 @@ import {
     View,
 } from 'react-native';
 import { ProfileStackParamList } from '../../../../../shared/navigation/StackParameters/types';
-import { ClaimStatusBadge } from '../../atoms/Badges/ClaimStatusBadge';
 import { Icon } from '../../../../insuranceClaim/ui/atoms/icons/Icon';
 import { useInsuranceClaimDetail } from '../../../hooks/insuranceClaims/useInsuranceClaimDetail';
+import { ClaimStatusBadge } from '../../atoms/Badges/ClaimStatusBadge';
 
 type InsuranceClaimDetailScreenRouteProp = RouteProp<
     ProfileStackParamList,

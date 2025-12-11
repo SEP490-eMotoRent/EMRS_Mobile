@@ -3,6 +3,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { TripStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+import { Icon } from '../../atoms/icons/Icon';
 
 type NavigationProp = StackNavigationProp<TripStackParamList>;
 
@@ -35,9 +36,12 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
     return (
         <View style={styles.section}>
             <View style={styles.header}>
-                <Text style={styles.title}>Chụp ảnh hiện trường</Text>
+                <View style={styles.headerLeft}>
+                    <Icon name="camera" size={20} color="#d4c5f9" />
+                    <Text style={styles.title}>Chụp ảnh hiện trường</Text>
+                </View>
                 <TouchableOpacity onPress={handleTakePhoto} style={styles.headerRight}>
-                    <Text style={styles.icon}>Camera</Text>
+                    <Icon name="camera" size={16} color="#d4c5f9" />
                     <Text style={styles.headerAction}>Chụp ảnh</Text>
                 </TouchableOpacity>
             </View>
@@ -55,8 +59,9 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
                         <TouchableOpacity 
                             style={styles.removeButton}
                             onPress={() => onRemovePhoto(index)}
+                            activeOpacity={0.8}
                         >
-                            <Text style={styles.removeIcon}>×</Text>
+                            <Icon name="close" size={14} color="#fff" />
                         </TouchableOpacity>
                     </View>
                 ))}
@@ -64,8 +69,9 @@ export const PhotosDocumentationSection: React.FC<PhotosDocumentationSectionProp
                     <TouchableOpacity 
                         style={styles.addPhotoCard}
                         onPress={handleTakePhoto}
+                        activeOpacity={0.7}
                     >
-                        <Text style={styles.addIcon}>+</Text>
+                        <Icon name="add" size={28} color="#666" />
                         <Text style={styles.addText}>Thêm ảnh</Text>
                     </TouchableOpacity>
                 )}
@@ -80,12 +86,19 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#2A2A2A',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 4,
+        marginBottom: 8,
+    },
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     title: {
         fontSize: 16,
@@ -95,17 +108,19 @@ const styles = StyleSheet.create({
     headerRight: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-    },
-    icon: {
-        fontSize: 18,
+        gap: 6,
+        backgroundColor: '#2A2A2A',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
     },
     headerAction: {
-        fontSize: 14,
-        color: '#fff',
+        fontSize: 13,
+        color: '#d4c5f9',
+        fontWeight: '600',
     },
     hint: {
-        fontSize: 12,
+        fontSize: 13,
         color: '#666',
         marginBottom: 12,
     },
@@ -115,11 +130,13 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     photoCard: {
-        width: 80,
-        height: 80,
+        width: 100,
+        height: 100,
         borderRadius: 8,
         position: 'relative',
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#333',
     },
     photoImage: {
         width: '100%',
@@ -127,38 +144,35 @@ const styles = StyleSheet.create({
     },
     removeButton: {
         position: 'absolute',
-        top: -8,
-        right: -8,
-        backgroundColor: '#FF4444',
+        top: 4,
+        right: 4,
+        backgroundColor: '#ef4444',
         width: 24,
         height: 24,
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    removeIcon: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: 'bold',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 3,
     },
     addPhotoCard: {
-        width: 80,
-        height: 80,
+        width: 100,
+        height: 100,
         borderRadius: 8,
         borderWidth: 2,
         borderStyle: 'dashed',
-        borderColor: '#666',
+        borderColor: '#333',
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#0A0A0A',
     },
-    addIcon: {
-        fontSize: 24,
-        color: '#666',
-    },
     addText: {
-        fontSize: 10,
+        fontSize: 12,
         color: '#666',
-        marginTop: 4,
+        marginTop: 6,
+        fontWeight: '500',
     },
 });

@@ -1,8 +1,10 @@
 import React from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
 
 export interface IconProps {
     name: 
@@ -11,7 +13,7 @@ export interface IconProps {
         | 'location' 
         | 'document' 
         | 'check'
-        // New icons for Insurance Claims
+        // Insurance Claims icons
         | 'shield'
         | 'calendar'
         | 'arrow'
@@ -24,7 +26,19 @@ export interface IconProps {
         | 'logout'
         | 'gift'
         | 'id-card'
-        | 'car';
+        | 'car'
+        // Incident Report icons
+        | 'refresh'
+        | 'time'
+        | 'map'
+        | 'camera'
+        | 'close'
+        | 'add'
+        | 'info'
+        | 'edit'
+        | 'warning'
+        | 'checkmark'
+        | 'send';
     color?: string;
     size?: number;
 }
@@ -37,7 +51,7 @@ export const Icon: React.FC<IconProps> = ({ name, color = '#fff', size = 24 }) =
         'document': { library: 'Ionicons', iconName: 'document-text' },
         'check': { library: 'FontAwesome', iconName: 'check' },
         
-        // New icons for Insurance Claims
+        // Insurance Claims icons
         'shield': { library: 'MaterialCommunityIcons', iconName: 'shield-check' },
         'calendar': { library: 'FontAwesome', iconName: 'calendar' },
         'arrow': { library: 'FontAwesome', iconName: 'chevron-right' },
@@ -51,6 +65,19 @@ export const Icon: React.FC<IconProps> = ({ name, color = '#fff', size = 24 }) =
         'gift': { library: 'FontAwesome', iconName: 'gift' },
         'id-card': { library: 'FontAwesome', iconName: 'id-card' },
         'car': { library: 'FontAwesome', iconName: 'car' },
+        
+        // Incident Report icons
+        'refresh': { library: 'Ionicons', iconName: 'reload-outline' },
+        'time': { library: 'Ionicons', iconName: 'time-outline' },
+        'map': { library: 'Ionicons', iconName: 'map-outline' },
+        'camera': { library: 'Ionicons', iconName: 'camera-outline' },
+        'close': { library: 'Ionicons', iconName: 'close' },
+        'add': { library: 'Ionicons', iconName: 'add' },
+        'info': { library: 'Ionicons', iconName: 'information-circle-outline' },
+        'edit': { library: 'Feather', iconName: 'edit-2' },
+        'warning': { library: 'Ionicons', iconName: 'warning-outline' },
+        'checkmark': { library: 'Ionicons', iconName: 'checkmark-circle' },
+        'send': { library: 'Ionicons', iconName: 'send' },
     };
 
     const iconConfig = iconMap[name];
@@ -65,12 +92,16 @@ export const Icon: React.FC<IconProps> = ({ name, color = '#fff', size = 24 }) =
     switch (library) {
         case 'FontAwesome':
             return <FontAwesome name={iconName} size={size} color={color} />;
+        case 'FontAwesome5':
+            return <FontAwesome5 name={iconName} size={size} color={color} />;
         case 'MaterialCommunityIcons':
             return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         case 'MaterialIcons':
             return <MaterialIcons name={iconName} size={size} color={color} />;
         case 'Ionicons':
             return <Ionicons name={iconName} size={size} color={color} />;
+        case 'Feather':
+            return <Feather name={iconName} size={size} color={color} />;
         default:
             return null;
     }

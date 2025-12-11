@@ -1,14 +1,14 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/insuranceClaim/CreateInsuranceClaimRequest';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { useCreateInsuranceClaim } from '../../hooks/IncidentManagement/useCreateInsuranceClaim';
 import { useFormProgress } from '../../hooks/IncidentManagement/useFormProgress';
 import { useIncidentForm } from '../../hooks/IncidentManagement/useIncidentForm';
 import { useLocation } from '../../hooks/IncidentManagement/useLocation';
-import { useVoiceRecording } from '../../hooks/IncidentManagement/useVoiceRecording';
+import { BackButton } from '../../../../common/components/atoms/buttons/BackButton';
 import { ProgressBar } from '../atoms';
 import { SubmitButton } from '../molecules';
 import {
@@ -46,15 +46,18 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
     } = useIncidentForm();
 
     const { location, isLoading: isLoadingLocation, refreshLocation } = useLocation();
-    const { isRecording, recordingDuration, startRecording, stopRecording } = useVoiceRecording();
     const { progress } = useFormProgress(formData);
     const { isLoading, error: apiError, createClaim } = useCreateInsuranceClaim();
 
+    const [manualLocation, setManualLocation] = useState<string>('');
+
     useEffect(() => {
-        if (location && !formData.incidentLocation) {
-            setIncidentLocation(location.address);
+        if (location && !formData.incidentLocation && !manualLocation) {
+            const autoLocation = location.address || 
+                `GPS: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
+            setIncidentLocation(autoLocation);
         }
-    }, [location, formData.incidentLocation, setIncidentLocation]);
+    }, [location, formData.incidentLocation, manualLocation, setIncidentLocation]);
 
     const getCurrentDateTimeDisplay = (): string => {
         const now = new Date();
@@ -67,24 +70,20 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
         });
     };
 
-    const handleVoiceNote = async () => {
-        if (isRecording) {
-            const audioUri = await stopRecording();
-            if (audioUri) {
-                Alert.alert(
-                    'Ghi âm đã lưu',
-                    'Tính năng chuyển giọng nói thành văn bản sẽ sớm ra mắt. Vui lòng nhập mô tả bằng tay.',
-                    [{ text: 'OK' }]
-                );
-            }
-        } else {
-            await startRecording();
+    const handleLocationChange = (text: string) => {
+        setManualLocation(text);
+        setIncidentLocation(text);
+    };
+
+    const handleGoBack = () => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
         }
     };
 
     const handleSubmit = async () => {
         if (!validate()) {
-            Alert.alert('Lỗi xác thực', 'Vui lòng sửa các lỗi bên dưới');
+            Alert.alert('Lỗi xác thực', 'Vui lòng điền đầy đủ thông tin bắt buộc');
             return;
         }
 
@@ -121,7 +120,19 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
     return (
         <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.headerContainer}>
+                <View style={styles.headerTop}>
+                    <BackButton onPress={handleGoBack} label="Quay lại" />
+                </View>
+                <View style={styles.headerTextBlock}>
+                    <Text style={styles.headerTitle}>Báo cáo sự cố</Text>
+                    <Text style={styles.headerSubtitle}>Gửi thông tin chi tiết về sự cố</Text>
+                </View>
+            </View>
+
             <ScrollView
+                style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
@@ -129,7 +140,10 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
                 <IncidentInfoSection
                     dateTime={getCurrentDateTimeDisplay()}
-                    location={location?.address || 'Đang lấy vị trí...'}
+                    location={
+                        location?.address || 
+                        (location ? `GPS: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}` : 'Đang lấy vị trí...')
+                    }
                     address={
                         location
                             ? `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`
@@ -148,22 +162,19 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
                 <LocationInputSection
                     value={formData.incidentLocation}
-                    onChangeText={setIncidentLocation}
+                    onChangeText={handleLocationChange}
                     error={errors.incidentLocation}
                 />
 
                 <DescriptionSection
                     value={formData.description}
                     onChangeText={setDescription}
-                    onVoiceNote={handleVoiceNote}
                     error={errors.description}
-                    isRecording={isRecording}
-                    recordingDuration={recordingDuration}
                 />
 
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#7C3AED" />
+                        <ActivityIndicator size="large" color="#d4c5f9" />
                     </View>
                 ) : (
                     <SubmitButton onPress={handleSubmit} />
@@ -177,6 +188,31 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#000',
+    },
+    headerContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 12,
+        backgroundColor: '#000',
+        borderBottomWidth: 1,
+        borderBottomColor: '#1A1A1A',
+    },
+    headerTop: {
+        marginBottom: 12,
+    },
+    headerTextBlock: {},
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    headerSubtitle: {
+        fontSize: 15,
+        color: '#666',
+    },
+    scrollView: {
+        flex: 1,
     },
     scrollContent: {
         padding: 16,

@@ -4,6 +4,7 @@ import React, { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { container } from "../../../../../core/di/ServiceContainer";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
+import { Feedback } from "../../../../../domain/entities/booking/Feedback";
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { useRenterProfile } from "../../../profile/hooks/profile/useRenterProfile";
 import { useCancelBooking } from "../../hooks/useCancelBooking";
@@ -14,13 +15,13 @@ import { TabButton } from "../molecules/TabButton";
 import { CurrentTrip, CurrentTripCard } from "../orgamisms/CurrentTripCard ";
 import { PastTrip, PastTripCard } from "../orgamisms/PastTripCard";
 import { TripsHeader } from "../orgamisms/TripsHeader";
-import { Feedback } from "../../../../../domain/entities/booking/Feedback";
 import { FeedbackModal } from "../orgamisms/modal/FeedbackModal";
 
 type TripsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'Trip'>;
 
 type TabType = "current" | "past";
 type PastFilterType = "completed" | "cancelled" | null;
+type SortOption = "newest" | "oldest" | "price_high" | "price_low";
 
 interface FeedbackModalState {
     visible: boolean;
@@ -33,7 +34,7 @@ export const TripsScreen: React.FC = () => {
     const navigation = useNavigation<TripsScreenNavigationProp>();
     const [activeTab, setActiveTab] = useState<TabType>("current");
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy, setSortBy] = useState("Mới nhất");
+    const [sortOption, setSortOption] = useState<SortOption>("newest");
     const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
 
     const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
@@ -48,7 +49,6 @@ export const TripsScreen: React.FC = () => {
     const { renter } = useRenterProfile();
     const currentRenterName = renter?.account?.fullname || renter?.email || "Bạn";
 
-    // ✅ MIGRATED: Get use cases from new container
     const { bookings, loading, error, refetch } = useGetCurrentRenterBookings(
         container.booking.get.currentRenter
     );
@@ -138,7 +138,6 @@ export const TripsScreen: React.FC = () => {
             return undefined;
         };
 
-        // Check if booking has additional fees
         const hasAdditionalFees = !!(
             (booking.additionalFees && booking.additionalFees.length > 0) ||
             booking.lateReturnFee ||
@@ -225,20 +224,33 @@ export const TripsScreen: React.FC = () => {
         [bookings, bookingFeedbacks]
     );
 
-    const handleNotification = () => {
-        console.log("Mở thông báo");
-    };
-
-    const handleSortPress = () => {
-        console.log("Mở tùy chọn sắp xếp");
+    const sortTrips = <T extends CurrentTrip | PastTrip>(trips: T[]): T[] => {
+        const sorted = [...trips];
+        
+        switch (sortOption) {
+            case "newest":
+                return sorted;
+            case "oldest":
+                return sorted.reverse();
+            case "price_high":
+                return sorted.sort((a, b) => {
+                    const priceA = parseFloat(a.totalAmount?.replace(/[^0-9]/g, '') || '0');
+                    const priceB = parseFloat(b.totalAmount?.replace(/[^0-9]/g, '') || '0');
+                    return priceB - priceA;
+                });
+            case "price_low":
+                return sorted.sort((a, b) => {
+                    const priceA = parseFloat(a.totalAmount?.replace(/[^0-9]/g, '') || '0');
+                    const priceB = parseFloat(b.totalAmount?.replace(/[^0-9]/g, '') || '0');
+                    return priceA - priceB;
+                });
+            default:
+                return sorted;
+        }
     };
 
     const handleViewDetails = (bookingId: string) => {
         navigation.navigate('BookingDetails', { bookingId });
-    };
-
-    const handleExtendRental = (tripId: string) => {
-        console.log("Gia hạn thuê", tripId);
     };
 
     const handleReportIssue = (bookingId: string, trip: CurrentTrip) => {
@@ -298,21 +310,25 @@ export const TripsScreen: React.FC = () => {
         });
     };
 
-    const filteredCurrentTrips = currentTrips.filter(trip =>
-        !searchQuery || 
-        trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trip.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredCurrentTrips = sortTrips(
+        currentTrips.filter(trip =>
+            !searchQuery || 
+            trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            trip.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
     );
 
-    const filteredPastTrips = pastTrips.filter(trip => {
-        if (pastFilter && trip.status !== pastFilter) return false;
-        if (searchQuery) {
-            return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
-        }
-        return true;
-    });
+    const filteredPastTrips = sortTrips(
+        pastTrips.filter(trip => {
+            if (pastFilter && trip.status !== pastFilter) return false;
+            if (searchQuery) {
+                return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
+            }
+            return true;
+        })
+    );
 
     const pastFilterTags = [
         { id: "completed", label: "Hoàn thành", count: pastTrips.filter(t => t.status === "completed").length },
@@ -348,7 +364,6 @@ export const TripsScreen: React.FC = () => {
                     <CurrentTripCard
                         trip={item}
                         onViewDetails={() => handleViewDetails(item.id)}
-                        onExtendRental={item.status === "renting" ? () => handleExtendRental(item.id) : undefined}
                         onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id, item) : undefined}
                         onCancel={item.status === "confirmed" ? () => handleCancelBooking(item.id) : undefined}
                     />
@@ -423,15 +438,15 @@ export const TripsScreen: React.FC = () => {
     return (
         <View style={styles.container}>
             <TripsHeader
-                onNotification={handleNotification}
-                notificationCount={3}
+                onRefresh={refetch}
+                refreshing={loading}
             />
 
             <SearchBar
                 searchValue={searchQuery}
                 onSearchChange={setSearchQuery}
-                sortValue={sortBy}
-                onSortPress={handleSortPress}
+                sortOption={sortOption}
+                onSortChange={setSortOption}
             />
 
             <View style={styles.tabsContainer}>

@@ -2,8 +2,8 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { InsuranceClaimResponse } from '../../../../../data/models/insurance/insuranceClaim/InsuranceClaimResponse';
-import { ClaimStatusBadge } from '../atoms/Badges/ClaimStatusBadge';
 import { Icon } from '../../../insuranceClaim/ui/atoms/icons/Icon';
+import { ClaimStatusBadge } from '../atoms/Badges/ClaimStatusBadge';
 
 interface InsuranceClaimCardProps {
     claim: InsuranceClaimResponse;
