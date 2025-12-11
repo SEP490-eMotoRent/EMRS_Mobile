@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
@@ -28,54 +28,50 @@ interface VehicleCardProps {
     onBookPress: (vehicleId: string) => void;
     dateRange?: string;
     location?: string;
+    distance?: string;
 }
 
-export const VehicleCard: React.FC<VehicleCardProps> = ({ 
-    vehicle, 
+export const VehicleCard: React.FC<VehicleCardProps> = ({
+    vehicle,
     onBookPress,
     dateRange = "Chọn Ngày",
-    location 
+    location,
+    distance,
 }) => {
     const navigation = useNavigation<VehicleCardNavigationProp>();
 
-    const handleCardPress = () => {
-        navigation.navigate('VehicleDetails', { 
+    const goToVehicleDetails = () => {
+        navigation.navigate("VehicleDetails", {
             vehicleId: vehicle.id,
             dateRange,
-            location
+            location,
         });
     };
 
     return (
-        <TouchableOpacity 
-            style={styles.card} 
-            onPress={handleCardPress}
+        <TouchableOpacity
+            style={styles.card}
+            onPress={goToVehicleDetails}
             activeOpacity={0.92}
         >
-            {/* ✅ Enhanced gradient background */}
             <LinearGradient
-                colors={['#1a1a1a', '#0d0d0d', '#050505']}
+                colors={["#1a1a1a", "#0d0d0d", "#050505"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.gradientBackground}
             >
-                {/* ✅ Subtle glow effect overlay */}
                 <View style={styles.glowOverlay} />
 
-                {/* Brand Badge - Top Right */}
-                <View style={styles.brandBadge}>
-                    <LinearGradient
-                        colors={['#9d7ff5', '#7c4dff']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.brandBadgeGradient}
-                    >
-                        <Text style={styles.brandText}>{vehicle.brand}</Text>
-                    </LinearGradient>
-                </View>
-
-                {/* Image Section */}
+                {/* Image Container */}
                 <View style={styles.imageContainer}>
+                    {/* Dark Gradient Overlay for better badge visibility */}
+                    <LinearGradient
+                        colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.2)", "transparent"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={styles.imageOverlay}
+                    />
+
                     {vehicle.imageUrl ? (
                         <Image
                             source={{ uri: vehicle.imageUrl }}
@@ -87,22 +83,65 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                             <Text style={styles.placeholderIcon}>🏍️</Text>
                         </View>
                     )}
-                    
-                    {/* Color Dot with glow */}
-                    <View style={styles.colorDotContainer}>
-                        <View style={[
-                            styles.colorDotGlow, 
-                            { backgroundColor: vehicle.colorHex, opacity: 0.3 }
-                        ]} />
-                        <View style={[styles.colorDot, { backgroundColor: vehicle.colorHex }]}>
-                            {vehicle.color === "Trắng" && <View style={styles.colorDotBorder} />}
+
+                    {/* Distance Badge - Top Left */}
+                    {distance && (
+                        <View style={styles.distanceBadge}>
+                            <View style={styles.distanceBadgeContent}>
+                                <Text style={styles.distanceIcon}>📍</Text>
+                                <Text style={styles.distanceText}>{distance}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Battery/Range Badge - Top Right (only if vehicle.range exists) */}
+                    {vehicle.range && (
+                        <View style={styles.rangeBadge}>
+                            <LinearGradient
+                                colors={["rgba(16, 185, 129, 0.25)", "rgba(5, 150, 105, 0.25)"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.rangeBadgeGradient}
+                            >
+                                <Text style={styles.rangeIcon}>⚡</Text>
+                                <Text style={styles.rangeText}>{vehicle.range}</Text>
+                            </LinearGradient>
+                        </View>
+                    )}
+
+                    {/* Enhanced Color Indicator - Bottom Left */}
+                    <View style={styles.colorIndicatorContainer}>
+                        {/* Glow Effect */}
+                        <View
+                            style={[
+                                styles.colorGlow,
+                                { backgroundColor: vehicle.colorHex },
+                            ]}
+                        />
+                        {/* Main Color Dot */}
+                        <View
+                            style={[
+                                styles.colorDot,
+                                { backgroundColor: vehicle.colorHex },
+                            ]}
+                        >
+                            {/* Inner Highlight for 3D effect */}
+                            <View style={styles.colorHighlight} />
+                            {/* White border for light colors */}
+                            {(vehicle.color === "Trắng" || vehicle.colorHex === "#ffffff") && (
+                                <View style={styles.colorDotBorder} />
+                            )}
+                        </View>
+                        {/* Color Label */}
+                        <View style={styles.colorLabel}>
+                            <Text style={styles.colorLabelText}>{vehicle.color}</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Info Section - Modernized */}
+                {/* Info Section */}
                 <View style={styles.infoSection}>
-                    {/* Name & Type Row */}
+                    {/* Vehicle Name & Type */}
                     <View style={styles.nameRow}>
                         <View style={styles.nameContainer}>
                             <Text style={styles.vehicleName} numberOfLines={1}>
@@ -112,38 +151,37 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                         </View>
                     </View>
 
-                    {/* Divider */}
                     <View style={styles.divider} />
 
-                    {/* Price & Button Row */}
+                    {/* Price & CTA Row */}
                     <View style={styles.actionRow}>
-                        {/* Price Section */}
                         <View style={styles.priceContainer}>
                             <View style={styles.priceRow}>
                                 <Text style={styles.priceAmount}>
-                                    {vehicle.price.toLocaleString('vi-VN')}₫
+                                    {vehicle.price.toLocaleString("vi-VN")}₫
                                 </Text>
                                 <Text style={styles.priceUnit}>/ngày</Text>
                             </View>
                             <Text style={styles.priceLabel}>Giá thuê</Text>
                         </View>
 
-                        {/* Book Button */}
-                        <TouchableOpacity 
+                        {/* Enhanced Book Button */}
+                        <TouchableOpacity
                             style={styles.bookButton}
                             onPress={(e) => {
                                 e.stopPropagation();
-                                onBookPress(vehicle.id);
+                                goToVehicleDetails();
                             }}
                             activeOpacity={0.85}
                         >
                             <LinearGradient
-                                colors={['#a78bfa', '#8b5cf6', '#7c4dff']}
+                                colors={["#a78bfa", "#8b5cf6", "#7c4dff"]}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={styles.bookButtonGradient}
                             >
                                 <Text style={styles.bookButtonText}>Đặt xe</Text>
+                                <Text style={styles.bookButtonArrow}>→</Text>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
@@ -156,22 +194,21 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
 const styles = StyleSheet.create({
     card: {
         marginHorizontal: 8,
-        width: 260,
-        borderRadius: 20, // ✅ More rounded (was 16)
+        width: 240, // Reduced from 260
+        borderRadius: 18,
         overflow: "hidden",
         shadowColor: "#7c4dff",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2, // ✅ More subtle (was 0.15)
-        shadowRadius: 12, // ✅ Softer (was 8)
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
         elevation: 8,
     },
     gradientBackground: {
-        borderRadius: 20,
+        borderRadius: 18,
         borderWidth: 1,
-        borderColor: "rgba(157, 127, 245, 0.2)", // ✅ Lighter border
+        borderColor: "rgba(157, 127, 245, 0.2)",
         overflow: "hidden",
     },
-    // ✅ NEW: Subtle glow overlay
     glowOverlay: {
         position: "absolute",
         top: 0,
@@ -180,39 +217,23 @@ const styles = StyleSheet.create({
         height: "50%",
         backgroundColor: "rgba(124, 77, 255, 0.03)",
     },
-    brandBadge: {
-        position: "absolute",
-        top: 12,
-        right: 12,
-        borderRadius: 10, // ✅ More rounded (was 8)
-        overflow: "hidden",
-        zIndex: 10,
-        shadowColor: "#7c4dff",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.5, // ✅ Stronger glow
-        shadowRadius: 6,
-        elevation: 5,
-    },
-    brandBadgeGradient: {
-        paddingHorizontal: 10, // ✅ More padding (was 8)
-        paddingVertical: 5, // ✅ Slightly taller (was 4)
-    },
-    brandText: {
-        color: "#fff",
-        fontSize: 10, // ✅ Slightly larger (was 9)
-        fontWeight: "700",
-        textTransform: "uppercase",
-        letterSpacing: 0.8, // ✅ More spacing (was 0.5)
-    },
     imageContainer: {
         width: "100%",
-        height: 170,
+        height: 140, // Reduced from 170
         backgroundColor: "#0f0f0f",
         justifyContent: "center",
         alignItems: "center",
         position: "relative",
         borderBottomWidth: 1,
         borderBottomColor: "rgba(157, 127, 245, 0.1)",
+    },
+    imageOverlay: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 60,
+        zIndex: 1,
     },
     vehicleImage: {
         width: "90%",
@@ -225,71 +246,153 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     placeholderIcon: {
-        fontSize: 64,
+        fontSize: 56,
         opacity: 0.25,
     },
-    colorDotContainer: {
+    // Distance Badge - Top Left
+    distanceBadge: {
+        position: "absolute",
+        top: 10,
+        left: 10,
+        zIndex: 10,
+        borderRadius: 10,
+        overflow: "hidden",
+    },
+    distanceBadgeContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(0, 0, 0, 0.6)",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+    },
+    distanceIcon: {
+        fontSize: 9,
+        marginRight: 3,
+    },
+    distanceText: {
+        color: "#fff",
+        fontSize: 10,
+        fontWeight: "700",
+    },
+    // Range Badge - Top Right
+    rangeBadge: {
+        position: "absolute",
+        top: 10,
+        right: 10,
+        zIndex: 10,
+        borderRadius: 10,
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: "rgba(16, 185, 129, 0.3)",
+    },
+    rangeBadgeGradient: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    rangeIcon: {
+        fontSize: 9,
+        marginRight: 3,
+    },
+    rangeText: {
+        color: "#6ee7b7",
+        fontSize: 10,
+        fontWeight: "700",
+    },
+    // Enhanced Color Indicator - Bottom Left
+    colorIndicatorContainer: {
         position: "absolute",
         bottom: 10,
-        left: 12,
+        left: 10,
+        flexDirection: "row",
+        alignItems: "center",
+        zIndex: 10,
     },
-    // ✅ NEW: Glow effect for color dot
-    colorDotGlow: {
+    colorGlow: {
         position: "absolute",
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        opacity: 0.5,
+        left: -2,
+        top: -2,
+    },
+    colorDot: {
         width: 24,
         height: 24,
         borderRadius: 12,
-        top: -4,
-        left: -4,
-    },
-    colorDot: {
-        width: 18, // ✅ Larger (was 16)
-        height: 18,
-        borderRadius: 9,
-        borderWidth: 2,
-        borderColor: "#0a0a0a",
+        borderWidth: 2.5,
+        borderColor: "#fff",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 4,
+        elevation: 5,
+        position: "relative",
+    },
+    colorHighlight: {
+        position: "absolute",
+        top: 2,
+        left: 2,
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
+        backgroundColor: "rgba(255, 255, 255, 0.4)",
     },
     colorDotBorder: {
         position: "absolute",
-        top: -2,
-        left: -2,
-        right: -2,
-        bottom: -2,
-        borderRadius: 9,
+        top: -2.5,
+        left: -2.5,
+        right: -2.5,
+        bottom: -2.5,
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#666",
+        borderColor: "#888",
     },
+    colorLabel: {
+        marginLeft: 7,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        borderRadius: 7,
+    },
+    colorLabelText: {
+        color: "rgba(255, 255, 255, 0.9)",
+        fontSize: 9,
+        fontWeight: "600",
+    },
+    // Info Section
     infoSection: {
-        padding: 14, // ✅ More padding (was 12)
+        padding: 12,
     },
     nameRow: {
-        marginBottom: 10, // ✅ More space (was 8)
+        marginBottom: 8,
     },
     nameContainer: {
         flex: 1,
     },
     vehicleName: {
-        fontSize: 16, // ✅ Larger (was 15)
+        fontSize: 15,
         fontWeight: "700",
         color: "#fff",
-        marginBottom: 3, // ✅ More space (was 2)
-        letterSpacing: 0.3, // ✅ NEW: Better readability
+        marginBottom: 2,
+        letterSpacing: 0.3,
     },
     vehicleType: {
-        fontSize: 11, // ✅ Larger (was 10)
-        color: "#999", // ✅ Lighter (was #999)
+        fontSize: 10,
+        color: "#999",
         fontWeight: "500",
     },
-    // ✅ NEW: Divider line
     divider: {
         height: 1,
         backgroundColor: "rgba(255, 255, 255, 0.08)",
-        marginVertical: 10,
+        marginVertical: 8,
     },
+    // Action Row
     actionRow: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -301,45 +404,53 @@ const styles = StyleSheet.create({
     priceRow: {
         flexDirection: "row",
         alignItems: "baseline",
-        marginBottom: 2, // ✅ NEW: Space for label
+        marginBottom: 1,
     },
     priceAmount: {
-        fontSize: 18, // ✅ Larger (was 16)
+        fontSize: 16,
         fontWeight: "800",
         color: "#fff",
     },
     priceUnit: {
-        fontSize: 11, // ✅ Larger (was 10)
+        fontSize: 10,
         color: "#888",
         fontWeight: "500",
-        marginLeft: 3,
+        marginLeft: 2,
     },
-    // ✅ NEW: Price label
     priceLabel: {
-        fontSize: 9,
+        fontSize: 8,
         color: "#666",
         fontWeight: "500",
         textTransform: "uppercase",
         letterSpacing: 0.5,
     },
+    // Enhanced Book Button
     bookButton: {
-        borderRadius: 12, // ✅ More rounded (was 10)
+        borderRadius: 12,
         overflow: "hidden",
         shadowColor: "#7c4dff",
         shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.5, // ✅ Stronger (was 0.4)
-        shadowRadius: 6, // ✅ Softer (was 4)
+        shadowOpacity: 0.5,
+        shadowRadius: 6,
         elevation: 6,
     },
     bookButtonGradient: {
-        paddingVertical: 11, // ✅ Slightly taller (was 10)
-        paddingHorizontal: 20, // ✅ Wider (was implicit)
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        flexDirection: "row",
         alignItems: "center",
+        justifyContent: "center",
     },
     bookButtonText: {
         color: "#fff",
-        fontSize: 14, // ✅ Larger (was 13)
+        fontSize: 13,
         fontWeight: "700",
-        letterSpacing: 0.6, // ✅ More spacing (was 0.5)
+        letterSpacing: 0.6,
+    },
+    bookButtonArrow: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "700",
+        marginLeft: 5,
     },
 });

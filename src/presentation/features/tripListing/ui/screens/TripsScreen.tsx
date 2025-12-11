@@ -21,7 +21,7 @@ type TripsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'Trip'>
 
 type TabType = "current" | "past";
 type CurrentFilterType = "pending" | "booked" | "renting" | null;
-type PastFilterType = "completed" | "cancelled" | null;
+type PastFilterType = "pending" | "booked" | "renting" | "completed" | "cancelled" | null;
 type SortOption = "newest" | "oldest" | "price_high" | "price_low";
 
 interface FeedbackModalState {
@@ -97,7 +97,7 @@ export const TripsScreen: React.FC = () => {
     const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         
-        // Returned, Completed, and Cancelled go to Past trips
+        // ✅ Current trips: Only PENDING, BOOKED, ACTIVE, RENTING
         if (["RETURNED", "COMPLETED", "CANCELLED"].includes(bookingStatus)) {
             return null;
         }
@@ -135,7 +135,6 @@ export const TripsScreen: React.FC = () => {
             const start = new Date(booking.startDatetime);
             const end = new Date(booking.endDatetime);
 
-            // BOOKED: Show time until pickup
             if (status === "booked" && now < start) {
                 const hoursUntilStart = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60));
                 
@@ -149,7 +148,6 @@ export const TripsScreen: React.FC = () => {
                 }
             }
 
-            // RENTING: Show time left until return
             if (status === "renting") {
                 const hoursLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60));
                 
@@ -166,8 +164,6 @@ export const TripsScreen: React.FC = () => {
         
         const calculatePaymentExpiry = () => {
             if (status !== "pending") return undefined;
-            // Assuming payment expires 30 minutes after booking creation
-            // You should replace this with actual expiry logic from your backend
             return "15 phút";
         };
 
@@ -181,7 +177,7 @@ export const TripsScreen: React.FC = () => {
             booking.earlyHandoverFee
         );
 
-            return {
+        return {
             id: booking.id,
             vehicleName,
             vehicleCategory,
@@ -202,13 +198,8 @@ export const TripsScreen: React.FC = () => {
         };
     };
 
-    const mapBookingToPastTrip = (booking: Booking): PastTrip | null => {
+    const mapBookingToPastTrip = (booking: Booking): PastTrip => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
-        
-        // Past trips: Returned, Completed, and Cancelled
-        if (!["RETURNED", "COMPLETED", "CANCELLED"].includes(bookingStatus)) {
-            return null;
-        }
 
         const startDate = booking.startDatetime ? formatShortDate(booking.startDatetime) : "";
         const endDate = booking.endDatetime ? formatShortDate(booking.endDatetime) : "";
@@ -223,10 +214,18 @@ export const TripsScreen: React.FC = () => {
             return "";
         };
 
-        // Map status: RETURNED and COMPLETED → "completed", CANCELLED → "cancelled"
-        const displayStatus: "completed" | "cancelled" = bookingStatus === "CANCELLED" 
-            ? "cancelled" 
-            : "completed";
+        // ✅ Map ALL statuses to display format
+        const statusMap: Record<string, "pending" | "booked" | "renting" | "completed" | "cancelled"> = {
+            "PENDING": "pending",
+            "BOOKED": "booked",
+            "ACTIVE": "renting",
+            "RENTING": "renting",
+            "COMPLETED": "completed",
+            "RETURNED": "completed",
+            "CANCELLED": "cancelled",
+        };
+
+        const displayStatus = statusMap[bookingStatus] || "completed";
 
         const feedback = bookingFeedbacks[booking.id];
         const hasFeedback = feedback !== null && feedback !== undefined;
@@ -238,7 +237,7 @@ export const TripsScreen: React.FC = () => {
             vehicleImageUrl: (booking.vehicleModel as any)?.imageUrl,
             dates: `${startDate} - ${endDate}, ${year}`,
             duration: calculateDuration(),
-            status: displayStatus,
+            status: displayStatus as any, // ✅ Allow all statuses
             rating: hasFeedback ? feedback.rating : undefined,
             totalAmount: formatVnd(booking.totalAmount),
             refundedAmount: bookingStatus === "CANCELLED" && booking.depositAmount
@@ -260,14 +259,28 @@ export const TripsScreen: React.FC = () => {
         [bookings]
     );
 
+    // ✅ Past trips: ALL bookings (no filtering)
     const pastTrips = React.useMemo(() => 
-        bookings.map(mapBookingToPastTrip).filter((t): t is PastTrip => t !== null),
+        bookings.map(mapBookingToPastTrip),
         [bookings, bookingFeedbacks]
     );
 
     const sortTrips = <T extends CurrentTrip | PastTrip>(trips: T[]): T[] => {
         const sorted = [...trips];
+        // const statusPriority: Record<string, number> = {
+        //     "renting": 1,
+        //     "booked": 2,
+        //     "pending": 3,
+        //     "completed": 4,
+        //     "cancelled": 5,
+        // };
         
+        // sorted.sort((a, b) => {
+        //     const priorityA = statusPriority[a.status] || 999;
+        //     const priorityB = statusPriority[b.status] || 999;
+        //     return priorityA - priorityB;
+        // });
+    
         switch (sortOption) {
             case "newest":
                 return sorted;
@@ -313,12 +326,10 @@ export const TripsScreen: React.FC = () => {
 
     const handlePayNow = (tripId: string) => {
         console.log("Thanh toán ngay", tripId);
-        // Navigate to payment screen
     };
 
     const handleExtend = (tripId: string) => {
         console.log("Gia hạn", tripId);
-        // Navigate to extension screen
     };
 
     const handleRentAgain = (tripId: string) => {
@@ -363,10 +374,8 @@ export const TripsScreen: React.FC = () => {
 
     const filteredCurrentTrips = sortTrips(
         currentTrips.filter(trip => {
-            // Filter by status
             if (currentFilter && trip.status !== currentFilter) return false;
             
-            // Filter by search
             if (searchQuery) {
                 return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                        trip.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -394,6 +403,9 @@ export const TripsScreen: React.FC = () => {
     ];
 
     const pastFilterTags = [
+        { id: "pending", label: "Chờ thanh toán", count: pastTrips.filter(t => t.status === "pending").length },
+        { id: "booked", label: "Đã đặt xe", count: pastTrips.filter(t => t.status === "booked").length },
+        { id: "renting", label: "Đang thuê", count: pastTrips.filter(t => t.status === "renting").length },
         { id: "completed", label: "Hoàn thành", count: pastTrips.filter(t => t.status === "completed").length },
         { id: "cancelled", label: "Đã hủy", count: pastTrips.filter(t => t.status === "cancelled").length },
     ];
@@ -492,7 +504,7 @@ export const TripsScreen: React.FC = () => {
                         <Text style={styles.emptyIcon}>◑</Text>
                         <Text style={styles.emptyTitle}>Chưa có lịch sử chuyến đi</Text>
                         <Text style={styles.emptyMessage}>
-                            Các chuyến đi đã hoàn thành hoặc đã hủy sẽ xuất hiện ở đây
+                            Tất cả các chuyến đi sẽ xuất hiện ở đây
                         </Text>
                     </View>
                 }
@@ -527,7 +539,6 @@ export const TripsScreen: React.FC = () => {
                 />
             </View>
 
-            {/* Filter tags for both tabs */}
             <View style={{ marginTop: 8, marginBottom: 8 }}>
                 {activeTab === "current" ? (
                     <FilterTags

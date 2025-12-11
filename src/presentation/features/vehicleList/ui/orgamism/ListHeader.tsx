@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { FilterButton } from "../../../map/ui/atoms/buttons/FilterButton";
 import { MapSearchBar } from "../../../map/ui/molecules/MapSearchBar";
 
@@ -25,16 +25,10 @@ export const ListHeader: React.FC<ListHeaderProps> = ({
           onPress={onSearchPress}
         />
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersContent}
-      >
-        <FilterButton label="Giá" onPress={onFilterPress} />
-        <FilterButton label="Dòng Xe" onPress={onFilterPress} />
-        <FilterButton label="Quãng Đường" onPress={onFilterPress} />
-        {/* ✅ REMOVED: "Tính Năng" button - not needed anymore */}
-      </ScrollView>
+      {/* ✅ Single unified filter button */}
+      <View style={styles.filterContainer}>
+        <FilterButton label="Bộ Lọc" onPress={onFilterPress} />
+      </View>
     </View>
   );
 };
@@ -49,9 +43,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
-  filtersContent: {
+  filterContainer: {
     paddingHorizontal: 16,
     paddingBottom: 12,
-    gap: 8,
   },
 });

@@ -10,7 +10,7 @@ export interface PastTrip {
     vehicleImageUrl?: string;
     dates: string;
     duration?: string;
-    status: "completed" | "cancelled";
+    status: "pending" | "booked" | "renting" | "completed" | "cancelled";
     rating?: number;
     totalAmount?: string;
     refundedAmount?: string;
@@ -175,41 +175,16 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
             
             {/* ✅ Actions - Single Row */}
             <View style={styles.actions}>
-                {trip.status === "completed" ? (
-                    <>
-                        <TouchableOpacity 
-                            style={styles.primaryButton} 
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                onRentAgain();
-                            }}
-                        >
-                            <Icon name="redo" size={13} color="#000" solid />
-                            <Text style={styles.primaryButtonText}>Thuê lại</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={styles.secondaryButton} 
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                onViewReceipt();
-                            }}
-                        >
-                            <Icon name="receipt" size={13} color="#d4c5f9" solid />
-                            <Text style={styles.secondaryButtonText}>Hóa đơn</Text>
-                        </TouchableOpacity>
-                    </>
-                ) : (
-                    <TouchableOpacity 
-                        style={styles.primaryButton} 
-                        onPress={(e) => {
-                            e.stopPropagation();
-                            onViewDetails?.();
-                        }}
-                    >
-                        <Icon name="file-alt" size={13} color="#000" solid />
-                        <Text style={styles.primaryButtonText}>Chi tiết</Text>
-                    </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                    style={styles.primaryButton}
+                    onPress={(e) => {
+                        e.stopPropagation();
+                        onViewDetails?.();
+                    }}
+                >
+                    <Icon name="file-alt" size={13} color="#000" solid />
+                    <Text style={styles.primaryButtonText}>Chi tiết</Text>
+                </TouchableOpacity>
             </View>
         </TouchableOpacity>
     );

@@ -1,21 +1,21 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
-import { FilterModal, FilterState } from "../../../vehicleList/ui/orgamism/FilterModal";
-import { useBranches } from "../../hooks/useBranches";
-import { useMapInteractions } from "../../hooks/useMapInteractions";
-import { useMapRegion } from "../../hooks/useMapRegion";
-import { getActiveFilterCount, getDefaultFilters } from "../../utils/filterUtils";
 import { ListViewButton } from "../atoms/buttons/ListViewButton";
 import { BranchMarker } from "../atoms/markers/BranchMarker";
 import { LocationPinMarker } from "../atoms/markers/LocationPinMarker";
 import { MapSearchBar } from "../molecules/MapSearchBar";
 import { MapFilters } from "../orgamisms/MapFilters";
 import { VehicleBottomSheet } from "../orgamisms/VehicleBottomSheet";
+import { useBranches } from "../../hooks/useBranches";
+import { useMapInteractions } from "../../hooks/useMapInteractions";
+import { useMapRegion } from "../../hooks/useMapRegion";
+import { FilterModal, FilterState } from "../../../vehicleList/ui/orgamism/FilterModal";
+import { getActiveFilterCount, getDefaultFilters } from "../../utils/filterUtils";
 
 type MapScreenRouteProp = RouteProp<BrowseStackParamList, 'Map'>;
 type MapScreenNavigationProp = StackNavigationProp<BrowseStackParamList, 'Map'>;
@@ -34,12 +34,9 @@ export const MapScreen: React.FC = () => {
 
     const [filters, setFilters] = useState<FilterState>(getDefaultFilters());
     const [filterModalVisible, setFilterModalVisible] = useState(false);
-    
-    const isDraggingRef = useRef(false);
 
     const { branches, loading, error, refetch } = useBranches();
-    
-    const { region, setRegion, searchedLocation, visibleBranches } = useMapRegion({ branches, address });
+    const { region, setRegion, searchedLocation } = useMapRegion({ branches, address });
     
     const {
         selectedBranchId,
@@ -60,28 +57,24 @@ export const MapScreen: React.FC = () => {
         getActiveFilterCount(filters), 
     [filters]);
 
+    const validBranches = useMemo(() => {
+        return branches.filter(branch => 
+            branch.latitude !== 0 && 
+            branch.longitude !== 0 &&
+            !isNaN(branch.latitude) &&
+            !isNaN(branch.longitude) &&
+            branch.latitude >= -90 && 
+            branch.latitude <= 90 &&
+            branch.longitude >= -180 && 
+            branch.longitude <= 180
+        );
+    }, [branches]);
+
+    // ✅ Get selected branch for distance calculation
     const selectedBranch = useMemo(() => {
         if (!selectedBranchId) return null;
-        return visibleBranches.find(b => b.id === selectedBranchId) || null;
-    }, [selectedBranchId, visibleBranches]);
-
-    // ✅ Stable marker IDs to prevent unnecessary re-renders
-    const markerIds = useMemo(() => 
-        visibleBranches.map(b => b.id).sort().join(','),
-    [visibleBranches]);
-
-    // ✅ Marker data with stable dependency
-    const markerData = useMemo(() => {
-        return visibleBranches.map(branch => ({
-            id: branch.id,
-            coordinate: {
-                latitude: branch.latitude,
-                longitude: branch.longitude,
-            },
-            isSelected: selectedBranchId === branch.id,
-            branch,
-        }));
-    }, [markerIds, selectedBranchId]);
+        return validBranches.find(b => b.id === selectedBranchId) || null;
+    }, [selectedBranchId, validBranches]);
 
     const handleListViewPress = useCallback(() => {
         navigation.navigate('ListView', { location, dateRange, address });
@@ -105,12 +98,7 @@ export const MapScreen: React.FC = () => {
         refetch();
     }, [refetch]);
 
-    const handleRegionChange = useCallback(() => {
-        isDraggingRef.current = true;
-    }, []);
-
     const handleRegionChangeComplete = useCallback((newRegion: Region) => {
-        isDraggingRef.current = false;
         setRegion(newRegion);
     }, [setRegion]);
 
@@ -140,17 +128,8 @@ export const MapScreen: React.FC = () => {
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 region={region}
-                onRegionChange={handleRegionChange}
                 onRegionChangeComplete={handleRegionChangeComplete}
                 onPress={handleMapPress}
-                showsUserLocation={false}
-                showsMyLocationButton={false}
-                toolbarEnabled={false}
-                moveOnMarkerPress={false}
-                pitchEnabled={false}
-                rotateEnabled={false}
-                scrollEnabled={true}
-                zoomEnabled={true}
             >
                 {searchedLocation && (
                     <Marker
@@ -162,17 +141,23 @@ export const MapScreen: React.FC = () => {
                     </Marker>
                 )}
 
-                {markerData.map((item) => (
-                    <Marker
-                        key={item.id}
-                        identifier={item.id}
-                        coordinate={item.coordinate}
-                        onPress={() => handleBranchMarkerPress(item.branch)}
-                        anchor={{ x: 0.5, y: 1 }}
-                    >
-                        <BranchMarker isSelected={item.isSelected} />
-                    </Marker>
-                ))}
+                {validBranches.map((branch) => {
+                    const isSelected = selectedBranchId === branch.id;
+                    
+                    return (
+                        <Marker
+                            key={branch.id}
+                            coordinate={{
+                                latitude: branch.latitude,
+                                longitude: branch.longitude,
+                            }}
+                            onPress={() => handleBranchMarkerPress(branch)}
+                            anchor={{ x: 0.5, y: 1 }}
+                        >
+                            <BranchMarker isSelected={isSelected} />
+                        </Marker>
+                    );
+                })}
             </MapView>
 
             <View style={styles.searchBarContainer}>
@@ -210,6 +195,7 @@ export const MapScreen: React.FC = () => {
                 currentFilters={filters}
             />
 
+            {/* ✅ UPDATED: Pass branch and searched locations */}
             <VehicleBottomSheet
                 visible={bottomSheetVisible}
                 vehicles={selectedVehicles}

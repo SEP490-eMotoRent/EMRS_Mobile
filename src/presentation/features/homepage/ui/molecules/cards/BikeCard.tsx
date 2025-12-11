@@ -83,7 +83,7 @@ export const BikeCard: React.FC<BikeCardProps> = ({ bike, onPress }) => {
                             <Ionicons name="location-outline" size={14} color="#9CA3AF" />
                             <Text style={styles.locationText}>{displayLocation}</Text>
                         </View>
-                        <Text style={styles.distanceText}>Cách: {bike.distance.toFixed(1)} km</Text>
+                        {/* <Text style={styles.distanceText}>Cách: {bike.distance.toFixed(1)} km</Text> */}
                     </View>
                 </View>
 
