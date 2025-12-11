@@ -45,7 +45,7 @@ type ReturnReportRouteProp = RouteProp<StaffStackParamList, "ReturnReport">;
 export const ReturnReportScreen: React.FC = () => {
   const navigation = useNavigation<ReturnReportNavigationProp>();
   const route = useRoute<ReturnReportRouteProp>();
-  const { bookingId, rentalReceiptId, settlement } = route.params;
+  const { bookingId, rentalReceiptId } = route.params;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -413,28 +413,6 @@ export const ReturnReportScreen: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.cardHeaderPrimary}>Tổng hợp chi phí</Text>
 
-          {/* Phí thuê xe cơ bản */}
-          {summary?.baseRentalFee !== 0 && (
-            <View style={styles.feeSection}>
-              <View style={styles.feeHeaderRow}>
-                <View
-                  style={[
-                    styles.feeIconBadge,
-                    { backgroundColor: "rgba(201, 182, 255, 0.15)" },
-                  ]}
-                >
-                  <AntDesign name="car" size={14} color="#C9B6FF" />
-                </View>
-                <View style={styles.feeHeaderText}>
-                  <Text style={styles.feeTitle}>Phí thuê xe</Text>
-                </View>
-                <Text style={[styles.feeAmount, { color: "#C9B6FF" }]}>
-                  {formatVnd(summary?.baseRentalFee || 0)}
-                </Text>
-              </View>
-            </View>
-          )}
-
           {/* Phí sạc pin */}
           {summary?.totalChargingFee !== 0 && (
             <View style={styles.feeSection}>
@@ -723,9 +701,6 @@ export const ReturnReportScreen: React.FC = () => {
               <Text style={styles.refreshText}>
                 {isRefreshing ? "Đang làm mới..." : "Làm mới trạng thái"}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.waitingBtn} disabled>
-              <Text style={styles.waitingText}>Đang chờ khách hàng...</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.homeBtn}
@@ -1135,7 +1110,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#C9B6FF",
     borderRadius: 10,
     paddingVertical: 14,
-    marginTop: 16,
     marginHorizontal: 16,
     alignItems: "center",
     flexDirection: "row",

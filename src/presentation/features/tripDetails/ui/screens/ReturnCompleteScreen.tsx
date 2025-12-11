@@ -119,22 +119,6 @@ export const ReturnCompleteScreen: React.FC = () => {
               Tuyệt vời! Lại một lần bàn giao thành công
             </Text>
           </View>
-
-          <View style={styles.feedbackRow}>
-            <Text style={styles.feedbackLabel}>Đánh giá khách hàng</Text>
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <AntDesign key={i} name="star" size={16} color="#FBBF24" />
-              ))}
-            </View>
-            <Text style={styles.feedbackTime}>
-              Khách duyệt lúc{" "}
-              {new Date().toLocaleTimeString("vi-VN", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
-          </View>
         </View>
 
         {/* ✅ NEW: Fee Breakdown Card */}
@@ -294,16 +278,6 @@ export const ReturnCompleteScreen: React.FC = () => {
                 Sẵn sàng cho thuê tiếp
               </Text>
             </View>
-          </View>
-        </View>
-
-        <View style={styles.feedbackBanner}>
-          <Text style={styles.feedbackBannerText}>
-            Tuyệt vời! Lại một lần trả xe thành công.
-          </Text>
-          <View style={styles.feedbackRatingRow}>
-            <AntDesign name="star" size={12} color="#FBBF24" />
-            <Text style={styles.feedbackRatingText}>Đánh giá: 4.90</Text>
           </View>
         </View>
 

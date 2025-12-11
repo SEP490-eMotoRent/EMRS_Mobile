@@ -556,10 +556,6 @@ export const VehicleInspectionScreen: React.FC = () => {
             ].filter(Boolean) as string[],
             checkListFile: checklistUri,
           });
-        console.log(
-          "updateHandoverReceiptResponse",
-          updateHandoverReceiptResponse
-        );
         if (updateHandoverReceiptResponse.success) {
           Toast.show({
             text1: "Cập nhật thông tin bàn giao thành công",

@@ -64,9 +64,8 @@ export const BookingDetailsScreen: React.FC = () => {
       fetchRentalReceipt();
     }, [])
   );
-
   useEffect(() => {
-    if (booking?.bookingStatus === "Completed") {
+    if (booking?.bookingStatus === "Returned" || booking?.bookingStatus === "Completed") {
       fetchSummary();
     }
   }, [booking?.bookingStatus]);
@@ -101,6 +100,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const fetchSummary = async () => {
     try {
       const response = await container.rentalReturn.summary.execute(bookingId);
+      console.log("response", response);
       setSummary(response.data);
     } catch (error) {
       console.error("Error fetching summary:", error);
@@ -831,23 +831,17 @@ const getLastReceipt = () => {
         )}
 
         {/* Return Summary */}
-        {booking?.bookingStatus === "Returned" && (
+        {(booking?.bookingStatus === "Returned" || booking?.bookingStatus === "Completed") && summary && (
         <View style={styles.section}>
           <SectionHeader title="Tóm tắt trả xe" icon="profile" />
           <View style={styles.summaryCard}>
             <View style={styles.summaryHeaderRow}>
-              <Text style={styles.summaryHeaderTitle}>Financial Summary</Text>
+              <Text style={styles.summaryHeaderTitle}>Tính toán</Text>
               <View style={styles.summaryPill}>
                 <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
               </View>
             </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Phí thuê xe</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.baseRentalFee || 0)}
-              </Text>
-            </View>
             {summary?.totalChargingFee !== 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryKey}>Phí sạc pin</Text>

@@ -1,5 +1,5 @@
 import { ApiResponse } from "../../../core/network/APIResponse";
-import { CreateReceiptResponse } from "../../../data/models/rentalReturn/CreateReceiptResponse";
+import { UpdateReturnReceiptResponse } from "../../../data/models/rentalReturn/UpdateReturnReceiptResponse";
 import { RentalReturnRepository } from "../../repositories/rentalReturn/RentalReturnRepository";
 
 export interface UpdateReturnReceiptUseCaseInput {
@@ -16,7 +16,7 @@ export interface UpdateReturnReceiptUseCaseInput {
 export class UpdateReturnReceiptUseCase {
     constructor(private rentalReturnRepository: RentalReturnRepository) {}
     
-    async execute(input: UpdateReturnReceiptUseCaseInput): Promise<ApiResponse<void>> {
+    async execute(input: UpdateReturnReceiptUseCaseInput): Promise<ApiResponse<UpdateReturnReceiptResponse>> {
         return await this.rentalReturnRepository.updateReturnReceipt(input);
     }
 }
