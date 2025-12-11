@@ -13,7 +13,7 @@ export interface ReceiptRemoteDataSource {
     createHandoverReceipt(request: CreateReceiptRequest): Promise<ApiResponse<HandoverReceiptResponse>>;
     getListRentalReceipt(bookingId: string): Promise<ApiResponse<RentalReceipt[]>>;
     getDetailRentalReceipt(rentalReceiptId: string): Promise<ApiResponse<RentalReceipt>>;
-    updateRentalReceipt(request: UpdateReceiptRequest): Promise<void>;
+    updateHandoverReceipt(request: UpdateReceiptRequest): Promise<ApiResponse<void>>;
     generateContract(bookingId: string, receiptId: string): Promise<ApiResponse<string>>;
     getContract(bookingId: string): Promise<ApiResponse<GetContractResponse>>;
     generateOtp(contractId: string): Promise<ApiResponse<string>>;

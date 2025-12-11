@@ -77,30 +77,36 @@ export class ReceiptRemoteDataSourceImpl implements ReceiptRemoteDataSource {
     }
   }
 
-  async updateRentalReceipt(request: UpdateReceiptRequest): Promise<void> {
+  async updateHandoverReceipt(request: UpdateReceiptRequest): Promise<ApiResponse<void>> {
     try {
       const formData = new FormData();
 
       // Add text fields
-      formData.append("RentalReceiptId", request.rentalReceiptId);
-      formData.append("EndOdometerKm", request.endOdometerKm.toString());
+      formData.append("Id", request.id);
+      formData.append("StartOdometerKm", request.startOdometerKm.toString());
       formData.append(
-        "EndBatteryPercentage",
-        request.endBatteryPercentage.toString()
+        "StartBatteryPercentage",
+        request.startBatteryPercentage.toString()
       );
 
       // Add return vehicle images files
-      request.returnVehicleImagesFiles.forEach((file, index) => {
-        formData.append("ReturnVehicleImagesFiles", file);
+      request.vehicleFiles.forEach((file, index) => {
+        formData.append("VehicleFiles", file);
       });
 
       // Add return checklist file
-      formData.append("ReturnCheckListFile", request.returnCheckListFile);
-      const response = await this.axiosClient.put<void>(
-        ApiEndpoints.receipt.updateRentalReceipt,
+      formData.append("CheckListFile", request.checkListFile);
+      formData.append("Notes", request.notes);
+      const response = await this.axiosClient.put<ApiResponse<void>>(
+        ApiEndpoints.receipt.updateHandoverReceipt,
         formData
       );
-      return response.data;
+      return {
+        success: true,
+        message: "Handover receipt updated successfully",
+        data: response.data.data,
+        code: response.status,
+      };
     }
     catch (error: any) {
       console.error("Error updating rental receipt:", error);

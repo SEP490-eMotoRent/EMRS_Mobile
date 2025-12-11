@@ -202,7 +202,7 @@ export const VehicleConfirmationScreen: React.FC = () => {
           <View style={styles.bookingRow}>
             <Text style={styles.bookingLabel}>Bảo hiểm</Text>
             <Text style={styles.bookingValue}>
-              {booking?.insurancePackage?.packageName}
+              {booking?.insurancePackage?.packageName || "Không có"}
             </Text>
           </View>
           <View style={styles.bookingRow}>

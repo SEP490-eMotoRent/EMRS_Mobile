@@ -10,11 +10,11 @@ import { ReceiptRemoteDataSource } from "../../datasources/interfaces/remote/rec
 import { CreateReceiptRequest } from "../../models/receipt/CreateReceiptRequest";
 import { GetContractResponse } from "../../models/receipt/GetContractResponse";
 import { HandoverReceiptResponse } from "../../models/receipt/HandoverReceiptResponse";
-import { UpdateReceiptUseCaseInput } from "../../../domain/usecases/receipt/UpdateReceiptUseCase";
-import { UpdateReceiptRequest } from "../../models/receipt/UpdateReceiptRequest";
+import { UpdateHandoverReceiptUseCaseInput } from "../../../domain/usecases/receipt/UpdateHandoverReceiptUseCase";
 import { ChangeVehicleUseCaseInput } from "../../../domain/usecases/receipt/ChangeVehicleUseCase";
 import { ChangeVehicleRequest } from "../../models/receipt/ChangeVehicleRequest";
 import { ChangeVehicleResponse } from "../../models/receipt/ChangeVehicleResponse";
+import { UpdateReceiptRequest } from "../../models/receipt/UpdateReceiptRequest";
 
 export class ReceiptRepositoryImpl implements ReceiptRepository {
   constructor(private remote: ReceiptRemoteDataSource) {}
@@ -71,12 +71,12 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
     return await this.remote.createHandoverReceipt(request);
   }
 
-  async updateRentalReceipt(input: UpdateReceiptUseCaseInput): Promise<void> {
+  async updateHandoverReceipt(input: UpdateHandoverReceiptUseCaseInput): Promise<ApiResponse<void>> {
     const request: UpdateReceiptRequest = {
-      rentalReceiptId: input.rentalReceiptId,
-      endOdometerKm: input.endOdometerKm,
-      endBatteryPercentage: input.endBatteryPercentage,
-      returnVehicleImagesFiles: input.vehicleFiles.map(
+      id: input.id,
+      startOdometerKm: input.startOdometerKm,
+      startBatteryPercentage: input.startBatteryPercentage,
+      vehicleFiles: input.vehicleFiles.map(
         (uri, index) =>
           ({
             uri,
@@ -84,13 +84,14 @@ export class ReceiptRepositoryImpl implements ReceiptRepository {
             name: `vehicle_${Date.now()}_${index}.jpg`,
           } as any)
       ),
-      returnCheckListFile: {
+      checkListFile: {
         uri: input.checkListFile,
         type: "image/png",
         name: `checklist_${Date.now()}.png`,
       } as any,
+      notes: input.notes,
     };
-    return await this.remote.updateRentalReceipt(request);
+    return await this.remote.updateHandoverReceipt(request);
   }
 
   async generateContract(

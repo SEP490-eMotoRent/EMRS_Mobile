@@ -1,8 +1,9 @@
 export interface UpdateReceiptRequest {
-    rentalReceiptId: string;
-    endOdometerKm: number;
-    endBatteryPercentage: number;
-    returnVehicleImagesFiles: File[];
-    returnCheckListFile: File;
+    id: string;
+    startOdometerKm: number;
+    startBatteryPercentage: number;
+    vehicleFiles: File[];
+    checkListFile: File;
+    notes: string;
 }
 
