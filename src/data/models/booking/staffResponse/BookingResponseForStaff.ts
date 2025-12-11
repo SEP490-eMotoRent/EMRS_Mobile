@@ -19,7 +19,7 @@ export interface BookingForStaffResponse {
     vehicle: VehicleBookingResponse; // ✅ Nested
     vehicleModel: VehicleModelBookingResponse; // ✅ Nested
     rentalContract: RentalContractBookingResponse; // ✅ Nested
-    rentalReceipt: RentalReceiptBookingResponse; // ✅ Nested
+    rentalReceipt: RentalReceiptBookingResponse[]; // ✅ Nested
     insurancePackage: InsurancePackageBookingResponse; // ✅ Nested
     handoverBranch: BranchBookingResponse; // ✅ Nested
 

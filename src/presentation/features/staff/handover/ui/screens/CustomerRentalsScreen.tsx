@@ -184,12 +184,21 @@ export const CustomerRentalsScreen: React.FC = () => {
   };
 
   const handleViewDetails = (booking: Booking) => {
-    console.log("View details:", booking.id);
     navigation.navigate("BookingDetails", { bookingId: booking.id });
   };
 
   const handleViewHandoverReport = (booking: Booking) => {
     navigation.navigate("HandoverReport", { bookingId: booking.id });
+  };
+
+  const handleUpdateReceipt = (booking: Booking) => {
+    navigation.navigate("VehicleInspection", {
+      vehicleId: booking.vehicle?.id,
+      bookingId: booking.id,
+      currentOdometerKm: booking.vehicle?.currentOdometerKm,
+      batteryHealthPercentage: booking.vehicle?.batteryHealthPercentage,
+      isUpdateReceipt: true,
+    });
   };
 
   const renderBookingCard = (booking: Booking) => {
@@ -331,6 +340,17 @@ export const CustomerRentalsScreen: React.FC = () => {
                 onPress={() => handleSelectVehicle(booking)}
               >
                 <Text style={styles.buttonText}>Chọn xe</Text>
+              </TouchableOpacity>
+            )}
+          {booking.bookingStatus === "Booked" &&
+            booking.rentalContract &&
+            hasVehicle &&
+            booking.rentalReceipts.length > 0 && (
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={() => handleUpdateReceipt(booking)}
+              >
+                <Text style={styles.buttonText}>Cập nhật biên bản</Text>
               </TouchableOpacity>
             )}
           {booking.bookingStatus === "Renting" &&
