@@ -9,6 +9,7 @@ import { SummaryResponse } from "../../../../models/rentalReturn/SummaryResponse
 import { VehicleSwapResponse } from "../../../../models/rentalReturn/VehicleSwapResponse";
 import { VehicleSwapRequest } from "../../../../models/rentalReturn/VehicleSwapRequest";
 import { UpdateReturnReceiptRequest } from "../../../../models/rentalReturn/UpdateReturnReceiptRequest";
+import { UpdateReturnReceiptResponse } from "../../../../models/rentalReturn/UpdateReturnReceiptResponse";
 
 export interface RentalReturnRemoteDataSource {
     analyzeReturn(request: AnalyzeReturnRequest): Promise<ApiResponse<AnalyzeReturnResponse>>;
@@ -16,5 +17,5 @@ export interface RentalReturnRemoteDataSource {
     getSummary(bookingId: string): Promise<ApiResponse<SummaryResponse>>;
     finalizeReturn(request: FinalizeReturnRequest): Promise<ApiResponse<FinalizeReturnResponse>>;
     swapVehicleReturn(request: VehicleSwapRequest): Promise<ApiResponse<VehicleSwapResponse>>;
-    updateReturnReceipt(request: UpdateReturnReceiptRequest): Promise<ApiResponse<void>>;
+    updateReturnReceipt(request: UpdateReturnReceiptRequest): Promise<ApiResponse<UpdateReturnReceiptResponse>>;
 }

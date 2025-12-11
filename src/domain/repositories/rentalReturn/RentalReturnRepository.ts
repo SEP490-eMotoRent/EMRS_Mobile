@@ -9,6 +9,7 @@ import { FinalizeReturnResponse } from "../../../data/models/rentalReturn/Finali
 import { VehicleSwapResponse } from "../../../data/models/rentalReturn/VehicleSwapResponse";
 import { SwapVehicleReturnUseCaseInput } from "../../usecases/rentalReturn/SwapVehicleReturnUseCase";
 import { UpdateReturnReceiptUseCaseInput } from "../../usecases/rentalReturn/UpdateReturnReceiptUseCase";
+import { UpdateReturnReceiptResponse } from "../../../data/models/rentalReturn/UpdateReturnReceiptResponse";
 
 export interface RentalReturnRepository {
     analyzeReturn(input: AiAnalyzeUseCaseInput): Promise<ApiResponse<AnalyzeReturnResponse>>;
@@ -16,5 +17,5 @@ export interface RentalReturnRepository {
     getSummary(bookingId: string): Promise<ApiResponse<SummaryResponse>>;
     finalizeReturn(request: FinalizeReturnRequest): Promise<ApiResponse<FinalizeReturnResponse>>;
     swapVehicleReturn(request: SwapVehicleReturnUseCaseInput): Promise<ApiResponse<VehicleSwapResponse>>;
-    updateReturnReceipt(input: UpdateReturnReceiptUseCaseInput): Promise<ApiResponse<void>>;
+    updateReturnReceipt(input: UpdateReturnReceiptUseCaseInput): Promise<ApiResponse<UpdateReturnReceiptResponse>>;
 }

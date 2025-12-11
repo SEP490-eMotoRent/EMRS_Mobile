@@ -225,8 +225,8 @@ export const GpsSharingTrackingScreen: React.FC = () => {
 
         if (typeof lat === "number" && typeof lon === "number") {
           setGuestLocation({
-            lat: 10.8436907,
-            lon: 106.8355672,
+            lat,
+            lon,
             raw: msg,
             time: msg?.timestamp || msg?.["position.timestamp"],
           });
@@ -472,7 +472,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
                 <Image
                   source={{
                     uri:
-                      (sessionDetail as any)?.ownerInfo?.avatarUrl ||
+                      (sessionDetail as any)?.ownerInfo?.avatarRenter ||
                       "https://picsum.photos/200/300",
                   }}
                   style={styles.markerAvatarImage}
@@ -497,7 +497,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
                 <Image
                   source={{
                     uri:
-                      (sessionDetail as any)?.guestInfo?.avatarUrl ||
+                      (sessionDetail as any)?.guestInfo?.avatarRenter ||
                       "https://picsum.photos/200/301",
                   }}
                   style={styles.markerAvatarImage}
@@ -582,7 +582,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
               <View style={styles.userInfoRow}>
                 <View style={styles.avatarContainer}>
                   <View style={[styles.avatar, styles.ownerAvatar]}>
-                    <Image source={{ uri: 'https://picsum.photos/200/300' }} style={styles.avatarImage} />
+                    <Image source={{ uri: sessionDetail.ownerInfo?.avatarRenter || 'https://picsum.photos/200/300' }} style={styles.avatarImage} />
                   </View>
                 </View>
                 <View style={styles.userDetails}>
@@ -638,7 +638,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
               <View style={styles.userInfoRow}>
                 <View style={styles.avatarContainer}>
                   <View style={[styles.avatar, styles.guestAvatar]}>
-                    <Image source={{ uri: 'https://picsum.photos/200/300' }} style={styles.avatarImage} />
+                    <Image source={{ uri: sessionDetail.guestInfo?.avatarRenter || 'https://picsum.photos/200/300' }} style={styles.avatarImage} />
                   </View>
                 </View>
                 <View style={styles.userDetails}>

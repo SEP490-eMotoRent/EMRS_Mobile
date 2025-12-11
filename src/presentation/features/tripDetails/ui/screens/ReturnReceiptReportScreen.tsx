@@ -526,28 +526,6 @@ export const ReturnReceiptReportScreen: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Tổng hợp chi phí</Text>
 
-          {/* Phí thuê xe cơ bản */}
-          {booking?.baseRentalFee !== 0 && (
-            <View style={styles.feeSection}>
-              <View style={styles.feeHeaderRow}>
-                <View
-                  style={[
-                    styles.feeIconBadge,
-                    { backgroundColor: "rgba(201, 182, 255, 0.15)" },
-                  ]}
-                >
-                  <AntDesign name="car" size={14} color="#C9B6FF" />
-                </View>
-                <View style={styles.feeHeaderText}>
-                  <Text style={styles.feeTitle}>Phí thuê xe</Text>
-                </View>
-                <Text style={[styles.feeAmount, { color: "#C9B6FF" }]}>
-                  {formatVnd(booking?.baseRentalFee || 0)}
-                </Text>
-              </View>
-            </View>
-          )}
-
           {/* Phí sạc pin */}
           {summary?.totalChargingFee !== 0 && (
             <View style={styles.feeSection}>

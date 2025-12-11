@@ -68,12 +68,14 @@ export interface OwnerInfo {
   renterId: string;
   renterName: string;
   vehicle: VehicleDetailResponse;
+  avatarRenter: string;
 }
 
 export interface GuestInfo {
   renterId: string;
   renterName: string;
   vehicle: VehicleDetailResponse;
+  avatarRenter: string;
 }
 
 export interface VehicleDetailResponse {

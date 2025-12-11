@@ -5,6 +5,6 @@ export interface UpdateReturnReceiptRequest {
     endOdometerKm: number;
     endBatteryPercentage: number;
     notes: string;
-    returnImageUrls: File[];
+    returnImageUrls: string[];
     checkListImage: File;
 }

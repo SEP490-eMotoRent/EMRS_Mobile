@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
   TextInput,
   Alert,
   Animated,
@@ -24,6 +25,9 @@ import sl from "../../../../../../core/di/InjectionContainer";
 import { CreateReceiptResponse } from "../../../../../../data/models/rentalReturn/CreateReceiptResponse";
 import { unwrapResponse } from "../../../../../../core/network/APIResponse";
 import { useGetLastReceipt } from "../hooks/useGetLastReceipt";
+import * as ImagePicker from "expo-image-picker";
+import { UpdateReturnReceiptUseCase } from "../../../../../../domain/usecases/rentalReturn/UpdateReturnReceiptUseCase";
+import { UpdateReturnReceiptResponse } from "../../../../../../data/models/rentalReturn/UpdateReturnReceiptResponse";
 
 type ManualInspectionScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -48,10 +52,62 @@ interface InspectionCategory {
   expanded: boolean;
 }
 
+type PhotoTileProps = {
+  uri: string | null;
+  labelTop?: string;
+  labelBottom?: string;
+  placeholderTitle?: string;
+  placeholderSubtitle?: string;
+  onPress: () => void;
+  isPrimary?: boolean;
+};
+
+const PhotoTile: React.FC<PhotoTileProps> = ({
+  uri,
+  labelTop,
+  labelBottom,
+  placeholderTitle,
+  placeholderSubtitle,
+  onPress,
+  isPrimary,
+}) => {
+  return (
+    <TouchableOpacity
+      style={[styles.tile, isPrimary && styles.tilePrimary]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      {uri ? (
+        <>
+          <Image source={{ uri }} style={styles.tileImage} />
+          {labelBottom && (
+            <View style={styles.retakeBadge}>
+              <Text style={styles.retakeText}>{labelBottom}</Text>
+            </View>
+          )}
+          {labelTop && <Text style={styles.tileTopLabel}>{labelTop}</Text>}
+        </>
+      ) : (
+        <View style={styles.placeholderInner}>
+          <AntDesign name="camera" size={26} color={colors.text.secondary} />
+          {!!placeholderTitle && (
+            <Text style={styles.placeholderTitle}>{placeholderTitle}</Text>
+          )}
+          {!!placeholderSubtitle && (
+            <Text style={styles.placeholderSubtitle}>
+              {placeholderSubtitle}
+            </Text>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+};
+
 export const ManualInspectionScreen: React.FC = () => {
   const navigation = useNavigation<ManualInspectionScreenNavigationProp>();
   const route = useRoute<ManualInspectionScreenRouteProp>();
-  const { bookingId, photos } = route.params || {};
+  const { bookingId, photos, isUpdateReceipt } = route.params || {};
 
   const [endOdometerKm, setEndOdometerKm] = useState("");
   const [endBatteryPercentage, setEndBatteryPercentage] = useState("");
@@ -59,7 +115,20 @@ export const ManualInspectionScreen: React.FC = () => {
   const [inspectionCompleted, setInspectionCompleted] = useState(false);
   const [returnReceiptData, setReturnReceiptData] =
     useState<CreateReceiptResponse | null>(null);
+  const [updateReturnReceiptData, setUpdateReturnReceiptData] =
+    useState<UpdateReturnReceiptResponse | null>(null);
   const [checklistUri, setChecklistUri] = useState<string | null>(null);
+  const [returnPhotos, setReturnPhotos] = useState<{
+    front: string | null;
+    back: string | null;
+    left: string | null;
+    right: string | null;
+  }>({
+    front: null,
+    back: null,
+    left: null,
+    right: null,
+  });
   const [odometerError, setOdometerError] = useState<string | null>(null);
   const [batteryError, setBatteryError] = useState<string | null>(null);
   const odometerShakeAnim = useRef(new Animated.Value(0)).current;
@@ -67,6 +136,7 @@ export const ManualInspectionScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const statusInputsCardRef = useRef<View>(null);
   const [statusInputsCardY, setStatusInputsCardY] = useState<number>(0);
+  const [hasFilledData, setHasFilledData] = useState(false);
   const [categories, setCategories] = useState<InspectionCategory[]>([
     {
       id: "body-paint",
@@ -136,6 +206,52 @@ export const ManualInspectionScreen: React.FC = () => {
 
   const { getLastReceipt, booking } = useGetLastReceipt({ bookingId });
 
+  const ensurePermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    return cam.status === "granted" && lib.status === "granted";
+  };
+
+  const openPicker = async (key: keyof typeof returnPhotos) => {
+    const ok = await ensurePermissions();
+    if (!ok) {
+      Alert.alert(
+        "Permission required",
+        "Please grant camera and media permissions."
+      );
+      return;
+    }
+
+    Alert.alert("Thêm ảnh", "Chọn nguồn ảnh", [
+      {
+        text: "Camera",
+        onPress: async () => {
+          const res = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 0.7,
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setReturnPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
+        },
+      },
+      {
+        text: "Thư viện",
+        onPress: async () => {
+          const res = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            quality: 0.7,
+            mediaTypes: ["images"],
+          });
+          if (!res.canceled && res.assets?.[0]?.uri) {
+            setReturnPhotos((p) => ({ ...p, [key]: res.assets[0].uri }));
+          }
+        },
+      },
+      { text: "Hủy", style: "cancel" },
+    ]);
+  };
+
   // Set default odometer value from startOdometerKm
   useEffect(() => {
     const lastReceipt = getLastReceipt();
@@ -172,6 +288,43 @@ export const ManualInspectionScreen: React.FC = () => {
       }
     }
   }, [endBatteryPercentage, batteryError]);
+
+  useEffect(() => {
+    if (isUpdateReceipt && !hasFilledData) {
+      const lastReceipt = getLastReceipt();
+      if (lastReceipt) {
+        setEndOdometerKm(lastReceipt.endOdometerKm.toString());
+        setEndBatteryPercentage(lastReceipt.endBatteryPercentage.toString());
+        const returnFiles = lastReceipt.returnVehicleImageFiles || [];
+        if (returnFiles.length > 0) {
+          setReturnPhotos({
+            front: returnFiles[0] || null,
+            back: returnFiles[1] || null,
+            left: returnFiles[2] || null,
+            right: returnFiles[3] || null,
+          });
+        }
+        setHasFilledData(true);
+      }
+    }
+  }, [isUpdateReceipt, getLastReceipt]);
+
+  // Init photos from route param (if provided)
+  useEffect(() => {
+    if (photos && Array.isArray(photos)) {
+      setReturnPhotos({
+        front: photos[0] || null,
+        back: photos[1] || null,
+        left: photos[2] || null,
+        right: photos[3] || null,
+      });
+    } else if (photos && typeof photos === "object") {
+      setReturnPhotos((prev) => ({
+        ...prev,
+        ...photos,
+      }));
+    }
+  }, [photos]);
 
   const shakeError = (animValue: Animated.Value) => {
     Animated.sequence([
@@ -295,6 +448,10 @@ export const ManualInspectionScreen: React.FC = () => {
     return isValid;
   };
 
+  const getPhotosCount = () => {
+    return Object.values(returnPhotos).filter(Boolean).length;
+  };
+
   const handleCompleteInspection = async () => {
     if (isSubmitting) return;
     try {
@@ -318,33 +475,65 @@ export const ManualInspectionScreen: React.FC = () => {
         setChecklistUri(capturedChecklistUri);
       }
 
-      const createReturnReceiptUseCase = new RentalReturnCreateReceiptUseCase(
-        sl.get("RentalReturnRepository")
-      );
+      if (isUpdateReceipt) {
+        const updateReturnReceiptUseCase = new UpdateReturnReceiptUseCase(
+          sl.get("RentalReturnRepository")
+        );
+        const updateReturnReceiptResponse =
+          await updateReturnReceiptUseCase.execute({
+            bookingId,
+            notes: "Kiểm tra thủ công",
+            rentalReceiptId: lastReceipt?.id,
+            actualReturnDatetime: new Date().toISOString(),
+            endOdometerKm: parseInt(endOdometerKm),
+            endBatteryPercentage: parseInt(endBatteryPercentage),
+            returnImageUrls: photos,
+            checkListImage: capturedChecklistUri,
+          });
+        if (updateReturnReceiptResponse.success) {
+          const updateReturnReceiptData: UpdateReturnReceiptResponse =
+            unwrapResponse(updateReturnReceiptResponse);
+          setUpdateReturnReceiptData(updateReturnReceiptData);
+          Toast.show({
+            text1: "Cập nhật thông tin trả xe thành công",
+            type: "success",
+          });
+          setInspectionCompleted(true);
+        } else {
+          Toast.show({
+            text1: updateReturnReceiptResponse.message,
+            type: "error",
+          });
+        }
+      } else {
+        const createReturnReceiptUseCase = new RentalReturnCreateReceiptUseCase(
+          sl.get("RentalReturnRepository")
+        );
 
-      const returnReceiptResponse = await createReturnReceiptUseCase.execute({
-        notes: "Kiểm tra thủ công",
-        returnReceiptId: lastReceipt?.id,
-        actualReturnDatetime: new Date().toISOString(),
-        endOdometerKm: parseInt(endOdometerKm),
-        endBatteryPercentage: parseInt(endBatteryPercentage),
-        bookingId,
-        returnImageUrls: photos,
-        checkListImage: capturedChecklistUri,
-      });
+        const returnReceiptResponse = await createReturnReceiptUseCase.execute({
+          notes: "Kiểm tra thủ công",
+          returnReceiptId: lastReceipt?.id,
+          actualReturnDatetime: new Date().toISOString(),
+          endOdometerKm: parseInt(endOdometerKm),
+          endBatteryPercentage: parseInt(endBatteryPercentage),
+          bookingId,
+          returnImageUrls: photos,
+          checkListImage: capturedChecklistUri,
+        });
 
-      const receiptData: CreateReceiptResponse = unwrapResponse(
-        returnReceiptResponse
-      );
+        const receiptData: CreateReceiptResponse = unwrapResponse(
+          returnReceiptResponse
+        );
 
-      setReturnReceiptData(receiptData);
-      setInspectionCompleted(true);
+        setReturnReceiptData(receiptData);
+        setInspectionCompleted(true);
 
-      Toast.show({
-        text1: "Kiểm tra đã hoàn thành",
-        text2: "Chọn bước tiếp theo",
-        type: "success",
-      });
+        Toast.show({
+          text1: "Kiểm tra đã hoàn thành",
+          text2: "Chọn bước tiếp theo",
+          type: "success",
+        });
+      }
     } catch (error) {
       // Alert.alert("Lỗi", `Không thể gửi kiểm tra: ${error.message}`);
       Toast.show({
@@ -376,61 +565,51 @@ export const ManualInspectionScreen: React.FC = () => {
 
         <StepProgressBar currentStep={3} totalSteps={4} />
 
-        {/* Overall Progress */}
-        <View style={styles.progressSection}>
-          <View style={styles.progressHeader}>
-            <View style={styles.progressHeaderLeft}>
-              <View style={styles.progressHeaderIcon}>
-                <AntDesign name="check-square" size={18} color="#C9B6FF" />
-              </View>
-              <View>
-                <Text style={styles.progressLabel}>Tiến độ kiểm tra</Text>
-                <Text style={styles.progressSubtitle}>
-                  {checkedItems}/{totalItems} mục đã hoàn thành
-                </Text>
+        {/* Required Photos (only when updating) */}
+        {isUpdateReceipt && (
+          <View style={styles.photosCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardHeaderLeft}>
+                <View style={styles.cardHeaderIcon}>
+                  <AntDesign name="camera" size={18} color="#7CFFCB" />
+                </View>
+                <View>
+                  <Text style={styles.cardHeaderTitle}>Ảnh 4 góc xe</Text>
+                  <Text style={styles.cardHeaderSubtitle}>
+                    {getPhotosCount()}/4 ảnh đã có
+                  </Text>
+                </View>
               </View>
             </View>
-            <View
-              style={[
-                styles.completionBadge,
-                {
-                  backgroundColor:
-                    checkedItems === totalItems
-                      ? "rgba(103,209,108,0.15)"
-                      : "rgba(255,211,102,0.15)",
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.completionPercentage,
-                  {
-                    color: checkedItems === totalItems ? "#67D16C" : "#FFD700",
-                  },
-                ]}
-              >
-                {totalItems > 0
-                  ? Math.round((checkedItems / totalItems) * 100)
-                  : 0}
-                %
-              </Text>
+            <View style={styles.photosGrid}>
+              <PhotoTile
+                uri={returnPhotos.front}
+                placeholderTitle="Mặt trước"
+                placeholderSubtitle="Chạm để chọn"
+                onPress={() => openPicker("front")}
+                isPrimary
+              />
+              <PhotoTile
+                uri={returnPhotos.back}
+                placeholderTitle="Mặt sau"
+                placeholderSubtitle="Chạm để chọn"
+                onPress={() => openPicker("back")}
+              />
+              <PhotoTile
+                uri={returnPhotos.left}
+                placeholderTitle="Bên trái"
+                placeholderSubtitle="Chạm để chọn"
+                onPress={() => openPicker("left")}
+              />
+              <PhotoTile
+                uri={returnPhotos.right}
+                placeholderTitle="Bên phải"
+                placeholderSubtitle="Chạm để chọn"
+                onPress={() => openPicker("right")}
+              />
             </View>
           </View>
-          <View style={styles.progressBarContainer}>
-            <View
-              style={[
-                styles.progressBar,
-                {
-                  width: `${
-                    totalItems > 0 ? (checkedItems / totalItems) * 100 : 0
-                  }%`,
-                  backgroundColor:
-                    checkedItems === totalItems ? "#67D16C" : "#C9B6FF",
-                },
-              ]}
-            />
-          </View>
-        </View>
+        )}
 
         {/* Vehicle Status Inputs */}
         <View
@@ -493,7 +672,11 @@ export const ManualInspectionScreen: React.FC = () => {
               </Animated.View>
               {batteryError && (
                 <View style={styles.errorContainer}>
-                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <AntDesign
+                    name="exclamation-circle"
+                    size={14}
+                    color="#FF6B6B"
+                  />
                   <Text style={styles.errorText}>{batteryError}</Text>
                 </View>
               )}
@@ -533,7 +716,11 @@ export const ManualInspectionScreen: React.FC = () => {
               </Animated.View>
               {odometerError && (
                 <View style={styles.errorContainer}>
-                  <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                  <AntDesign
+                    name="exclamation-circle"
+                    size={14}
+                    color="#FF6B6B"
+                  />
                   <Text style={styles.errorText}>{odometerError}</Text>
                 </View>
               )}
@@ -541,6 +728,61 @@ export const ManualInspectionScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Overall Progress */}
+        <View style={styles.progressSection}>
+          <View style={styles.progressHeader}>
+            <View style={styles.progressHeaderLeft}>
+              <View style={styles.progressHeaderIcon}>
+                <AntDesign name="check-square" size={18} color="#C9B6FF" />
+              </View>
+              <View>
+                <Text style={styles.progressLabel}>Tiến độ kiểm tra</Text>
+                <Text style={styles.progressSubtitle}>
+                  {checkedItems}/{totalItems} mục đã hoàn thành
+                </Text>
+              </View>
+            </View>
+            <View
+              style={[
+                styles.completionBadge,
+                {
+                  backgroundColor:
+                    checkedItems === totalItems
+                      ? "rgba(103,209,108,0.15)"
+                      : "rgba(255,211,102,0.15)",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.completionPercentage,
+                  {
+                    color: checkedItems === totalItems ? "#67D16C" : "#FFD700",
+                  },
+                ]}
+              >
+                {totalItems > 0
+                  ? Math.round((checkedItems / totalItems) * 100)
+                  : 0}
+                %
+              </Text>
+            </View>
+          </View>
+          <View style={styles.progressBarContainer}>
+            <View
+              style={[
+                styles.progressBar,
+                {
+                  width: `${
+                    totalItems > 0 ? (checkedItems / totalItems) * 100 : 0
+                  }%`,
+                  backgroundColor:
+                    checkedItems === totalItems ? "#67D16C" : "#C9B6FF",
+                },
+              ]}
+            />
+          </View>
+        </View>
         {/* Inspection Categories */}
         <View
           ref={checklistRef}
@@ -686,7 +928,11 @@ export const ManualInspectionScreen: React.FC = () => {
                   navigation.navigate("ReturnReport", {
                     bookingId: bookingId,
                     rentalReceiptId: returnReceiptData.rentalReceiptId,
-                    settlement: returnReceiptData.settlement,
+                  });
+                } else if (updateReturnReceiptData) {
+                  navigation.navigate("ReturnReport", {
+                    bookingId: bookingId,
+                    rentalReceiptId: updateReturnReceiptData.rentalReceiptId,
                   });
                 }
               }}
@@ -715,10 +961,19 @@ export const ManualInspectionScreen: React.FC = () => {
                   <AntDesign name="loading" size={18} color="#0B0B0F" />
                   <Text style={styles.primaryCtaText}>Đang gửi...</Text>
                 </>
-              ) : checkedItems === totalItems ? (
+              ) : checkedItems === totalItems &&
+                booking.bookingStatus === "Renting" ? (
                 <>
                   <AntDesign name="check-circle" size={18} color="#0B0B0F" />
                   <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
+                </>
+              ) : checkedItems === totalItems &&
+                booking.bookingStatus === "Returned" ? (
+                <>
+                  <AntDesign name="check-circle" size={18} color="#0B0B0F" />
+                  <Text style={styles.primaryCtaText}>
+                    Cập nhật thông tin trả xe
+                  </Text>
                 </>
               ) : (
                 <>
@@ -728,6 +983,22 @@ export const ManualInspectionScreen: React.FC = () => {
                   </Text>
                 </>
               )}
+            </View>
+          </TouchableOpacity>
+        )}
+        {booking.bookingStatus === "Returned" && (
+          <TouchableOpacity
+            style={[styles.primaryCta, {marginTop: 8}]}
+            onPress={() => {
+              navigation.navigate("ReturnReport", {
+                bookingId: bookingId,
+                rentalReceiptId: getLastReceipt()?.id,
+              });
+            }}
+          >
+            <View style={styles.primaryCtaContent}>
+              <AntDesign name="file-text" size={18} color="#0B0B0F" />
+              <Text style={styles.primaryCtaText}>Xem trạng thái trả xe</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -789,6 +1060,76 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
   },
+  photosCard: {
+    backgroundColor: "#11131A",
+    borderRadius: 20,
+    marginHorizontal: 16,
+    padding: 20,
+    marginBottom: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#1F2430",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  photosGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  tile: {
+    width: "48%",
+    backgroundColor: "#1B1F2A",
+    borderRadius: 16,
+    height: 140,
+    overflow: "hidden",
+    position: "relative",
+    borderWidth: 2,
+    borderColor: "#232838",
+    borderStyle: "dashed",
+  },
+  tilePrimary: {
+    borderColor: "#7CFFCB",
+    borderStyle: "solid",
+  },
+  tileImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  placeholderInner: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  placeholderTitle: {
+    color: colors.text.primary,
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  placeholderSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  retakeBadge: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  retakeText: { color: "#fff", fontSize: 12 },
+  tileTopLabel: {
+    position: "absolute",
+    bottom: 6,
+    left: 8,
+    color: "#fff",
+    fontWeight: "600",
+  },
   completionBadge: {
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -846,6 +1187,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontSize: 18,
     fontWeight: "700",
+  },
+  cardHeaderSubtitle: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    marginTop: 2,
   },
   metricsRow: {
     flexDirection: "row",

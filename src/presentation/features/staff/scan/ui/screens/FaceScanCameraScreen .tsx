@@ -6,6 +6,7 @@ import {
   View,
   Text,
   useWindowDimensions,
+  TouchableOpacity,
 } from "react-native";
 import {
   Camera as VisionCamera,
@@ -46,7 +47,10 @@ export const FaceScanCameraScreen = () => {
   const stableTimer = useRef<NodeJS.Timeout | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(true);
-  const device = useCameraDevice("back");
+  const [cameraPosition, setCameraPosition] = useState<"front" | "back">(
+    "front"
+  );
+  const device = useCameraDevice(cameraPosition);
   const cameraRef = useRef<VisionCameraType>(null);
 
   useEffect(() => {
@@ -108,27 +112,26 @@ export const FaceScanCameraScreen = () => {
       const photo = await cameraRef.current.takePhoto({
         flash: "off",
       });
-      const fixed = await manipulateAsync(
-        "file://" + photo.path,
-        [{ flip: FlipType.Horizontal }],
-        { compress: 0.9, format: SaveFormat.JPEG }
-      );
+      // Flip ảnh chỉ khi dùng camera trước để tránh bị mirror
+      let finalUri = "file://" + photo.path;
+      if (cameraPosition === "front") {
+        const fixed = await manipulateAsync(
+          finalUri,
+          [{ flip: FlipType.Horizontal }],
+          { compress: 0.9, format: SaveFormat.JPEG }
+        );
+        finalUri = fixed.uri;
+      }
 
       const file = {
-        uri: fixed.uri, // 👈 bắt buộc
-        type: "image/jpeg", // 👈 bắt buộc
-        name: `photo_${Date.now()}.jpg`, // 👈 bắt buộc
+        uri: finalUri,
+        type: "image/jpeg",
+        name: `photo_${Date.now()}.jpg`,
       };
-      console.log("📸 Photo to upload:", {
-        uri: fixed.uri,
-        fixedUri: fixed.uri.replace("file://", ""),
-        width: fixed.width,
-        height: fixed.height,
-      });
 
-      const info = await FileSystem.getInfoAsync(fixed.uri);
+      const info = await FileSystem.getInfoAsync(finalUri);
       console.log("📦 Local file info:", info);
-      return file; // { path, width, height, ... }
+      return file;
     } catch (err) {
       console.error("takePicture error:", err);
       return null;
@@ -269,6 +272,25 @@ export const FaceScanCameraScreen = () => {
 
   return (
     <View style={StyleSheet.absoluteFill}>
+      <View style={styles.topControls}>
+        <TouchableOpacity
+          style={styles.switchCamBtn}
+          onPress={() => {
+            // Đổi giữa cam trước / sau
+            setFaceStatus(null);
+            if (stableTimer.current) {
+              clearTimeout(stableTimer.current);
+              stableTimer.current = null;
+            }
+            setCameraPosition((prev) => (prev === "front" ? "back" : "front"));
+          }}
+        >
+          <Text style={styles.switchCamText}>
+            {cameraPosition === "front" ? "Dùng cam sau" : "Dùng cam trước"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <DetectorCamera
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
@@ -312,6 +334,26 @@ export const FaceScanCameraScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  topControls: {
+    position: "absolute",
+    top: 32,
+    right: 16,
+    zIndex: 20,
+  },
+  switchCamBtn: {
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  switchCamText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 12,
+    letterSpacing: 0.3,
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",

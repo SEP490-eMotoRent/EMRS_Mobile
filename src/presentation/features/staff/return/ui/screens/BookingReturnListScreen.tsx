@@ -146,10 +146,35 @@ export const BookingReturnListScreen: React.FC = () => {
     return `${diffDays} ngày thuê`;
   };
 
+  const getLastReceipt = (booking: Booking) => {
+    const receipts = booking.rentalReceipts;
+    const bookingVehicleId = booking?.vehicle?.id || booking?.vehicleId || null;
+    const lastReceipt = receipts?.length
+      ? (() => {
+          if (!bookingVehicleId) return receipts[receipts?.length - 1];
+          const matched = [...receipts].reverse().find((r) => {
+            const id = r?.vehicle?.id || r?.booking?.vehicle?.id || null;
+            return id === bookingVehicleId;
+          });
+          return matched || receipts[receipts?.length - 1];
+        })()
+      : null;
+    return lastReceipt;
+  };
+
   const handleReturnVehicle = (booking: Booking) => {
     navigation.navigate("VehicleConfirmation", {
       bookingId: booking.id,
       vehicleId: booking.vehicle?.id,
+    });
+  };
+
+  const handleUpdateReturnReceipt = (booking: Booking) => {
+    const lastReceipt = getLastReceipt(booking);
+    navigation.navigate("ManualInspection", {
+      bookingId: booking.id,
+      photos: lastReceipt?.returnVehicleImageFiles || [],
+      isUpdateReceipt: true,
     });
   };
 
@@ -282,23 +307,45 @@ export const BookingReturnListScreen: React.FC = () => {
           >
             <Text style={styles.buttonText}>Xem chi tiết</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.selectButton,
-              !hasVehicle && styles.selectButtonPending,
-            ]}
-            onPress={() => handleReturnVehicle(booking)}
-          >
-            <Text
+          {booking.bookingStatus === "Renting" && (
+            <TouchableOpacity
               style={[
-                styles.buttonText,
-                !hasVehicle && styles.buttonTextPending,
+                styles.selectButton,
+                !hasVehicle && styles.selectButtonPending,
               ]}
+              onPress={() => handleReturnVehicle(booking)}
             >
-              {hasVehicle ? "Trả xe" : "Trả xe"}
-            </Text>
-            <AntDesign name="arrow-right" size={16} color="#000" />
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.buttonText,
+                  !hasVehicle && styles.buttonTextPending,
+                ]}
+              >
+                Trả xe
+              </Text>
+              <AntDesign name="arrow-right" size={14} color="#000" />
+            </TouchableOpacity>
+          )}
+          {booking.bookingStatus === "Returned" && (
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.selectButton,
+                  !hasVehicle && styles.selectButtonPending,
+                ]}
+                onPress={() => handleUpdateReturnReceipt(booking)}
+              >
+                <Text
+                  style={[
+                    styles.buttonText,
+                    !hasVehicle && styles.buttonTextPending,
+                  ]}
+                >
+                  Cập nhật biên bản
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     );
@@ -313,9 +360,7 @@ export const BookingReturnListScreen: React.FC = () => {
               ? `Đặt chỗ trả của ${renter?.account?.fullname}`
               : "Đặt chỗ trả của khách hàng"
           }
-          submeta={
-            new Date().toLocaleString("en-GB")
-          }
+          submeta={new Date().toLocaleString("en-GB")}
           onBack={() => navigation.goBack()}
         />
 
@@ -331,8 +376,7 @@ export const BookingReturnListScreen: React.FC = () => {
           <View style={styles.header}>
             <View style={styles.branchRow}>
               <Text style={styles.branchText}>
-                {user?.branchName ||
-                  "Đang tải chi nhánh..."}
+                {user?.branchName || "Đang tải chi nhánh..."}
               </Text>
               <AntDesign name="down" size={12} color={colors.text.primary} />
             </View>
@@ -349,8 +393,7 @@ export const BookingReturnListScreen: React.FC = () => {
           <View style={styles.rentalSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                Danh sách trả của{" "}
-                {renter?.account?.fullname ?? "Khách hàng"}
+                Danh sách trả của {renter?.account?.fullname ?? "Khách hàng"}
               </Text>
               <View style={styles.countBadge}>
                 <Text style={styles.countText}>{bookings?.length ?? 0}</Text>
@@ -419,7 +462,9 @@ export const BookingReturnListScreen: React.FC = () => {
                           setShowModelList(false);
                         }}
                       >
-                        <Text style={styles.dropdownItemText}>Tất cả mẫu xe</Text>
+                        <Text style={styles.dropdownItemText}>
+                          Tất cả mẫu xe
+                        </Text>
                       </TouchableOpacity>
                       {vehicleModels.map((m) => (
                         <TouchableOpacity

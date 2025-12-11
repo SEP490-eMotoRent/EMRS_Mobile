@@ -410,26 +410,11 @@ export type StaffStackParamList = {
   };
   ReturnInspection: { bookingId: string };
   AIAnalysis: { bookingId: string; analyzeReturnData: AnalyzeReturnResponse };
-  ManualInspection: { bookingId: string; photos: string[] };
+  ManualInspection: { bookingId: string; photos: string[]; isUpdateReceipt?: boolean };
   AdditionalFees: { bookingId: string };
   ReturnReport: {
     bookingId: string;
     rentalReceiptId: string;
-    settlement: {
-      baseRentalFee: number;
-      depositAmount: number;
-      totalAmount: number;
-      totalChargingFee: number;
-      totalAdditionalFees: number;
-      refundAmount: number;
-      feesBreakdown: {
-        cleaningFee: number;
-        crossBranchFee: number;
-        damageFee: number;
-        excessKmFee: number;
-        lateReturnFee: number;
-      };
-    };
   };
   SignContract: {
     bookingId: string;

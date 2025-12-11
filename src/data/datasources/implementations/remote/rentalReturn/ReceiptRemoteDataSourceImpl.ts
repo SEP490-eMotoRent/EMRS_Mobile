@@ -9,6 +9,7 @@ import { FinalizeReturnRequest } from "../../../../models/rentalReturn/FinalizeR
 import { FinalizeReturnResponse } from "../../../../models/rentalReturn/FinalizeReturnResponse";
 import { SummaryResponse } from "../../../../models/rentalReturn/SummaryResponse";
 import { UpdateReturnReceiptRequest } from "../../../../models/rentalReturn/UpdateReturnReceiptRequest";
+import { UpdateReturnReceiptResponse } from "../../../../models/rentalReturn/UpdateReturnReceiptResponse";
 import { VehicleSwapRequest } from "../../../../models/rentalReturn/VehicleSwapRequest";
 import { VehicleSwapResponse } from "../../../../models/rentalReturn/VehicleSwapResponse";
 import { RentalReturnRemoteDataSource } from "../../../interfaces/remote/rentalReturn/RentalReturnRemoteDataSource";
@@ -171,7 +172,7 @@ export class RentalReturnRemoteDataSourceImpl
 
   async updateReturnReceipt(
     request: UpdateReturnReceiptRequest
-  ): Promise<ApiResponse<void>> {
+  ): Promise<ApiResponse<UpdateReturnReceiptResponse>> {
     try {
       const formData = new FormData();
 
@@ -184,9 +185,10 @@ export class RentalReturnRemoteDataSourceImpl
         request.endBatteryPercentage.toString()
       );
       formData.append("Notes", request.notes);
-      request.returnImageUrls.forEach((file, index) => {
-        formData.append("ReturnImageUrls", file);
-      });
+      formData.append(
+        "ReturnImageUrls",
+        JSON.stringify(request.returnImageUrls)
+      );
       formData.append("ChecklistImage", request.checkListImage);
 
       console.log("=== FormData Content ===");
@@ -194,7 +196,7 @@ export class RentalReturnRemoteDataSourceImpl
         console.log(`${key}:`, value);
       });
       const response = await this.axiosClient.put<
-        ApiResponse<void>
+        ApiResponse<UpdateReturnReceiptResponse>
       >(ApiEndpoints.rentalReturn.updateReturnReceipt, formData);
       return {
         success: true,

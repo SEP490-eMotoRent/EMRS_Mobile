@@ -527,21 +527,6 @@ export const AdditionalFeesScreen: React.FC = () => {
         navigation.navigate("ReturnReport", {
           bookingId: bookingId,
           rentalReceiptId: lastReceipt?.id || "",
-          settlement: {
-            baseRentalFee: 0,
-            depositAmount: 0,
-            totalAmount: 0,
-            totalChargingFee: 0,
-            totalAdditionalFees: 0,
-            refundAmount: 0,
-            feesBreakdown: {
-              cleaningFee: 0,
-              crossBranchFee: 0,
-              damageFee: 0,
-              excessKmFee: 0,
-              lateReturnFee: 0,
-            },
-          },
         });
       }, 1500);
     } catch (error: any) {

@@ -15,6 +15,7 @@ import { VehicleSwapRequest } from "../../models/rentalReturn/VehicleSwapRequest
 import { SwapVehicleReturnUseCaseInput } from "../../../domain/usecases/rentalReturn/SwapVehicleReturnUseCase";
 import { UpdateReturnReceiptRequest } from "../../models/rentalReturn/UpdateReturnReceiptRequest";
 import { UpdateReturnReceiptUseCaseInput } from "../../../domain/usecases/rentalReturn/UpdateReturnReceiptUseCase";
+import { UpdateReturnReceiptResponse } from "../../models/rentalReturn/UpdateReturnReceiptResponse";
 
 export class RentalReturnRepositoryImpl implements RentalReturnRepository {
   constructor(private remote: RentalReturnRemoteDataSource) {}
@@ -83,7 +84,7 @@ export class RentalReturnRepositoryImpl implements RentalReturnRepository {
     return await this.remote.swapVehicleReturn(request);
   }
 
-  async updateReturnReceipt(input: UpdateReturnReceiptUseCaseInput): Promise<ApiResponse<void>> {
+  async updateReturnReceipt(input: UpdateReturnReceiptUseCaseInput): Promise<ApiResponse<UpdateReturnReceiptResponse>> {
     const request: UpdateReturnReceiptRequest = {
       bookingId: input.bookingId,
       rentalReceiptId: input.rentalReceiptId,
@@ -91,14 +92,7 @@ export class RentalReturnRepositoryImpl implements RentalReturnRepository {
       endOdometerKm: input.endOdometerKm,
       endBatteryPercentage: input.endBatteryPercentage,
       notes: input.notes,
-      returnImageUrls: input.returnImageUrls.map(
-        (uri, index) =>
-          ({
-            uri,
-            type: "image/jpeg",
-            name: `return_${Date.now()}_${index}.jpg`,
-          } as any)
-      ),
+      returnImageUrls: input.returnImageUrls,
       checkListImage: {
         uri: input.checkListImage,
         type: "image/png",
