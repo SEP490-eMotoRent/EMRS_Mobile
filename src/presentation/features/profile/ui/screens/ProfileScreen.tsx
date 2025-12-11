@@ -169,6 +169,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       amount: TransactionTypeHelper.isCredit(t.transactionType) ? t.amount : -t.amount,
   }));
 
+  // ✅ Check if transactions exist (hide section if empty)
+  const hasTransactions = transactions.length > 0;
+
   // === RENDER ===
   return (
     <SafeAreaView style={styles.container}>
@@ -191,7 +194,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           documents={renterResponse.documents}
           memberSince={memberSince}
           trips="0"
-          distance="0km"
+          distance="0" // Pass number only, component will add " km"
           membership={membership}
           onEdit={handleEdit}
         />
@@ -205,15 +208,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onManage={handleManage}
           onRetry={handleWalletRetry}
         />
-        <TransactionList
-          transactions={transactions}
-          onViewAll={handleViewAllTransactions}
-          limit={5}
-        />
+
+        {/* ✅ Only show transactions if they exist */}
+        {hasTransactions && (
+          <TransactionList
+            transactions={transactions}
+            onViewAll={handleViewAllTransactions}
+            limit={5}
+          />
+        )}
+
         <VerificationCard
           verifications={verifications}
           onVerify={handleVerify}
         />
+
         <QuickSettings 
           onSignOut={handleSignOut}
           onInsuranceClaims={handleInsuranceClaims}
