@@ -1,7 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { RadioButton } from "../../atoms/radio/RadioButton";
-import { WalletBalance } from "../../molecules/WalletBalance";
 
 interface PaymentMethodCardProps {
     isSelected: boolean;
@@ -34,11 +33,29 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
                 <RadioButton selected={isSelected} />
             </View>
             
-            <WalletBalance
-                currentBalance={currentBalance}
-                afterBalance={afterBalance}
-                isSufficient={isSufficient}
-            />
+            <View style={styles.balanceContainer}>
+                <View style={styles.balanceRow}>
+                    <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
+                    <Text style={styles.balanceValue}>{currentBalance}</Text>
+                </View>
+                
+                {isSufficient ? (
+                    <View style={styles.balanceRow}>
+                        <Text style={styles.balanceLabel}>Số dư sau giao dịch</Text>
+                        <Text style={styles.balanceValueAfter}>{afterBalance}</Text>
+                    </View>
+                ) : (
+                    <View style={styles.insufficientContainer}>
+                        <View style={styles.warningBadge}>
+                            <Text style={styles.warningIcon}>⚠️</Text>
+                            <Text style={styles.warningText}>Số dư không đủ</Text>
+                        </View>
+                        <Text style={styles.insufficientHint}>
+                            Vui lòng nạp thêm tiền hoặc chọn phương thức thanh toán khác
+                        </Text>
+                    </View>
+                )}
+            </View>
         </TouchableOpacity>
     );
 };
@@ -59,6 +76,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        marginBottom: 16,
     },
     leftSection: {
         flexDirection: "row",
@@ -81,5 +99,53 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 15,
         fontWeight: "700",
+    },
+    balanceContainer: {
+        gap: 12,
+    },
+    balanceRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    balanceLabel: {
+        color: "#999",
+        fontSize: 14,
+    },
+    balanceValue: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    balanceValueAfter: {
+        color: "#4ade80",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    insufficientContainer: {
+        backgroundColor: "#2a1a1a",
+        borderRadius: 8,
+        padding: 12,
+        borderLeftWidth: 3,
+        borderLeftColor: "#ef4444",
+    },
+    warningBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 6,
+    },
+    warningIcon: {
+        fontSize: 16,
+        marginRight: 6,
+    },
+    warningText: {
+        color: "#fbbf24",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    insufficientHint: {
+        color: "#999",
+        fontSize: 12,
+        lineHeight: 16,
     },
 });

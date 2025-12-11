@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { InfoTooltip } from "../../molecules/InfoTooltip";
 import { SummaryRow } from "../../atoms/text/SummaryRow";
+import { InfoTooltip } from "../../molecules/InfoTooltip";
 
 interface BookingSummaryProps {
     rentalDays: number;
+    rentalDurationText?: string;
     rentalPrice: string;
     securityDeposit: string;
     total: string;
@@ -18,6 +19,7 @@ interface BookingSummaryProps {
  */
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
     rentalDays,
+    rentalDurationText,
     rentalPrice,
     securityDeposit,
     total,
@@ -43,7 +45,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
             
             <View style={styles.content}>
                 <SummaryRow 
-                    label={`Phí thuê (${rentalDays} ngày)`} 
+                    label={`Phí thuê${rentalDurationText ? ` (${rentalDurationText})` : ` (${rentalDays} ngày)`}`} 
                     value={rentalPrice}
                 />
                 <SummaryRow 
