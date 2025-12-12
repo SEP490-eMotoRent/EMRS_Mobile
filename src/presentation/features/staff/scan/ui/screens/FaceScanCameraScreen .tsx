@@ -114,14 +114,6 @@ export const FaceScanCameraScreen = () => {
       });
       // Flip ảnh chỉ khi dùng camera trước để tránh bị mirror
       let finalUri = "file://" + photo.path;
-      if (cameraPosition === "front") {
-        const fixed = await manipulateAsync(
-          finalUri,
-          [{ flip: FlipType.Horizontal }],
-          { compress: 0.9, format: SaveFormat.JPEG }
-        );
-        finalUri = fixed.uri;
-      }
 
       const file = {
         uri: finalUri,
@@ -129,8 +121,6 @@ export const FaceScanCameraScreen = () => {
         name: `photo_${Date.now()}.jpg`,
       };
 
-      const info = await FileSystem.getInfoAsync(finalUri);
-      console.log("📦 Local file info:", info);
       return file;
     } catch (err) {
       console.error("takePicture error:", err);
