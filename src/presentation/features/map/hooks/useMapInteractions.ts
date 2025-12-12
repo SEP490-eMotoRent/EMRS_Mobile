@@ -12,6 +12,8 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
     const selectedBranchIdRef = useRef<string | null>(null);
     const bottomSheetVisibleRef = useRef(false);
     const isProcessingRef = useRef(false);
+    const animationLockRef = useRef(false);
+    const currentSearchRef = useRef<AbortController | null>(null);
 
     const { vehicles, loading, error, searchVehicles } = useVehicleSearch();
 
@@ -20,43 +22,140 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
         bottomSheetVisibleRef.current = bottomSheetVisible;
     }, [selectedBranchId, bottomSheetVisible]);
 
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (currentSearchRef.current) {
+                currentSearchRef.current.abort();
+            }
+        };
+    }, []);
+
     const handleBranchMarkerPress = useCallback(
         async (branch: Branch) => {
-        if (!branch?.id || isProcessingRef.current) return;
+            // ✅ Prevent spam clicks during animation or processing
+            if (animationLockRef.current || isProcessingRef.current) {
+                console.log('🚫 Ignoring click - animation in progress');
+                return;
+            }
 
-        const isSame = selectedBranchIdRef.current === branch.id;
+            if (!branch?.id) return;
 
-        if (isSame && bottomSheetVisibleRef.current) {
-            setBottomSheetVisible(false);
-            setSelectedBranchId(null);
-            return;
-        }
+            // ✅ Cancel any in-flight search
+            if (currentSearchRef.current) {
+                console.log('⏹️ Aborting previous search');
+                currentSearchRef.current.abort();
+            }
 
-        isProcessingRef.current = true;
-        setSelectedBranchId(branch.id);
-        setBottomSheetVisible(true);
+            const isSame = selectedBranchIdRef.current === branch.id;
 
-        try {
-            const parsed = parseDateRange(dateRange);
-            // YOUR ACTUAL searchVehicles signature — ONLY 4 ARGS
-            await searchVehicles(branch.id, dateRange, parsed.startTime, parsed.endTime);
-        } catch (err) {
-            console.error("Search failed:", err);
-        } finally {
-            isProcessingRef.current = false;
-        }
+            // Tapping same branch = close
+            if (isSame && bottomSheetVisibleRef.current) {
+                console.log('🔽 Closing bottom sheet');
+                animationLockRef.current = true;
+                
+                setBottomSheetVisible(false);
+                setSelectedBranchId(null);
+                
+                // Release lock after close animation completes
+                setTimeout(() => {
+                    animationLockRef.current = false;
+                }, 300);
+                return;
+            }
+
+            // ✅ Lock to prevent concurrent operations
+            animationLockRef.current = true;
+            isProcessingRef.current = true;
+
+            console.log(`🔍 Opening branch: ${branch.id}`);
+
+            try {
+                // Create abort controller for this specific search
+                const controller = new AbortController();
+                currentSearchRef.current = controller;
+
+                // Update UI immediately
+                setSelectedBranchId(branch.id);
+                setBottomSheetVisible(true);
+
+                // Parse date range
+                const parsed = parseDateRange(dateRange);
+                
+                // Start vehicle search
+                await searchVehicles(
+                    branch.id, 
+                    dateRange, 
+                    parsed.startTime, 
+                    parsed.endTime
+                );
+
+                // Only release locks if this search wasn't cancelled
+                if (!controller.signal.aborted) {
+                    console.log('✅ Search completed successfully');
+                    // Wait for open animation to complete before allowing new clicks
+                    setTimeout(() => {
+                        animationLockRef.current = false;
+                        isProcessingRef.current = false;
+                    }, 350); // Slightly longer than animation duration
+                } else {
+                    console.log('⏹️ Search was cancelled');
+                    isProcessingRef.current = false;
+                }
+            } catch (err: any) {
+                // Ignore abort errors (they're expected)
+                if (err?.name !== 'AbortError') {
+                    console.error("❌ Search failed:", err);
+                }
+                
+                // Release locks on error
+                animationLockRef.current = false;
+                isProcessingRef.current = false;
+            }
         },
         [dateRange, searchVehicles]
     );
 
     const handleMapPress = useCallback(() => {
+        // Don't allow closing during animation
+        if (animationLockRef.current) {
+            return;
+        }
+
+        if (currentSearchRef.current) {
+            currentSearchRef.current.abort();
+        }
+
+        console.log('🗺️ Map pressed - closing bottom sheet');
+        animationLockRef.current = true;
+        
         setSelectedBranchId(null);
         setBottomSheetVisible(false);
+
+        setTimeout(() => {
+            animationLockRef.current = false;
+        }, 300);
     }, []);
 
     const handleBottomSheetClose = useCallback(() => {
+        // Don't allow closing during animation
+        if (animationLockRef.current) {
+            return;
+        }
+
+        if (currentSearchRef.current) {
+            currentSearchRef.current.abort();
+        }
+
+        console.log('✕ Bottom sheet close button pressed');
+        animationLockRef.current = true;
+        
         setSelectedBranchId(null);
         setBottomSheetVisible(false);
+
+        setTimeout(() => {
+            animationLockRef.current = false;
+        }, 300);
     }, []);
 
     const handleSearchBarPress = useCallback(() => {
@@ -68,7 +167,8 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
     }, []);
 
     const handleBookVehicle = useCallback((vehicleId: string) => {
-        console.log("Book vehicle:", vehicleId);
+        console.log("📖 Book vehicle:", vehicleId);
+        // Add your booking logic here
     }, []);
 
     return {
