@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Linking, StyleSheet, Text, View } from 'react
 import { WebView } from 'react-native-webview';
 import { container } from '../../../../../../core/di/ServiceContainer';
 import { BookingStackParamList } from '../../../../../shared/navigation/StackParameters/types';
+import { useBookingStatusPolling } from '../../../hooks/useBookingStatusPolling';
 import { PageHeader } from '../../molecules/PageHeader';
 
 type RoutePropType = any;
@@ -50,10 +51,48 @@ export const VNPayWebViewScreen: React.FC = () => {
 
     const [loading, setLoading] = useState(true);
     const [timeLeft, setTimeLeft] = useState<number>(0);
+    const [pollingEnabled, setPollingEnabled] = useState(true);
     const expiryTimer = useRef<NodeJS.Timeout | null>(null);
     const hasHandled = useRef(false);
 
     const STORAGE_KEY = `vnpay_payment_context_${bookingId}`;
+
+    // ==================== STATUS POLLING ====================
+    useBookingStatusPolling({
+        bookingId,
+        enabled: pollingEnabled && !hasHandled.current,
+        onStatusChange: (status) => {
+            console.log('═══════════════════════════════════════════════════');
+            console.log('🔔 [VNPAY POLLING] Status change detected:', status);
+            console.log('═══════════════════════════════════════════════════');
+            
+            if (status === 'Booked') {
+                console.log('✅ [VNPAY POLLING] Payment confirmed via polling!');
+                console.log('🎯 [VNPAY POLLING] Deep link may have failed, but polling caught it');
+                
+                hasHandled.current = true;
+                setPollingEnabled(false);
+                
+                Alert.alert(
+                    'Thanh toán thành công!',
+                    'Thanh toán của bạn đã được xác nhận',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => navigateToContract()
+                        }
+                    ]
+                );
+            } else if (status === 'Cancelled') {
+                console.log('❌ [VNPAY POLLING] Booking cancelled');
+                hasHandled.current = true;
+                setPollingEnabled(false);
+                showFailure('Booking đã hết hạn. Nếu bạn đã thanh toán, vui lòng liên hệ hỗ trợ với mã booking: ' + bookingId);
+            }
+        },
+        pollingInterval: 3000,
+        maxDuration: 15 * 60 * 1000,
+    });
 
     // Store context
     useEffect(() => {
@@ -150,9 +189,13 @@ export const VNPayWebViewScreen: React.FC = () => {
                 return;
             }
 
-            console.log('🔗 Processing deep link:', url);
+            console.log('═══════════════════════════════════════════════════');
+            console.log('🔗 [DEEP LINK] Processing callback');
+            console.log('═══════════════════════════════════════════════════');
+            console.log('📥 URL:', url);
 
             hasHandled.current = true;
+            setPollingEnabled(false); // Stop polling when deep link fires
 
             webviewRef.current?.stopLoading();
             setLoading(true);
@@ -193,6 +236,7 @@ export const VNPayWebViewScreen: React.FC = () => {
                             text: 'Thử lại',
                             onPress: () => {
                                 hasHandled.current = false;
+                                setPollingEnabled(true);
                                 handleDeepLink(url);
                             }
                         },
@@ -238,6 +282,7 @@ export const VNPayWebViewScreen: React.FC = () => {
             setTimeLeft(diff);
             if (diff <= 0 && !hasHandled.current) {
                 hasHandled.current = true;
+                setPollingEnabled(false);
                 showExpiry();
             }
         };
@@ -292,6 +337,7 @@ export const VNPayWebViewScreen: React.FC = () => {
                 text: 'Hủy',
                 style: 'destructive',
                 onPress: () => {
+                    setPollingEnabled(false);
                     navigation.goBack();
                 },
             },

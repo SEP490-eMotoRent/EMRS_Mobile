@@ -106,23 +106,43 @@ const parseEnglishDate = (dateStr: string): Date | null => {
     try {
         // Split by "|" to separate date and time
         const parts = dateStr.split("|").map(p => p.trim());
-        const dateOnly = parts[0]; // "Nov 30"
-        const timeStr = parts[1]; // "6:00 PM" or undefined
+        const dateOnly = parts[0]; // "Dec 16"
+        const timeStr = parts[1]; // "10:00 AM" or undefined
         
-        console.log('🗓️ parseEnglishDate - dateOnly:', dateOnly, 'timeStr:', timeStr);
+        // ✅ FIX: Build date string in ISO-friendly format
+        const currentYear = new Date().getFullYear();
+        const monthDayYear = `${dateOnly} ${currentYear}`; // "Dec 16 2024"
         
-        // Parse date using Date constructor
-        let parsedDate = new Date(dateOnly + " " + new Date().getFullYear());
+        // Use a more reliable parsing method
+        let parsedDate = new Date(monthDayYear);
         
-        console.log('🗓️ parseEnglishDate - initial parsed:', parsedDate);
-        
-        // Validate the parsed date
+        // ✅ If that fails, try with explicit formatting
         if (isNaN(parsedDate.getTime())) {
-            console.error('🗓️ Invalid date:', dateOnly);
-            return null;
+            // Extract month and day manually
+            const match = dateOnly.match(/([A-Za-z]+)\s+(\d+)/);
+            if (!match) {
+                console.warn('🗓️ Could not parse date:', dateOnly);
+                return null;
+            }
+            
+            const [, monthStr, dayStr] = match;
+            const monthMap: { [key: string]: number } = {
+                'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            };
+            
+            const month = monthMap[monthStr];
+            const day = parseInt(dayStr, 10);
+            
+            if (month === undefined || isNaN(day)) {
+                console.warn('🗓️ Invalid month or day:', monthStr, dayStr);
+                return null;
+            }
+            
+            parsedDate = new Date(currentYear, month, day);
         }
         
-        // Parse time if provided (e.g., "6:00 PM")
+        // ✅ Parse time if provided
         if (timeStr) {
             const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
             if (timeMatch) {
@@ -138,7 +158,6 @@ const parseEnglishDate = (dateStr: string): Date | null => {
                 }
                 
                 parsedDate.setHours(hours, minutes, 0, 0);
-                console.log('🗓️ parseEnglishDate - after time set:', parsedDate);
             }
         } else {
             // No time provided, set to midnight
@@ -147,7 +166,7 @@ const parseEnglishDate = (dateStr: string): Date | null => {
         
         return parsedDate;
     } catch (error) {
-        console.error("Error parsing English date:", error);
+        console.warn("⚠️ Error parsing English date:", error);
         return null;
     }
 };

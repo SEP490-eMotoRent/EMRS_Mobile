@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Dimensions,
     Modal,
@@ -9,6 +9,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import { CalendarList } from "react-native-calendars";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
 
@@ -18,7 +19,6 @@ interface DateTimeSearchModalProps {
     onConfirm: (dateRange: string) => void;
 }
 
-// ✅ CRITICAL: Local date formatting to avoid UTC timezone bugs
 const formatLocalDate = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -34,25 +34,33 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
     const [startDate, setStartDate] = useState<string | null>(null);
     const [endDate, setEndDate] = useState<string | null>(null);
     const [selectedDates, setSelectedDates] = useState<{ [key: string]: any }>({});
+    const [calendarReady, setCalendarReady] = useState(false); // ✅ Prevent flicker
 
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [currentTimeType, setCurrentTimeType] = useState<"pickup" | "return">("pickup");
-    // ✅ FIXED: Vietnamese format
     const [pickupTime, setPickupTime] = useState("6:00 CH");
     const [returnTime, setReturnTime] = useState("10:00 SA");
 
-    const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-    const periods = ["SA", "CH"];
+    // ✅ Minimal delay to prevent calendar flicker (50ms)
+    useEffect(() => {
+        if (visible) {
+            setCalendarReady(false);
+            const timer = setTimeout(() => {
+                setCalendarReady(true);
+            }, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [visible]);
 
-    // ✅ FIXED: Use local timezone
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = formatLocalDate(today);
 
+    // ✅ 6 months from today, but include the entire last month
     const maxDate = new Date(today);
-    maxDate.setMonth(maxDate.getMonth() + 12);
-    maxDate.setMonth(maxDate.getMonth() + 1, 0);
-    const maxDateStr = formatLocalDate(maxDate);
+    maxDate.setMonth(maxDate.getMonth() + 6);
+    const lastDayOfMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
+    const maxDateStr = formatLocalDate(lastDayOfMonth);
 
     const onDayPress = (day: any) => {
         const selectedDay = new Date(day.dateString);
@@ -62,6 +70,7 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
         }
 
         if (!startDate || (startDate && endDate)) {
+            // ✅ Single date - rounded with border
             setStartDate(day.dateString);
             setEndDate(null);
             setSelectedDates({
@@ -70,6 +79,8 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                     endingDay: true,
                     color: "#b8a4ff",
                     textColor: "black",
+                    selected: true, // ✅ Adds border
+                    selectedColor: "#7c3aed", // ✅ Darker purple border color
                 },
             });
         } else {
@@ -82,33 +93,55 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
             const startStr = formatLocalDate(start);
             const endStr = formatLocalDate(end);
 
-            let currentDate = new Date(start);
-            while (currentDate <= end) {
-                const dateStr = formatLocalDate(currentDate);
-                range[dateStr] = { 
-                    color: "#b8a4ff", 
+            if (startStr === endStr) {
+                // ✅ Same day - rounded with border
+                setSelectedDates({
+                    [startStr]: {
+                        startingDay: true,
+                        endingDay: true,
+                        color: "#b8a4ff",
+                        textColor: "black",
+                        selected: true, // ✅ Adds border
+                        selectedColor: "#7c3aed", // ✅ Darker purple border
+                    },
+                });
+            } else {
+                // Range selection - middle dates
+                let currentDate = new Date(start);
+                while (currentDate <= end) {
+                    const dateStr = formatLocalDate(currentDate);
+                    range[dateStr] = { 
+                        color: "#b8a4ff",
+                        textColor: "black",
+                    };
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                // ✅ Start date - left rounded with border
+                range[startStr] = {
+                    startingDay: true,
+                    color: "#b8a4ff",
                     textColor: "black",
+                    selected: true, // ✅ Adds border
+                    selectedColor: "#7c3aed", // ✅ Border color
                 };
-                currentDate.setDate(currentDate.getDate() + 1);
+                
+                // ✅ End date - right rounded with border
+                range[endStr] = {
+                    endingDay: true,
+                    color: "#b8a4ff",
+                    textColor: "black",
+                    selected: true, // ✅ Adds border
+                    selectedColor: "#7c3aed", // ✅ Border color
+                };
+
+                setSelectedDates(range);
             }
-
-            range[startStr] = {
-                startingDay: true,
-                color: "#b8a4ff",
-                textColor: "black",
-            };
-            range[endStr] = {
-                endingDay: true,
-                color: "#b8a4ff",
-                textColor: "black",
-            };
-
-            setSelectedDates(range);
+            
             setStartDate(startStr);
             setEndDate(endStr);
         }
     };
-
     const handleConfirm = () => {
         if (startDate && endDate) {
             onConfirm(`${startDate} - ${endDate} (${pickupTime} - ${returnTime})`);
@@ -131,7 +164,6 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
         setShowTimePicker(false);
     };
 
-    // ✅ FIXED: Use local timezone for disabled dates
     const markedDatesWithDisabled = { ...selectedDates };
     
     const currentDate = new Date(today);
@@ -161,74 +193,80 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                         <View style={styles.sheet}>
                             <View style={styles.header}>
                                 <Text style={styles.headerTitle}>Chọn Ngày Nhận Và Trả</Text>
-                                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                                    <Text style={styles.closeIcon}>✕</Text>
+                                <TouchableOpacity 
+                                    onPress={onClose} 
+                                    style={styles.closeButton}
+                                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="close" size={28} color="#888" />
                                 </TouchableOpacity>
                             </View>
 
                             <View style={styles.calendarContainer}>
-                                <CalendarList
-                                    markingType="period"
-                                    markedDates={markedDatesWithDisabled}
-                                    onDayPress={onDayPress}
-                                    pastScrollRange={0}
-                                    futureScrollRange={12}
-                                    scrollEnabled={true}
-                                    minDate={todayStr}
-                                    maxDate={maxDateStr}
-                                    monthFormat={'MMMM yyyy'}
-                                    renderHeader={(date) => {
-                                        const monthNames = [
-                                            "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4",
-                                            "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8",
-                                            "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
-                                        ];
-                                        const month = date?.getMonth() ?? 0;
-                                        const year = date?.getFullYear() ?? 2025;
-                                        return (
-                                            <Text style={{
-                                                color: "#fff",
-                                                fontSize: 18,
-                                                fontWeight: "600",
-                                                textAlign: "center",
-                                                paddingVertical: 10,
-                                            }}>
-                                                {monthNames[month]} {year}
-                                            </Text>
-                                        );
-                                    }}
-                                    theme={{
-                                        calendarBackground: "#000",
-                                        dayTextColor: "#fff",
-                                        monthTextColor: "#fff",
-                                        arrowColor: "#fff",
-                                        textDisabledColor: "#222", // ✅ DARKER disabled color
-                                        todayTextColor: "#b8a4ff",
-                                        selectedDayBackgroundColor: "#b8a4ff",
-                                        selectedDayTextColor: "#000",
-                                    }}
-                                    style={styles.calendar}
-                                />
+                                {/* ✅ Opacity transition prevents flicker */}
+                                <View style={{ opacity: calendarReady ? 1 : 0, flex: 1 }}>
+                                    <CalendarList
+                                        markingType="period"
+                                        markedDates={markedDatesWithDisabled}
+                                        onDayPress={onDayPress}
+                                        pastScrollRange={0}
+                                        futureScrollRange={6}
+                                        scrollEnabled={true}
+                                        minDate={todayStr}
+                                        maxDate={maxDateStr}
+                                        removeClippedSubviews={false}
+                                        calendarHeight={350}
+                                        monthFormat={'MMMM yyyy'}
+                                        renderHeader={(date) => {
+                                            const monthNames = [
+                                                "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4",
+                                                "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8",
+                                                "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+                                            ];
+                                            const month = date?.getMonth() ?? 0;
+                                            const year = date?.getFullYear() ?? 2025;
+                                            return (
+                                                <Text style={{
+                                                    color: "#fff",
+                                                    fontSize: 18,
+                                                    fontWeight: "600",
+                                                    textAlign: "center",
+                                                    paddingVertical: 10,
+                                                }}>
+                                                    {monthNames[month]} {year}
+                                                </Text>
+                                            );
+                                        }}
+                                        theme={{
+                                            calendarBackground: "#000",
+                                            dayTextColor: "#fff",
+                                            monthTextColor: "#fff",
+                                            arrowColor: "#b8a4ff",
+                                            textDisabledColor: "#222",
+                                            todayTextColor: "#b8a4ff",
+                                            selectedDayBackgroundColor: "#b8a4ff",
+                                            selectedDayTextColor: "#000",
+                                        }}
+                                        style={styles.calendar}
+                                    />
+                                </View>
                             </View>
 
                             <View style={styles.dateTimeOverlay}>
                                 <View style={styles.dateTimeContainer}>
-                                    <ScrollView style={styles.dateTimeBoxScroll}>
-                                        <View style={styles.dateTimeBox}>
-                                            <Text style={styles.dateLabel}>Giờ Nhận</Text>
-                                            <TouchableOpacity onPress={() => openTimePicker("pickup")}>
-                                                <Text style={styles.timeLabel}>{pickupTime}</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </ScrollView>
-                                    <ScrollView style={styles.dateTimeBoxScroll}>
-                                        <View style={styles.dateTimeBox}>
-                                            <Text style={styles.dateLabel}>Giờ Trả</Text>
-                                            <TouchableOpacity onPress={() => openTimePicker("return")}>
-                                                <Text style={styles.timeLabel}>{returnTime}</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </ScrollView>
+                                    <View style={styles.dateTimeBox}>
+                                        <Text style={styles.dateLabel}>Giờ Nhận</Text>
+                                        <TouchableOpacity onPress={() => openTimePicker("pickup")}>
+                                            <Text style={styles.timeLabel}>{pickupTime}</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={styles.dateTimeBox}>
+                                        <Text style={styles.dateLabel}>Giờ Trả</Text>
+                                        <TouchableOpacity onPress={() => openTimePicker("return")}>
+                                            <Text style={styles.timeLabel}>{returnTime}</Text>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                                 <PrimaryButton title="Xác Nhận" onPress={handleConfirm} />
                             </View>
@@ -391,10 +429,6 @@ const styles = StyleSheet.create({
     closeButton: {
         padding: 5,
     },
-    closeIcon: {
-        color: "#fff",
-        fontSize: 24,
-    },
     calendarContainer: {
         alignItems: "center",
         justifyContent: "flex-start",
@@ -403,7 +437,6 @@ const styles = StyleSheet.create({
     },
     calendar: {
         width: "100%",
-        height: 320,
     },
     dateTimeOverlay: {
         position: "absolute",
@@ -418,11 +451,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 20,
         width: "100%",
-    },
-    dateTimeBoxScroll: {
-        flex: 1,
-        marginHorizontal: 5,
-        maxHeight: 60,
+        gap: 10,
     },
     dateTimeBox: {
         flex: 1,
@@ -432,7 +461,6 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 10,
         alignItems: "center",
-        marginHorizontal: 5,
     },
     dateLabel: {
         color: "#ccc",

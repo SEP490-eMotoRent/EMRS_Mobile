@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
-    TouchableOpacity, 
-    Text, 
-    StyleSheet, 
-    ViewStyle, 
-    TextStyle,
+import {
     ActivityIndicator,
+    StyleSheet,
+    Text,
+    TextStyle,
+    TouchableOpacity,
+    ViewStyle
 } from 'react-native';
 import { colors } from '../../../../common/theme/colors';
 
@@ -16,6 +16,7 @@ interface PrimaryButtonProps {
     textStyle?: TextStyle;
     disabled?: boolean;
     loading?: boolean;
+    flex?: boolean; // ✅ NEW: For side-by-side buttons
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -25,6 +26,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     textStyle,
     disabled = false,
     loading = false,
+    flex = false, // ✅ NEW
 }) => {
     const isDisabled = disabled || loading;
 
@@ -32,6 +34,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         <TouchableOpacity
             style={[
                 styles.button, 
+                flex && styles.flexButton, // ✅ NEW
                 style,
                 isDisabled && styles.buttonDisabled
             ]}
@@ -45,11 +48,14 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
                     color={colors.button.text} 
                 />
             ) : (
-                <Text style={[
-                    styles.text, 
-                    textStyle,
-                    isDisabled && styles.textDisabled
-                ]}>
+                <Text 
+                    style={[
+                        styles.text, 
+                        textStyle,
+                        isDisabled && styles.textDisabled
+                    ]}
+                    numberOfLines={1} // ✅ NEW: Prevent text overflow
+                >
                     {title}
                 </Text>
             )}
@@ -66,6 +72,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: 56,
+    },
+    flexButton: { // ✅ NEW: For side-by-side buttons
+        flex: 1,
+        paddingHorizontal: 12, // Reduce padding for tight spacing
     },
     text: {
         color: colors.button.text,

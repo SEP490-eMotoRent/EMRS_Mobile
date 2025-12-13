@@ -23,10 +23,10 @@ type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 export const HomeScreen: React.FC = () => {
     const navigation = useNavigation<HomeScreenNavigationProp>();
     const [modalVisible, setModalVisible] = useState(false);
-    // ✅ NEW: State to store pre-filled address
+    // NEW: State to store pre-filled address
     const [prefilledAddress, setPrefilledAddress] = useState<string | null>(null);
 
-    // ✅ Use paginated hook for real vehicle data
+    // Use paginated hook for real vehicle data
     const {
         items,
         loading,
@@ -34,7 +34,7 @@ export const HomeScreen: React.FC = () => {
         loadInitial,
     } = useVehicleModelsPaginated();
 
-    // ✅ Load initial data on mount
+    // Load initial data on mount
     useEffect(() => {
         loadInitial({
             startTime: undefined,
@@ -43,15 +43,20 @@ export const HomeScreen: React.FC = () => {
         });
     }, []);
 
-    // ✅ Map search items to motorcycles for display
+    // Map search items to motorcycles for display
     const defaultDateRange = DateHelper.getDefaultDateRange();
     const featuredBikes = useMemo(() => {
         const motorcycles = VehicleModelMapper.fromSearchItems(items, [], defaultDateRange);
         
-        // ✅ Shuffle array randomly using Fisher-Yates algorithm
-        const shuffled = [...motorcycles].sort(() => Math.random() - 0.5);
+        // Filter out bikes with 0 availability - only feature what you have!
+        const availableBikes = motorcycles.filter(bike => 
+            bike.countAvailable !== undefined && bike.countAvailable > 0
+        );
         
-        // ✅ Take first 5 bikes after shuffling (random selection)
+        // Shuffle array randomly using Fisher-Yates algorithm
+        const shuffled = [...availableBikes].sort(() => Math.random() - 0.5);
+        
+        // Take first 5 bikes after shuffling (or less if not enough available)
         return shuffled.slice(0, 5);
     }, [items, defaultDateRange]);
 
@@ -75,13 +80,13 @@ export const HomeScreen: React.FC = () => {
         });
     };
 
-    // ✅ NEW: Handle city selection
+    // NEW: Handle city selection
     const handleCitySelect = (cityAddress: string) => {
         setPrefilledAddress(cityAddress);
         setModalVisible(true);
     };
 
-    // ✅ NEW: Handle modal close - reset pre-filled address
+    // NEW: Handle modal close - reset pre-filled address
     const handleModalClose = () => {
         setModalVisible(false);
         setPrefilledAddress(null);
@@ -108,15 +113,15 @@ export const HomeScreen: React.FC = () => {
                     loading={loading}
                     error={error}
                     onViewAll={handleViewAllBikes}
-                    onBikePress={handleBikePress} // ✅ NEW: Pass bike press handler
+                    onBikePress={handleBikePress} // NEW: Pass bike press handler
                 />
-                {/* ✅ UPDATED: Pass city select handler */}
+                {/* UPDATED: Pass city select handler */}
                 <PopularCitiesSection onCityPress={handleCitySelect} />
                 <AdvantagesSection />
                 <ReviewsSection />
             </ScrollView>
 
-            {/* ✅ UPDATED: Pass initial address and custom close handler */}
+            {/* UPDATED: Pass initial address and custom close handler */}
             <BookingModal
                 visible={modalVisible}
                 onClose={handleModalClose}
