@@ -109,8 +109,8 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 <View style={styles.urgentAlert}>
                     <Icon name="clock" size={16} color="#fbbf24" solid />
                     <View style={styles.alertContent}>
-                        <Text style={styles.alertTitle}>Thanh toán trước {trip.paymentExpiry}</Text>
-                        <Text style={styles.alertSubtext}>Đơn sẽ tự động hủy</Text>
+                        <Text style={styles.alertTitle}>Thanh toán trong vòng {trip.paymentExpiry}</Text>
+                        <Text style={styles.alertSubtext}>Đơn sẽ tự động hủy nếu không thanh toán</Text>
                     </View>
                 </View>
             )}
@@ -143,30 +143,16 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
             {/* ✅ Actions - SINGLE ROW */}
             <View style={styles.actions}>
                 {trip.status === "pending" && (
-                    <>
-                        <TouchableOpacity 
-                            style={styles.primaryButton} 
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                onPayNow?.();
-                            }}
-                        >
-                            <Icon name="credit-card" size={14} color="#000" solid />
-                            <Text style={styles.primaryButtonText}>Thanh toán</Text>
-                        </TouchableOpacity>
-                        {onCancel && (
-                            <TouchableOpacity 
-                                style={styles.cancelButton} 
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    onCancel();
-                                }}
-                            >
-                                <Icon name="times" size={14} color="#ef4444" solid />
-                                <Text style={styles.cancelButtonText}>Hủy</Text>
-                            </TouchableOpacity>
-                        )}
-                    </>
+                    <TouchableOpacity 
+                        style={styles.primaryButton} 
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onViewDetails();
+                        }}
+                    >
+                        <Icon name="file-alt" size={14} color="#000" solid />
+                        <Text style={styles.primaryButtonText}>Chi tiết</Text>
+                    </TouchableOpacity>
                 )}
 
                 {trip.status === "booked" && (
@@ -268,7 +254,7 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "700",
     },
-    // ✅ NEW: Large Image Container
+    // ✅ Large Image Container
     imageContainer: {
         width: "100%",
         height: 160,
@@ -303,7 +289,7 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         textTransform: "uppercase",
     },
-    // ✅ NEW: Vehicle Info Below Image
+    // ✅ Vehicle Info Below Image
     vehicleInfo: {
         marginBottom: 12,
     },
