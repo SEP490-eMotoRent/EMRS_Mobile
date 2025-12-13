@@ -178,10 +178,10 @@ export const RegisterScreen: React.FC = () => {
           />
 
           {/* Social authentication options (Google) */}
-          <GoogleAuthButton 
+          {/* <GoogleAuthButton 
             onPress={handleGoogleSignUp} 
             showSeparator={true} 
-          />
+          /> */}
 
           {/* Login prompt for existing users */}
           <SignInPrompt onSignInPress={handleSignIn} />

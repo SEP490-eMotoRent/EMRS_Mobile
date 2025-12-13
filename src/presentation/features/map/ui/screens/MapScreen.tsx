@@ -14,8 +14,9 @@ import { VehicleBottomSheet } from "../orgamisms/VehicleBottomSheet";
 import { useBranches } from "../../hooks/useBranches";
 import { useMapInteractions } from "../../hooks/useMapInteractions";
 import { useMapRegion } from "../../hooks/useMapRegion";
-import { FilterModal, FilterState } from "../../../vehicleList/ui/orgamism/FilterModal";
-import { getActiveFilterCount, getDefaultFilters } from "../../utils/filterUtils";
+// ❌ COMMENTED OUT - Filter imports
+// import { FilterModal, FilterState } from "../../../vehicleList/ui/orgamism/FilterModal";
+// import { getActiveFilterCount, getDefaultFilters } from "../../utils/filterUtils";
 
 type MapScreenRouteProp = RouteProp<BrowseStackParamList, 'Map'>;
 type MapScreenNavigationProp = StackNavigationProp<BrowseStackParamList, 'Map'>;
@@ -32,8 +33,9 @@ export const MapScreen: React.FC = () => {
 
     const { location, dateRange, address } = routeParams;
 
-    const [filters, setFilters] = useState<FilterState>(getDefaultFilters());
-    const [filterModalVisible, setFilterModalVisible] = useState(false);
+    // ❌ COMMENTED OUT - Filter state
+    // const [filters, setFilters] = useState<FilterState>(getDefaultFilters());
+    // const [filterModalVisible, setFilterModalVisible] = useState(false);
 
     const { branches, loading, error, refetch } = useBranches();
     const { region, setRegion, searchedLocation } = useMapRegion({ branches, address });
@@ -53,9 +55,10 @@ export const MapScreen: React.FC = () => {
         handleBookVehicle,
     } = useMapInteractions({ dateRange });
 
-    const activeFilterCount = useMemo(() => 
-        getActiveFilterCount(filters), 
-    [filters]);
+    // ❌ COMMENTED OUT - Active filter count
+    // const activeFilterCount = useMemo(() => 
+    //     getActiveFilterCount(filters), 
+    // [filters]);
 
     const validBranches = useMemo(() => {
         return branches.filter(branch => 
@@ -77,28 +80,60 @@ export const MapScreen: React.FC = () => {
     }, [selectedBranchId, validBranches]);
 
     const handleListViewPress = useCallback(() => {
-        navigation.navigate('ListView', { location, dateRange, address });
+        try {
+            console.log('[MapScreen] Navigating to ListView');
+            navigation.navigate('ListView', { location, dateRange, address });
+        } catch (err) {
+            console.error('[MapScreen] ListView navigation failed: ', err);
+            // Optional: Show toast or error message
+        }
     }, [navigation, location, dateRange, address]);
 
-    const handleFilterPress = useCallback(() => {
-        setFilterModalVisible(true);
-    }, []);
+    // ❌ COMMENTED OUT - Filter press handler
+    // const handleFilterPress = useCallback(() => {
+    //     setFilterModalVisible(true);
+    // }, []);
 
-    const handleFilterApply = useCallback((newFilters: FilterState) => {
-        setFilters(newFilters);
-        setFilterModalVisible(false);
-    }, []);
+    // ❌ COMMENTED OUT - Filter apply handler
+    // const handleFilterApply = useCallback((newFilters: FilterState) => {
+    //     setFilters(newFilters);
+    //     setFilterModalVisible(false);
+    // }, []);
 
-    const handleFilterClose = useCallback(() => {
-        setFilterModalVisible(false);
-    }, []);
+    // ❌ COMMENTED OUT - Filter close handler
+    // const handleFilterClose = useCallback(() => {
+    //     setFilterModalVisible(false);
+    // }, []);
 
+    // ✅ UPDATED - Refresh now actually refreshes the page
     const handleRefresh = useCallback(() => {
-        setFilters(getDefaultFilters());
+        // ❌ COMMENTED OUT - Reset filters
+        // setFilters(getDefaultFilters());
+        
+        // ✅ Refetch branches data
         refetch();
-    }, [refetch]);
+        
+        // ✅ Close bottom sheet if open
+        if (bottomSheetVisible) {
+            handleBottomSheetClose();
+        }
+        
+        // ✅ Reset region to default if needed (optional - you can remove this if you want to keep current position)
+        // This will re-center the map based on branches
+        // You can uncomment this if you want full reset:
+        // if (validBranches.length > 0) {
+        //     const firstBranch = validBranches[0];
+        //     setRegion({
+        //         latitude: firstBranch.latitude,
+        //         longitude: firstBranch.longitude,
+        //         latitudeDelta: 0.05,
+        //         longitudeDelta: 0.05,
+        //     });
+        // }
+    }, [refetch, bottomSheetVisible, handleBottomSheetClose]);
 
     const handleRegionChangeComplete = useCallback((newRegion: Region) => {
+        console.log('[MapScreen] Region changed: ', newRegion);
         setRegion(newRegion);
     }, [setRegion]);
 
@@ -168,11 +203,15 @@ export const MapScreen: React.FC = () => {
                 />
             </View>
 
+            {/* ✅ UPDATED - Only refresh button, no filter */}
             <View style={styles.filtersContainer}>
                 <MapFilters
-                    onFilterPress={handleFilterPress}
+                    // ❌ COMMENTED OUT - Filter press
+                    // onFilterPress={handleFilterPress}
                     onRefreshPress={handleRefresh}
-                    activeFilterCount={activeFilterCount}
+                    // ❌ COMMENTED OUT - Active filter count
+                    // activeFilterCount={activeFilterCount}
+                    showFilterButton={false} // Hide filter button
                 />
             </View>
 
@@ -188,12 +227,13 @@ export const MapScreen: React.FC = () => {
                 onClose={handleBookingModalClose}
             />
 
-            <FilterModal
+            {/* ❌ COMMENTED OUT - Filter modal */}
+            {/* <FilterModal
                 visible={filterModalVisible}
                 onClose={handleFilterClose}
                 onApply={handleFilterApply}
                 currentFilters={filters}
-            />
+            /> */}
 
             {/* ✅ UPDATED: Pass branch and searched locations */}
             <VehicleBottomSheet

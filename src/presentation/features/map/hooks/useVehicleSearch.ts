@@ -30,6 +30,7 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
 
     useEffect(() => {
         return () => {
+            console.log('[useVehicleSearch] Unmounting hook');
             trackBreadcrumb('🧹 Cleaning up useVehicleSearch');
             isMountedRef.current = false;
             isSearchingRef.current = false;
@@ -37,6 +38,7 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
     }, []);
 
     const cancelSearch = useCallback(() => {
+        console.log('[useVehicleSearch] Cancelling search #', currentSearchIdRef.current);
         trackBreadcrumb(`⏹️ Cancelling search #${currentSearchIdRef.current}`);
         currentSearchIdRef.current += 1;
         isSearchingRef.current = false;
@@ -48,8 +50,8 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
         startTime?: string,
         endTime?: string
     ) => {
-        // ✅ Validate input
         if (!branchId || typeof branchId !== 'string') {
+            console.error('[useVehicleSearch] Invalid branch ID: ', branchId);
             trackError('STATE_ERROR', new Error('Invalid branchId'), 'Search validation failed', { branchId });
             if (isMountedRef.current) {
                 setError('Invalid branch ID');
@@ -58,25 +60,25 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
             return;
         }
 
-        // ✅ Prevent concurrent searches
         if (isSearchingRef.current) {
+            console.log('[useVehicleSearch] Search in progress, cancelling old one');
             trackBreadcrumb('🚫 Search already in progress, cancelling...');
             cancelSearch();
             await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        // ✅ Create unique ID for this search
         const searchId = ++currentSearchIdRef.current;
         isSearchingRef.current = true;
 
+        console.log('[useVehicleSearch] Starting search #', searchId, ': branch=', branchId, ', range=', dateRange);
         trackBreadcrumb(`🔍 Starting search #${searchId}: branch=${branchId}, range=${dateRange}`);
 
         try {
-            // ✅ Clear state immediately
+            // Set loading, but DO NOT clear vehicles — prevent flash/crash on rapid taps
             if (isMountedRef.current) {
                 setLoading(true);
                 setError(null);
-                setVehicles([]);
+                // REMOVED setVehicles([]) — keeps old vehicles until new ones load, cures unmount race
             }
 
             const searchUseCase = sl.getSearchVehiclesUseCase();
@@ -91,6 +93,7 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 setTimeout(() => reject(new Error('Search timeout')), 15000);
             });
 
+            console.log('[useVehicleSearch] Awaiting API for search #', searchId);
             trackBreadcrumb(`⏳ Awaiting API response for search #${searchId}`);
 
             const results: VehicleModelSearchResponse[] = await Promise.race([
@@ -98,26 +101,27 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 timeoutPromise
             ]);
 
-            // ✅ Check if this search was cancelled
             if (searchId !== currentSearchIdRef.current) {
+                console.log('[useVehicleSearch] Search #', searchId, ' cancelled');
                 trackBreadcrumb(`⏹️ Search #${searchId} was cancelled (current: ${currentSearchIdRef.current})`);
                 return;
             }
 
-            // ✅ Check if component unmounted
             if (!isMountedRef.current) {
+                console.log('[useVehicleSearch] Component unmounted, discarding search #', searchId);
                 trackBreadcrumb(`🗑️ Component unmounted, discarding search #${searchId}`);
                 return;
             }
 
+            console.log('[useVehicleSearch] Search #', searchId, ' completed with ', results?.length || 0, ' results');
             trackBreadcrumb(`✅ Search #${searchId} completed: ${results?.length || 0} results`);
 
             if (!Array.isArray(results)) {
                 throw new Error('Invalid search results format');
             }
 
-            // ✅ Handle empty results
             if (results.length === 0) {
+                console.log('[useVehicleSearch] No vehicles found for search #', searchId);
                 trackBreadcrumb(`📭 No vehicles found for search #${searchId}`);
                 if (isMountedRef.current && searchId === currentSearchIdRef.current) {
                     setVehicles([]);
@@ -126,36 +130,39 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 return;
             }
 
-            // Calculate rental duration
             let rentalDays = 1;
             try {
                 rentalDays = calculateRentalDuration(dateRange);
+                console.log('[useVehicleSearch] Rental duration: ', rentalDays, ' days');
                 trackBreadcrumb(`📅 Rental duration: ${rentalDays} days`);
             } catch (durationError) {
+                console.error('[useVehicleSearch] Duration calculation failed: ', durationError);
                 trackError('JS_ERROR', durationError, 'Duration calculation failed', { dateRange });
             }
 
-            // Map results
             const mappedVehicles = mapVehicleModelsToElectricVehicles(results, rentalDays);
+            console.log('[useVehicleSearch] Mapped ', mappedVehicles.length, ' vehicles');
             trackBreadcrumb(`🚗 Mapped ${mappedVehicles.length} vehicles`);
 
-            // ✅ Double-check before updating state
             if (isMountedRef.current && searchId === currentSearchIdRef.current) {
+                console.log('[useVehicleSearch] Updating state with ', mappedVehicles.length, ' vehicles');
                 trackBreadcrumb(`✅ Updating state with ${mappedVehicles.length} vehicles`);
                 setVehicles(mappedVehicles);
             } else {
+                console.log('[useVehicleSearch] Discarding results for stale search #', searchId);
                 trackBreadcrumb(`⏹️ Discarding results for search #${searchId} (stale)`);
             }
 
         } catch (err) {
-            // ✅ Check if still relevant
             if (!isMountedRef.current || searchId !== currentSearchIdRef.current) {
+                console.log('[useVehicleSearch] Ignoring error for cancelled/stale search #', searchId);
                 trackBreadcrumb(`⏹️ Ignoring error for cancelled/stale search #${searchId}`);
                 return;
             }
 
             const errorMessage = err instanceof Error ? err.message : 'Failed to search vehicles';
             
+            console.error('[useVehicleSearch] Search #', searchId, ' failed: ', errorMessage);
             trackError('JS_ERROR', err, `Search #${searchId} failed`, {
                 branchId,
                 dateRange,
@@ -170,10 +177,10 @@ export const useVehicleSearch = (): UseVehicleSearchResult => {
                 setVehicles([]);
             }
         } finally {
-            // ✅ Only clear loading if this is still the current search
             if (isMountedRef.current && searchId === currentSearchIdRef.current) {
                 setLoading(false);
                 isSearchingRef.current = false;
+                console.log('[useVehicleSearch] Search #', searchId, ' finalized');
                 trackBreadcrumb(`🏁 Search #${searchId} finalized`);
             }
         }

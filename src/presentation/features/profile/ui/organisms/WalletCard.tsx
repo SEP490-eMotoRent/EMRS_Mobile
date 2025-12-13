@@ -21,6 +21,11 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   onManage,
   onRetry,
 }) => {
+  // Format number with dots as thousand separators
+  const formatNumber = (num: number): string => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
   // === RENDER LOADING STATE ===
   if (loading) {
     return (
@@ -76,7 +81,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
 
       <Text style={styles.availableText}>Số Dư</Text>
       <Text style={styles.balanceAmount}>
-        {balance !== null ? balance.toLocaleString() : '0'}đ
+        {balance !== null ? formatNumber(balance) : '0'}đ
       </Text>
 
       <View style={styles.walletActions}>

@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 
 interface MapSearchBarProps {
     location: string;
@@ -14,18 +15,22 @@ export const MapSearchBar: React.FC<MapSearchBarProps> = ({
 }) => {
     return (
         <TouchableOpacity style={styles.container} onPress={onPress}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <View style={styles.textContainer}>
-            <Text style={styles.locationText} numberOfLines={1}>
-            {location}
-            </Text>
-            <Text style={styles.dateText} numberOfLines={1}>
-            {dateRange}
-            </Text>
-        </View>
-        <View style={styles.currentLocationButton}>
-            <Text style={styles.targetIcon}>🎯</Text>
-        </View>
+            {/* ✅ Updated: FontAwesome search icon */}
+            <FontAwesome name="search" size={20} color="#fff" style={styles.searchIcon} />
+            
+            <View style={styles.textContainer}>
+                <Text style={styles.locationText} numberOfLines={1}>
+                    {location}
+                </Text>
+                <Text style={styles.dateText} numberOfLines={1}>
+                    {dateRange}
+                </Text>
+            </View>
+            
+            <View style={styles.currentLocationButton}>
+                {/* ✅ Updated: FontAwesome crosshairs icon */}
+                <FontAwesome name="crosshairs" size={16} color="#fff" />
+            </View>
         </TouchableOpacity>
     );
 };
@@ -43,8 +48,7 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
     },
-    locationIcon: {
-        fontSize: 24,
+    searchIcon: {
         marginRight: 12,
     },
     currentLocationButton: {
@@ -55,9 +59,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginLeft: 8,
-    },
-    targetIcon: {
-        fontSize: 18,
     },
     textContainer: {
         flex: 1,
@@ -71,9 +72,5 @@ const styles = StyleSheet.create({
         color: "#aaa",
         fontSize: 14,
         marginTop: 2,
-    },
-    searchIcon: {
-        fontSize: 24,
-        marginRight: 12,
     },
 });

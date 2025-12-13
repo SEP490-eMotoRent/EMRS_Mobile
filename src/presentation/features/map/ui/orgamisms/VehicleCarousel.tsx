@@ -29,37 +29,14 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
 }) => {
     const scrollX = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef<ScrollView>(null);
-    const isMountedRef = useRef(true);
 
-    // ✅ Cleanup on unmount - CRITICAL for preventing crashes
     useEffect(() => {
-        isMountedRef.current = true;
-
+        console.log('[VehicleCarousel] Mounted with ', vehicles.length, ' vehicles');
         return () => {
-            console.log('🧹 Cleaning up VehicleCarousel');
-            isMountedRef.current = false;
-            
-            // ✅ Stop all animations
+            console.log('[VehicleCarousel] Unmounting');
             scrollX.stopAnimation();
-            
-            // ✅ Clear scroll view reference
-            if (scrollViewRef.current) {
-                scrollViewRef.current = null;
-            }
         };
-    }, [scrollX]);
-
-    // ✅ Reset scroll position when vehicles change
-    useEffect(() => {
-        if (scrollViewRef.current && vehicles.length > 0) {
-            // Small delay to ensure render is complete
-            setTimeout(() => {
-                if (isMountedRef.current && scrollViewRef.current) {
-                    scrollViewRef.current.scrollTo({ x: 0, y: 0, animated: false });
-                }
-            }, 50);
-        }
-    }, [vehicles]);
+    }, [vehicles.length]);
 
     if (!vehicles || vehicles.length === 0) {
         return (
@@ -86,15 +63,7 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
                 overScrollMode="never"
                 onScroll={Animated.event(
                     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-                    { 
-                        useNativeDriver: false,
-                        listener: (event) => {
-                            // Optional: Add scroll tracking
-                            if (!isMountedRef.current) {
-                                console.log('⚠️ Scroll event on unmounted component');
-                            }
-                        }
-                    }
+                    { useNativeDriver: false }
                 )}
             >
                 {vehicles.map((vehicle, index) => (
