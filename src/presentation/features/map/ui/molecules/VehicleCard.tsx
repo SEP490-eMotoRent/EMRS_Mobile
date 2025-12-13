@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
@@ -39,13 +39,44 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
     distance,
 }) => {
     const navigation = useNavigation<VehicleCardNavigationProp>();
+    const isMountedRef = useRef(true);
+
+    // ✅ Track mount status to prevent navigation after unmount
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     const goToVehicleDetails = () => {
-        navigation.navigate("VehicleDetails", {
-            vehicleId: vehicle.id,
-            dateRange,
-            location,
-        });
+        // ✅ Prevent navigation if component unmounted
+        if (!isMountedRef.current) {
+            console.log('⚠️ Prevented navigation on unmounted component');
+            return;
+        }
+
+        try {
+            navigation.navigate("VehicleDetails", {
+                vehicleId: vehicle.id,
+                dateRange,
+                location,
+            });
+        } catch (error) {
+            console.error('❌ Navigation error:', error);
+        }
+    };
+
+    const handleBookPress = (e: any) => {
+        e.stopPropagation();
+        
+        // ✅ Prevent action if component unmounted
+        if (!isMountedRef.current) {
+            console.log('⚠️ Prevented book action on unmounted component');
+            return;
+        }
+
+        goToVehicleDetails();
     };
 
     return (
@@ -94,7 +125,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                         </View>
                     )}
 
-                    {/* Battery/Range Badge - Top Right (only if vehicle.range exists) */}
+                    {/* Battery/Range Badge - Top Right */}
                     {vehicle.range && (
                         <View style={styles.rangeBadge}>
                             <LinearGradient
@@ -111,28 +142,23 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
 
                     {/* Enhanced Color Indicator - Bottom Left */}
                     <View style={styles.colorIndicatorContainer}>
-                        {/* Glow Effect */}
                         <View
                             style={[
                                 styles.colorGlow,
                                 { backgroundColor: vehicle.colorHex },
                             ]}
                         />
-                        {/* Main Color Dot */}
                         <View
                             style={[
                                 styles.colorDot,
                                 { backgroundColor: vehicle.colorHex },
                             ]}
                         >
-                            {/* Inner Highlight for 3D effect */}
                             <View style={styles.colorHighlight} />
-                            {/* White border for light colors */}
                             {(vehicle.color === "Trắng" || vehicle.colorHex === "#ffffff") && (
                                 <View style={styles.colorDotBorder} />
                             )}
                         </View>
-                        {/* Color Label */}
                         <View style={styles.colorLabel}>
                             <Text style={styles.colorLabelText}>{vehicle.color}</Text>
                         </View>
@@ -168,10 +194,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                         {/* Enhanced Book Button */}
                         <TouchableOpacity
                             style={styles.bookButton}
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                goToVehicleDetails();
-                            }}
+                            onPress={handleBookPress}
                             activeOpacity={0.85}
                         >
                             <LinearGradient
@@ -194,7 +217,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
 const styles = StyleSheet.create({
     card: {
         marginHorizontal: 8,
-        width: 240, // Reduced from 260
+        width: 240,
         borderRadius: 18,
         overflow: "hidden",
         shadowColor: "#7c4dff",
@@ -219,7 +242,7 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         width: "100%",
-        height: 140, // Reduced from 170
+        height: 140,
         backgroundColor: "#0f0f0f",
         justifyContent: "center",
         alignItems: "center",
@@ -249,7 +272,6 @@ const styles = StyleSheet.create({
         fontSize: 56,
         opacity: 0.25,
     },
-    // Distance Badge - Top Left
     distanceBadge: {
         position: "absolute",
         top: 10,
@@ -277,7 +299,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "700",
     },
-    // Range Badge - Top Right
     rangeBadge: {
         position: "absolute",
         top: 10,
@@ -303,7 +324,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "700",
     },
-    // Enhanced Color Indicator - Bottom Left
     colorIndicatorContainer: {
         position: "absolute",
         bottom: 10,
@@ -365,7 +385,6 @@ const styles = StyleSheet.create({
         fontSize: 9,
         fontWeight: "600",
     },
-    // Info Section
     infoSection: {
         padding: 12,
     },
@@ -392,7 +411,6 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255, 255, 255, 0.08)",
         marginVertical: 8,
     },
-    // Action Row
     actionRow: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -424,7 +442,6 @@ const styles = StyleSheet.create({
         textTransform: "uppercase",
         letterSpacing: 0.5,
     },
-    // Enhanced Book Button
     bookButton: {
         borderRadius: 12,
         overflow: "hidden",

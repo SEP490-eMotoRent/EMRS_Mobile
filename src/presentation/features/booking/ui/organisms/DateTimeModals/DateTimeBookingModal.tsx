@@ -65,7 +65,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             setCalendarReady(false);
             const timer = setTimeout(() => {
                 setCalendarReady(true);
-            }, 50);
+            }, 150);
             return () => clearTimeout(timer);
         }
     }, [visible]);

@@ -1,11 +1,11 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
+    Animated,
     Dimensions,
     ScrollView,
     StyleSheet,
-    View,
-    Animated,
     Text,
+    View,
 } from "react-native";
 import { ElectricVehicle, VehicleCard } from "../molecules/VehicleCard";
 
@@ -14,99 +14,142 @@ const CARD_WIDTH = 260;
 const CARD_SPACING = 12;
 const ITEM_WIDTH = CARD_WIDTH + CARD_SPACING;
 
-    interface VehicleCarouselProps {
+interface VehicleCarouselProps {
     vehicles: ElectricVehicle[];
     onBookVehicle: (vehicleId: string) => void;
     dateRange?: string;
     location?: string;
-    }
+}
 
-    export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
+export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
     vehicles,
     onBookVehicle,
     dateRange,
     location,
-    }) => {
+}) => {
     const scrollX = useRef(new Animated.Value(0)).current;
+    const scrollViewRef = useRef<ScrollView>(null);
+    const isMountedRef = useRef(true);
+
+    // ✅ Cleanup on unmount - CRITICAL for preventing crashes
+    useEffect(() => {
+        isMountedRef.current = true;
+
+        return () => {
+            console.log('🧹 Cleaning up VehicleCarousel');
+            isMountedRef.current = false;
+            
+            // ✅ Stop all animations
+            scrollX.stopAnimation();
+            
+            // ✅ Clear scroll view reference
+            if (scrollViewRef.current) {
+                scrollViewRef.current = null;
+            }
+        };
+    }, [scrollX]);
+
+    // ✅ Reset scroll position when vehicles change
+    useEffect(() => {
+        if (scrollViewRef.current && vehicles.length > 0) {
+            // Small delay to ensure render is complete
+            setTimeout(() => {
+                if (isMountedRef.current && scrollViewRef.current) {
+                    scrollViewRef.current.scrollTo({ x: 0, y: 0, animated: false });
+                }
+            }, 50);
+        }
+    }, [vehicles]);
 
     if (!vehicles || vehicles.length === 0) {
         return (
-        <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>No vehicles</Text>
-            <Text style={styles.emptyText}>Không có xe nào</Text>
-        </View>
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>🔍</Text>
+                <Text style={styles.emptyText}>Không có xe nào</Text>
+            </View>
         );
     }
 
     return (
         <View style={styles.container}>
-        <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            snapToInterval={ITEM_WIDTH}
-            snapToAlignment="center"
-            contentContainerStyle={styles.content}
-            scrollEventThrottle={16}
-            removeClippedSubviews={true}
-            directionalLockEnabled={true}
-            overScrollMode="never"
-            onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: false }
+            <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToInterval={ITEM_WIDTH}
+                snapToAlignment="center"
+                contentContainerStyle={styles.content}
+                scrollEventThrottle={16}
+                removeClippedSubviews={true}
+                directionalLockEnabled={true}
+                overScrollMode="never"
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                    { 
+                        useNativeDriver: false,
+                        listener: (event) => {
+                            // Optional: Add scroll tracking
+                            if (!isMountedRef.current) {
+                                console.log('⚠️ Scroll event on unmounted component');
+                            }
+                        }
+                    }
+                )}
+            >
+                {vehicles.map((vehicle, index) => (
+                    <View key={`${vehicle.id}-${index}`} style={styles.cardWrapper}>
+                        <VehicleCard
+                            vehicle={vehicle}
+                            onBookPress={onBookVehicle}
+                            dateRange={dateRange}
+                            location={location}
+                        />
+                    </View>
+                ))}
+            </ScrollView>
+
+            {vehicles.length > 1 && (
+                <View style={styles.pagination}>
+                    {vehicles.map((_, index) => {
+                        const inputRange = [
+                            (index - 1) * ITEM_WIDTH,
+                            index * ITEM_WIDTH,
+                            (index + 1) * ITEM_WIDTH,
+                        ];
+
+                        const scale = scrollX.interpolate({
+                            inputRange,
+                            outputRange: [0.6, 1.3, 0.6],
+                            extrapolate: "clamp",
+                        });
+
+                        const opacity = scrollX.interpolate({
+                            inputRange,
+                            outputRange: [0.4, 1, 0.4],
+                            extrapolate: "clamp",
+                        });
+
+                        return (
+                            <Animated.View
+                                key={`dot-${index}`}
+                                style={[
+                                    styles.dot,
+                                    { transform: [{ scale }], opacity },
+                                ]}
+                            />
+                        );
+                    })}
+                </View>
             )}
-        >
-            {vehicles.map((vehicle) => (
-            <View key={vehicle.id} style={styles.cardWrapper}>
-                <VehicleCard
-                vehicle={vehicle}
-                onBookPress={onBookVehicle}
-                dateRange={dateRange}
-                location={location}
-                />
-            </View>
-            ))}
-        </ScrollView>
-
-        {vehicles.length > 1 && (
-            <View style={styles.pagination}>
-            {vehicles.map((_, index) => {
-                const inputRange = [
-                (index - 1) * ITEM_WIDTH,
-                index * ITEM_WIDTH,
-                (index + 1) * ITEM_WIDTH,
-                ];
-
-                const scale = scrollX.interpolate({
-                inputRange,
-                outputRange: [0.6, 1.3, 0.6],
-                extrapolate: "clamp",
-                });
-
-                const opacity = scrollX.interpolate({
-                inputRange,
-                outputRange: [0.4, 1, 0.4],
-                extrapolate: "clamp",
-                });
-
-                return (
-                <Animated.View
-                    key={index}
-                    style={[
-                    styles.dot,
-                    { transform: [{ scale }], opacity },
-                    ]}
-                />
-                );
-            })}
-            </View>
-        )}
         </View>
     );
-    };
+};
 
-    const styles = StyleSheet.create({
-    container: { flex: 1 },
+const styles = StyleSheet.create({
+    container: { 
+        flex: 1,
+    },
     content: {
         paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2,
         paddingVertical: 12,

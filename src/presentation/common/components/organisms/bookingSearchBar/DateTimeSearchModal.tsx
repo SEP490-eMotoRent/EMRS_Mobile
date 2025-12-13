@@ -47,7 +47,7 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
             setCalendarReady(false);
             const timer = setTimeout(() => {
                 setCalendarReady(true);
-            }, 50);
+            }, 150);
             return () => clearTimeout(timer);
         }
     }, [visible]);

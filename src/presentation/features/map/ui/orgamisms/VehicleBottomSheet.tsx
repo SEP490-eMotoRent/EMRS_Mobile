@@ -11,6 +11,7 @@ import {
 import { calculateDistance, formatDistance } from "../../utils/distanceUtils";
 import { ElectricVehicle } from "../molecules/VehicleCard";
 import { VehicleCarousel } from "./VehicleCarousel";
+import { trackBreadcrumb, trackError } from "../../utils/crashTracker";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BOTTOM_SHEET_HEIGHT = 360;
@@ -47,6 +48,7 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     const translateY = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current;
     const animationInProgress = useRef(false);
     const currentAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
+    const lastVisibleState = useRef<boolean>(false); // ✅ NEW: Track last state
 
     const distanceKm = useMemo(() => {
         if (!branchLocation || !searchedLocation) return null;
@@ -65,82 +67,107 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     }, [distanceKm]);
 
     useEffect(() => {
-        // ✅ CRITICAL FIX: Stop any running animation before starting new one
-        if (animationInProgress.current && currentAnimationRef.current) {
-            console.log('⏹️ Stopping previous animation');
-            currentAnimationRef.current.stop();
-            translateY.stopAnimation();
-            animationInProgress.current = false;
-        }
-
-        // ✅ Don't start new animation if one is already running
-        if (animationInProgress.current) {
-            console.log('⚠️ Animation already in progress, skipping');
+        // ✅ CRITICAL: Skip if state didn't actually change
+        if (lastVisibleState.current === visible) {
             return;
         }
+        lastVisibleState.current = visible;
 
         try {
-            if (visible) {
-                console.log('📈 Opening bottom sheet');
-                animationInProgress.current = true;
-                
-                // Reset position immediately
-                translateY.setValue(BOTTOM_SHEET_HEIGHT);
-                
-                // Create and store animation reference
-                currentAnimationRef.current = Animated.spring(translateY, {
-                    toValue: 0,
-                    useNativeDriver: true,
-                    tension: 50,
-                    friction: 9,
-                });
+            trackBreadcrumb(`🎬 Animation trigger: visible=${visible}, inProgress=${animationInProgress.current}`);
 
-                currentAnimationRef.current.start(({ finished }) => {
-                    if (finished) {
-                        console.log('✅ Open animation completed');
-                    }
-                    animationInProgress.current = false;
-                    currentAnimationRef.current = null;
-                });
-            } else {
-                console.log('📉 Closing bottom sheet');
-                animationInProgress.current = true;
-                
-                // Create and store animation reference
-                currentAnimationRef.current = Animated.timing(translateY, {
-                    toValue: BOTTOM_SHEET_HEIGHT,
-                    duration: 250,
-                    useNativeDriver: true,
-                });
-
-                currentAnimationRef.current.start(({ finished }) => {
-                    if (finished) {
-                        console.log('✅ Close animation completed');
-                    }
-                    animationInProgress.current = false;
-                    currentAnimationRef.current = null;
-                });
+            // ✅ CRITICAL: Force stop any running animation FIRST
+            if (currentAnimationRef.current) {
+                trackBreadcrumb('⏹️ Force stopping previous animation');
+                currentAnimationRef.current.stop();
+                currentAnimationRef.current = null;
             }
+            
+            // Stop the native animation
+            translateY.stopAnimation(() => {
+                // After native animation stops, reset flag
+                animationInProgress.current = false;
+            });
+
+            // ✅ Wait a tick to ensure native cleanup
+            setTimeout(() => {
+                if (animationInProgress.current) {
+                    trackBreadcrumb('⚠️ Animation still in progress after cleanup, aborting');
+                    return;
+                }
+
+                animationInProgress.current = true;
+
+                if (visible) {
+                    trackBreadcrumb(`📈 Opening bottom sheet (${vehicles?.length || 0} vehicles)`);
+                    
+                    // Reset position
+                    translateY.setValue(BOTTOM_SHEET_HEIGHT);
+                    
+                    // Create animation
+                    currentAnimationRef.current = Animated.spring(translateY, {
+                        toValue: 0,
+                        useNativeDriver: true,
+                        tension: 50,
+                        friction: 9,
+                    });
+
+                    currentAnimationRef.current.start(({ finished }) => {
+                        if (finished) {
+                            trackBreadcrumb('✅ Open animation completed');
+                        } else {
+                            trackBreadcrumb('⚠️ Open animation interrupted');
+                        }
+                        animationInProgress.current = false;
+                        currentAnimationRef.current = null;
+                    });
+                } else {
+                    trackBreadcrumb('📉 Closing bottom sheet');
+                    
+                    // Create animation
+                    currentAnimationRef.current = Animated.timing(translateY, {
+                        toValue: BOTTOM_SHEET_HEIGHT,
+                        duration: 250,
+                        useNativeDriver: true,
+                    });
+
+                    currentAnimationRef.current.start(({ finished }) => {
+                        if (finished) {
+                            trackBreadcrumb('✅ Close animation completed');
+                        } else {
+                            trackBreadcrumb('⚠️ Close animation interrupted');
+                        }
+                        animationInProgress.current = false;
+                        currentAnimationRef.current = null;
+                    });
+                }
+            }, 16); // ✅ One frame delay (16ms) to ensure cleanup
+            
         } catch (error) {
-            console.error('❌ Animation error:', error);
+            trackError('ANIMATION_ERROR', error, 'Bottom sheet animation failed', {
+                visible,
+                vehicleCount: vehicles?.length,
+                animationInProgress: animationInProgress.current,
+            });
             animationInProgress.current = false;
             currentAnimationRef.current = null;
         }
-    }, [visible, translateY]);
+    }, [visible, translateY, vehicles?.length]);
 
     // ✅ Cleanup on unmount
     useEffect(() => {
         return () => {
-            console.log('🧹 Cleaning up bottom sheet animations');
+            trackBreadcrumb('🧹 Cleaning up bottom sheet animations');
             if (currentAnimationRef.current) {
                 currentAnimationRef.current.stop();
+                currentAnimationRef.current = null;
             }
             translateY.stopAnimation();
             animationInProgress.current = false;
         };
     }, [translateY]);
 
-    // ✅ Don't render at all when not visible (prevents ghost interactions)
+    // ✅ Don't render at all when not visible
     if (!visible) return null;
 
     const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
@@ -154,23 +181,23 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
 
     const handleClose = () => {
         try {
-            console.log('👆 Close button pressed');
+            trackBreadcrumb('👆 Close button pressed');
             onClose();
         } catch (error) {
-            console.error('❌ Error closing bottom sheet:', error);
+            trackError('JS_ERROR', error, 'Bottom sheet close handler failed');
         }
     };
 
     const handleBookVehicle = (vehicleId: string) => {
         try {
             if (!vehicleId || typeof vehicleId !== 'string') {
-                console.warn('⚠️ Invalid vehicle ID:', vehicleId);
+                trackError('STATE_ERROR', new Error('Invalid vehicle ID'), 'Invalid vehicle ID on book', { vehicleId });
                 return;
             }
-            console.log('📖 Booking vehicle:', vehicleId);
+            trackBreadcrumb(`📖 Booking vehicle: ${vehicleId}`);
             onBookVehicle(vehicleId);
         } catch (error) {
-            console.error('❌ Error booking vehicle:', error);
+            trackError('JS_ERROR', error, 'Book vehicle handler failed', { vehicleId });
         }
     };
 
