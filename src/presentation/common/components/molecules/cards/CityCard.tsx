@@ -1,6 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { BuildingIcon } from '../../atoms/icons/searchBarIcons/BuildingIcon';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface CityCardProps {
     cityName: string;
@@ -19,7 +19,7 @@ export const CityCard: React.FC<CityCardProps> = ({
             onPress={onPress}
             activeOpacity={0.7}
         >
-            <BuildingIcon />
+            <Ionicons name="storefront" size={26} color="#A78BFA" />
             <View style={styles.cityContent}>
                 <Text style={styles.cityName}>{cityName}</Text>
                 <Text style={styles.citySub}>{state}</Text>
@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
     },
     cityContent: {
         flex: 1,
+        marginLeft: 16, // ✅ Add spacing from icon
     },
     cityName: {
         color: '#fff',

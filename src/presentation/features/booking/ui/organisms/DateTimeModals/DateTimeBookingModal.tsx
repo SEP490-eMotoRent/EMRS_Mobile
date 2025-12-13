@@ -9,6 +9,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import { CalendarList } from "react-native-calendars";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 
@@ -25,7 +26,6 @@ interface DateTimeBookingModalProps {
     initialReturnTime?: string;
 }
 
-// ✅ CRITICAL: Local date formatting to avoid UTC timezone bugs
 const formatLocalDate = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -48,6 +48,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     const [startDate, setStartDate] = useState<string | null>(initialStartDate || null);
     const [endDate, setEndDate] = useState<string | null>(initialEndDate || null);
     const [selectedDates, setSelectedDates] = useState<{ [key: string]: any }>({});
+    const [calendarReady, setCalendarReady] = useState(false); // ✅ Prevent flicker
 
     const [showTimePicker, setShowTimePicker] = useState(false);
     const [currentTimeType, setCurrentTimeType] = useState<"pickup" | "return">("pickup");
@@ -57,6 +58,17 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
 
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
     const periods = ["SA", "CH"];
+
+    // ✅ Minimal delay to prevent calendar flicker (50ms)
+    useEffect(() => {
+        if (visible) {
+            setCalendarReady(false);
+            const timer = setTimeout(() => {
+                setCalendarReady(true);
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [visible]);
 
     // ✅ Current time
     const now = new Date();
@@ -72,10 +84,11 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     today.setHours(0, 0, 0, 0);
     const todayStr = formatLocalDate(today);
 
+    // ✅ 6 months from today, but include the entire last month
     const maxDate = new Date(today);
-    maxDate.setMonth(maxDate.getMonth() + 12);
-    maxDate.setMonth(maxDate.getMonth() + 1, 0);
-    const maxDateStr = formatLocalDate(maxDate);
+    maxDate.setMonth(maxDate.getMonth() + 6);
+    const lastDayOfMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
+    const maxDateStr = formatLocalDate(lastDayOfMonth);
 
     const parseBranchTime = (timeStr: string): { hour: number; period: string } => {
         const match = timeStr.match(/(\d+):00\s*(SA|CH)/);
@@ -87,14 +100,13 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     const branchClose = parseBranchTime(branchCloseTime);
 
     const getAvailableHours = (period: string) => {
-        const allHours = Array.from({ length: 12 }, (_, i) => i + 1); // [1, 2, ..., 12]
+        const allHours = Array.from({ length: 12 }, (_, i) => i + 1);
         
-        // Convert 12-hour format to 24-hour for proper comparison
         const convertTo24Hour = (hour: number, per: string): number => {
             if (per === 'SA') {
-                return hour === 12 ? 0 : hour; // 12 SA = 0 (midnight)
+                return hour === 12 ? 0 : hour;
             } else {
-                return hour === 12 ? 12 : hour + 12; // 12 CH = 12 (noon), 1 CH = 13, etc.
+                return hour === 12 ? 12 : hour + 12;
             }
         };
         
@@ -106,9 +118,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             return hour24 >= openHour24 && hour24 <= closeHour24;
         });
         
-        // Sort hours chronologically within the period
-        // For SA: [1, 2, ..., 11, 12] → [12, 1, 2, ..., 11] (midnight first)
-        // For CH: [1, 2, ..., 11, 12] → [12, 1, 2, ..., 11] (noon first)
         return availableHours.sort((a, b) => {
             const a24 = convertTo24Hour(a, period);
             const b24 = convertTo24Hour(b, period);
@@ -124,26 +133,42 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             const start = new Date(initialStartDate);
             const end = new Date(initialEndDate);
 
-            let currentDate = new Date(start);
-            while (currentDate <= end) {
-                const dateStr = formatLocalDate(currentDate);
-                range[dateStr] = { 
-                    color: "#b8a4ff", 
+            if (initialStartDate === initialEndDate) {
+                // ✅ Same day - rounded with border
+                range[initialStartDate] = {
+                    startingDay: true,
+                    endingDay: true,
+                    color: "#b8a4ff",
                     textColor: "black",
+                    selected: true,
+                    selectedColor: "#7c3aed",
                 };
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
+            } else {
+                let currentDate = new Date(start);
+                while (currentDate <= end) {
+                    const dateStr = formatLocalDate(currentDate);
+                    range[dateStr] = { 
+                        color: "#b8a4ff", 
+                        textColor: "black",
+                    };
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
 
-            range[initialStartDate] = {
-                startingDay: true,
-                color: "#b8a4ff",
-                textColor: "black",
-            };
-            range[initialEndDate] = {
-                endingDay: true,
-                color: "#b8a4ff",
-                textColor: "black",
-            };
+                range[initialStartDate] = {
+                    startingDay: true,
+                    color: "#b8a4ff",
+                    textColor: "black",
+                    selected: true,
+                    selectedColor: "#7c3aed",
+                };
+                range[initialEndDate] = {
+                    endingDay: true,
+                    color: "#b8a4ff",
+                    textColor: "black",
+                    selected: true,
+                    selectedColor: "#7c3aed",
+                };
+            }
 
             setSelectedDates(range);
             setStartDate(initialStartDate);
@@ -153,7 +178,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         }
     }, [visible, initialStartDate, initialEndDate, initialPickupTime, initialReturnTime]);
 
-    // ✅ Clear error when modal opens
     useEffect(() => {
         if (visible) {
             setValidationError(null);
@@ -169,6 +193,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         }
 
         if (!startDate || (startDate && endDate)) {
+            // ✅ Single date - rounded with border
             setStartDate(day.dateString);
             setEndDate(null);
             setSelectedDates({
@@ -177,6 +202,8 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                     endingDay: true,
                     color: "#b8a4ff",
                     textColor: "black",
+                    selected: true,
+                    selectedColor: "#7c3aed",
                 },
             });
         } else {
@@ -189,34 +216,57 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             const startStr = formatLocalDate(start);
             const endStr = formatLocalDate(end);
 
-            let currentDate = new Date(start);
-            while (currentDate <= end) {
-                const dateStr = formatLocalDate(currentDate);
-                range[dateStr] = { 
-                    color: "#b8a4ff", 
+            if (startStr === endStr) {
+                // ✅ Same day - rounded with border
+                setSelectedDates({
+                    [startStr]: {
+                        startingDay: true,
+                        endingDay: true,
+                        color: "#b8a4ff",
+                        textColor: "black",
+                        selected: true,
+                        selectedColor: "#7c3aed",
+                    },
+                });
+            } else {
+                // Range selection - middle dates
+                let currentDate = new Date(start);
+                while (currentDate <= end) {
+                    const dateStr = formatLocalDate(currentDate);
+                    range[dateStr] = { 
+                        color: "#b8a4ff",
+                        textColor: "black",
+                    };
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                // ✅ Start date - left rounded with border
+                range[startStr] = {
+                    startingDay: true,
+                    color: "#b8a4ff",
                     textColor: "black",
+                    selected: true,
+                    selectedColor: "#7c3aed",
                 };
-                currentDate.setDate(currentDate.getDate() + 1);
+                
+                // ✅ End date - right rounded with border
+                range[endStr] = {
+                    endingDay: true,
+                    color: "#b8a4ff",
+                    textColor: "black",
+                    selected: true,
+                    selectedColor: "#7c3aed",
+                };
+
+                setSelectedDates(range);
             }
-
-            range[startStr] = {
-                startingDay: true,
-                color: "#b8a4ff",
-                textColor: "black",
-            };
-            range[endStr] = {
-                endingDay: true,
-                color: "#b8a4ff",
-                textColor: "black",
-            };
-
-            setSelectedDates(range);
+            
             setStartDate(startStr);
             setEndDate(endStr);
         }
     };
 
-    // ✅ NEW: Convert time string to Date object
+    // ✅ Convert time string to Date object
     const parseTimeToDate = (dateStr: string, timeStr: string): Date => {
         const match = timeStr.match(/(\d+):(\d+)\s*(SA|CH)/);
         if (!match) {
@@ -240,7 +290,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         return date;
     };
 
-    // ✅ NEW: Validate 24-hour advance booking
+    // ✅ Validate 24-hour advance booking
     const validateBookingTime = (startDateStr: string, startTimeStr: string): boolean => {
         const selectedStartDateTime = parseTimeToDate(startDateStr, startTimeStr);
         const minAllowedTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -266,7 +316,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         if (startDate && endDate) {
             // ✅ Validate 24-hour advance booking
             if (!validateBookingTime(startDate, pickupTime)) {
-                return; // Don't close modal if validation fails
+                return;
             }
 
             onConfirm(`${startDate} - ${endDate} (${pickupTime} - ${returnTime})`);
@@ -283,7 +333,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         const time = `${hour}:00 ${period}`;
         if (currentTimeType === "pickup") {
             setPickupTime(time);
-            // ✅ Clear validation error when time changes
             setValidationError(null);
         } else {
             setReturnTime(time);
@@ -291,10 +340,9 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         setShowTimePicker(false);
     };
 
-    // ✅ FIXED: Mark dates within 24 hours as disabled
+    // ✅ Mark dates within 24 hours as disabled
     const markedDatesWithDisabled = { ...selectedDates };
     
-    // Disable all dates before minDate
     const disableDate = new Date(minDate);
     for (let i = 0; i < 60; i++) {
         disableDate.setDate(disableDate.getDate() - 1);
@@ -333,54 +381,64 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                         ⚠️ Phải đặt trước ít nhất 24 giờ
                                     </Text>
                                 </View>
-                                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                                    <Text style={styles.closeIcon}>✕</Text>
+                                <TouchableOpacity 
+                                    onPress={onClose} 
+                                    style={styles.closeButton}
+                                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="close" size={28} color="#888" />
                                 </TouchableOpacity>
                             </View>
 
                             <View style={styles.calendarContainer}>
-                                <CalendarList
-                                    markingType="period"
-                                    markedDates={markedDatesWithDisabled}
-                                    onDayPress={onDayPress}
-                                    pastScrollRange={0}
-                                    futureScrollRange={12}
-                                    scrollEnabled={true}
-                                    minDate={minDateStr}
-                                    maxDate={maxDateStr}
-                                    monthFormat={'MMMM yyyy'}
-                                    renderHeader={(date) => {
-                                        const monthNames = [
-                                            "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4",
-                                            "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8",
-                                            "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
-                                        ];
-                                        const month = date?.getMonth() ?? 0;
-                                        const year = date?.getFullYear() ?? 2025;
-                                        return (
-                                            <Text style={{
-                                                color: "#fff",
-                                                fontSize: 18,
-                                                fontWeight: "600",
-                                                textAlign: "center",
-                                                paddingVertical: 10,
-                                            }}>
-                                                {monthNames[month]} {year}
-                                            </Text>
-                                        );
-                                    }}
-                                    theme={{
-                                        calendarBackground: "#000",
-                                        dayTextColor: "#fff",
-                                        monthTextColor: "#fff",
-                                        arrowColor: "#fff",
-                                        textDisabledColor: "#222",
-                                        todayTextColor: "#b8a4ff",
-                                        selectedDayBackgroundColor: "#b8a4ff",
-                                        selectedDayTextColor: "#000",
-                                    }}
-                                    style={styles.calendar}
-                                />
+                                {/* ✅ Opacity transition prevents flicker */}
+                                <View style={{ opacity: calendarReady ? 1 : 0, flex: 1 }}>
+                                    <CalendarList
+                                        markingType="period"
+                                        markedDates={markedDatesWithDisabled}
+                                        onDayPress={onDayPress}
+                                        pastScrollRange={0}
+                                        futureScrollRange={6}
+                                        scrollEnabled={true}
+                                        minDate={minDateStr}
+                                        maxDate={maxDateStr}
+                                        removeClippedSubviews={false}
+                                        calendarHeight={350}
+                                        monthFormat={'MMMM yyyy'}
+                                        renderHeader={(date) => {
+                                            const monthNames = [
+                                                "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4",
+                                                "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8",
+                                                "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+                                            ];
+                                            const month = date?.getMonth() ?? 0;
+                                            const year = date?.getFullYear() ?? 2025;
+                                            return (
+                                                <Text style={{
+                                                    color: "#fff",
+                                                    fontSize: 18,
+                                                    fontWeight: "600",
+                                                    textAlign: "center",
+                                                    paddingVertical: 10,
+                                                }}>
+                                                    {monthNames[month]} {year}
+                                                </Text>
+                                            );
+                                        }}
+                                        theme={{
+                                            calendarBackground: "#000",
+                                            dayTextColor: "#fff",
+                                            monthTextColor: "#fff",
+                                            arrowColor: "#b8a4ff",
+                                            textDisabledColor: "#222",
+                                            todayTextColor: "#b8a4ff",
+                                            selectedDayBackgroundColor: "#b8a4ff",
+                                            selectedDayTextColor: "#000",
+                                        }}
+                                        style={styles.calendar}
+                                    />
+                                </View>
                             </View>
 
                             <View style={styles.dateTimeOverlay}>
@@ -392,22 +450,18 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                 )}
                                 
                                 <View style={styles.dateTimeContainer}>
-                                    <ScrollView style={styles.dateTimeBoxScroll}>
-                                        <View style={styles.dateTimeBox}>
-                                            <Text style={styles.dateLabel}>Giờ Nhận</Text>
-                                            <TouchableOpacity onPress={() => openTimePicker("pickup")}>
-                                                <Text style={styles.timeLabel}>{pickupTime}</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </ScrollView>
-                                    <ScrollView style={styles.dateTimeBoxScroll}>
-                                        <View style={styles.dateTimeBox}>
-                                            <Text style={styles.dateLabel}>Giờ Trả</Text>
-                                            <TouchableOpacity onPress={() => openTimePicker("return")}>
-                                                <Text style={styles.timeLabel}>{returnTime}</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </ScrollView>
+                                    <View style={styles.dateTimeBox}>
+                                        <Text style={styles.dateLabel}>Giờ Nhận</Text>
+                                        <TouchableOpacity onPress={() => openTimePicker("pickup")}>
+                                            <Text style={styles.timeLabel}>{pickupTime}</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={styles.dateTimeBox}>
+                                        <Text style={styles.dateLabel}>Giờ Trả</Text>
+                                        <TouchableOpacity onPress={() => openTimePicker("return")}>
+                                            <Text style={styles.timeLabel}>{returnTime}</Text>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                                 <PrimaryButton title="Xác Nhận" onPress={handleConfirm} />
                             </View>
@@ -612,10 +666,6 @@ const styles = StyleSheet.create({
     closeButton: {
         padding: 5,
     },
-    closeIcon: {
-        color: "#fff",
-        fontSize: 24,
-    },
     calendarContainer: {
         alignItems: "center",
         justifyContent: "flex-start",
@@ -624,7 +674,6 @@ const styles = StyleSheet.create({
     },
     calendar: {
         width: "100%",
-        height: 320,
     },
     dateTimeOverlay: {
         position: "absolute",
@@ -660,11 +709,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 20,
         width: "100%",
-    },
-    dateTimeBoxScroll: {
-        flex: 1,
-        marginHorizontal: 5,
-        maxHeight: 60,
+        gap: 10,
     },
     dateTimeBox: {
         flex: 1,
@@ -674,7 +719,6 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 10,
         alignItems: "center",
-        marginHorizontal: 5,
     },
     dateLabel: {
         color: "#ccc",
