@@ -9,7 +9,7 @@ interface UseMapRegionProps {
 }
 
 const DEFAULT_REGION: Region = {
-    latitude: 10.8231,
+    latitude: 10.8231,      // Ho Chi Minh City center
     longitude: 106.6297,
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
@@ -49,7 +49,7 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
     const hasInitializedRef = useRef<boolean>(false);
     const currentGeocodeIdRef = useRef<number>(0);
 
-    // ✅ CRITICAL: Stable branch filtering - only filter once
+    // ✅ Stable branch filtering
     const validBranches = useMemo(() => {
         const filtered = branches.filter(b => {
             const isValid = 
@@ -69,15 +69,14 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         return filtered;
     }, [branches]);
 
-    // ✅ NEW: Get closest N branches to current region center
+    // ✅ Show only closest branches for performance
     const visibleBranches = useMemo(() => {
-        const MAX_VISIBLE = 15; // Show only 15 closest branches
+        const MAX_VISIBLE = 15;
         
         if (validBranches.length <= MAX_VISIBLE) {
             return validBranches;
         }
 
-        // Calculate distance from region center to each branch
         const branchesWithDistance = validBranches.map(branch => ({
             branch,
             distance: calculateDistance(
@@ -88,7 +87,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
             )
         }));
 
-        // Sort by distance and take closest N
         branchesWithDistance.sort((a, b) => a.distance - b.distance);
         const closest = branchesWithDistance.slice(0, MAX_VISIBLE).map(item => item.branch);
         
@@ -108,7 +106,7 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
             const geocodingRepo = sl.getGeocodingRepository();
             const coordinates = await geocodingRepo.geocodeAddress(addr);
 
-            // ✅ CRITICAL: Only update if this is still the latest request
+            // Only apply if still relevant and mounted
             if (!isMountedRef.current || currentGeocodeIdRef.current !== requestId) {
                 console.log('⏭️ Geocode outdated, skipping');
                 return;
@@ -118,19 +116,28 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
             setSearchedLocation(coordinates);
             setHasSearched(true);
             
-            // ✅ Single atomic region update
-            setRegion({
+            setRegion(prev => ({
+                ...prev,
                 latitude: coordinates.latitude,
                 longitude: coordinates.longitude,
                 latitudeDelta: 0.02,
                 longitudeDelta: 0.02,
-            });
-        } catch (err) {
+            }));
+        } catch (err: any) {
+            // ✅ CRITICAL: Always catch and handle geocoding errors
+            console.warn('⚠️ Geocoding failed:', err.message || err);
+
             if (!isMountedRef.current || currentGeocodeIdRef.current !== requestId) {
                 return;
             }
-            
-            setError(err instanceof Error ? err.message : 'Geocoding failed');
+
+            // Do NOT set error state if it's just location unavailable
+            if (err.message?.includes?.('location') || err.message?.includes?.('unavailable')) {
+                console.log('📍 Location unavailable, using branch average');
+            } else {
+                setError('Không thể tìm vị trí. Đang dùng vị trí mặc định.');
+            }
+
             setSearchedLocation(null);
             setHasSearched(false);
         } finally {
@@ -140,21 +147,22 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         }
     }, []);
 
+    // Debounced geocoding on address change
     useEffect(() => {
-        if (address && address !== "1 Phạm Văn Hai, Street, Tân Bình...") {
-            // ✅ Cancel previous timeout
-            if (geocodeTimeoutRef.current !== null) {
-                clearTimeout(geocodeTimeoutRef.current);
-            }
-
-            // ✅ Increment request ID to invalidate old requests
-            currentGeocodeIdRef.current += 1;
-            const requestId = currentGeocodeIdRef.current;
-
-            geocodeTimeoutRef.current = setTimeout(() => {
-                geocodeAddress(address, requestId);
-            }, 300);
+        if (!address || address === "1 Phạm Văn Hai, Street, Tân Bình...") {
+            return;
         }
+
+        if (geocodeTimeoutRef.current !== null) {
+            clearTimeout(geocodeTimeoutRef.current);
+        }
+
+        currentGeocodeIdRef.current += 1;
+        const requestId = currentGeocodeIdRef.current;
+
+        geocodeTimeoutRef.current = setTimeout(() => {
+            geocodeAddress(address, requestId);
+        }, 500); // Slightly longer debounce
 
         return () => {
             if (geocodeTimeoutRef.current !== null) {
@@ -163,7 +171,7 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         };
     }, [address, geocodeAddress]);
 
-    // ✅ CRITICAL: Don't run if user has searched
+    // Initialize map to average of branches if no search
     useEffect(() => {
         if (validBranches.length > 0 && !hasSearched && !hasInitializedRef.current) {
             hasInitializedRef.current = true;
@@ -185,6 +193,8 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
                 latitudeDelta: 0.1,
                 longitudeDelta: 0.1,
             });
+
+            console.log(`🗺️ Map initialized to branch average: ${avgLat.toFixed(6)}, ${avgLng.toFixed(6)}`);
         }
     }, [validBranches, hasSearched]);
 
@@ -196,6 +206,7 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         hasInitializedRef.current = false;
     }, []);
 
+    // Cleanup
     useEffect(() => {
         return () => {
             isMountedRef.current = false;

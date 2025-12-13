@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BrowseStackParamList } from "../../../../shared/navigation/StackParameters/types";
 
@@ -41,47 +41,46 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
     const navigation = useNavigation<VehicleCardNavigationProp>();
     const isMountedRef = useRef(true);
 
-    // ✅ Track mount status to prevent navigation after unmount
     useEffect(() => {
+        console.log('[VehicleCard] Mounted for vehicle ID: ', vehicle.id);
         isMountedRef.current = true;
         return () => {
+            console.log('[VehicleCard] Unmounting for vehicle ID: ', vehicle.id);
             isMountedRef.current = false;
         };
-    }, []);
+    }, [vehicle.id]);
 
-    const goToVehicleDetails = () => {
-        // ✅ Prevent navigation if component unmounted
+    const goToVehicleDetails = useCallback(() => {
         if (!isMountedRef.current) {
-            console.log('⚠️ Prevented navigation on unmounted component');
+            console.log('[VehicleCard] Navigation prevented: unmounted for ID ', vehicle.id);
             return;
         }
 
         try {
+            console.log('[VehicleCard] Navigating to VehicleDetails for ID ', vehicle.id);
             navigation.navigate("VehicleDetails", {
                 vehicleId: vehicle.id,
                 dateRange,
                 location,
             });
         } catch (error) {
-            console.error('❌ Navigation error:', error);
+            console.error('[VehicleCard] Navigation error for ID ', vehicle.id, ': ', error);
         }
-    };
+    }, [navigation, vehicle.id, dateRange, location]);
 
-    const handleBookPress = (e: any) => {
+    const handleBookPress = useCallback((e: any) => {
         e.stopPropagation();
-        
-        // ✅ Prevent action if component unmounted
         if (!isMountedRef.current) {
-            console.log('⚠️ Prevented book action on unmounted component');
+            console.log('[VehicleCard] Book action prevented: unmounted for ID ', vehicle.id);
             return;
         }
-
+        console.log('[VehicleCard] Book button pressed for ID ', vehicle.id);
         goToVehicleDetails();
-    };
+    }, [goToVehicleDetails, vehicle.id]);
 
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { pointerEvents: "auto" }]}  // ← Moved here as style
             onPress={goToVehicleDetails}
             activeOpacity={0.92}
         >
