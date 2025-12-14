@@ -962,13 +962,13 @@ export const ManualInspectionScreen: React.FC = () => {
                   <Text style={styles.primaryCtaText}>Đang gửi...</Text>
                 </>
               ) : checkedItems === totalItems &&
-                booking.bookingStatus === "Renting" ? (
+                booking?.bookingStatus === "Renting" ? (
                 <>
                   <AntDesign name="check-circle" size={18} color="#0B0B0F" />
                   <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
                 </>
               ) : checkedItems === totalItems &&
-                booking.bookingStatus === "Returned" ? (
+                booking?.bookingStatus === "Returned" ? (
                 <>
                   <AntDesign name="check-circle" size={18} color="#0B0B0F" />
                   <Text style={styles.primaryCtaText}>
@@ -986,7 +986,7 @@ export const ManualInspectionScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
         )}
-        {booking.bookingStatus === "Returned" && (
+        {booking?.bookingStatus === "Returned" && (
           <TouchableOpacity
             style={[styles.primaryCta, {marginTop: 8}]}
             onPress={() => {

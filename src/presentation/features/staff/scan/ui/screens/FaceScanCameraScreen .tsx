@@ -26,7 +26,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import Toast from "react-native-toast-message";
 import * as MediaLibrary from "expo-media-library";
-import { FlipType, manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import { FlipType, ImageManipulator, manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as FileSystem from "expo-file-system/legacy";
 type FaceStatus = {
   yaw: "Left" | "Right" | "Center";
@@ -114,6 +114,14 @@ export const FaceScanCameraScreen = () => {
       });
       // Flip ảnh chỉ khi dùng camera trước để tránh bị mirror
       let finalUri = "file://" + photo.path;
+      if (cameraPosition === "front") {
+        const fixed = await ImageManipulator.manipulateAsync(
+          finalUri,
+          [{ flip: FlipType.Horizontal }],
+          { compress: 0.9, format: SaveFormat.JPEG }
+        );
+        finalUri = fixed.uri;
+      }
 
       const file = {
         uri: finalUri,
@@ -223,7 +231,12 @@ export const FaceScanCameraScreen = () => {
         });
         return;
       }
-      // console.log("Captured file:", photo.path);
+      // Lưu ảnh vào thư viện trước khi gọi API
+      try {
+        await MediaLibrary.createAssetAsync(file.uri);
+      } catch (err) {
+        console.warn("Save to library failed:", err);
+      }
 
       const scanFaceUseCase = new ScanFaceUseCase(sl.get("RenterRepository"));
       const response = await scanFaceUseCase.execute({
