@@ -16,7 +16,6 @@ import { Branch } from "../../../../../domain/entities/operations/Branch";
 import { BranchMapMarker } from "../atoms/BranchMapMarker";
 import { UserLocationMarker } from "../atoms/UserLocationMarker";
 import { RouteLine } from "../molecules/RouteLine";
-import { NavigationView } from "../organisms/NavigationView";
 import { useLocation } from "../../context/LocationContext";
 import { BranchInfoCard } from "../organisms/BranchInfoCard";
 
@@ -26,7 +25,6 @@ export const BranchMapScreen: React.FC = () => {
   const mapRef = useRef<MapView>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [showRoute, setShowRoute] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
   const [routeDistance, setRouteDistance] = useState<string>("");
   const [routeDuration, setRouteDuration] = useState<string>("");
   const [region, setRegion] = useState<Region>({
@@ -66,33 +64,9 @@ export const BranchMapScreen: React.FC = () => {
     }
   }, [branches, location]);
 
-  // Auto-zoom to route when navigation starts
-  useEffect(() => {
-    if (isNavigating && location && selectedBranch && mapRef.current) {
-      const coordinates = [
-        { latitude: location.latitude, longitude: location.longitude },
-        { latitude: selectedBranch.latitude, longitude: selectedBranch.longitude },
-      ];
-
-      // Small delay to ensure map is ready
-      setTimeout(() => {
-        mapRef.current?.fitToCoordinates(coordinates, {
-          edgePadding: { 
-            top: 150,      // Space for top bar
-            right: 50,     // Margin
-            bottom: 250,   // Space for bottom buttons
-            left: 50       // Margin
-          },
-          animated: true,
-        });
-      }, 300);
-    }
-  }, [isNavigating, location, selectedBranch]);
-
   const handleBranchPress = (branch: Branch) => {
     setSelectedBranch(branch);
     setShowRoute(false);
-    setIsNavigating(false);
     setRouteDistance("");
     setRouteDuration("");
   };
@@ -100,44 +74,12 @@ export const BranchMapScreen: React.FC = () => {
   const handleCloseBranchInfo = () => {
     setSelectedBranch(null);
     setShowRoute(false);
-    setIsNavigating(false);
     setRouteDistance("");
     setRouteDuration("");
   };
 
   const handleToggleRoute = () => {
     setShowRoute(!showRoute);
-  };
-
-  const handleStartNavigation = () => {
-    if (!selectedBranch || !location) return;
-    setIsNavigating(true);
-    setShowRoute(true);
-  };
-
-  const handleStopNavigation = () => {
-    setIsNavigating(false);
-    setShowRoute(false);
-  };
-
-  const handleOverview = () => {
-    // Fit the route on screen
-    if (!location || !selectedBranch || !mapRef.current) return;
-
-    const coordinates = [
-      { latitude: location.latitude, longitude: location.longitude },
-      { latitude: selectedBranch.latitude, longitude: selectedBranch.longitude },
-    ];
-
-    mapRef.current.fitToCoordinates(coordinates, {
-      edgePadding: { 
-        top: 150,      // Space for top bar
-        right: 50, 
-        bottom: 250,   // Space for bottom buttons
-        left: 50 
-      },
-      animated: true,
-    });
   };
 
   const handleRouteData = (distance: string, duration: string) => {
@@ -163,13 +105,11 @@ export const BranchMapScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {!isNavigating && (
-        <ScreenHeader
-          title="Chi nhánh"
-          subtitle="Tìm chi nhánh gần bạn"
-          showBackButton={false}
-        />
-      )}
+      <ScreenHeader
+        title="Chi nhánh"
+        subtitle="Tìm chi nhánh gần bạn"
+        showBackButton={false}
+      />
       {location ? (
         <View style={styles.mapContainer}>
           <MapView
@@ -235,66 +175,49 @@ export const BranchMapScreen: React.FC = () => {
             ))}
           </MapView>
 
-          {/* Navigation Mode Overlay */}
-          {isNavigating && selectedBranch && (
-            <NavigationView
-              branch={selectedBranch}
-              distance={routeDistance}
-              duration={routeDuration}
-              onStop={handleStopNavigation}
-              onOverview={handleOverview}
-            />
+          {/* My Location Button */}
+          {location && (
+            <TouchableOpacity
+              style={styles.myLocationButton}
+              onPress={() => {
+                mapRef.current?.animateToRegion({
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  latitudeDelta: 0.02,
+                  longitudeDelta: 0.02,
+                });
+              }}
+            >
+              <AntDesign name="aim" size={22} color="#C9B6FF" />
+            </TouchableOpacity>
           )}
 
-          {/* Only show these buttons when NOT navigating */}
-          {!isNavigating && (
-            <>
-              {/* My Location Button */}
-              {location && (
-                <TouchableOpacity
-                  style={styles.myLocationButton}
-                  onPress={() => {
-                    mapRef.current?.animateToRegion({
-                      latitude: location.latitude,
-                      longitude: location.longitude,
-                      latitudeDelta: 0.02,
-                      longitudeDelta: 0.02,
-                    });
-                  }}
-                >
-                  <AntDesign name="aim" size={22} color="#C9B6FF" />
-                </TouchableOpacity>
-              )}
+          {/* Refresh Button */}
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={refetch}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <AntDesign name="reload" size={20} color="#000" />
+            )}
+          </TouchableOpacity>
 
-              {/* Refresh Button */}
-              <TouchableOpacity
-                style={styles.refreshButton}
-                onPress={refetch}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator size="small" color="#000" />
-                ) : (
-                  <AntDesign name="reload" size={20} color="#000" />
-                )}
-              </TouchableOpacity>
-
-              {/* Branch Info Card */}
-              {selectedBranch && (
-                <View style={styles.branchInfoCardContainer}>
-                  <BranchInfoCard
-                    branch={selectedBranch}
-                    onClose={handleCloseBranchInfo}
-                    onNavigate={handleStartNavigation}
-                    onShowRoute={handleToggleRoute}
-                    isRouteVisible={showRoute}
-                    hasUserLocation={!!location}
-                    distance={routeDistance}
-                    duration={routeDuration}
-                  />
-                </View>
-              )}
-            </>
+          {/* Branch Info Card */}
+          {selectedBranch && (
+            <View style={styles.branchInfoCardContainer}>
+              <BranchInfoCard
+                branch={selectedBranch}
+                onClose={handleCloseBranchInfo}
+                onShowRoute={handleToggleRoute}
+                isRouteVisible={showRoute}
+                hasUserLocation={!!location}
+                distance={routeDistance}
+                duration={routeDuration}
+              />
+            </View>
           )}
 
           {/* Error Message */}

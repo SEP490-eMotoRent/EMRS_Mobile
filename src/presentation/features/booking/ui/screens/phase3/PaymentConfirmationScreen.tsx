@@ -367,11 +367,11 @@ export const PaymentConfirmationScreen: React.FC = () => {
         
         switch (selectedPaymentMethod) {
             case "wallet":
-                return `Thanh toán ${totalAmountFormatted} bằng Ví`;
+                return `Thanh toán ${totalAmountFormatted}`;
             case "vnpay":
-                return `Thanh toán ${totalAmountFormatted} bằng VNPay`;
+                return `Thanh toán ${totalAmountFormatted}`;
             case "zalopay":
-                return `Thanh toán ${totalAmountFormatted} bằng ZaloPay`;
+                return `Thanh toán ${totalAmountFormatted}`;
             default:
                 return `Thanh toán ${totalAmountFormatted}`;
         }
@@ -383,7 +383,12 @@ export const PaymentConfirmationScreen: React.FC = () => {
             <PageHeader title="Xác nhận thanh toán" onBack={() => navigation.goBack()} />
             <ProgressIndicator currentStep={3} totalSteps={4} />
 
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+            <ScrollView 
+                style={styles.scrollView} 
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* ========== BOOKING SUMMARY ========== */}
                 <BookingSummaryCard
                     vehicleName={vehicleName}
                     rentalPeriod={`${startDate} - ${endDate}`}
@@ -392,7 +397,20 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     insurancePlan={insurancePlan}
                 />
 
+                {/* ========== COST BREAKDOWN (MOVED UP) ========== */}
+                <CostBreakdown
+                    rentalFee={rentalFee}
+                    insuranceFee={insuranceFee}
+                    securityDeposit={securityDeposit}
+                    total={totalAmountFormatted}
+                    holidaySurcharge={holidaySurcharge}
+                    holidayDayCount={holidayDayCount}
+                />
+
+                {/* ========== PAYMENT METHOD SECTION ========== */}
                 <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Chọn phương thức thanh toán</Text>
+                    
                     {/* ========== WALLET PAYMENT OPTION ========== */}
                     <PaymentMethodCard
                         isSelected={selectedPaymentMethod === "wallet"}
@@ -457,19 +475,17 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
 
-                <CostBreakdown
-                    rentalFee={rentalFee}
-                    insuranceFee={insuranceFee}
-                    securityDeposit={securityDeposit}
-                    total={totalAmountFormatted}
-                    holidaySurcharge={holidaySurcharge}
-                    holidayDayCount={holidayDayCount}
-                />
-
+                {/* ========== PAYMENT NOTICES ========== */}
                 <PaymentNotices />
             </ScrollView>
 
+            {/* ========== STICKY FOOTER WITH PAYMENT BUTTON ========== */}
             <View style={styles.footer}>
+                <View style={styles.totalPreview}>
+                    <Text style={styles.totalPreviewLabel}>Tổng thanh toán</Text>
+                    <Text style={styles.totalPreviewAmount}>{totalAmountFormatted}</Text>
+                </View>
+                
                 <PrimaryButton
                     title={getButtonTitle()}
                     onPress={handlePayment}
@@ -500,12 +516,36 @@ const styles = StyleSheet.create({
     section: { 
         marginBottom: 20 
     },
+    sectionTitle: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 16,
+    },
     footer: {
         padding: 16,
         paddingBottom: 32,
         backgroundColor: "#000",
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
+    },
+    totalPreview: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 16,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#1a1a1a",
+    },
+    totalPreviewLabel: {
+        color: "#999",
+        fontSize: 14,
+    },
+    totalPreviewAmount: {
+        color: "#00ff00",
+        fontSize: 20,
+        fontWeight: "700",
     },
     
     // Payment Option Styles

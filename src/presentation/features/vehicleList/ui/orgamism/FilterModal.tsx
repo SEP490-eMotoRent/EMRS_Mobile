@@ -6,14 +6,16 @@ import {
     View,
     TouchableOpacity,
     ScrollView,
+    Switch,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 
 export interface FilterState {
-    priceRange: [number, number];      // [min, max]
-    models: string[];                   // Selected model IDs
-    rangeKm: [number, number];         // [min, max] battery range
-    features: string[];                 // Selected features
+    priceRange: [number, number];
+    models: string[];
+    rangeKm: [number, number];
+    features: string[];
+    showUnavailable: boolean;  // ✅ NEW
 }
 
 interface FilterModalProps {
@@ -42,11 +44,11 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             models: [],
             rangeKm: [0, 150],
             features: [],
+            showUnavailable: false,  // ✅ Default off
         };
         setFilters(resetFilters);
     };
 
-    // Update price range (for dual slider, we'll use single slider for max value)
     const updateMaxPrice = (value: number) => {
         setFilters(prev => ({
             ...prev,
@@ -75,7 +77,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         (filters.priceRange[1] < 500000 ? 1 : 0) +
         (filters.rangeKm[1] < 150 ? 1 : 0) +
         filters.models.length +
-        filters.features.length;
+        filters.features.length +
+        (filters.showUnavailable ? 1 : 0);
 
     return (
         <Modal
@@ -92,7 +95,6 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 />
                 
                 <View style={styles.modalContent}>
-                    {/* Header */}
                     <View style={styles.header}>
                         <TouchableOpacity onPress={handleReset}>
                             <Text style={styles.resetText}>Đặt Lại</Text>
@@ -103,20 +105,38 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         </TouchableOpacity>
                     </View>
 
-                    {/* Drag indicator */}
                     <View style={styles.dragIndicator} />
 
                     <ScrollView 
                         style={styles.filtersContainer}
                         showsVerticalScrollIndicator={false}
                     >
+                        {/* ✅ Show Unavailable Toggle - First Section */}
+                        <View style={styles.section}>
+                            <View style={styles.toggleRow}>
+                                <View style={styles.toggleLabelContainer}>
+                                    <Text style={styles.sectionTitle}>Hiển Thị Xe Không Có Sẵn</Text>
+                                    <Text style={styles.toggleSubtext}>
+                                        Bao gồm xe đã hết chỗ trong kết quả
+                                    </Text>
+                                </View>
+                                <Switch
+                                    value={filters.showUnavailable}
+                                    onValueChange={(value) => 
+                                        setFilters(prev => ({ ...prev, showUnavailable: value }))
+                                    }
+                                    trackColor={{ false: '#333', true: '#d4c5f9' }}
+                                    thumbColor={filters.showUnavailable ? '#fff' : '#999'}
+                                    ios_backgroundColor="#333"
+                                />
+                            </View>
+                        </View>
+
                         {/* Price Range Section */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Giá Thuê (₫/ngày)</Text>
                             <View style={styles.priceLabels}>
-                                <Text style={styles.priceText}>
-                                    0₫
-                                </Text>
+                                <Text style={styles.priceText}>0₫</Text>
                                 <Text style={styles.priceTextHighlight}>
                                     {filters.priceRange[1].toLocaleString('vi-VN')}₫
                                 </Text>
@@ -142,9 +162,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Quãng Đường Pin (Km)</Text>
                             <View style={styles.priceLabels}>
-                                <Text style={styles.priceText}>
-                                    0 Km
-                                </Text>
+                                <Text style={styles.priceText}>0 Km</Text>
                                 <Text style={styles.priceTextHighlight}>
                                     {filters.rangeKm[1]} Km
                                 </Text>
@@ -167,7 +185,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                         </View>
 
                         {/* Model Selection */}
-                        <View style={styles.section}>
+                        {/* <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Dòng Xe</Text>
                             <View style={styles.chipContainer}>
                                 <FilterChip
@@ -219,27 +237,10 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                                     }}
                                 />
                             </View>
-                        </View>
-
-                        {/* ✅ COMMENTED: Features section - not needed anymore */}
-                        {/* <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Tính Năng</Text>
-                            <View style={styles.chipContainer}>
-                                <FilterChip
-                                    label="🔌 Hỗ Trợ Sạc"
-                                    selected={filters.features.includes('charging')}
-                                    onPress={() => toggleFeature('charging')}
-                                />
-                                <FilterChip
-                                    label="📍 GPS Tracking"
-                                    selected={filters.features.includes('gps')}
-                                    onPress={() => toggleFeature('gps')}
-                                />
-                            </View>
                         </View> */}
                     </ScrollView>
 
-                    {/* Footer with Apply Button */}
+                    {/* Footer */}
                     <View style={styles.footer}>
                         <View style={styles.footerInfo}>
                             {activeFilterCount > 0 && (
@@ -264,14 +265,11 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     );
 };
 
-// FilterChip component
-interface FilterChipProps {
-    label: string;
-    selected: boolean;
-    onPress: () => void;
-}
-
-const FilterChip: React.FC<FilterChipProps> = ({ label, selected, onPress }) => (
+const FilterChip: React.FC<{ label: string; selected: boolean; onPress: () => void }> = ({ 
+    label, 
+    selected, 
+    onPress 
+}) => (
     <TouchableOpacity
         style={[styles.chip, selected && styles.chipSelected]}
         onPress={onPress}
@@ -296,7 +294,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1a1a1a',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        height: '92%', // Changed from maxHeight to height for consistent size
+        height: '92%',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.3,
@@ -317,13 +315,13 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingVertical: 20, // Increased from 16
+        paddingVertical: 20,
         borderBottomWidth: 1,
         borderBottomColor: '#2a2a2a',
     },
     title: {
         color: '#fff',
-        fontSize: 20, // Increased from 18
+        fontSize: 20,
         fontWeight: '700',
         letterSpacing: 0.3,
     },
@@ -344,17 +342,33 @@ const styles = StyleSheet.create({
     filtersContainer: {
         flex: 1,
         paddingHorizontal: 20,
-        paddingTop: 24, // Increased from 16
+        paddingTop: 24,
         paddingBottom: 16,
     },
     section: {
-        marginBottom: 36, // Increased from 32
+        marginBottom: 36,
+    },
+    // ✅ Toggle styles
+    toggleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    toggleLabelContainer: {
+        flex: 1,
+        marginRight: 16,
+    },
+    toggleSubtext: {
+        color: '#666',
+        fontSize: 13,
+        marginTop: 4,
+        lineHeight: 18,
     },
     sectionTitle: {
         color: '#fff',
-        fontSize: 17, // Increased from 16
+        fontSize: 17,
         fontWeight: '600',
-        marginBottom: 18, // Increased from 16
         letterSpacing: 0.2,
     },
     priceLabels: {
@@ -362,6 +376,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 12,
         paddingHorizontal: 4,
+        marginTop: 16,
     },
     priceText: {
         color: '#666',
@@ -392,10 +407,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 10,
+        marginTop: 16,
     },
     chip: {
-        paddingHorizontal: 18, // Increased from 16
-        paddingVertical: 12, // Increased from 10
+        paddingHorizontal: 18,
+        paddingVertical: 12,
         borderRadius: 20,
         borderWidth: 1.5,
         borderColor: '#333',
@@ -407,7 +423,7 @@ const styles = StyleSheet.create({
     },
     chipText: {
         color: '#999',
-        fontSize: 15, // Increased from 14
+        fontSize: 15,
         fontWeight: '600',
     },
     chipTextSelected: {
@@ -416,23 +432,23 @@ const styles = StyleSheet.create({
     },
     footer: {
         padding: 20,
-        paddingBottom: 28, // Increased for better spacing
+        paddingBottom: 28,
         borderTopWidth: 1,
         borderTopColor: '#2a2a2a',
         backgroundColor: '#1a1a1a',
     },
     footerInfo: {
-        marginBottom: 14, // Increased from 12
+        marginBottom: 14,
         alignItems: 'center',
     },
     activeFiltersText: {
         color: '#d4c5f9',
-        fontSize: 14, // Increased from 13
+        fontSize: 14,
         fontWeight: '500',
     },
     applyButton: {
         backgroundColor: '#d4c5f9',
-        paddingVertical: 18, // Increased from 16
+        paddingVertical: 18,
         borderRadius: 14,
         alignItems: 'center',
         shadowColor: '#d4c5f9',
@@ -443,7 +459,7 @@ const styles = StyleSheet.create({
     },
     applyButtonText: {
         color: '#000',
-        fontSize: 17, // Increased from 16
+        fontSize: 17,
         fontWeight: '700',
         letterSpacing: 0.5,
     },

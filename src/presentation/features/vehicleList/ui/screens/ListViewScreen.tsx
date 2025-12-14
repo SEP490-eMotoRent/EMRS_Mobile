@@ -3,6 +3,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { DateHelper } from "../../../../../domain/helpers/DateHelper";
 import { BookingModal } from "../../../../common/components/organisms/bookingSearchBar/BookingModal";
 import {
   BrowseStackParamList,
@@ -14,11 +15,10 @@ import { MapViewButton } from "../atoms/buttons/MapViewButtons";
 import { EmptyState } from "../molecules/state/EmptyState";
 import { ErrorState } from "../molecules/state/ErrorState";
 import { LoadingState } from "../molecules/state/LoadingState";
+import { FilterModal, FilterState } from "../orgamism/FilterModal";
 import { ListControls } from "../orgamism/ListControls";
 import { ListHeader } from "../orgamism/ListHeader";
 import { MotorcycleCard } from "../orgamism/MotorcycleCard";
-import { FilterState, FilterModal } from "../orgamism/FilterModal";
-import { DateHelper } from "../../../../../domain/helpers/DateHelper";
 
 // ✅ Vietnamese date formatter utility
 function formatDateRangeVietnamese(dateRange: string): string {
@@ -60,7 +60,7 @@ type ListViewNavigationProp =
   | StackNavigationProp<BrowseStackParamList, "ListView">
   | StackNavigationProp<HomeStackParamList, "ListView">;
 
-type SortType = "closest" | "price-low" | "price-high" | "availability";
+type SortType = "price-low" | "price-high" | "availability";
 
 export const ListView: React.FC = () => {
   const route = useRoute<ListViewRouteProp>();
@@ -81,16 +81,17 @@ export const ListView: React.FC = () => {
     refresh,
   } = useVehicleModelsPaginated();
 
-  const [sortBy, setSortBy] = useState<SortType>("closest");
+  const [sortBy, setSortBy] = useState<SortType>("price-low");
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   
   // ✅ Filter state
   const [filters, setFilters] = useState<FilterState>({
-    priceRange: [0, 500000],
-    models: [],
-    rangeKm: [0, 150],
-    features: [],
+      priceRange: [0, 500000],
+      models: [],
+      rangeKm: [0, 150],
+      features: [],
+      showUnavailable: false,  // ✅ Add this
   });
 
   const { location, dateRange, address } = route.params || {
@@ -117,42 +118,44 @@ export const ListView: React.FC = () => {
   const filteredMotorcycles = useMemo(() => {
     let filtered = [...motorcycles];
 
-    // ALWAYS hide unavailable bikes (no toggle needed)
-    filtered = filtered.filter(m => (m.countAvailable ?? 0) > 0);
+    // ✅ Filter by availability based on toggle
+    if (!filters.showUnavailable) {
+        filtered = filtered.filter(m => (m.countAvailable ?? 0) > 0);
+    }
 
     // Price filter
     if (filters.priceRange[1] < 500000) {
-      filtered = filtered.filter(m => 
-        m.price >= filters.priceRange[0] && m.price <= filters.priceRange[1]
-      );
+        filtered = filtered.filter(m => 
+            m.price >= filters.priceRange[0] && m.price <= filters.priceRange[1]
+        );
     }
 
     // Range filter
     if (filters.rangeKm[1] < 150) {
-      filtered = filtered.filter(m => {
-        const rangeValue = parseInt(m.range.replace(' Km', '')) || 0;
-        return rangeValue >= filters.rangeKm[0] && rangeValue <= filters.rangeKm[1];
-      });
+        filtered = filtered.filter(m => {
+            const rangeValue = parseInt(m.range.replace(' Km', '')) || 0;
+            return rangeValue >= filters.rangeKm[0] && rangeValue <= filters.rangeKm[1];
+        });
     }
 
     // Model filter
     if (filters.models.length > 0) {
-      filtered = filtered.filter(m => 
-        filters.models.some(model => 
-          m.brand.toLowerCase().includes(model.toLowerCase())
-        )
-      );
+        filtered = filtered.filter(m => 
+            filters.models.some(model => 
+                m.brand.toLowerCase().includes(model.toLowerCase())
+            )
+        );
     }
 
     // Features filter
     if (filters.features.length > 0) {
-      filtered = filtered.filter(m => 
-        filters.features.every(feature => {
-          if (feature === 'charging') return m.features.includes('Support Charging');
-          if (feature === 'gps') return m.features.includes('GPS Tracking');
-          return false;
-        })
-      );
+        filtered = filtered.filter(m => 
+            filters.features.every(feature => {
+                if (feature === 'charging') return m.features.includes('Support Charging');
+                if (feature === 'gps') return m.features.includes('GPS Tracking');
+                return false;
+            })
+        );
     }
 
     return filtered;
@@ -160,29 +163,26 @@ export const ListView: React.FC = () => {
 
   // ✅ Enhanced sorting with availability
   const sortedMotorcycles = useMemo(() => {
-    const sorted = [...filteredMotorcycles].sort((a, b) => {
-      if (sortBy === "closest") return a.distance - b.distance;
-      if (sortBy === "price-low") return a.price - b.price;
-      if (sortBy === "price-high") return b.price - a.price;
-      if (sortBy === "availability") {
-        const aAvail = a.countAvailable ?? 0;
-        const bAvail = b.countAvailable ?? 0;
-        return bAvail - aAvail;
-      }
-      return 0;
-    });
-    return sorted;
+      const sorted = [...filteredMotorcycles].sort((a, b) => {
+          if (sortBy === "price-low") return a.price - b.price;
+          if (sortBy === "price-high") return b.price - a.price;
+          if (sortBy === "availability") {
+              const aAvail = a.countAvailable ?? 0;
+              const bAvail = b.countAvailable ?? 0;
+              return bAvail - aAvail;
+          }
+          return 0;
+      });
+      return sorted;
   }, [filteredMotorcycles, sortBy]);
 
   const handleSortPress = () => {
-    if (sortBy === "closest") setSortBy("price-low");
-    else if (sortBy === "price-low") setSortBy("price-high");
-    else if (sortBy === "price-high") setSortBy("availability");
-    else setSortBy("closest");
+      if (sortBy === "price-low") setSortBy("price-high");
+      else if (sortBy === "price-high") setSortBy("availability");
+      else setSortBy("price-low");
   };
 
   const getSortLabel = () => {
-    if (sortBy === "closest") return "Gần Nhất";
     if (sortBy === "price-low") return "Giá: Thấp → Cao";
     if (sortBy === "price-high") return "Giá: Cao → Thấp";
     return "Có Sẵn Nhiều";

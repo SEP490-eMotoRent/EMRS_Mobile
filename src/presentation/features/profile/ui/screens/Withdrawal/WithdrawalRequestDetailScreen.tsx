@@ -23,6 +23,11 @@ export const WithdrawalRequestDetailScreen: React.FC<WithdrawalRequestDetailScre
     const { request, loading, error, refresh } = useWithdrawalRequestDetail(requestId);
     const { cancelRequest, loading: canceling } = useCancelWithdrawalRequest();
 
+    // Format number with dots as thousand separators
+    const formatNumber = (num: number): string => {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
     const handleCancel = () => {
         Alert.alert("Xác nhận hủy", "Bạn có chắc muốn hủy yêu cầu này?", [
         { text: "Không", style: "cancel" },
@@ -93,7 +98,7 @@ export const WithdrawalRequestDetailScreen: React.FC<WithdrawalRequestDetailScre
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.amountCard}>
             <Text style={styles.amountLabel}>Số tiền rút</Text>
-            <Text style={styles.amountValue}>{request.amount.toLocaleString()}đ</Text>
+            <Text style={styles.amountValue}>{formatNumber(request.amount)}đ</Text>
             <View style={styles.statusContainer}>
                 <StatusBadge status={request.status as any} />
             </View>

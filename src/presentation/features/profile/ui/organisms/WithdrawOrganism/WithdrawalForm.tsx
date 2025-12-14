@@ -19,13 +19,13 @@ interface WithdrawalFormProps {
         bankAccountName: string;
     }) => Promise<void>;
     loading?: boolean;
-    }
+}
 
-    export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
+export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
     currentBalance,
     onSubmit,
     loading = false,
-    }) => {
+}) => {
     const [amount, setAmount] = useState("");
     const [bankName, setBankName] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
@@ -33,25 +33,48 @@ interface WithdrawalFormProps {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    // Format number with thousand separators (dots)
+    const formatNumber = (value: string): string => {
+        // Remove all non-numeric characters
+        const numericValue = value.replace(/[^0-9]/g, "");
+        
+        if (!numericValue) return "";
+        
+        // Add thousand separators
+        return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
+    // Get raw numeric value
+    const getRawNumber = (formattedValue: string): number => {
+        const numericString = formattedValue.replace(/\./g, "");
+        return parseFloat(numericString) || 0;
+    };
+
+    const handleAmountChange = (text: string) => {
+        const formatted = formatNumber(text);
+        setAmount(formatted);
+    };
+
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
+        const rawAmount = getRawNumber(amount);
 
-        if (!amount || parseFloat(amount) <= 0) {
-        newErrors.amount = "Vui lòng nhập số tiền hợp lệ";
-        } else if (parseFloat(amount) > currentBalance) {
-        newErrors.amount = "Số dư không đủ";
+        if (!amount || rawAmount <= 0) {
+            newErrors.amount = "Vui lòng nhập số tiền hợp lệ";
+        } else if (rawAmount > currentBalance) {
+            newErrors.amount = "Số dư không đủ";
         }
 
         if (!bankName.trim()) {
-        newErrors.bankName = "Vui lòng nhập tên ngân hàng";
+            newErrors.bankName = "Vui lòng nhập tên ngân hàng";
         }
 
         if (!accountNumber.trim()) {
-        newErrors.accountNumber = "Vui lòng nhập số tài khoản";
+            newErrors.accountNumber = "Vui lòng nhập số tài khoản";
         }
 
         if (!accountName.trim()) {
-        newErrors.accountName = "Vui lòng nhập tên chủ tài khoản";
+            newErrors.accountName = "Vui lòng nhập tên chủ tài khoản";
         }
 
         setErrors(newErrors);
@@ -61,93 +84,95 @@ interface WithdrawalFormProps {
     const handleSubmit = async () => {
         if (!validate()) return;
 
+        const rawAmount = getRawNumber(amount);
+
         Alert.alert(
-        "Xác nhận rút tiền",
-        `Bạn có chắc muốn rút ${parseFloat(amount).toLocaleString()}đ?`,
-        [
-            { text: "Hủy", style: "cancel" },
-            {
-            text: "Xác nhận",
-            onPress: async () => {
-                await onSubmit({
-                amount: parseFloat(amount),
-                bankName: bankName.trim(),
-                bankAccountNumber: accountNumber.trim(),
-                bankAccountName: accountName.trim(),
-                });
-            },
-            },
-        ]
+            "Xác nhận rút tiền",
+            `Bạn có chắc muốn rút ${rawAmount.toLocaleString('vi-VN')}đ?`,
+            [
+                { text: "Hủy", style: "cancel" },
+                {
+                    text: "Xác nhận",
+                    onPress: async () => {
+                        await onSubmit({
+                            amount: rawAmount,
+                            bankName: bankName.trim(),
+                            bankAccountNumber: accountNumber.trim(),
+                            bankAccountName: accountName.trim(),
+                        });
+                    },
+                },
+            ]
         );
     };
 
     return (
         <View style={styles.container}>
-        <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
-            <Text style={styles.balanceAmount}>
-            {currentBalance.toLocaleString()}đ
+            <View style={styles.balanceCard}>
+                <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
+                <Text style={styles.balanceAmount}>
+                    {currentBalance.toLocaleString('vi-VN')}đ
+                </Text>
+            </View>
+
+            <FormInput
+                label="Số tiền muốn rút"
+                placeholder="Nhập số tiền"
+                keyboardType="numeric"
+                value={amount}
+                onChangeText={handleAmountChange}
+                error={errors.amount}
+                required
+            />
+
+            <FormInput
+                label="Tên ngân hàng"
+                placeholder="VD: Vietcombank, BIDV, Techcombank"
+                value={bankName}
+                onChangeText={setBankName}
+                error={errors.bankName}
+                required
+            />
+
+            <FormInput
+                label="Số tài khoản"
+                placeholder="Nhập số tài khoản ngân hàng"
+                keyboardType="numeric"
+                value={accountNumber}
+                onChangeText={setAccountNumber}
+                error={errors.accountNumber}
+                required
+            />
+
+            <FormInput
+                label="Tên chủ tài khoản"
+                placeholder="Nhập tên chủ tài khoản"
+                value={accountName}
+                onChangeText={setAccountName}
+                error={errors.accountName}
+                required
+            />
+
+            <TouchableOpacity
+                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+            >
+                {loading ? (
+                    <ActivityIndicator color="#000" />
+                ) : (
+                    <Text style={styles.submitText}>Tạo yêu cầu rút tiền</Text>
+                )}
+            </TouchableOpacity>
+
+            <Text style={styles.note}>
+                💡 Yêu cầu sẽ được xử lý trong vòng 1-3 ngày làm việc
             </Text>
         </View>
-
-        <FormInput
-            label="Số tiền muốn rút"
-            placeholder="Nhập số tiền"
-            keyboardType="numeric"
-            value={amount}
-            onChangeText={setAmount}
-            error={errors.amount}
-            required
-        />
-
-        <FormInput
-            label="Tên ngân hàng"
-            placeholder="VD: Vietcombank, BIDV, Techcombank"
-            value={bankName}
-            onChangeText={setBankName}
-            error={errors.bankName}
-            required
-        />
-
-        <FormInput
-            label="Số tài khoản"
-            placeholder="Nhập số tài khoản ngân hàng"
-            keyboardType="numeric"
-            value={accountNumber}
-            onChangeText={setAccountNumber}
-            error={errors.accountNumber}
-            required
-        />
-
-        <FormInput
-            label="Tên chủ tài khoản"
-            placeholder="Nhập tên chủ tài khoản"
-            value={accountName}
-            onChangeText={setAccountName}
-            error={errors.accountName}
-            required
-        />
-
-        <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-        >
-            {loading ? (
-            <ActivityIndicator color="#000" />
-            ) : (
-            <Text style={styles.submitText}>Tạo yêu cầu rút tiền</Text>
-            )}
-        </TouchableOpacity>
-
-        <Text style={styles.note}>
-            💡 Yêu cầu sẽ được xử lý trong vòng 1-3 ngày làm việc
-        </Text>
-        </View>
     );
-    };
+};
 
-    const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flex: 1,
     },

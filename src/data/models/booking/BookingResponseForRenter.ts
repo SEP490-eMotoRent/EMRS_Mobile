@@ -13,7 +13,7 @@ export interface BookingResponseForRenter {
     totalRentalFee: number;
     totalAmount: number;
     bookingStatus: string;
-    bookingCode: string;                // ✅ ADDED
+    bookingCode: string;
     vehicleModelId: string;
     renterId: string;
     vehicle: VehicleResponse;
@@ -22,6 +22,7 @@ export interface BookingResponseForRenter {
     vehicleModel: VehicleModelResponse;
     renter: RenterDetailResponse;
     insurancePackage?: InsurancePackageResponse;
+    vehicleModelmediaResponse?: VehicleModelMediaResponse; // ✅ NEW
 }
 
 export interface VehicleResponse {
@@ -68,4 +69,12 @@ export interface InsurancePackageResponse {
     coverageTheft: number;
     deductibleAmount: number;
     description: string;
+}
+
+export interface VehicleModelMediaResponse {
+    id: string;
+    mediaType: string;
+    fileUrl: string;
+    docNo: string;
+    entityType: string;
 }

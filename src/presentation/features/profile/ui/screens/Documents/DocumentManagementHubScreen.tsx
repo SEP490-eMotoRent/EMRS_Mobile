@@ -1,5 +1,5 @@
-import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useCallback } from 'react';
 import {
     ActivityIndicator,
@@ -54,17 +54,17 @@ export const DocumentManagementHubScreen: React.FC<DocumentManagementHubScreenPr
         if (!doc) return 'needed';
         
         const status = doc.verificationStatus?.toLowerCase();
-        if (status === 'approved' || status === 'verified') return 'verified';
-        if (status === 'pending') return 'pending';
+        // ✅ Treat Pending as verified - user has uploaded, that's all they need to do
+        if (status === 'approved' || status === 'verified' || status === 'pending') return 'verified';
         
-        // Check expiry
-        if (doc.expiryDate) {
+        // Check expiry only for non-license documents (driver's license has no expiry in VN)
+        if (doc.expiryDate && doc.documentType === 'Citizen') {
             const expiry = new Date(doc.expiryDate);
             const now = new Date();
             if (expiry < now) return 'expired';
         }
         
-        return 'pending';
+        return 'verified'; // Default to verified if uploaded
     };
 
     const formatExpiryDate = (isoDate?: string): string => {
@@ -199,15 +199,15 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ data, onPress, formatExpiry
                     buttonText: 'Xem Chi Tiết',
                     buttonBg: '#7C3AED',
                 };
-            case 'pending':
-                return {
-                    label: 'Đang Xử Lý',
-                    bgColor: '#f59e0b',
-                    textColor: '#000000',
-                    icon: 'time' as const,
-                    buttonText: 'Xem Chi Tiết',
-                    buttonBg: '#7C3AED',
-                };
+            // case 'pending':
+            //     return {
+            //         label: 'Đang Xử Lý',
+            //         bgColor: '#f59e0b',
+            //         textColor: '#000000',
+            //         icon: 'time' as const,
+            //         buttonText: 'Xem Chi Tiết',
+            //         buttonBg: '#7C3AED',
+            //     };
             case 'expired':
                 return {
                     label: 'Đã Hết Hạn',

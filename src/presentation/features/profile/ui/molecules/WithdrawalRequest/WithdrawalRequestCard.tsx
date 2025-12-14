@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StatusBadge } from "../../atoms/Badges/StatusBadge";
 
 interface WithdrawalRequestCardProps {
@@ -19,7 +19,12 @@ export const WithdrawalRequestCard: React.FC<WithdrawalRequestCardProps> = ({
     status,
     createdAt,
     onPress,
-    }) => {
+}) => {
+    // Format number with dots as thousand separators
+    const formatNumber = (num: number): string => {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
     const formattedDate = createdAt.toLocaleDateString("vi-VN", {
         day: "2-digit",
         month: "2-digit",
@@ -30,17 +35,17 @@ export const WithdrawalRequestCard: React.FC<WithdrawalRequestCardProps> = ({
 
     return (
         <TouchableOpacity style={styles.card} onPress={onPress}>
-        <View style={styles.header}>
-            <Text style={styles.amount}>{amount.toLocaleString()}đ</Text>
-            <StatusBadge status={status} />
-        </View>
+            <View style={styles.header}>
+                <Text style={styles.amount}>{formatNumber(amount)}đ</Text>
+                <StatusBadge status={status} />
+            </View>
 
-        <View style={styles.details}>
-            <Text style={styles.bank}>{bankName}</Text>
-            <Text style={styles.account}>{maskedAccount}</Text>
-        </View>
+            <View style={styles.details}>
+                <Text style={styles.bank}>{bankName}</Text>
+                <Text style={styles.account}>{maskedAccount}</Text>
+            </View>
 
-        <Text style={styles.date}>{formattedDate}</Text>
+            <Text style={styles.date}>{formattedDate}</Text>
         </TouchableOpacity>
     );
 };

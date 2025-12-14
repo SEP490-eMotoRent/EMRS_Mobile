@@ -26,15 +26,19 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
             !v.title.toLowerCase().includes('số điện thoại')
     );
 
-    // Convert 'expired' → 'needed' to satisfy VerificationItem
+    // ✅ FIX: Treat all uploaded documents as "verified" (only check existence)
     const safeVerifications: Verification[] = filteredVerifications.map(v => ({
         label: v.title,
-        status: v.status === 'expired' ? 'needed' : v.status,
-        validUntil: v.status === 'valid' ? '31 Thg 12, 2025' : undefined,
+        // If it's not 'needed', it means document exists → treat as 'verified'
+        status: v.status === 'needed' ? 'needed' : 'verified',
+        // status: v.status === 'expired' ? 'needed' : v.status, // ⬅️ COMMENTED OUT: Old logic
+        validUntil: undefined, // Don't show validity period
     }));
 
+    // ✅ Check if all documents exist (not just verified by admin)
     const allVerified = filteredVerifications.every(
-        v => v.status === 'verified' || v.status === 'valid'
+        v => v.status !== 'needed' // Only check if uploaded, ignore pending/verified distinction
+        // v => v.status === 'verified' || v.status === 'valid' // ⬅️ COMMENTED OUT: Old logic
     );
 
     return (
@@ -51,13 +55,17 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
                 <View style={styles.verificationWarning}>
                     <Icon name="warning" size={18} color="#FBBF24" />
                     <Text style={styles.warningText}>
-                        Chưa xác thực hoàn toàn. Vui lòng hoàn tất xác thực để sử dụng đầy đủ tính năng.
+                        Vui lòng tải lên giấy tờ để sử dụng đầy đủ tính năng.
+                        {/* Chưa xác thực hoàn toàn. Vui lòng hoàn tất xác thực để sử dụng đầy đủ tính năng. */}
+                        {/* ⬆️ COMMENTED OUT: Old warning about verification */}
                     </Text>
                 </View>
             )}
 
             <TouchableOpacity style={styles.verificationButton} onPress={onVerify}>
-                <Text style={styles.verificationButtonText}>Quản Lý Xác Thực</Text>
+                <Text style={styles.verificationButtonText}>Quản Lý Giấy Tờ</Text>
+                {/* Quản Lý Xác Thực */}
+                {/* ⬆️ COMMENTED OUT: Old button text */}
             </TouchableOpacity>
         </View>
     );

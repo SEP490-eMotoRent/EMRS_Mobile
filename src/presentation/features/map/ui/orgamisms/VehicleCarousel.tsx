@@ -1,18 +1,18 @@
-import React, { useRef, useState } from "react";
-import { 
-    Dimensions, 
-    NativeScrollEvent, 
-    NativeSyntheticEvent, 
-    ScrollView, 
-    StyleSheet, 
+import React, { useEffect, useRef } from "react";
+import {
+    Animated,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
     View,
-    Animated 
 } from "react-native";
 import { ElectricVehicle, VehicleCard } from "../molecules/VehicleCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = 260;
 const CARD_SPACING = 12;
+const ITEM_WIDTH = CARD_WIDTH + CARD_SPACING;
 
 interface VehicleCarouselProps {
     vehicles: ElectricVehicle[];
@@ -21,67 +21,90 @@ interface VehicleCarouselProps {
     location?: string;
 }
 
-export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({ 
-    vehicles, 
+export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
+    vehicles,
     onBookVehicle,
     dateRange,
-    location
+    location,
 }) => {
-    const scrollViewRef = useRef<ScrollView>(null);
-    const [activeIndex, setActiveIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
+    const scrollViewRef = useRef<ScrollView>(null);
 
-    const handleScroll = Animated.event(
-        [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-        {
-            useNativeDriver: false,
-            listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-                const scrollPosition = event.nativeEvent.contentOffset.x;
-                const index = Math.round(scrollPosition / (CARD_WIDTH + CARD_SPACING));
-                setActiveIndex(index);
-            },
-        }
-    );
+    useEffect(() => {
+        console.log('[VehicleCarousel] Mounted with ', vehicles.length, ' vehicles');
+        return () => {
+            console.log('[VehicleCarousel] Unmounting');
+            scrollX.stopAnimation();
+        };
+    }, [vehicles.length]);
+
+    if (!vehicles || vehicles.length === 0) {
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>🔍</Text>
+                <Text style={styles.emptyText}>Không có xe nào</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-            {/* Scrollable Cards */}
-            <View style={styles.scrollWrapper}>
-                <ScrollView
-                    ref={scrollViewRef}
-                    horizontal
-                    pagingEnabled={false}
-                    showsHorizontalScrollIndicator={false}
-                    decelerationRate="fast"
-                    snapToInterval={CARD_WIDTH + CARD_SPACING}
-                    snapToAlignment="center"
-                    contentContainerStyle={styles.scrollContent}
-                    onScroll={handleScroll}
-                    scrollEventThrottle={16}
-                >
-                    {vehicles.map((vehicle) => (
+            <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToInterval={ITEM_WIDTH}
+                snapToAlignment="center"
+                contentContainerStyle={styles.content}
+                scrollEventThrottle={16}
+                removeClippedSubviews={true}
+                directionalLockEnabled={true}
+                overScrollMode="never"
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                    { useNativeDriver: false }
+                )}
+            >
+                {vehicles.map((vehicle, index) => (
+                    <View key={`${vehicle.id}-${index}`} style={styles.cardWrapper}>
                         <VehicleCard
-                            key={vehicle.id}
                             vehicle={vehicle}
                             onBookPress={onBookVehicle}
                             dateRange={dateRange}
                             location={location}
                         />
-                    ))}
-                </ScrollView>
-            </View>
+                    </View>
+                ))}
+            </ScrollView>
 
-            {/* Simple Pagination */}
             {vehicles.length > 1 && (
-                <View style={styles.paginationContainer}>
+                <View style={styles.pagination}>
                     {vehicles.map((_, index) => {
-                        const isActive = index === activeIndex;
+                        const inputRange = [
+                            (index - 1) * ITEM_WIDTH,
+                            index * ITEM_WIDTH,
+                            (index + 1) * ITEM_WIDTH,
+                        ];
+
+                        const scale = scrollX.interpolate({
+                            inputRange,
+                            outputRange: [0.6, 1.3, 0.6],
+                            extrapolate: "clamp",
+                        });
+
+                        const opacity = scrollX.interpolate({
+                            inputRange,
+                            outputRange: [0.4, 1, 0.4],
+                            extrapolate: "clamp",
+                        });
+
                         return (
-                            <View
-                                key={index}
+                            <Animated.View
+                                key={`dot-${index}`}
                                 style={[
-                                    styles.paginationDot,
-                                    isActive && styles.activeDot,
+                                    styles.dot,
+                                    { transform: [{ scale }], opacity },
                                 ]}
                             />
                         );
@@ -93,35 +116,45 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
 };
 
 const styles = StyleSheet.create({
-    container: {
+    container: { 
         flex: 1,
     },
-    scrollWrapper: {
-        flex: 1,
+    content: {
+        paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2,
+        paddingVertical: 12,
+        alignItems: "center",
     },
-    scrollContent: {
-        paddingLeft: (SCREEN_WIDTH - CARD_WIDTH) / 2,
-        paddingRight: (SCREEN_WIDTH - CARD_WIDTH) / 2,
-        paddingTop: 12, // ✅ Increased from 8 (more top padding)
-        paddingBottom: 8, // ✅ Increased from 4 (more bottom padding)
+    cardWrapper: {
+        width: CARD_WIDTH,
+        marginHorizontal: CARD_SPACING / 2,
     },
-    paginationContainer: {
+    pagination: {
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        paddingTop: 6, // ✅ Increased from 4
-        paddingBottom: 12, // ✅ Increased from 8 (more bottom space)
+        paddingVertical: 12,
     },
-    paginationDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: "#444",
-        marginHorizontal: 3,
-    },
-    activeDot: {
+    dot: {
+        width: 7,
+        height: 7,
+        borderRadius: 4,
         backgroundColor: "#d4c5f9",
-        width: 18,
-        borderRadius: 3,
+        marginHorizontal: 4,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingVertical: 40,
+    },
+    emptyIcon: {
+        fontSize: 36,
+        marginBottom: 8,
+        opacity: 0.6,
+    },
+    emptyText: {
+        fontSize: 15,
+        color: "#888",
+        fontWeight: "600",
     },
 });

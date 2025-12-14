@@ -119,8 +119,12 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
     // Calculate display days for booking summary
-    const displayDays = Math.ceil(totalHours / 24);
-
+    // const displayDays = Math.ceil(totalHours / 24);
+    const displayDays = Math.floor(totalHours / 24);
+    const displayHours = Math.floor(totalHours % 24);
+    const rentalDurationText = displayHours > 0 
+        ? `${displayDays} Ngày ${displayHours} Giờ` 
+        : `${displayDays} Ngày`;
     console.log("📊 Rental calculation:", {
         category,
         totalHours,
@@ -411,6 +415,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 
                 <BookingSummary
                     rentalDays={displayDays}
+                    rentalDurationText={rentalDurationText}
                     rentalPrice={`${totalRentalFee.toLocaleString()}đ`}
                     securityDeposit={`${securityDeposit.toLocaleString()}đ`}
                     total={`${total.toLocaleString()}đ`}

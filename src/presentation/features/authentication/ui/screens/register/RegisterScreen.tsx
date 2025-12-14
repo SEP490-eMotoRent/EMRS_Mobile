@@ -10,7 +10,7 @@
  * - Privacy policy access
  * 
  * @author eMotoRent Development Team
- * @created 2024
+ * @created 2025
  */
 
 import { useNavigation } from '@react-navigation/native';
@@ -178,10 +178,10 @@ export const RegisterScreen: React.FC = () => {
           />
 
           {/* Social authentication options (Google) */}
-          <GoogleAuthButton 
+          {/* <GoogleAuthButton 
             onPress={handleGoogleSignUp} 
             showSeparator={true} 
-          />
+          /> */}
 
           {/* Login prompt for existing users */}
           <SignInPrompt onSignInPress={handleSignIn} />

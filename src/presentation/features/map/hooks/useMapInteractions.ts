@@ -1,137 +1,150 @@
-import { useState, useCallback, useRef } from 'react';
-import { Branch } from '../../../../domain/entities/operations/Branch';
-import { parseDateRange } from '../utils/dateParser';
-import { useVehicleSearch } from './useVehicleSearch';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Branch } from "../../../../domain/entities/operations/Branch";
+import { parseDateRange } from "../utils/dateParser";
+import { useVehicleSearch } from "./useVehicleSearch";
+import { trackBreadcrumb, trackError, setTrackingContext } from "../utils/crashTracker";
 
-interface UseMapInteractionsParams {
-    dateRange?: string;
-}
-
-export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: UseMapInteractionsParams = {}) => {
+export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?: string } = {}) => {
     const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
     const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
     const [bookingModalVisible, setBookingModalVisible] = useState(false);
-    
-    // ✅ THROTTLE instead of debounce - prevents rapid clicks
-    const lastClickTimeRef = useRef<number>(0);
-    const lastClickedBranchRef = useRef<string | null>(null);
 
-    const { vehicles, loading, error, searchVehicles } = useVehicleSearch();
+    const selectedBranchIdRef = useRef<string | null>(null);
+    const bottomSheetVisibleRef = useRef(false);
 
-    // ✅ ULTRA DEFENSIVE marker press handler with throttling
-    const handleBranchMarkerPress = useCallback(async (branch: Branch) => {
-        const now = Date.now();
+    const { vehicles, loading, error, searchVehicles, cancelSearch } = useVehicleSearch();
+
+    useEffect(() => {
+        setTrackingContext('MapScreen', 'Idle');
+    }, []);
+
+    useEffect(() => {
+        selectedBranchIdRef.current = selectedBranchId;
+        bottomSheetVisibleRef.current = bottomSheetVisible;
         
-        // ✅ THROTTLE: Ignore clicks within 500ms of last click
-        if (now - lastClickTimeRef.current < 500) {
-            console.log('⏱️ Click throttled - too fast');
-            return;
-        }
-        
-        lastClickTimeRef.current = now;
+        // Add log for state change
+        console.log(`[useMapInteractions] State updated: branchId=${selectedBranchId}, sheet=${bottomSheetVisible}`);
+        trackBreadcrumb(`State: branchId=${selectedBranchId}, sheet=${bottomSheetVisible}`);
+    }, [selectedBranchId, bottomSheetVisible]);
 
-        try {
-            // ✅ Validate branch
-            if (!branch?.id) {
-                console.warn('⚠️ Invalid branch:', branch);
-                return;
-            }
+    useEffect(() => {
+        return () => {
+            console.log('[useMapInteractions] Unmounting hook');
+            trackBreadcrumb('🧹 useMapInteractions unmounting');
+            cancelSearch();
+        };
+    }, [cancelSearch]);
 
-            // ✅ If same branch, toggle off
-            if (lastClickedBranchRef.current === branch.id && bottomSheetVisible) {
-                console.log('👆 Toggling off same branch');
-                setBottomSheetVisible(false);
-                setSelectedBranchId(null);
-                lastClickedBranchRef.current = null;
-                return;
-            }
-
-            console.log('🎯 Branch clicked:', branch.id);
-            
-            lastClickedBranchRef.current = branch.id;
-
-            // ✅ Update UI FIRST (instant feedback)
-            setSelectedBranchId(branch.id);
-            setBottomSheetVisible(true);
-
-            // ✅ Parse dates safely
-            let startTime: string | undefined;
-            let endTime: string | undefined;
-            
+    const handleBranchMarkerPress = useCallback(
+        async (branch: Branch) => {
             try {
+                console.log('[useMapInteractions] Branch marker pressed: ', branch.id);
+                trackBreadcrumb(`👆 Branch marker pressed: ${branch.id}`);
+                setTrackingContext('MapScreen', 'BranchMarkerPress');
+
+                if (!branch?.id) {
+                    trackError('STATE_ERROR', new Error('Invalid branch'), 'Branch ID missing', { branch });
+                    return;
+                }
+
+                const isSame = selectedBranchIdRef.current === branch.id;
+
+                if (isSame && bottomSheetVisibleRef.current) {
+                    console.log('[useMapInteractions] Closing sheet for same branch');
+                    trackBreadcrumb('🔽 Closing bottom sheet (same branch)');
+                    setTrackingContext('MapScreen', 'ClosingSheet');
+                    
+                    cancelSearch();
+                    setBottomSheetVisible(false);
+                    setSelectedBranchId(null);
+                    selectedBranchIdRef.current = null;
+                    return;
+                }
+
+                console.log('[useMapInteractions] Opening new branch: ', branch.id);
+                trackBreadcrumb(`🏢 Opening branch: ${branch.id}`);
+                setTrackingContext('MapScreen', 'OpeningSheet');
+
+                cancelSearch();
+
+                setSelectedBranchId(branch.id);
+                selectedBranchIdRef.current = branch.id;
+                setBottomSheetVisible(true);
+
                 const parsed = parseDateRange(dateRange);
-                startTime = parsed.startTime;
-                endTime = parsed.endTime;
-            } catch (parseError) {
-                console.warn('⚠️ Date parse failed:', parseError);
-            }
+                
+                console.log('[useMapInteractions] Starting search for branch: ', branch.id);
+                trackBreadcrumb(`🔍 Starting search for branch ${branch.id}`);
+                setTrackingContext('MapScreen', 'SearchingVehicles');
+                
+                await searchVehicles(
+                    branch.id, 
+                    dateRange, 
+                    parsed.startTime, 
+                    parsed.endTime
+                );
 
-            // ✅ Search in background (async, won't block UI)
-            searchVehicles(branch.id, dateRange, startTime, endTime)
-                .catch(err => {
-                    console.error('❌ Search failed:', err);
-                    // Don't crash - just log it
+                console.log('[useMapInteractions] Search completed for branch: ', branch.id);
+                trackBreadcrumb('✅ Search completed successfully');
+                setTrackingContext('MapScreen', 'SheetOpen');
+                
+            } catch (err: any) {
+                console.error('[useMapInteractions] Branch press failed: ', err);
+                trackError('JS_ERROR', err, 'Branch marker press failed', {
+                    branchId: branch?.id,
+                    dateRange,
+                    selectedBranchId: selectedBranchIdRef.current,
+                    bottomSheetVisible: bottomSheetVisibleRef.current,
                 });
-            
-        } catch (error) {
-            console.error('❌ handleBranchMarkerPress error:', error);
-            // ✅ Don't crash app - recover gracefully
-        }
-    }, [dateRange, searchVehicles, bottomSheetVisible]);
+            }
+        },
+        [dateRange, searchVehicles, cancelSearch]
+    );
 
-    // ✅ Safe map press handler
     const handleMapPress = useCallback(() => {
-        try {
-            setSelectedBranchId(null);
-            setBottomSheetVisible(false);
-            lastClickedBranchRef.current = null;
-        } catch (error) {
-            console.error('❌ handleMapPress error:', error);
-        }
-    }, []);
+        console.log('[useMapInteractions] Map pressed');
+        trackBreadcrumb('🗺️ Map pressed');
+        setTrackingContext('MapScreen', 'MapPress');
 
-    // ✅ Safe bottom sheet close
+        cancelSearch();
+        setBottomSheetVisible(false);
+        setSelectedBranchId(null);
+        selectedBranchIdRef.current = null;
+    }, [cancelSearch]);
+
     const handleBottomSheetClose = useCallback(() => {
-        try {
-            setBottomSheetVisible(false);
-            setSelectedBranchId(null);
-            lastClickedBranchRef.current = null;
-        } catch (error) {
-            console.error('❌ handleBottomSheetClose error:', error);
-        }
-    }, []);
+        console.log('[useMapInteractions] Bottom sheet close button pressed');
+        trackBreadcrumb('✕ Bottom sheet close button pressed');
+        setTrackingContext('MapScreen', 'CloseButtonPress');
 
-    // ✅ Safe search bar press
+        cancelSearch();
+        setBottomSheetVisible(false);
+        setSelectedBranchId(null);
+        selectedBranchIdRef.current = null;
+    }, [cancelSearch]);
+
     const handleSearchBarPress = useCallback(() => {
-        try {
-            setBookingModalVisible(true);
-        } catch (error) {
-            console.error('❌ handleSearchBarPress error:', error);
-        }
+        console.log('[useMapInteractions] Search bar pressed');
+        trackBreadcrumb('🔍 Search bar pressed');
+        setBookingModalVisible(true);
     }, []);
 
-    // ✅ Safe booking modal close
     const handleBookingModalClose = useCallback(() => {
-        try {
-            setBookingModalVisible(false);
-        } catch (error) {
-            console.error('❌ handleBookingModalClose error:', error);
-        }
+        console.log('[useMapInteractions] Booking modal closed');
+        trackBreadcrumb('✕ Booking modal closed');
+        setBookingModalVisible(false);
     }, []);
 
-    // ✅ Safe book vehicle handler
     const handleBookVehicle = useCallback((vehicleId: string) => {
-        try {
-            console.log("📱 Booking vehicle:", vehicleId);
-        } catch (error) {
-            console.error('❌ handleBookVehicle error:', error);
-        }
+        console.log('[useMapInteractions] Book vehicle: ', vehicleId);
+        trackBreadcrumb(`📖 Book vehicle: ${vehicleId}`);
+        // Add your booking logic here
     }, []);
 
     return {
         selectedBranchId,
         bottomSheetVisible,
-        selectedVehicles: vehicles,
+        selectedVehicles: vehicles || [],
         bookingModalVisible,
         vehiclesLoading: loading,
         vehiclesError: error,

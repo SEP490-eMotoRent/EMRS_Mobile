@@ -75,7 +75,9 @@ export const InsurancePlansScreen: React.FC = () => {
     const { packages, loading, error, refetch } = useInsurancePackages();
 
     const insurancePlans: InsurancePlan[] = useMemo(() => {
-        const apiPlans = packages.map(pkg => transformToInsurancePlan(pkg));
+        // Sort packages by price (lowest to highest)
+        const sortedPackages = [...packages].sort((a, b) => a.packageFee - b.packageFee);
+        const apiPlans = sortedPackages.map(pkg => transformToInsurancePlan(pkg));
         return [noProtectionPlan, ...apiPlans];
     }, [packages]);
 

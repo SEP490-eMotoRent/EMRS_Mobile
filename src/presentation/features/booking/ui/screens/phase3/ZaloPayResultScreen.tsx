@@ -16,6 +16,7 @@ import { BookingStackParamList } from '../../../../../shared/navigation/StackPar
 import { PrimaryButton } from '../../../../../common/components/atoms/buttons/PrimaryButton';
 import { SecondaryButton } from '../../../../homepage/ui/atoms/buttons/SecondaryButton';
 import { container } from '../../../../../../core/di/ServiceContainer';
+import { useBookingStatusPolling } from '../../../hooks/useBookingStatusPolling';
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ZaloPayResult'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ZaloPayResult'>;
@@ -56,8 +57,42 @@ export const ZaloPayResultScreen: React.FC = () => {
     const [transactionId, setTransactionId] = useState<string>('');
     const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [pollingEnabled, setPollingEnabled] = useState(true);
 
     const { bookingId } = route.params;
+
+    // ==================== STATUS POLLING ====================
+    useBookingStatusPolling({
+        bookingId,
+        enabled: pollingEnabled && paymentStatus === 'pending',
+        onStatusChange: (status) => {
+            console.log('═══════════════════════════════════════════════════');
+            console.log('🔔 [ZALOPAY POLLING] Status change detected:', status);
+            console.log('═══════════════════════════════════════════════════');
+            
+            if (status === 'Booked') {
+                console.log('✅ [ZALOPAY POLLING] Payment confirmed via polling!');
+                console.log('🎯 [ZALOPAY POLLING] Deep link may have failed, but polling caught it');
+                
+                setPollingEnabled(false);
+                setPaymentStatus('success');
+                
+                setTimeout(() => {
+                    navigateToContract();
+                }, 2000);
+            } else if (status === 'Cancelled') {
+                console.log('❌ [ZALOPAY POLLING] Booking cancelled');
+                setPollingEnabled(false);
+                setPaymentStatus('failed');
+                setErrorMessage(
+                    'Booking đã hết hạn. Nếu bạn đã thanh toán, ' +
+                    'vui lòng liên hệ hỗ trợ với mã booking: ' + bookingId
+                );
+            }
+        },
+        pollingInterval: 3000,
+        maxDuration: 15 * 60 * 1000,
+    });
 
     // ==================== LOAD BOOKING CONTEXT ====================
     useEffect(() => {
@@ -95,6 +130,7 @@ export const ZaloPayResultScreen: React.FC = () => {
 
         console.log('📥 [CALLBACK] Raw URL:', url);
         setIsProcessing(true);
+        setPollingEnabled(false); // Stop polling when callback fires
 
         try {
             const params = parseCallbackUrl(url);
@@ -336,12 +372,14 @@ export const ZaloPayResultScreen: React.FC = () => {
     // ==================== RETRY PAYMENT ====================
     const handleRetry = () => {
         console.log('🔄 [RETRY] User clicked retry, going back...');
+        setPollingEnabled(false);
         navigation.goBack();
     };
 
     // ==================== GO HOME ====================
     const handleGoHome = () => {
         console.log('🏠 [HOME] User clicked go home, navigating to Trips...');
+        setPollingEnabled(false);
         navigation.reset({
             index: 0,
             routes: [{ name: 'Trips' }],
@@ -407,6 +445,9 @@ export const ZaloPayResultScreen: React.FC = () => {
                     Mã giao dịch: {transactionId}
                 </Text>
             )}
+            <Text style={styles.pollingHint}>
+                Đang tự động kiểm tra trạng thái thanh toán...
+            </Text>
         </View>
     );
 };
@@ -493,6 +534,13 @@ const styles = StyleSheet.create({
         color: '#999',
         fontSize: 14,
         marginTop: 10,
+    },
+    pollingHint: {
+        color: '#666',
+        fontSize: 12,
+        marginTop: 20,
+        textAlign: 'center',
+        fontStyle: 'italic',
     },
     buttonContainer: {
         marginTop: 40,

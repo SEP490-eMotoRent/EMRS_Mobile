@@ -8,12 +8,13 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { trackBreadcrumb, trackError } from "../../utils/crashTracker";
 import { calculateDistance, formatDistance } from "../../utils/distanceUtils";
 import { ElectricVehicle } from "../molecules/VehicleCard";
 import { VehicleCarousel } from "./VehicleCarousel";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const BOTTOM_SHEET_HEIGHT = 360; // ✅ Increased from 300 to 360
+const BOTTOM_SHEET_HEIGHT = 360;
 
 interface VehicleBottomSheetProps {
     visible: boolean;
@@ -23,12 +24,10 @@ interface VehicleBottomSheetProps {
     onBookVehicle: (vehicleId: string) => void;
     dateRange?: string;
     location?: string;
-    // ✅ NEW: Branch location for distance calculation
     branchLocation?: {
         latitude: number;
         longitude: number;
     };
-    // ✅ NEW: Searched location (user's search/current location)
     searchedLocation?: {
         latitude: number;
         longitude: number;
@@ -47,9 +46,7 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     searchedLocation,
 }) => {
     const translateY = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current;
-    const animationInProgress = useRef(false);
 
-    // ✅ Calculate distance ONCE when branch is selected
     const distanceKm = useMemo(() => {
         if (!branchLocation || !searchedLocation) return null;
         
@@ -61,41 +58,39 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
         );
     }, [branchLocation, searchedLocation]);
 
-    // ✅ Format distance for display
     const formattedDistance = useMemo(() => {
         if (distanceKm === null) return null;
         return formatDistance(distanceKm);
     }, [distanceKm]);
 
+    // Simplified, safe animation – no manual stopping, no delays, no race conditions
     useEffect(() => {
-        if (animationInProgress.current) return;
-
-        try {
-            if (visible) {
-                animationInProgress.current = true;
-                Animated.spring(translateY, {
-                    toValue: 0,
-                    useNativeDriver: true,
-                    tension: 50,
-                    friction: 9,
-                }).start(() => {
-                    animationInProgress.current = false;
-                });
-            } else {
-                animationInProgress.current = true;
-                Animated.timing(translateY, {
-                    toValue: BOTTOM_SHEET_HEIGHT,
-                    duration: 250,
-                    useNativeDriver: true,
-                }).start(() => {
-                    animationInProgress.current = false;
-                });
-            }
-        } catch (error) {
-            console.error('Animation error:', error);
-            animationInProgress.current = false;
+        console.log('[VehicleBottomSheet] Visible changed to: ', visible);
+        if (visible) {
+            console.log('[VehicleBottomSheet] Starting open animation');
+            Animated.spring(translateY, {
+                toValue: 0,
+                useNativeDriver: true,
+                tension: 60,
+                friction: 10,
+            }).start(() => console.log('[VehicleBottomSheet] Open animation completed'));
+        } else {
+            console.log('[VehicleBottomSheet] Starting close animation');
+            Animated.timing(translateY, {
+                toValue: BOTTOM_SHEET_HEIGHT,
+                duration: 280,
+                useNativeDriver: true,
+            }).start(() => console.log('[VehicleBottomSheet] Close animation completed'));
         }
-    }, [visible, translateY]);
+    }, [visible]);
+
+    // Reset position on unmount to prevent glitches
+    useEffect(() => {
+        return () => {
+            console.log('[VehicleBottomSheet] Unmounting, resetting translateY');
+            translateY.setValue(BOTTOM_SHEET_HEIGHT);
+        };
+    }, [translateY]);
 
     if (!visible) return null;
 
@@ -110,21 +105,28 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
 
     const handleClose = () => {
         try {
+            console.log('[VehicleBottomSheet] Close button pressed');
+            trackBreadcrumb('👆 Close button pressed');
             onClose();
         } catch (error) {
-            console.error('Error closing bottom sheet:', error);
+            console.error('[VehicleBottomSheet] Close handler failed: ', error);
+            trackError('JS_ERROR', error, 'Bottom sheet close handler failed');
         }
     };
 
     const handleBookVehicle = (vehicleId: string) => {
         try {
             if (!vehicleId || typeof vehicleId !== 'string') {
-                console.warn('Invalid vehicle ID:', vehicleId);
+                console.error('[VehicleBottomSheet] Invalid vehicle ID: ', vehicleId);
+                trackError('STATE_ERROR', new Error('Invalid vehicle ID'), 'Invalid vehicle ID on book', { vehicleId });
                 return;
             }
+            console.log('[VehicleBottomSheet] Booking vehicle: ', vehicleId);
+            trackBreadcrumb(`📖 Booking vehicle: ${vehicleId}`);
             onBookVehicle(vehicleId);
         } catch (error) {
-            console.error('Error booking vehicle:', error);
+            console.error('[VehicleBottomSheet] Book vehicle failed: ', error);
+            trackError('JS_ERROR', error, 'Book vehicle handler failed', { vehicleId });
         }
     };
 
@@ -134,6 +136,7 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                 styles.container,
                 { transform: [{ translateY }] },
             ]}
+            pointerEvents="box-none"
         >
             <LinearGradient
                 colors={['rgba(212, 197, 249, 0.2)', 'rgba(124, 77, 255, 0.05)']}
@@ -142,7 +145,6 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                 style={styles.gradientBorder}
             >
                 <View style={styles.content}>
-                    {/* Compact Header */}
                     <View style={styles.header}>
                         <View style={styles.handleBar} />
                         
@@ -151,7 +153,6 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                                 <Text style={styles.icon}>🏍️</Text>
                                 <View style={styles.titleContainer}>
                                     <Text style={styles.title}>{getTitle()}</Text>
-                                    {/* ✅ NEW: Distance indicator */}
                                     {formattedDistance && (
                                         <View style={styles.distanceBadge}>
                                             <Text style={styles.distanceIcon}>📍</Text>
@@ -171,7 +172,6 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                         </View>
                     </View>
 
-                    {/* Carousel or Empty */}
                     <View style={styles.carouselContainer}>
                         {safeVehicles.length > 0 ? (
                             <VehicleCarousel 
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     header: {
         paddingTop: 6,
         paddingHorizontal: 16,
-        paddingBottom: 6, // ✅ Reduced from 8 to give carousel more space
+        paddingBottom: 6,
     },
     handleBar: {
         width: 36,
@@ -250,7 +250,6 @@ const styles = StyleSheet.create({
         color: "#fff",
         marginBottom: 4,
     },
-    // ✅ NEW: Distance badge styles
     distanceBadge: {
         flexDirection: "row",
         alignItems: "center",
@@ -288,7 +287,7 @@ const styles = StyleSheet.create({
     },
     carouselContainer: {
         flex: 1,
-        paddingBottom: 4, // ✅ Reduced from 8 to maximize carousel height
+        paddingBottom: 4,
     },
     emptyState: {
         flex: 1,

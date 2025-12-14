@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 
 interface RefreshButtonProps {
     onPress: () => void;
@@ -8,8 +9,9 @@ interface RefreshButtonProps {
 export const RefreshButton: React.FC<RefreshButtonProps> = ({ onPress }) => {
     return (
         <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.icon}>🔄</Text>
-        <Text style={styles.text}>Refresh</Text>
+            {/* ✅ Updated: FontAwesome refresh icon */}
+            <FontAwesome name="refresh" size={16} color="#fff" style={styles.icon} />
+            <Text style={styles.text}>Refresh</Text>
         </TouchableOpacity>
     );
 };
@@ -26,8 +28,7 @@ const styles = StyleSheet.create({
         borderColor: "#333",
     },
     icon: {
-        fontSize: 16,
-        marginRight: 6,
+        marginRight: 8,
     },
     text: {
         color: "#fff",

@@ -5,8 +5,11 @@ import {
     useRoute,
 } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
+    Linking,
     Modal,
     ScrollView,
     StyleSheet,
@@ -14,6 +17,8 @@ import {
     View,
 } from "react-native";
 import { WebView } from "react-native-webview";
+import { container } from "../../../../../../core/di/ServiceContainer";
+import { ConfigurationType } from "../../../../../../domain/entities/configuration/ConfigurationType";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { BookingStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
@@ -22,6 +27,7 @@ import { ContractGenerationProgress } from "../../organisms/contract/ContractGen
 import { NextStepsCard } from "../../organisms/NextStepsCard";
 import { PaymentSuccessHeader } from "../../organisms/payment/PaymentSuccessHeader";
 import { useRenterProfile } from "../../../../profile/hooks/profile/useRenterProfile";
+
 type RoutePropType = RouteProp<BookingStackParamList, "DigitalContract">;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, "DigitalContract">;
 
@@ -45,13 +51,46 @@ export const DigitalContractScreen: React.FC = () => {
     } = route.params;
 
     const displayContractNumber = contractNumber ?? "N/A";
-    
-    // Extract renter information
-    const renterName = renter?.account?.fullname || "___________________________";
-    const renterIdCard = renter?.documents?.[0]?.documentNumber || "___________________________";
 
     const [contractGenerated, setContractGenerated] = useState(false);
     const [showContractModal, setShowContractModal] = useState(false);
+    const [contractTemplateUrl, setContractTemplateUrl] = useState<string | null>(null);
+    const [loadingTemplate, setLoadingTemplate] = useState(false);
+    const [templateError, setTemplateError] = useState<string | null>(null);
+
+    // ==================== FETCH CONTRACT TEMPLATE FROM CONFIGURATION ====================
+    useEffect(() => {
+        fetchContractTemplate();
+    }, []);
+
+    const fetchContractTemplate = async () => {
+        try {
+            setLoadingTemplate(true);
+            setTemplateError(null);
+
+            console.log("📄 Fetching contract template from Configuration API...");
+            
+            const configurations = await container.configuration.getByType.execute(
+                ConfigurationType.RentalContractTemplate
+            );
+
+            if (configurations && configurations.length > 0) {
+                const templateConfig = configurations[0];
+                const templateUrl = templateConfig.value;
+
+                console.log("✅ Contract template fetched:", templateUrl);
+                setContractTemplateUrl(templateUrl);
+            } else {
+                console.warn("⚠️ No contract template found in configurations");
+                setTemplateError("Không tìm thấy mẫu hợp đồng");
+            }
+        } catch (error: any) {
+            console.error("❌ Error fetching contract template:", error);
+            setTemplateError(error.message || "Không thể tải mẫu hợp đồng");
+        } finally {
+            setLoadingTemplate(false);
+        }
+    };
 
     const handleContractComplete = () => setContractGenerated(true);
 
@@ -73,90 +112,25 @@ export const DigitalContractScreen: React.FC = () => {
         }
     };
 
-    const htmlContent = `
-        <!DOCTYPE html>
-        <html lang="vi">
-        <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Hợp đồng thuê xe</title>
-            <style>
-                body { font-family: "Times New Roman", serif; font-size: 13px; margin: 10px; line-height: 1.5; color: #000; }
-                h1 { text-align: center; font-size: 18px; font-weight: bold; }
-                h2 { text-decoration: underline; font-weight: bold; font-size: 15px; }
-                h3 { font-weight: bold; }
-                .section { margin-top: 10px; }
-                .signature-row { display: flex; justify-content: space-between; margin-top: 40px; }
-                .signature-box { width: 48%; text-align: center; }
-                .center { text-align: center; }
-                .italic { font-style: italic; }
-                .bold { font-weight: bold; }
-            </style>
-        </head>
-        <body>
-            <p class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-            <p class="center bold">Độc lập – Tự do – Hạnh phúc</p>
+    const handleViewContractTemplate = () => {
+        if (contractTemplateUrl) {
+            setShowContractModal(true);
+        } else {
+            Alert.alert(
+                "Thông báo",
+                "Mẫu hợp đồng chưa sẵn sàng. Vui lòng thử lại sau.",
+                [{ text: "OK" }]
+            );
+        }
+    };
 
-            <h1>HỢP ĐỒNG THUÊ XE</h1>
-            <p class="center">Số: ${displayContractNumber}</p>
+    const handleRetryFetchTemplate = () => {
+        fetchContractTemplate();
+    };
 
-            <p class="italic">Hôm nay, tại ${branchName}, chúng tôi gồm:</p>
-
-            <div class="section">
-                <h2>1. BÊN GIAO XE</h2>
-                <p>Công ty: eMotoRent</p>
-                <p>Địa điểm giao xe: ${branchName}</p>
-            </div>
-
-            <div class="section">
-                <h2>2. BÊN NHẬN XE</h2>
-                <p>Người thuê: ${renterName}</p>
-                <p>Số CCCD: ${renterIdCard}</p>
-                ${renter ? '' : '<p class="italic">* Thông tin sẽ được điền khi nhận xe tại chi nhánh</p>'}
-            </div>
-
-            <div class="section">
-                <h3>Điều 1. Thông tin xe thuê</h3>
-                <p>Nhãn hiệu xe: ${vehicleName}</p>
-                <p>Thời gian thuê: ${startDate} - ${endDate}</p>
-                <p>Thời lượng: ${duration}</p>
-                <p>Giá thuê: ${totalAmount}</p>
-                <p>Tiền đặt cọc: ${securityDeposit}</p>
-            </div>
-
-            <div class="section">
-                <h3>Điều 2. Nghĩa vụ của các bên</h3>
-                <p class="bold">Bên cho thuê:</p>
-                <p>- Giao xe đúng thời gian, địa điểm đã thỏa thuận</p>
-                <p>- Đảm bảo xe trong tình trạng tốt, an toàn khi giao</p>
-                <p>- Hỗ trợ bên thuê khi có sự cố trong quá trình sử dụng</p>
-
-                <p class="bold">Bên thuê:</p>
-                <p>- Thanh toán đầy đủ chi phí thuê xe theo thỏa thuận</p>
-                <p>- Bảo quản xe cẩn thận, sử dụng đúng mục đích</p>
-                <p>- Trả xe đúng thời gian, địa điểm đã thỏa thuận</p>
-                <p>- Chịu trách nhiệm về mọi hư hỏng phát sinh trong thời gian thuê</p>
-            </div>
-
-            <div class="section">
-                <h3>Điều 3. Điều khoản chung</h3>
-                <p>- Hợp đồng có hiệu lực kể từ ngày ký</p>
-                <p>- Mọi tranh chấp sẽ được giải quyết thông qua thương lượng</p>
-                <p>- Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản</p>
-            </div>
-
-            <div class="signature-row">
-                <div class="signature-box">
-                    <p class="bold">BÊN GIAO XE</p>
-                    <p class="italic">(Ký, đóng dấu)</p>
-                </div>
-                <div class="signature-box">
-                    <p class="bold">BÊN NHẬN XE</p>
-                    <p class="italic">(Ký tên)</p>
-                </div>
-            </div>
-        </body>
-        </html>`;
+    const handleCloseModal = () => {
+        setShowContractModal(false);
+    };
 
     return (
         <View style={styles.container}>
@@ -189,16 +163,44 @@ export const DigitalContractScreen: React.FC = () => {
                         />
 
                         <View style={styles.contractPreviewCard}>
-                            <Text style={styles.contractTitle}>Hợp đồng thuê xe</Text>
+                            <View style={styles.contractPreviewHeader}>
+                                <Text style={styles.contractTitle}>Hợp đồng thuê xe (Mẫu)</Text>
+                                <View style={styles.sampleBadge}>
+                                    <Text style={styles.sampleBadgeText}>MẪU</Text>
+                                </View>
+                            </View>
                             <Text style={styles.contractSummary}>
-                                Đây là bản hợp đồng thuê xe giữa bạn và eMotoRent, bao gồm thông tin xe,
-                                thời gian thuê, giá thuê và nghĩa vụ hai bên.
+                                Đây là bản hợp đồng mẫu để bạn tham khảo. Hợp đồng chính thức sẽ được ký khi 
+                                bạn đến nhận xe tại chi nhánh {branchName}.
                             </Text>
-                            <PrimaryButton
-                                title="Đọc hợp đồng"
-                                onPress={() => setShowContractModal(true)}
-                                style={styles.readButton}
-                            />
+
+                            {loadingTemplate ? (
+                                <View style={styles.loadingContainer}>
+                                    <ActivityIndicator size="small" color="#fbbf24" />
+                                    <Text style={styles.loadingText}>Đang tải mẫu hợp đồng...</Text>
+                                </View>
+                            ) : templateError ? (
+                                <View style={styles.errorContainer}>
+                                    <Text style={styles.errorText}>{templateError}</Text>
+                                    <PrimaryButton
+                                        title="Thử lại"
+                                        onPress={handleRetryFetchTemplate}
+                                        style={styles.retryButton}
+                                    />
+                                </View>
+                            ) : (
+                                <>
+                                    <PrimaryButton
+                                        title="Xem hợp đồng mẫu"
+                                        onPress={handleViewContractTemplate}
+                                        style={styles.readButton}
+                                        disabled={!contractTemplateUrl}
+                                    />
+                                    <Text style={styles.contractNote}>
+                                        💡 Hợp đồng chính thức sẽ bao gồm đầy đủ thông tin xe và chữ ký điện tử
+                                    </Text>
+                                </>
+                            )}
                         </View>
 
                         <View style={styles.confirmationCard}>
@@ -224,7 +226,9 @@ export const DigitalContractScreen: React.FC = () => {
                             </View>
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
-                                <Text style={styles.infoText}>Mang theo CCCD và giấy phép lái xe</Text>
+                                <Text style={styles.infoText}>
+                                    Mang theo <Text style={styles.infoTextBold}>CCCD và giấy phép lái xe gốc</Text> để ký hợp đồng
+                                </Text>
                             </View>
                             <View style={styles.infoItem}>
                                 <Text style={styles.infoBullet}>•</Text>
@@ -255,11 +259,88 @@ export const DigitalContractScreen: React.FC = () => {
                 </View>
             )}
 
+            {/* ==================== CONTRACT TEMPLATE MODAL WITH GOOGLE DOCS VIEWER ==================== */}
             <Modal visible={showContractModal} animationType="slide" transparent={false}>
                 <View style={styles.modalContainer}>
-                    <WebView originWhitelist={["*"]} source={{ html: htmlContent }} />
+                    <View style={styles.modalHeader}>
+                        <View style={styles.modalHeaderContent}>
+                            <View>
+                                <Text style={styles.modalHeaderTitle}>Hợp đồng thuê xe (Mẫu)</Text>
+                                <Text style={styles.modalHeaderSubtitle}>Mã đặt xe: {displayContractNumber}</Text>
+                            </View>
+                            <View style={styles.modalSampleBadge}>
+                                <Text style={styles.modalSampleBadgeText}>MẪU</Text>
+                            </View>
+                        </View>
+                        <View style={styles.modalNotice}>
+                            <Text style={styles.modalNoticeIcon}>⚠️</Text>
+                            <Text style={styles.modalNoticeText}>
+                                Đây chỉ là hợp đồng mẫu. Hợp đồng chính thức sẽ được ký tại chi nhánh với đầy đủ thông tin chi tiết.
+                            </Text>
+                        </View>
+                    </View>
+
+                    {contractTemplateUrl ? (
+                        <WebView
+                            originWhitelist={["*"]}
+                            source={{ 
+                                uri: `https://docs.google.com/viewer?url=${encodeURIComponent(contractTemplateUrl)}&embedded=true`,
+                            }}
+                            style={styles.webview}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                            scalesPageToFit={false}
+                            showsVerticalScrollIndicator={true}
+                            onError={(syntheticEvent) => {
+                                const { nativeEvent } = syntheticEvent;
+                                console.error("❌ WebView error:", nativeEvent);
+                            }}
+                            onLoadStart={() => {
+                                console.log("📥 Starting to load PDF in WebView...");
+                            }}
+                            onLoadEnd={() => {
+                                console.log("✅ PDF WebView loaded successfully");
+                            }}
+                            injectedJavaScript={`
+                                (function() {
+                                    // Wait for page to load
+                                    setTimeout(function() {
+                                        // Set initial zoom to 100%
+                                        document.body.style.zoom = "100%";
+                                        
+                                        // Try to zoom in on the PDF viewer
+                                        const meta = document.querySelector('meta[name="viewport"]');
+                                        if (meta) {
+                                            meta.setAttribute('content', 'width=device-width, initial-scale=1.5, maximum-scale=3.0, user-scalable=yes');
+                                        }
+                                    }, 1000);
+                                })();
+                                true;
+                            `}
+                            renderLoading={() => (
+                                <View style={styles.webviewLoadingContainer}>
+                                    <ActivityIndicator size="large" color="#fbbf24" />
+                                    <Text style={styles.webviewLoadingText}>Đang tải PDF...</Text>
+                                </View>
+                            )}
+                            startInLoadingState={true}
+                        />
+                    ) : (
+                        <View style={styles.noContractContainer}>
+                            <Text style={styles.noContractText}>Không tìm thấy mẫu hợp đồng</Text>
+                            <PrimaryButton
+                                title="Đóng"
+                                onPress={handleCloseModal}
+                                style={styles.retryButton}
+                            />
+                        </View>
+                    )}
+
                     <View style={styles.modalFooter}>
-                        <PrimaryButton title="Đóng" onPress={() => setShowContractModal(false)} />
+                        <PrimaryButton 
+                            title="Đóng" 
+                            onPress={handleCloseModal}
+                        />
                     </View>
                 </View>
             </Modal>
@@ -281,9 +362,23 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#22c55e",
     },
-    confirmationTitle: { color: "#22c55e", fontSize: 20, fontWeight: "700", marginBottom: 12 },
-    confirmationText: { color: "#fff", fontSize: 14, lineHeight: 20, marginBottom: 12 },
-    bookingReference: { color: "#4169E1", fontSize: 14, fontWeight: "600" },
+    confirmationTitle: { 
+        color: "#22c55e", 
+        fontSize: 20, 
+        fontWeight: "700", 
+        marginBottom: 12 
+    },
+    confirmationText: { 
+        color: "#fff", 
+        fontSize: 14, 
+        lineHeight: 20, 
+        marginBottom: 12 
+    },
+    bookingReference: { 
+        color: "#4169E1", 
+        fontSize: 14, 
+        fontWeight: "600" 
+    },
 
     infoCard: {
         backgroundColor: "#1a1a1a",
@@ -291,10 +386,32 @@ const styles = StyleSheet.create({
         padding: 20,
         marginBottom: 20,
     },
-    infoTitle: { color: "#fff", fontSize: 16, fontWeight: "700", marginBottom: 16 },
-    infoItem: { flexDirection: "row", marginBottom: 12 },
-    infoBullet: { color: "#4169E1", fontSize: 16, marginRight: 8, width: 20 },
-    infoText: { color: "#999", fontSize: 14, lineHeight: 20, flex: 1 },
+    infoTitle: { 
+        color: "#fff", 
+        fontSize: 16, 
+        fontWeight: "700", 
+        marginBottom: 16 
+    },
+    infoItem: { 
+        flexDirection: "row", 
+        marginBottom: 12 
+    },
+    infoBullet: { 
+        color: "#4169E1", 
+        fontSize: 16, 
+        marginRight: 8, 
+        width: 20 
+    },
+    infoText: { 
+        color: "#999", 
+        fontSize: 14, 
+        lineHeight: 20, 
+        flex: 1 
+    },
+    infoTextBold: {
+        color: "#fff",
+        fontWeight: "700",
+    },
 
     footer: {
         padding: 16,
@@ -318,12 +435,154 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 20,
         marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "#fbbf24",
     },
-    contractTitle: { color: "#fff", fontSize: 16, fontWeight: "700", marginBottom: 8 },
-    contractSummary: { color: "#999", fontSize: 14, lineHeight: 20, marginBottom: 12 },
-    readButton: { backgroundColor: "#4169E1" },
+    contractPreviewHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 8,
+    },
+    contractTitle: { 
+        color: "#fff", 
+        fontSize: 16, 
+        fontWeight: "700",
+        flex: 1,
+    },
+    sampleBadge: {
+        backgroundColor: "#fbbf24",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    sampleBadgeText: {
+        color: "#000",
+        fontSize: 10,
+        fontWeight: "700",
+    },
+    contractSummary: { 
+        color: "#999", 
+        fontSize: 14, 
+        lineHeight: 20, 
+        marginBottom: 12 
+    },
+    readButton: { 
+        backgroundColor: "#fbbf24",
+        marginBottom: 12,
+    },
+    contractNote: {
+        color: "#fbbf24",
+        fontSize: 12,
+        textAlign: "center",
+        fontStyle: "italic",
+    },
 
-    modalContainer: { flex: 1, backgroundColor: "#fff" },
+    loadingContainer: {
+        padding: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    loadingText: {
+        color: "#fbbf24",
+        fontSize: 14,
+        marginTop: 8,
+    },
+
+    errorContainer: {
+        padding: 16,
+        alignItems: "center",
+    },
+    errorText: {
+        color: "#ef4444",
+        fontSize: 14,
+        textAlign: "center",
+        marginBottom: 12,
+    },
+    retryButton: {
+        backgroundColor: "#fbbf24",
+        minWidth: 120,
+    },
+
+    modalContainer: { 
+        flex: 1, 
+        backgroundColor: "#fff" 
+    },
+    modalHeader: {
+        backgroundColor: "#fff",
+        borderBottomWidth: 1,
+        borderBottomColor: "#ddd",
+    },
+    modalHeaderContent: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        padding: 16,
+    },
+    modalHeaderTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#000",
+        marginBottom: 4,
+    },
+    modalHeaderSubtitle: {
+        fontSize: 14,
+        color: "#666",
+    },
+    modalSampleBadge: {
+        backgroundColor: "#fbbf24",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
+    },
+    modalSampleBadgeText: {
+        color: "#000",
+        fontSize: 12,
+        fontWeight: "700",
+    },
+    modalNotice: {
+        backgroundColor: "#fff3cd",
+        padding: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        borderTopWidth: 1,
+        borderTopColor: "#ffc107",
+    },
+    modalNoticeIcon: {
+        fontSize: 16,
+        marginRight: 8,
+    },
+    modalNoticeText: {
+        flex: 1,
+        color: "#856404",
+        fontSize: 13,
+        lineHeight: 18,
+    },
+    webview: {
+        flex: 1,
+        backgroundColor: "#fff",
+    },
+    webviewLoadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#fff",
+    },
+    webviewLoadingText: {
+        marginTop: 12,
+        fontSize: 14,
+        color: "#666",
+    },
+    noContractContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    noContractText: {
+        fontSize: 16,
+        color: "#999",
+        marginBottom: 20,
+    },
     modalFooter: {
         padding: 16,
         borderTopWidth: 1,

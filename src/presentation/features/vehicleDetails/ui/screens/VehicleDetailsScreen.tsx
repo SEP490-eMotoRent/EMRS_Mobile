@@ -257,7 +257,7 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         )}
 
-        {/* ✅ ALWAYS SHOW: Document Verification Section */}
+        {/* ALWAYS SHOW: Document Verification Section */}
         <View style={[
           styles.documentsWarning,
           documentsStatus.complete && styles.documentsWarningComplete

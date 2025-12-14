@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Button } from '../../../../../common/components/atoms/buttons/Button';
 import { Input } from '../../../../../common/components/atoms/Input';
 
@@ -38,17 +38,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
     return (
         <View style={styles.container}>
-            {/* ✅ ERROR DISPLAY */}
-            {error && (
-                <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>{error}</Text>
-                    {onErrorDismiss && (
-                        <Text style={styles.dismissText} onPress={onErrorDismiss}>
-                            ✕
-                        </Text>
-                    )}
-                </View>
-            )}
+            {/* Error banner removed - Toast notifications handle all errors */}
 
             <View style={styles.inputContainer}>
                 <Input
@@ -100,27 +90,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 0,
     },
-    // ✅ ERROR STYLES
-    errorContainer: {
-        backgroundColor: '#FEE2E2',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    errorText: {
-        color: '#DC2626',
-        fontSize: 14,
-        flex: 1,
-    },
-    dismissText: {
-        color: '#DC2626',
-        fontSize: 18,
-        fontWeight: 'bold',
-        paddingLeft: 12,
-    },
+    // Error styles removed - no longer needed
     inputContainer: {
         marginBottom: 16,
     },

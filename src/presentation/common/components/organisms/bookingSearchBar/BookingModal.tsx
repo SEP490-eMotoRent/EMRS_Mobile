@@ -13,11 +13,10 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import { useBranches } from "../../../../features/map/hooks/useBranches";
 import { HomeStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
-import { BuildingIcon } from "../../atoms/icons/searchBarIcons/BuildingIcon";
-import { CalendarIcon } from "../../atoms/icons/searchBarIcons/CalendarIcon";
 import { CityCard } from "../../molecules/cards/CityCard";
 import { InputField } from "../../molecules/InputField";
 import { DateTimeSearchModal } from "./DateTimeSearchModal";
@@ -27,7 +26,7 @@ type NavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 interface BookingModalProps {
     visible: boolean;
     onClose: () => void;
-    initialAddress?: string | null; // ✅ NEW: Accept initial address
+    initialAddress?: string | null;
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({ 
@@ -43,7 +42,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     const [address, setAddress] = useState("1 Phạm Văn Hai, Tân Bình");
     const [selectedDates, setSelectedDates] = useState<string | null>(null);
 
-    // ✅ NEW: Pre-fill address when modal opens with initialAddress
     useEffect(() => {
         if (visible && initialAddress) {
             setAddress(initialAddress);
@@ -172,29 +170,35 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         <TouchableOpacity 
                             style={styles.closeButton}
                             onPress={onClose}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                            activeOpacity={0.7}
                         >
-                            <Text style={styles.closeIcon}>✕</Text>
+                            <Ionicons name="close" size={28} color="#888" />
                         </TouchableOpacity>
                     </View>
 
                     <ScrollView showsVerticalScrollIndicator={false}>
                     <Text style={styles.sectionTitle}>Ở ĐÂU VÀ KHI NÀO</Text>
 
-                    {/* Address Input */}
+                    {/* Address Input - wrapped icon with spacing */}
                     <InputField 
-                        icon={<BuildingIcon />}
+                        icon={
+                            <View style={{ marginRight: 12 }}>
+                                <Ionicons name="business" size={26} color="#A78BFA" />
+                            </View>
+                        }
                         value={address}
                         onChangeText={setAddress}
                         placeholder="Điền địa chỉ của bạn hoặc chi nhánh"
                     />
 
-                    {/* Date Range */}
+                    {/* Date Range - bigger icons */}
                     <TouchableOpacity
                         style={styles.dateBox}
                         onPress={() => setDateModalVisible(true)}
+                        activeOpacity={0.7}
                     >
-                        <CalendarIcon />
+                        <Ionicons name="calendar-outline" size={26} color="#A78BFA" />
                         <View style={styles.dateContent}>
                             {formattedDates ? (
                                 <>
@@ -207,7 +211,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                                 <Text style={styles.inputLabel}>Chọn Ngày</Text>
                             )}
                         </View>
-                        <Text style={styles.chevronIcon}>›</Text>
+                        <Ionicons name="chevron-forward" size={26} color="#555" />
                     </TouchableOpacity>
 
                     <View style={styles.divider} />
@@ -219,15 +223,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         </Text>
                     </View>
 
+                    {/* GPS button - bigger icon */}
                     <TouchableOpacity
                         style={styles.gpsButton}
                         onPress={handleGetCurrentLocation}
                         disabled={loadingLocation}
+                        activeOpacity={0.7}
                     >
                         {loadingLocation ? (
                             <ActivityIndicator size="small" color="#A78BFA" />
                         ) : (
-                            <Text style={styles.gpsIcon}>⌖</Text>
+                            <Ionicons name="locate" size={26} color="#A78BFA" />
                         )}
                         <Text style={styles.gpsText}>
                             {loadingLocation ? 'Đang lấy vị trí...' : 'Sử dụng vị trí hiện tại'}
@@ -243,7 +249,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                     {error && (
                         <View style={styles.errorContainer}>
-                            <Text style={styles.errorIcon}>⚠</Text>
+                            <Ionicons name="warning" size={22} color="#ff6b6b" />
                             <Text style={styles.errorText}>{error}</Text>
                         </View>
                     )}
@@ -259,7 +265,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                     {!loading && !error && branches.length === 0 && (
                         <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyIcon}>○</Text>
+                            <Ionicons name="business-outline" size={48} color="#333" />
                             <Text style={styles.emptyText}>Không có chi nhánh</Text>
                         </View>
                     )}
@@ -314,11 +320,7 @@ const styles = StyleSheet.create({
         right: 0,
         top: 8,
         padding: 8,
-    },
-    closeIcon: {
-        color: '#888',
-        fontSize: 24,
-        fontWeight: '300',
+        zIndex: 10,
     },
     sectionTitle: {
         color: "#fff",
@@ -338,15 +340,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#1a1a1a',
     },
-    gpsIcon: {
-        fontSize: 20,
-        color: '#A78BFA',
-        marginRight: 12,
-    },
     gpsText: {
         color: '#A78BFA',
         fontSize: 15,
         fontWeight: '500',
+        marginLeft: 12,
     },
     dateBox: {
         backgroundColor: '#0a0a0a',
@@ -360,7 +358,7 @@ const styles = StyleSheet.create({
     },
     dateContent: {
         flex: 1,
-        marginLeft: 8,
+        marginLeft: 16, // ✅ Increased spacing
     },
     inputLabel: {
         color: "#aaa",
@@ -375,11 +373,6 @@ const styles = StyleSheet.create({
     dateText: {
         color: "#fff",
         fontSize: 15,
-    },
-    chevronIcon: {
-        color: '#555',
-        fontSize: 28,
-        fontWeight: '300',
     },
     divider: {
         height: 1,
@@ -418,27 +411,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    errorIcon: {
-        fontSize: 18,
-        color: '#ff6b6b',
-        marginRight: 10,
-    },
     errorText: {
         color: '#ff6b6b',
         fontSize: 14,
         flex: 1,
+        marginLeft: 10,
     },
     emptyContainer: {
         padding: 24,
         alignItems: 'center',
     },
-    emptyIcon: {
-        fontSize: 32,
-        color: '#333',
-        marginBottom: 8,
-    },
     emptyText: {
         color: '#666',
         fontSize: 14,
+        marginTop: 12,
     },
 });

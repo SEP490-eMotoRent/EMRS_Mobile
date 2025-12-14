@@ -1,13 +1,12 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Branch } from "../../../../../domain/entities/operations/Branch";
 import { colors } from "../../../../common/theme/colors";
 
 interface BranchInfoCardProps {
     branch: Branch;
     onClose: () => void;
-    onNavigate: () => void;
     onShowRoute: () => void;
     isRouteVisible: boolean;
     hasUserLocation: boolean;
@@ -18,7 +17,6 @@ interface BranchInfoCardProps {
 export const BranchInfoCard: React.FC<BranchInfoCardProps> = ({
     branch,
     onClose,
-    onNavigate,
     onShowRoute,
     isRouteVisible,
     hasUserLocation,
@@ -66,40 +64,29 @@ export const BranchInfoCard: React.FC<BranchInfoCardProps> = ({
                 </View>
             )}
 
-            {/* Action Buttons */}
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity
+            {/* Single "Chỉ đường" Button - Full Width */}
+            <TouchableOpacity
+                style={[
+                    styles.routeButton,
+                    isRouteVisible && styles.routeButtonActive,
+                ]}
+                onPress={onShowRoute}
+                disabled={!hasUserLocation}
+            >
+                <AntDesign
+                    name="eye"
+                    size={16}
+                    color={isRouteVisible ? "#000" : "#fff"}
+                />
+                <Text
                     style={[
-                        styles.routeButton,
-                        isRouteVisible && styles.routeButtonActive,
+                        styles.routeButtonText,
+                        isRouteVisible && styles.routeButtonTextActive,
                     ]}
-                    onPress={onShowRoute}
-                    disabled={!hasUserLocation}
                 >
-                    <AntDesign
-                        name="eye"
-                        size={16}
-                        color={isRouteVisible ? "#000" : "#fff"}
-                    />
-                    <Text
-                        style={[
-                            styles.routeButtonText,
-                            isRouteVisible && styles.routeButtonTextActive,
-                        ]}
-                    >
-                        {isRouteVisible ? "Ẩn đường" : "Xem đường"}
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.navigateButton}
-                    onPress={onNavigate}
-                    disabled={!hasUserLocation}
-                >
-                    <AntDesign name="arrow-right" size={16} color="#000" />
-                    <Text style={styles.navigateButtonText}>Bắt đầu</Text>
-                </TouchableOpacity>
-            </View>
+                    {isRouteVisible ? "Ẩn đường" : "Chỉ đường"}
+                </Text>
+            </TouchableOpacity>
 
             {!hasUserLocation && (
                 <Text style={styles.warningText}>
@@ -164,13 +151,7 @@ const styles = StyleSheet.create({
         color: "#b8a4ff",
         fontWeight: "600",
     },
-    buttonContainer: {
-        flexDirection: "row",
-        gap: 8,
-        marginTop: 12,
-    },
     routeButton: {
-        flex: 1,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
@@ -181,6 +162,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 16,
         borderRadius: 12,
+        marginTop: 12,
     },
     routeButtonActive: {
         backgroundColor: "#b8a4ff",
@@ -193,22 +175,6 @@ const styles = StyleSheet.create({
     },
     routeButtonTextActive: {
         color: "#000",
-    },
-    navigateButton: {
-        flex: 1,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        backgroundColor: "#b8a4ff",
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-    },
-    navigateButtonText: {
-        color: "#000",
-        fontWeight: "600",
-        fontSize: 14,
     },
     warningText: {
         fontSize: 11,
