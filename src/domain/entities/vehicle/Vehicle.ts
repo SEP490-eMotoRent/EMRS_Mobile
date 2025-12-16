@@ -4,6 +4,8 @@ import { Booking } from "../booking/Booking";
 import { MaintenanceSchedule } from "../maintenance/MaintenanceSchedule";
 import { RepairRequest } from "../maintenance/RepairRequest";
 import { Branch } from '../operations/Branch';
+import { RentalReceipt } from '../booking/RentalReceipt';
+import { VehicleTransferOrder } from './VehicleTransferOrder';
 
 export class Vehicle implements BaseEntity {
     public readonly id: string;
@@ -12,25 +14,25 @@ export class Vehicle implements BaseEntity {
     public deletedAt: Date | null;
     public isDeleted: boolean;
 
+    // CORRECTED: All properties match C# backend
     public licensePlate: string;
     public color: string;
-    public yearOfManufacture?: Date;
+    public dateManufacturing?: Date; // FIXED: was yearOfManufacture
     public currentOdometerKm: number;
     public batteryHealthPercentage: number;
     public status: string;
-    public fileUrl?: string[];
     public purchaseDate?: Date;
     public description: string;
     public branchId: string;
     public vehicleModelId: string;
-    // ✅ REMOVED: rentalPricing property (doesn't exist in backend)
-    // Backend doesn't have this field, rental pricing is on VehicleModel -> RentalPricing
+    public gpsDeviceIdent?: string; // ADDED
+    public flespiDeviceId?: number; // ADDED
 
-    // ✅ 5 RELATIONS (matching backend exactly)
     public branch: Branch;
     public vehicleModel: VehicleModel;
+    public rentalReceipts: RentalReceipt[] = []; // ADDED
     public bookings: Booking[] = [];
-    public maintenanceSchedules: MaintenanceSchedule[] = [];
+    public vehicleTransferOrders: VehicleTransferOrder[] = []; // ADDED
     public repairRequests: RepairRequest[] = [];
 
     constructor(
@@ -43,15 +45,18 @@ export class Vehicle implements BaseEntity {
         description: string,
         branchId: string,
         vehicleModelId: string,
-        // ✅ RELATIONS PARAMS (matching backend)
+        // ✅ RELATIONS PARAMS
         branch: Branch,
         vehicleModel: VehicleModel,
+        rentalReceipts: RentalReceipt[] = [],
         bookings: Booking[] = [],
-        maintenanceSchedules: MaintenanceSchedule[] = [],
+        vehicleTransferOrders: VehicleTransferOrder[] = [],
         repairRequests: RepairRequest[] = [],
-        yearOfManufacture?: Date,
-        fileUrl?: string[],
+        // ✅ OPTIONAL FIELDS
+        dateManufacturing?: Date,
         purchaseDate?: Date,
+        gpsDeviceIdent?: string,
+        flespiDeviceId?: number,
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
@@ -73,15 +78,17 @@ export class Vehicle implements BaseEntity {
         this.vehicleModelId = vehicleModelId;
         
         // Optional fields
-        this.yearOfManufacture = yearOfManufacture;
-        this.fileUrl = fileUrl;
+        this.dateManufacturing = dateManufacturing;
         this.purchaseDate = purchaseDate;
+        this.gpsDeviceIdent = gpsDeviceIdent;
+        this.flespiDeviceId = flespiDeviceId;
 
         // Relations
         this.branch = branch;
         this.vehicleModel = vehicleModel;
+        this.rentalReceipts = rentalReceipts;
         this.bookings = bookings;
-        this.maintenanceSchedules = maintenanceSchedules;
+        this.vehicleTransferOrders = vehicleTransferOrders;
         this.repairRequests = repairRequests;
     }
 
@@ -106,7 +113,6 @@ export class Vehicle implements BaseEntity {
         return this.bookings.length;
     }
 
-    // ✅ NEW: Access rental pricing through VehicleModel
     dailyRentalPrice(): number {
         return this.vehicleModel.dailyRentalPrice();
     }
