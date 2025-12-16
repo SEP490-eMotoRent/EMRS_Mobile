@@ -45,8 +45,19 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     branchLocation,
     searchedLocation,
 }) => {
+    // Animation value for bottom sheet position
     const translateY = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current;
+    
+    // Track current animation to prevent race conditions
+    const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+    
+    // Track mounted state to prevent updates after unmount
+    const isMountedRef = useRef<boolean>(true);
 
+    /**
+     * Calculate distance between branch and searched location
+     * Memoized to prevent recalculation on every render
+     */
     const distanceKm = useMemo(() => {
         if (!branchLocation || !searchedLocation) return null;
         
@@ -58,44 +69,101 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
         );
     }, [branchLocation, searchedLocation]);
 
+    /**
+     * Format distance for display
+     */
     const formattedDistance = useMemo(() => {
         if (distanceKm === null) return null;
         return formatDistance(distanceKm);
     }, [distanceKm]);
 
-    // Simplified, safe animation – no manual stopping, no delays, no race conditions
+    /**
+     * Handle animation with race condition prevention
+     * 
+     * Critical fixes:
+     * 1. Stop previous animation before starting new one
+     * 2. Check if component is mounted before finishing
+     * 3. Clear animation ref after completion
+     */
     useEffect(() => {
         console.log('[VehicleBottomSheet] Visible changed to: ', visible);
+        
+        // CRITICAL: Stop any in-progress animation first
+        if (animationRef.current) {
+            console.log('[VehicleBottomSheet] Stopping previous animation');
+            animationRef.current.stop();
+            animationRef.current = null;
+        }
+
         if (visible) {
             console.log('[VehicleBottomSheet] Starting open animation');
-            Animated.spring(translateY, {
+            
+            // Create spring animation for smooth opening
+            animationRef.current = Animated.spring(translateY, {
                 toValue: 0,
                 useNativeDriver: true,
                 tension: 60,
                 friction: 10,
-            }).start(() => console.log('[VehicleBottomSheet] Open animation completed'));
+            });
+            
+            animationRef.current.start(({ finished }) => {
+                // Only process completion if animation finished naturally and component is mounted
+                if (finished && isMountedRef.current) {
+                    console.log('[VehicleBottomSheet] Open animation completed');
+                    animationRef.current = null;
+                }
+            });
         } else {
             console.log('[VehicleBottomSheet] Starting close animation');
-            Animated.timing(translateY, {
+            
+            // Create timing animation for quick closing
+            animationRef.current = Animated.timing(translateY, {
                 toValue: BOTTOM_SHEET_HEIGHT,
                 duration: 280,
                 useNativeDriver: true,
-            }).start(() => console.log('[VehicleBottomSheet] Close animation completed'));
+            });
+            
+            animationRef.current.start(({ finished }) => {
+                // Only process completion if animation finished naturally and component is mounted
+                if (finished && isMountedRef.current) {
+                    console.log('[VehicleBottomSheet] Close animation completed');
+                    animationRef.current = null;
+                }
+            });
         }
-    }, [visible]);
+    }, [visible, translateY]);
 
-    // Reset position on unmount to prevent glitches
+    /**
+     * Cleanup: Stop animations and reset position on unmount
+     * Prevents crash from animations trying to update unmounted component
+     */
     useEffect(() => {
+        isMountedRef.current = true;
+        
         return () => {
-            console.log('[VehicleBottomSheet] Unmounting, resetting translateY');
+            console.log('[VehicleBottomSheet] Unmounting, cleaning up animations');
+            isMountedRef.current = false;
+            
+            // Stop any running animation
+            if (animationRef.current) {
+                animationRef.current.stop();
+                animationRef.current = null;
+            }
+            
+            // Reset position immediately (no animation)
             translateY.setValue(BOTTOM_SHEET_HEIGHT);
         };
     }, [translateY]);
 
+    // Don't render anything if not visible (performance optimization)
     if (!visible) return null;
 
+    // Ensure vehicles is always an array
     const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
 
+    /**
+     * Get title based on marker type
+     */
     const getTitle = () => {
         if (markerType === "cluster") {
             return `${safeVehicles.length} Xe Điện`;
@@ -103,6 +171,9 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
         return "Xe Điện Có Sẵn";
     };
 
+    /**
+     * Handle close button press with error tracking
+     */
     const handleClose = () => {
         try {
             console.log('[VehicleBottomSheet] Close button pressed');
@@ -114,6 +185,9 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
         }
     };
 
+    /**
+     * Handle vehicle booking with validation and error tracking
+     */
     const handleBookVehicle = (vehicleId: string) => {
         try {
             if (!vehicleId || typeof vehicleId !== 'string') {
@@ -145,6 +219,7 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                 style={styles.gradientBorder}
             >
                 <View style={styles.content}>
+                    {/* Header with handle bar, title, and close button */}
                     <View style={styles.header}>
                         <View style={styles.handleBar} />
                         
@@ -153,6 +228,7 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                                 <Text style={styles.icon}>🏍️</Text>
                                 <View style={styles.titleContainer}>
                                     <Text style={styles.title}>{getTitle()}</Text>
+                                    {/* Distance badge - only show if we have distance data */}
                                     {formattedDistance && (
                                         <View style={styles.distanceBadge}>
                                             <Text style={styles.distanceIcon}>📍</Text>
@@ -172,6 +248,7 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
                         </View>
                     </View>
 
+                    {/* Vehicle carousel */}
                     <View style={styles.carouselContainer}>
                         {safeVehicles.length > 0 ? (
                             <VehicleCarousel 

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { InteractionManager } from 'react-native';
 import { Region } from 'react-native-maps';
 import sl from '../../../../core/di/InjectionContainer';
 import { Branch } from '../../../../domain/entities/operations/Branch';
@@ -15,7 +16,10 @@ const DEFAULT_REGION: Region = {
     longitudeDelta: 0.05,
 };
 
-// ✅ Helper: Calculate distance between two coordinates (Haversine formula)
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ * Returns distance in kilometers
+ */
 const calculateDistance = (
     lat1: number,
     lon1: number,
@@ -43,13 +47,17 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
     const [geocoding, setGeocoding] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Refs for managing async operations and preventing race conditions
     const geocodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastGeocodedAddressRef = useRef<string>('');
     const isMountedRef = useRef<boolean>(true);
     const hasInitializedRef = useRef<boolean>(false);
     const currentGeocodeIdRef = useRef<number>(0);
 
-    // ✅ Stable branch filtering
+    /**
+     * Filter branches with valid coordinates
+     * Memoized to prevent recalculation on every render
+     */
     const validBranches = useMemo(() => {
         const filtered = branches.filter(b => {
             const isValid = 
@@ -69,7 +77,12 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         return filtered;
     }, [branches]);
 
-    // ✅ Show only closest branches for performance
+    /**
+     * Show only closest branches for performance
+     * Limits to 15 markers to prevent performance issues
+     * 
+     * Note: Currently not used in MapScreen, but available for future optimization
+     */
     const visibleBranches = useMemo(() => {
         const MAX_VISIBLE = 15;
         
@@ -94,7 +107,16 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         return closest;
     }, [validBranches, region.latitude, region.longitude]);
 
+    /**
+     * Geocode address with race condition prevention and error handling
+     * 
+     * Critical fixes:
+     * 1. Use InteractionManager to defer state updates until after animations
+     * 2. Check request ID to prevent race conditions
+     * 3. Gracefully handle geocoding failures without crashing
+     */
     const geocodeAddress = useCallback(async (addr: string, requestId: number) => {
+        // Skip if already geocoded this address
         if (lastGeocodedAddressRef.current === addr) {
             return;
         }
@@ -106,36 +128,55 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
             const geocodingRepo = sl.getGeocodingRepository();
             const coordinates = await geocodingRepo.geocodeAddress(addr);
 
-            // Only apply if still relevant and mounted
+            // Check if request is still valid (prevents race conditions)
             if (!isMountedRef.current || currentGeocodeIdRef.current !== requestId) {
                 console.log('⏭️ Geocode outdated, skipping');
                 return;
             }
 
-            lastGeocodedAddressRef.current = addr;
-            setSearchedLocation(coordinates);
-            setHasSearched(true);
-            
-            setRegion(prev => ({
-                ...prev,
-                latitude: coordinates.latitude,
-                longitude: coordinates.longitude,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-            }));
+            // CRITICAL: Wait for ongoing interactions/animations to complete
+            // This prevents geocoding from triggering state updates during animations
+            InteractionManager.runAfterInteractions(() => {
+                // Double-check component is still mounted and request is still valid
+                if (!isMountedRef.current || currentGeocodeIdRef.current !== requestId) {
+                    console.log('⏭️ Geocode outdated after interaction, skipping');
+                    return;
+                }
+
+                lastGeocodedAddressRef.current = addr;
+                setSearchedLocation(coordinates);
+                setHasSearched(true);
+                
+                // Update map region to show geocoded location
+                setRegion(prev => ({
+                    ...prev,
+                    latitude: coordinates.latitude,
+                    longitude: coordinates.longitude,
+                    latitudeDelta: 0.02,
+                    longitudeDelta: 0.02,
+                }));
+
+                console.log(`✅ Geocoded: ${addr} -> ${coordinates.latitude}, ${coordinates.longitude}`);
+            });
         } catch (err: any) {
-            // ✅ CRITICAL: Always catch and handle geocoding errors
+            // CRITICAL: Always catch and handle geocoding errors gracefully
             console.warn('⚠️ Geocoding failed:', err.message || err);
 
             if (!isMountedRef.current || currentGeocodeIdRef.current !== requestId) {
                 return;
             }
 
-            // Do NOT set error state if it's just location unavailable
+            // Don't set error state for common location unavailable errors
+            // This prevents showing error messages when geocoding simply can't find the location
             if (err.message?.includes?.('location') || err.message?.includes?.('unavailable')) {
                 console.log('📍 Location unavailable, using branch average');
             } else {
-                setError('Không thể tìm vị trí. Đang dùng vị trí mặc định.');
+                // Only set error for unexpected failures
+                InteractionManager.runAfterInteractions(() => {
+                    if (isMountedRef.current && currentGeocodeIdRef.current === requestId) {
+                        setError('Không thể tìm vị trí. Đang dùng vị trí mặc định.');
+                    }
+                });
             }
 
             setSearchedLocation(null);
@@ -147,22 +188,29 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         }
     }, []);
 
-    // Debounced geocoding on address change
+    /**
+     * Debounced geocoding on address change
+     * Waits 500ms after last address change before geocoding
+     */
     useEffect(() => {
+        // Skip default/placeholder address
         if (!address || address === "1 Phạm Văn Hai, Street, Tân Bình...") {
             return;
         }
 
+        // Clear previous timeout
         if (geocodeTimeoutRef.current !== null) {
             clearTimeout(geocodeTimeoutRef.current);
         }
 
+        // Increment request ID for race condition detection
         currentGeocodeIdRef.current += 1;
         const requestId = currentGeocodeIdRef.current;
 
+        // Debounce: wait 500ms before geocoding
         geocodeTimeoutRef.current = setTimeout(() => {
             geocodeAddress(address, requestId);
-        }, 500); // Slightly longer debounce
+        }, 500);
 
         return () => {
             if (geocodeTimeoutRef.current !== null) {
@@ -171,7 +219,10 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         };
     }, [address, geocodeAddress]);
 
-    // Initialize map to average of branches if no search
+    /**
+     * Initialize map to average of branches if no search performed
+     * This centers the map on the average location of all branches
+     */
     useEffect(() => {
         if (validBranches.length > 0 && !hasSearched && !hasInitializedRef.current) {
             hasInitializedRef.current = true;
@@ -198,6 +249,9 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         }
     }, [validBranches, hasSearched]);
 
+    /**
+     * Reset search state
+     */
     const resetSearch = useCallback(() => {
         setSearchedLocation(null);
         setHasSearched(false);
@@ -206,7 +260,9 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         hasInitializedRef.current = false;
     }, []);
 
-    // Cleanup
+    /**
+     * Cleanup on unmount
+     */
     useEffect(() => {
         return () => {
             isMountedRef.current = false;
@@ -223,6 +279,6 @@ export const useMapRegion = ({ branches, address }: UseMapRegionProps) => {
         resetSearch,
         geocoding,
         error,
-        visibleBranches,
+        visibleBranches, // Available for future optimization
     };
 };

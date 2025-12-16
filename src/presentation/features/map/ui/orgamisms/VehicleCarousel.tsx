@@ -27,17 +27,30 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
     dateRange,
     location,
 }) => {
+    // Animated value for scroll position
     const scrollX = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef<ScrollView>(null);
+    
+    // Track mounted state
+    const isMountedRef = useRef<boolean>(true);
 
+    /**
+     * Lifecycle tracking and cleanup
+     */
     useEffect(() => {
+        isMountedRef.current = true;
         console.log('[VehicleCarousel] Mounted with ', vehicles.length, ' vehicles');
+        
         return () => {
             console.log('[VehicleCarousel] Unmounting');
+            isMountedRef.current = false;
+            
+            // CRITICAL: Stop scroll animation on unmount to prevent memory leaks
             scrollX.stopAnimation();
         };
-    }, [vehicles.length]);
+    }, [vehicles.length, scrollX]);
 
+    // Empty state
     if (!vehicles || vehicles.length === 0) {
         return (
             <View style={styles.emptyContainer}>
@@ -63,7 +76,13 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
                 overScrollMode="never"
                 onScroll={Animated.event(
                     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-                    { useNativeDriver: false }
+                    { 
+                        useNativeDriver: false, // Must be false for scroll animations
+                        listener: (event: any) => {
+                            // Optional: Log scroll position for debugging
+                            // console.log('[VehicleCarousel] Scroll X:', event.nativeEvent.contentOffset.x);
+                        }
+                    }
                 )}
             >
                 {vehicles.map((vehicle, index) => (
@@ -78,21 +97,25 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
                 ))}
             </ScrollView>
 
+            {/* Pagination dots - only show if more than 1 vehicle */}
             {vehicles.length > 1 && (
                 <View style={styles.pagination}>
                     {vehicles.map((_, index) => {
+                        // Calculate input range for smooth interpolation
                         const inputRange = [
                             (index - 1) * ITEM_WIDTH,
                             index * ITEM_WIDTH,
                             (index + 1) * ITEM_WIDTH,
                         ];
 
+                        // Interpolate scale for zoom effect
                         const scale = scrollX.interpolate({
                             inputRange,
                             outputRange: [0.6, 1.3, 0.6],
                             extrapolate: "clamp",
                         });
 
+                        // Interpolate opacity for fade effect
                         const opacity = scrollX.interpolate({
                             inputRange,
                             outputRange: [0.4, 1, 0.4],
@@ -104,7 +127,10 @@ export const VehicleCarousel: React.FC<VehicleCarouselProps> = ({
                                 key={`dot-${index}`}
                                 style={[
                                     styles.dot,
-                                    { transform: [{ scale }], opacity },
+                                    { 
+                                        transform: [{ scale }], 
+                                        opacity 
+                                    },
                                 ]}
                             />
                         );
