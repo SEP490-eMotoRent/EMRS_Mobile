@@ -3,9 +3,9 @@ import { HolidayPricing } from "../../../../domain/entities/financial/HolidayPri
 export interface HolidayDay {
     date: Date;
     holiday: HolidayPricing;
-    dayIndex: number; // Index in rental period (0-based)
-    isInDiscountedPeriod: boolean; // Whether this day falls in discounted period
-    basePrice: number; // Daily rate (discounted or regular)
+    dayIndex: number;
+    isInDiscountedPeriod: boolean;
+    basePrice: number;
     surchargeAmount: number;
     totalPrice: number;
 }
@@ -139,19 +139,23 @@ const calculateProgressiveTiers = (totalHours: number): ProgressiveTierBreakdown
 };
 
 /**
- * Calculate combined pricing with Progressive Tier Hourly Pricing
+ * UPDATED: Calculate combined pricing with Progressive Tier Hourly Pricing
+ * NOW USING WHITEBOARD FORMULA (Subtractive Discounts)
  * 
- * Formula:
- * 1. Divide rental into discounted period + regular period
- * 2. Calculate hourly rate: Daily_Price ÷ 24
- * 3. Discounted portion: Hourly_Rate × Discounted_Hours × (1 - Discount_Rate)
- * 4. Regular portion: Hourly_Rate × Regular_Hours
- * 5. Holiday surcharge: Applied to the rate of the specific day
+ * Whiteboard Formula:
+ * A = Base price per day (gốc thuê)
+ * B = Normal days price = A × (days - λ) × (1 - %mem - %month)
+ * C = Holiday days price = A × λ × (1 + %holiday) × (1 - %mem - %month)
+ * D = B + C
  * 
- * Example (70 days):
- * - 60 days (2 months) get 10% discount
- * - 10 days regular price
- * - Total = (4,167đ × 1,440h × 0.90) + (4,167đ × 240h)
+ * Where:
+ * - λ (lambda) = number of holiday days
+ * - %mem = membership discount percentage (as decimal)
+ * - %month = monthly/yearly discount percentage (as decimal)
+ * - %holiday = holiday surcharge percentage (as decimal)
+ * 
+ * KEY CHANGE: Discounts are now SUBTRACTIVE (1 - %mem - %month)
+ * Previously: Sequential (1 - %month) × (1 - %mem)
  * 
  * @param startDate - Rental start date/time
  * @param endDate - Rental end date/time
@@ -159,6 +163,7 @@ const calculateProgressiveTiers = (totalHours: number): ProgressiveTierBreakdown
  * @param totalHours - Total rental hours
  * @param holidays - List of holiday pricings
  * @param configDiscountRate - Configuration discount rate (e.g., 0.90 for 10% monthly discount)
+ * @param membershipDiscountPercentage - Membership discount percentage (e.g., 5 for 5%)
  */
 export const calculateCombinedRentalFee = (
     startDate: Date,
@@ -166,7 +171,8 @@ export const calculateCombinedRentalFee = (
     dailyRate: number,
     totalHours: number,
     holidays: HolidayPricing[],
-    configDiscountRate: number
+    configDiscountRate: number,
+    membershipDiscountPercentage: number = 0
 ): {
     baseRentalFee: number;
     discountAmount: number;
@@ -174,82 +180,151 @@ export const calculateCombinedRentalFee = (
     totalRentalFee: number;
     holidayDays: HolidayDay[];
     progressiveTierBreakdown: ProgressiveTierBreakdown;
+    membershipDiscountAmount: number;
 } => {
     // Step 1: Calculate hourly rate
     const hourlyRate = dailyRate / HOURS_PER_DAY;
+    const totalDays = totalHours / HOURS_PER_DAY;
 
     // Step 2: Calculate progressive tier breakdown
     const tierBreakdown = calculateProgressiveTiers(totalHours);
     const { discountedHours, regularHours } = tierBreakdown;
 
-    // Step 3: Calculate base rental with progressive pricing
-    let baseRentalFee: number;
-    let discountAmount: number;
-
-    if (discountedHours > 0) {
-        // Has discounted period
-        const discountedPortion = hourlyRate * discountedHours * configDiscountRate;
-        const regularPortion = hourlyRate * regularHours;
-        const totalBeforeDiscount = hourlyRate * totalHours;
-
-        baseRentalFee = Math.round(discountedPortion + regularPortion);
-        discountAmount = Math.round(totalBeforeDiscount - baseRentalFee);
-    } else {
-        // No discount
-        baseRentalFee = Math.round(hourlyRate * totalHours);
-        discountAmount = 0;
-    }
-
-    // Step 4: Calculate holiday surcharge
+    // Step 3: Find holiday days (λ)
     const rentalDates = getDatesInRange(startDate, endDate);
-    const discountedDaysCount = discountedHours / HOURS_PER_DAY;
     const holidayDays: HolidayDay[] = [];
-    let totalSurcharge = 0;
-    let maxMultiplier = 1;
-
+    
     rentalDates.forEach((date, dayIndex) => {
         const holiday = findHolidayForDate(date, holidays);
-
         if (holiday) {
-            // Determine if this day is in discounted period
-            const isInDiscountedPeriod = dayIndex < discountedDaysCount;
-
-            // Calculate the daily rate for this day
-            const dailyRateForThisDay = isInDiscountedPeriod
-                ? hourlyRate * HOURS_PER_DAY * configDiscountRate
-                : hourlyRate * HOURS_PER_DAY;
-
-            // Calculate surcharge (rounded)
-            const surchargeAmount = Math.round(dailyRateForThisDay * (holiday.priceMultiplier - 1));
-            const totalPrice = Math.round(dailyRateForThisDay * holiday.priceMultiplier);
-
             holidayDays.push({
                 date,
                 holiday,
                 dayIndex,
-                isInDiscountedPeriod,
-                basePrice: Math.round(dailyRateForThisDay),
-                surchargeAmount,
-                totalPrice,
+                isInDiscountedPeriod: false, // Will update later
+                basePrice: 0,
+                surchargeAmount: 0,
+                totalPrice: 0,
             });
-
-            totalSurcharge += surchargeAmount;
-
-            if (holiday.priceMultiplier > maxMultiplier) {
-                maxMultiplier = holiday.priceMultiplier;
-            }
         }
     });
 
-    const totalRentalFee = baseRentalFee + totalSurcharge;
+    const lambda = holidayDays.length;
+
+    // Step 4: Calculate SUBTRACTIVE discount rate (WHITEBOARD FORMULA)
+    // OLD: (1 - 0.10) × (1 - 0.05) = 0.855 → 14.5% off
+    // NEW: 1 - 0.10 - 0.05 = 0.85 → 15% off
+    const configDiscountPercentage = (1 - configDiscountRate) * 100;
+    const configDiscountDecimal = configDiscountPercentage / 100;
+    const membershipDiscountDecimal = membershipDiscountPercentage / 100;
+    const combinedDiscountRate = 1 - membershipDiscountDecimal - configDiscountDecimal;
+
+    console.log("💰 [WHITEBOARD] Discount calculation:", {
+        configDiscount: `${configDiscountPercentage.toFixed(1)}%`,
+        membershipDiscount: `${membershipDiscountPercentage}%`,
+        combinedRate: combinedDiscountRate.toFixed(3),
+        totalDiscount: `${((1 - combinedDiscountRate) * 100).toFixed(1)}%`,
+        method: "SUBTRACTIVE (1 - %mem - %month)"
+    });
+
+    // Step 5: Calculate B - Normal days with progressive pricing
+    let normalDaysFee = 0;
+    let discountAmount = 0;
+
+    if (discountedHours > 0) {
+        // Has progressive discount
+        const discountedDays = discountedHours / HOURS_PER_DAY;
+        const regularDays = regularHours / HOURS_PER_DAY;
+        
+        // Distribute holiday days across periods proportionally
+        const holidayInDiscountedPeriod = Math.min(
+            lambda, 
+            Math.floor(lambda * (discountedDays / totalDays))
+        );
+        const holidayInRegularPeriod = lambda - holidayInDiscountedPeriod;
+        
+        const discountedNormalDays = discountedDays - holidayInDiscountedPeriod;
+        const regularNormalDays = regularDays - holidayInRegularPeriod;
+        
+        // Calculate normal days fee with combined discount
+        const discountedPortion = dailyRate * discountedNormalDays * combinedDiscountRate;
+        const regularPortion = dailyRate * regularNormalDays * combinedDiscountRate;
+        
+        normalDaysFee = Math.round(discountedPortion + regularPortion);
+        
+        // Calculate discount amount
+        const totalBeforeDiscount = dailyRate * (totalDays - lambda);
+        discountAmount = Math.round(totalBeforeDiscount * (1 - combinedDiscountRate));
+        
+        console.log("🔵 [WHITEBOARD] Normal days (B):", {
+            discountedNormalDays: discountedNormalDays.toFixed(2),
+            regularNormalDays: regularNormalDays.toFixed(2),
+            normalDaysFee: normalDaysFee.toLocaleString(),
+        });
+    } else {
+        // No progressive discount
+        const normalDaysCount = totalDays - lambda;
+        normalDaysFee = Math.round(dailyRate * normalDaysCount * combinedDiscountRate);
+        
+        const totalBeforeDiscount = dailyRate * normalDaysCount;
+        discountAmount = Math.round(totalBeforeDiscount * (1 - combinedDiscountRate));
+        
+        console.log("🔵 [WHITEBOARD] Normal days (B):", {
+            normalDays: normalDaysCount,
+            normalDaysFee: normalDaysFee.toLocaleString(),
+        });
+    }
+
+    // Step 6: Calculate C - Holiday days with surcharge
+    let holidayDaysFee = 0;
+    let totalHolidaySurcharge = 0;
+    
+    holidayDays.forEach((holidayDay, index) => {
+        const holidayMultiplier = holidayDay.holiday.priceMultiplier;
+        
+        // Calculate holiday day with combined discount applied
+        const holidayBasePrice = Math.round(dailyRate * combinedDiscountRate);
+        const holidayTotalPrice = Math.round(dailyRate * holidayMultiplier * combinedDiscountRate);
+        const surchargeAmount = holidayTotalPrice - holidayBasePrice;
+        
+        holidayDay.basePrice = holidayBasePrice;
+        holidayDay.totalPrice = holidayTotalPrice;
+        holidayDay.surchargeAmount = surchargeAmount;
+        
+        holidayDaysFee += holidayTotalPrice;
+        totalHolidaySurcharge += surchargeAmount;
+    });
+    
+    if (lambda > 0) {
+        console.log("🔴 [WHITEBOARD] Holiday days (C):", {
+            holidayDays: lambda,
+            holidayDaysFee: holidayDaysFee.toLocaleString(),
+            totalSurcharge: totalHolidaySurcharge.toLocaleString(),
+        });
+    }
+
+    // Step 7: Calculate D - Total rental fee
+    const totalRentalFee = normalDaysFee + holidayDaysFee;
+    
+    // Calculate base without any discounts for display
+    const baseWithoutDiscounts = Math.round(dailyRate * totalDays);
+    const totalDiscountAmount = baseWithoutDiscounts - totalRentalFee + totalHolidaySurcharge;
+    const membershipDiscountAmount = Math.round(dailyRate * totalDays * membershipDiscountDecimal);
+    
+    console.log("💚 [WHITEBOARD] Final (D = B + C):", {
+        normalDaysFee: normalDaysFee.toLocaleString(),
+        holidayDaysFee: holidayDaysFee.toLocaleString(),
+        totalRentalFee: totalRentalFee.toLocaleString(),
+    });
 
     return {
-        baseRentalFee,
-        discountAmount,
-        holidaySurcharge: totalSurcharge,
-        totalRentalFee,
+        baseRentalFee: baseWithoutDiscounts,
+        discountAmount: totalDiscountAmount,
+        holidaySurcharge: totalHolidaySurcharge,
+        totalRentalFee: totalRentalFee,
         holidayDays,
         progressiveTierBreakdown: tierBreakdown,
+        membershipDiscountAmount,
     };
 };
 

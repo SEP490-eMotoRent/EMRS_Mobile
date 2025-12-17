@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from "react";
 import {
     Dimensions,
@@ -9,7 +10,6 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import { Ionicons } from '@expo/vector-icons';
 import { CalendarList } from "react-native-calendars";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 
@@ -84,9 +84,9 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
     today.setHours(0, 0, 0, 0);
     const todayStr = formatLocalDate(today);
 
-    // ✅ 6 months from today, but include the entire last month
+    // ✅ UPDATED: 13 months from today to support 365-day yearly bookings
     const maxDate = new Date(today);
-    maxDate.setMonth(maxDate.getMonth() + 6);
+    maxDate.setMonth(maxDate.getMonth() + 13);
     const lastDayOfMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
     const maxDateStr = formatLocalDate(lastDayOfMonth);
 
@@ -399,7 +399,7 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                                         markedDates={markedDatesWithDisabled}
                                         onDayPress={onDayPress}
                                         pastScrollRange={0}
-                                        futureScrollRange={6}
+                                        futureScrollRange={13}
                                         scrollEnabled={true}
                                         minDate={minDateStr}
                                         maxDate={maxDateStr}
