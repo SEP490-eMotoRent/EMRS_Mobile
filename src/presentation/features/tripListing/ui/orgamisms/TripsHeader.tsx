@@ -1,7 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
-import { Icon } from "../atoms/Icons/Icons";
+import { Icon } from "../atoms/icons/Icons";
 
 interface TripsHeaderProps {
     onRefresh: () => void;
