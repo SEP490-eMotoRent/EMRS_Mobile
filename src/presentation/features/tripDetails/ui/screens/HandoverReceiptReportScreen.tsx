@@ -27,6 +27,7 @@ import { RentalReceipt } from "../../../../../domain/entities/booking/RentalRece
 import { GetBookingByIdUseCase } from "../../../../../domain/usecases/booking/GetBookingByIdUseCase";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
 import { GetDetailRentalReceiptUseCase } from "../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
+import ImageViewer from "react-native-image-zoom-viewer";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -221,46 +222,35 @@ export const HandoverReceiptReportScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
-              <View style={[styles.iconBadge, { backgroundColor: "rgba(201, 182, 255, 0.15)" }]}>
+              <View
+                style={[
+                  styles.iconBadge,
+                  { backgroundColor: "rgba(201, 182, 255, 0.15)" },
+                ]}
+              >
                 <AntDesign name="idcard" size={16} color="#C9B6FF" />
               </View>
               <Text style={styles.cardHeader}>Thông tin chung</Text>
             </View>
             <View style={styles.divider} />
-            <InfoRow 
-              label="Khách thuê" 
-              icon="user"
-              iconColor="#C9B6FF"
-            >
+            <InfoRow label="Khách thuê" icon="user" iconColor="#C9B6FF">
               {booking?.renter?.fullName() || "-"}
             </InfoRow>
-            <InfoRow 
-              label="Mã booking" 
-              icon="tag"
-              iconColor="#7DB3FF"
-            >
+            <InfoRow label="Mã booking" icon="tag" iconColor="#7DB3FF">
               {bookingCode}
             </InfoRow>
-            <InfoRow 
-              label="Biên bản" 
-              icon="file-text"
-              iconColor="#3B82F6"
-            >
+            <InfoRow label="Biên bản" icon="file-text" iconColor="#3B82F6">
               {rentalReceipt?.id ? `#${rentalReceipt?.id.slice(-8)}` : "-"}
             </InfoRow>
-            <InfoRow 
-              label="Thời gian tạo" 
+            <InfoRow
+              label="Thời gian tạo"
               icon="clock-circle"
               iconColor="#FFD666"
             >
               {formatDateTime(rentalReceipt?.createdAt)}
             </InfoRow>
             {rentalReceipt?.notes && (
-              <InfoRow 
-                label="Ghi chú" 
-                icon="message"
-                iconColor="#22C55E"
-              >
+              <InfoRow label="Ghi chú" icon="message" iconColor="#22C55E">
                 {rentalReceipt.notes}
               </InfoRow>
             )}
@@ -270,38 +260,27 @@ export const HandoverReceiptReportScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
-              <View style={[styles.iconBadge, { backgroundColor: "rgba(59, 130, 246, 0.15)" }]}>
+              <View
+                style={[
+                  styles.iconBadge,
+                  { backgroundColor: "rgba(59, 130, 246, 0.15)" },
+                ]}
+              >
                 <AntDesign name="dashboard" size={16} color="#3B82F6" />
               </View>
               <Text style={styles.cardHeader}>Thông số ban đầu</Text>
             </View>
             <View style={styles.divider} />
-            <InfoRow 
-              label="Số km ban đầu" 
-              icon="dashboard"
-              iconColor="#F59E0B"
-            >
+            <InfoRow label="Số km ban đầu" icon="dashboard" iconColor="#F59E0B">
               {rentalReceipt?.startOdometerKm ?? "-"} km
             </InfoRow>
-            <InfoRow 
-              label="Pin ban đầu" 
-              icon="thunderbolt"
-              iconColor="#3B82F6"
-            >
+            <InfoRow label="Pin ban đầu" icon="thunderbolt" iconColor="#3B82F6">
               {rentalReceipt?.startBatteryPercentage ?? "-"}%
             </InfoRow>
-            <InfoRow 
-              label="Nhân viên bàn giao" 
-              icon="user"
-              iconColor="#22C55E"
-            >
+            <InfoRow label="Nhân viên bàn giao" icon="user" iconColor="#22C55E">
               {staffName}
             </InfoRow>
-            <InfoRow 
-              label="Chi nhánh" 
-              icon="environment"
-              iconColor="#7DB3FF"
-            >
+            <InfoRow label="Chi nhánh" icon="environment" iconColor="#7DB3FF">
               {branchName}
             </InfoRow>
           </View>
@@ -310,7 +289,12 @@ export const HandoverReceiptReportScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
-              <View style={[styles.iconBadge, { backgroundColor: "rgba(34, 197, 94, 0.15)" }]}>
+              <View
+                style={[
+                  styles.iconBadge,
+                  { backgroundColor: "rgba(34, 197, 94, 0.15)" },
+                ]}
+              >
                 <AntDesign name="picture" size={16} color="#22C55E" />
               </View>
               <View style={styles.cardHeaderRight}>
@@ -347,8 +331,14 @@ export const HandoverReceiptReportScreen: React.FC = () => {
               <>
                 <View style={styles.divider} />
                 <View style={styles.emptyState}>
-                  <AntDesign name="picture" size={32} color={colors.text.secondary} />
-                  <Text style={styles.emptyStateText}>Chưa có ảnh bàn giao</Text>
+                  <AntDesign
+                    name="picture"
+                    size={32}
+                    color={colors.text.secondary}
+                  />
+                  <Text style={styles.emptyStateText}>
+                    Chưa có ảnh bàn giao
+                  </Text>
                 </View>
               </>
             )}
@@ -359,7 +349,12 @@ export const HandoverReceiptReportScreen: React.FC = () => {
           <View style={styles.section}>
             <View style={styles.card}>
               <View style={styles.cardHeaderRow}>
-                <View style={[styles.iconBadge, { backgroundColor: "rgba(255, 214, 102, 0.15)" }]}>
+                <View
+                  style={[
+                    styles.iconBadge,
+                    { backgroundColor: "rgba(255, 214, 102, 0.15)" },
+                  ]}
+                >
                   <AntDesign name="check-square" size={16} color="#FFD666" />
                 </View>
                 <Text style={styles.cardHeader}>Checklist bàn giao</Text>
@@ -391,7 +386,9 @@ export const HandoverReceiptReportScreen: React.FC = () => {
   const combinedImages = checklistHandoverImage
     ? [...handoverImages, checklistHandoverImage]
     : handoverImages;
-
+  const zoomImages = combinedImages.map((uri) => ({
+    url: uri,
+  }));
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -436,25 +433,24 @@ export const HandoverReceiptReportScreen: React.FC = () => {
             </View>
           </SafeAreaView>
 
-          <ScrollView
-            ref={imageScrollRef}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleImageScroll}
-            style={styles.imageModalScroll}
-            decelerationRate="fast"
-          >
-            {combinedImages.map((image, index) => (
-              <View key={image + index} style={styles.imageModalImageContainer}>
-                <Image
-                  source={{ uri: image }}
-                  style={styles.imageModalImage}
-                  resizeMode="contain"
-                />
-              </View>
-            ))}
-          </ScrollView>
+          <ImageViewer
+            imageUrls={zoomImages}
+            index={selectedImageIndex}
+            enableSwipeDown
+            onSwipeDown={closeImageModal}
+            onChange={(index) => {
+              if (typeof index === "number") {
+                setSelectedImageIndex(index);
+              }
+            }}
+            renderIndicator={(currentIndex, allSize) => (
+              <Text style={styles.imageModalCounter}>
+                {currentIndex} / {allSize}
+              </Text>
+            )}
+            backgroundColor="rgba(0,0,0,0.95)"
+            saveToLocalByLongPress={false}
+          />
 
           {combinedImages.length > 1 && (
             <View style={styles.imageModalThumbnailStrip}>
@@ -500,11 +496,21 @@ type InfoRowProps = {
   iconColor?: string;
 };
 
-const InfoRow: React.FC<InfoRowProps> = ({ label, children, icon, iconColor = colors.text.secondary }) => (
+const InfoRow: React.FC<InfoRowProps> = ({
+  label,
+  children,
+  icon,
+  iconColor = colors.text.secondary,
+}) => (
   <View style={styles.infoRow}>
     <View style={styles.infoLabelContainer}>
       {icon && (
-        <AntDesign name={icon} size={12} color={iconColor} style={styles.infoIcon} />
+        <AntDesign
+          name={icon}
+          size={12}
+          color={iconColor}
+          style={styles.infoIcon}
+        />
       )}
       <Text style={styles.infoLabel}>{label}</Text>
     </View>

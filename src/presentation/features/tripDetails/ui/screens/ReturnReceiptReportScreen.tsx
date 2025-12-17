@@ -36,7 +36,7 @@ import Toast from "react-native-toast-message";
 import { GetDetailRentalReceiptUseCase } from "../../../../../domain/usecases/receipt/GetDetailRentalReceipt";
 import { RootState } from "../../../authentication/store";
 import { useAppSelector } from "../../../authentication/store/hooks";
-
+import ImageViewer from "react-native-image-zoom-viewer";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 type NavProp = StackNavigationProp<TripStackParamList, "ReturnReceiptReport">;
@@ -227,6 +227,9 @@ export const ReturnReceiptReportScreen: React.FC = () => {
     rentalReceipt?.checkListReturnFile,
   ]);
 
+  const zoomImages = combinedImages.map((uri) => ({
+    url: uri,
+  }));
   // Scroll to selected image when modal opens
   useEffect(() => {
     if (modalVisible && imageScrollRef.current && combinedImages.length > 0) {
@@ -723,7 +726,9 @@ export const ReturnReceiptReportScreen: React.FC = () => {
 
           {/* Tóm tắt nhanh trước khi tính kết quả */}
           <View style={styles.kvRow}>
-            <Text style={styles.kvDim}>Tổng phụ phí (hư hỏng, vệ sinh, vượt km...)</Text>
+            <Text style={styles.kvDim}>
+              Tổng phụ phí (hư hỏng, vệ sinh, vượt km...)
+            </Text>
             <Text style={[styles.kvStrong, { color: "#F97316" }]}>
               {formatVnd(summary?.totalAdditionalFees || 0)}
             </Text>
@@ -835,33 +840,24 @@ export const ReturnReceiptReportScreen: React.FC = () => {
           </SafeAreaView>
 
           {/* Image ScrollView with zoom */}
-          <ScrollView
-            ref={imageScrollRef}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleImageScroll}
-            style={styles.modalImageScroll}
-            decelerationRate="fast"
-          >
-            {combinedImages.map((image, index) => (
-              <ScrollView
-                key={index}
-                style={styles.modalImageContainer}
-                maximumZoomScale={3}
-                minimumZoomScale={1}
-                showsVerticalScrollIndicator={false}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.modalImageContentContainer}
-              >
-                <Image
-                  source={{ uri: image }}
-                  style={styles.modalImage}
-                  resizeMode="contain"
-                />
-              </ScrollView>
-            ))}
-          </ScrollView>
+          <ImageViewer
+            imageUrls={zoomImages}
+            index={selectedImageIndex}
+            enableSwipeDown
+            onSwipeDown={closeImageModal}
+            onChange={(index) => {
+              if (typeof index === "number") {
+                setSelectedImageIndex(index);
+              }
+            }}
+            renderIndicator={(currentIndex, allSize) => (
+              <Text style={styles.imageModalCounter}>
+                {currentIndex} / {allSize}
+              </Text>
+            )}
+            backgroundColor="rgba(0,0,0,0.95)"
+            saveToLocalByLongPress={false}
+          />
 
           {/* Thumbnail Strip */}
           {combinedImages.length > 1 && (
@@ -1342,4 +1338,5 @@ const styles = StyleSheet.create({
     borderColor: "#C9B6FF",
     borderRadius: 6,
   },
+  imageModalCounter: { color: "#fff", fontSize: 14, fontWeight: "600" },
 });

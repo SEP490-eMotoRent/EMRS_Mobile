@@ -12,6 +12,7 @@ import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { BookingSummary } from "../../organisms/booking/BookingSummary";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ConfirmRentalDuration'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRentalDuration'>;
@@ -278,7 +279,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const isContinueDisabled = loading || !isValid;
     
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <PageHeader title="Thời gian thuê" onBack={handleBack} />
             <ProgressIndicator currentStep={1} totalSteps={4} />
 
@@ -438,7 +439,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     disabled={isContinueDisabled}
                 />
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 

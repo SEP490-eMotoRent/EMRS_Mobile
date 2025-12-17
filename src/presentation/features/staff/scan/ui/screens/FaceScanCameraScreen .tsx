@@ -115,14 +115,14 @@ export const FaceScanCameraScreen = () => {
       // Flip ảnh chỉ khi dùng camera trước để tránh bị mirror
       let finalUri = "file://" + photo.path;
       if (cameraPosition === "front") {
-        const fixed = await ImageManipulator.manipulateAsync(
+        const fixed = await manipulateAsync(
           finalUri,
           [{ flip: FlipType.Horizontal }],
           { compress: 0.9, format: SaveFormat.JPEG }
         );
         finalUri = fixed.uri;
       }
-
+      
       const file = {
         uri: finalUri,
         type: "image/jpeg",
@@ -230,12 +230,6 @@ export const FaceScanCameraScreen = () => {
           text2: "Vui lòng thử lại.",
         });
         return;
-      }
-      // Lưu ảnh vào thư viện trước khi gọi API
-      try {
-        await MediaLibrary.createAssetAsync(file.uri);
-      } catch (err) {
-        console.warn("Save to library failed:", err);
       }
 
       const scanFaceUseCase = new ScanFaceUseCase(sl.get("RenterRepository"));

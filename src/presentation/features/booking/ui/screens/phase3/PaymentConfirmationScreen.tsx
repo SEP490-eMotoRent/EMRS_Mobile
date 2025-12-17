@@ -24,6 +24,7 @@ import { BookingSummaryCard } from "../../organisms/booking/BookingSummaryCard";
 import { CostBreakdown } from "../../organisms/CostBreakdown";
 import { PaymentMethodCard } from "../../organisms/payment/PaymentMethodCard";
 import { PaymentNotices } from "../../organisms/payment/PaymentNotices";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'PaymentConfirmation'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'PaymentConfirmation'>;
@@ -398,7 +399,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <PageHeader title="Xác nhận thanh toán" onBack={() => navigation.goBack()} />
             <ProgressIndicator currentStep={3} totalSteps={4} />
 
@@ -507,7 +508,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     loading={bookingLoading}
                 />
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -534,7 +535,6 @@ const styles = StyleSheet.create({
     },
     footer: {
         padding: 16,
-        paddingBottom: 32,
         backgroundColor: "#000",
         borderTopWidth: 1,
         borderTopColor: "#1a1a1a",
