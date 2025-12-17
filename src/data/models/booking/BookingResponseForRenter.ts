@@ -22,15 +22,19 @@ export interface BookingResponseForRenter {
     vehicleModel: VehicleModelResponse;
     renter: RenterDetailResponse;
     insurancePackage?: InsurancePackageResponse;
-    vehicleModelmediaResponse?: VehicleModelMediaResponse; // ✅ NEW
+    vehicleModelmediaResponse?: VehicleModelMediaResponse;
 }
 
 export interface VehicleResponse {
     id: string;
     licensePlate: string;
     color: string;
-    yearOfManufacture: string;
+    dateManufacturing?: string;
     currentOdometerKm: number;
+    batteryHealthPercentage?: number;
+    status?: string;
+    description?: string;
+    purchaseDate?: string;
 }
 
 export interface VehicleModelResponse {

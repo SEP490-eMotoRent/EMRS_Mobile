@@ -44,20 +44,16 @@ interface BookingContext {
 }
 
 export const PaymentConfirmationScreen: React.FC = () => {
-    // ==================== 1. HOOKS ====================
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
 
     const { balance: walletBalance, loading: walletLoading, refresh: refreshWallet } = useWallet();
-
     const user = useAppSelector((state) => state.auth.user);
     const userId = user?.id;
 
     const { createBooking, loading: bookingLoading } = useCreateBooking(container.booking.create.standard);
-
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"wallet" | "vnpay" | "zalopay">("wallet");
 
-    // ==================== 2. EARLY RETURN ====================
     if (walletLoading) {
         return (
             <View style={[styles.container, styles.center]}>
@@ -67,7 +63,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
         );
     }
 
-    // ==================== 3. DATA & CALCULATIONS ====================
     const safeBalance = walletBalance ?? 0;
 
     const {
@@ -76,16 +71,32 @@ export const PaymentConfirmationScreen: React.FC = () => {
         vehicleImageUrl,
         branchId,
         branchName,
-        startDate,
-        endDate,
+        pricePerDay,
+        
+        // ISO strings for backend
+        startDateISO,
+        endDateISO,
+        
+        // Display strings for UI
+        startDateDisplay,
+        endDateDisplay,
+        
         duration,
         rentalDays,
         insurancePlan,
         insurancePlanId,
+        
+        // Numbers for calculations
+        rentalFeeAmount,
+        insuranceFeeAmount,
+        securityDepositAmount,
+        
+        // Formatted strings for display
         rentalFee,
         insuranceFee,
         securityDeposit,
         total,
+        
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
@@ -101,87 +112,106 @@ export const PaymentConfirmationScreen: React.FC = () => {
         return parseInt(price.replace(/[^0-9]/g, ""), 10) || 0;
     };
 
-    const rental = parsePrice(rentalFee);
-    const insurance = parsePrice(insuranceFee);
-    const deposit = parsePrice(securityDeposit);
-    
-    const totalAmount = rental + insurance + deposit;
+    const totalAmount = rentalFeeAmount + insuranceFeeAmount + securityDepositAmount;
     const passedTotal = parsePrice(total);
 
     if (totalAmount !== passedTotal) {
-        console.warn("⚠️ Total mismatch detected!");
+        console.warn("Total mismatch detected!");
         console.warn("Our calculation:", totalAmount);
         console.warn("Passed from prev screen:", passedTotal);
-        console.warn("Difference:", Math.abs(totalAmount - passedTotal));
     } else {
-        console.log("✅ Total verification passed:", totalAmount);
+        console.log("Total verification passed:", totalAmount);
     }
 
     const afterBalance = safeBalance - totalAmount;
     const isSufficient = afterBalance >= 0;
-
     const totalAmountFormatted = `${totalAmount.toLocaleString('vi-VN')}đ`;
 
-    console.log("Payment Confirmation - Amounts:", {
-        baseRentalFee,
-        rentingRate,
-        rental,
-        averageRentalPrice,
-        insurance,
-        deposit,
-        totalAmount,
-        vehicleCategory,
+    console.log("Frontend pricing breakdown:", {
         holidaySurcharge,
         holidayDayCount,
-        membershipTier,
         membershipDiscountPercentage,
         membershipDiscountAmount,
+        membershipTier,
+        baseRentalFee,
+        rentingRate,
+        averageRentalPrice,
+        totalAmount,
     });
 
-    const parseDateString = (dateStr: string): Date => {
-        const monthNames: { [key: string]: number } = {
-            "Tháng 1": 0, "Tháng 2": 1, "Tháng 3": 2, "Tháng 4": 3,
-            "Tháng 5": 4, "Tháng 6": 5, "Tháng 7": 6, "Tháng 8": 7,
-            "Tháng 9": 8, "Tháng 10": 9, "Tháng 11": 10, "Tháng 12": 11
-        };
+    const parseDateString = (isoDate: string | null, displayDate: string): Date => {
+        try {
+            if (isoDate && isoDate.includes('-')) {
+                console.log('Parsing as ISO string:', isoDate);
+                
+                const timeMatch = displayDate.match(/(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
+                if (!timeMatch) {
+                    throw new Error(`Cannot extract time from: ${displayDate}`);
+                }
+                
+                const [, hoursStr, minutes, period] = timeMatch;
+                let hours = parseInt(hoursStr, 10);
+                
+                const isPM = period.toUpperCase() === 'PM' || period.toUpperCase() === 'CH';
+                const isAM = period.toUpperCase() === 'AM' || period.toUpperCase() === 'SA';
+                
+                if (isPM && hours !== 12) hours += 12;
+                if (isAM && hours === 12) hours = 0;
+                
+                const date = new Date(isoDate);
+                date.setHours(hours, parseInt(minutes, 10), 0, 0);
+                
+                console.log("Parsed date successfully:", {
+                    isoDate,
+                    displayDate,
+                    result: date.toISOString(),
+                });
+                
+                return date;
+            }
+            
+            console.warn('ISO date not available, trying Vietnamese format:', displayDate);
+            
+            const monthNames: { [key: string]: number } = {
+                "Tháng 1": 0, "Tháng 2": 1, "Tháng 3": 2, "Tháng 4": 3,
+                "Tháng 5": 4, "Tháng 6": 5, "Tháng 7": 6, "Tháng 8": 7,
+                "Tháng 9": 8, "Tháng 10": 9, "Tháng 11": 10, "Tháng 12": 11
+            };
 
-        const match = dateStr.match(/(Tháng \d+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
-        if (!match) {
-            console.error("❌ Failed to parse date:", dateStr);
-            throw new Error(`Invalid date format: ${dateStr}`);
-        }
+            const match = displayDate.match(/(Tháng \d+)\s+(\d+)\s+(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
+            if (!match) {
+                throw new Error(`Cannot parse Vietnamese date: ${displayDate}`);
+            }
 
-        const [, monthStr, day, hours, minutes, period] = match;
-        const monthIndex = monthNames[monthStr];
-        
-        if (monthIndex === undefined) {
-            throw new Error(`Invalid month: ${monthStr}`);
-        }
+            const [, monthStr, day, hours, minutes, period] = match;
+            const monthIndex = monthNames[monthStr];
+            
+            if (monthIndex === undefined) {
+                throw new Error(`Invalid month: ${monthStr}`);
+            }
 
-        let hour = parseInt(hours, 10);
-        
-        const isPM = period.toUpperCase() === 'PM' || period.toUpperCase() === 'CH';
-        const isAM = period.toUpperCase() === 'AM' || period.toUpperCase() === 'SA';
-        
-        if (isPM && hour !== 12) {
-            hour += 12;
-        }
-        if (isAM && hour === 12) {
-            hour = 0;
-        }
+            let hour = parseInt(hours, 10);
+            const isPM = period.toUpperCase() === 'PM' || period.toUpperCase() === 'CH';
+            const isAM = period.toUpperCase() === 'AM' || period.toUpperCase() === 'SA';
+            
+            if (isPM && hour !== 12) hour += 12;
+            if (isAM && hour === 12) hour = 0;
 
-        const year = new Date().getFullYear();
-        const date = new Date(year, monthIndex, parseInt(day, 10), hour, parseInt(minutes, 10), 0, 0);
-        
-        console.log("✅ Parsed date:", {
-            input: dateStr,
-            output: date.toISOString(),
-        });
-        
-        return date;
+            const year = new Date().getFullYear();
+            const date = new Date(year, monthIndex, parseInt(day, 10), hour, parseInt(minutes, 10), 0, 0);
+            
+            console.log("Parsed Vietnamese date:", {
+                input: displayDate,
+                output: date.toISOString(),
+            });
+            
+            return date;
+        } catch (error: any) {
+            console.error("Date parsing failed:", error.message);
+            throw new Error(`Invalid date format: ${displayDate}`);
+        }
     };
 
-    // ==================== 4. PAYMENT HANDLER ====================
     const handlePayment = async () => {
         if (!userId) {
             Alert.alert("Lỗi", "Vui lòng đăng nhập");
@@ -189,8 +219,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
         }
 
         try {
-            const startDateTime = parseDateString(startDate);
-            const endDateTime = parseDateString(endDate);
+            const startDateTime = parseDateString(startDateISO, startDateDisplay);
+            const endDateTime = parseDateString(endDateISO, endDateDisplay);
 
             let finalInsurancePackageId: string | undefined = undefined;
             
@@ -198,8 +228,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(insurancePlanId)) {
                     finalInsurancePackageId = insurancePlanId;
                 } else {
-                    console.warn("⚠️ Invalid insurance package ID format:", insurancePlanId);
-                    finalInsurancePackageId = insurancePlanId;
+                    console.warn("Invalid insurance package ID format:", insurancePlanId);
                 }
             }
 
@@ -211,48 +240,51 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 rentalDays,
                 rentalHours: 0,
                 baseRentalFee: baseRentalFee,
-                depositAmount: deposit,
+                depositAmount: securityDepositAmount,
                 rentingRate: rentingRate,
                 averageRentalPrice: averageRentalPrice,
                 insurancePackageId: finalInsurancePackageId,
-                totalRentalFee: rental,
-                renterId: userId,
-                holidaySurcharge: holidaySurcharge || 0,
-                holidayDayCount: holidayDayCount || 0,
-                membershipDiscountPercentage: membershipDiscountPercentage || 0,
-                membershipDiscountAmount: membershipDiscountAmount || 0,
-                membershipTier: membershipTier || "BRONZE",
+                totalRentalFee: rentalFeeAmount,
             };
 
-            console.log("📋 Complete booking input:", JSON.stringify(bookingInput, null, 2));
+            console.log("Sending to backend:", JSON.stringify(bookingInput, null, 2));
 
-            // ========== WALLET PAYMENT ==========
             if (selectedPaymentMethod === "wallet") {
                 const booking = await createBooking(bookingInput);
                 await refreshWallet();
+
+                console.log("Wallet booking created:", {
+                    id: booking.id,
+                    bookingCode: booking.bookingCode,
+                    status: booking.bookingStatus,
+                });
+
+                const contractNumber = booking.bookingCode || booking.id;
+                
+                if (!booking.bookingCode) {
+                    console.warn("No bookingCode returned, using booking ID instead");
+                }
 
                 navigation.replace("DigitalContract", {
                     vehicleId,
                     vehicleName,
                     vehicleImageUrl: vehicleImageUrl || "",
-                    startDate,
-                    endDate,
+                    startDate: startDateDisplay,
+                    endDate: endDateDisplay,
                     duration,
                     rentalDays,
                     branchName,
                     insurancePlan,
                     totalAmount: totalAmountFormatted,
-                    securityDeposit,
-                    contractNumber: booking.bookingCode || booking.id,
+                    securityDeposit: `${securityDepositAmount.toLocaleString()}đ`,
+                    contractNumber: contractNumber,
                 });
             } 
-            // ========== VNPAY PAYMENT ==========
             else if (selectedPaymentMethod === "vnpay") {
                 const result = await container.booking.create.vnpay.execute(bookingInput);
 
-                console.log("✅ VNPay booking created:", {
+                console.log("VNPay booking created:", {
                     bookingId: result.booking.id,
-                    bookingCode: result.booking.bookingCode,
                     vnpayUrl: result.vnpayUrl,
                 });
 
@@ -261,14 +293,14 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     vehicleId,
                     vehicleName,
                     vehicleImageUrl,
-                    startDate,
-                    endDate,
+                    startDate: startDateDisplay,
+                    endDate: endDateDisplay,
                     duration,
                     rentalDays,
                     branchName,
                     insurancePlan,
                     totalAmount: totalAmountFormatted,
-                    securityDeposit,
+                    securityDeposit: `${securityDepositAmount.toLocaleString()}đ`,
                 };
 
                 const STORAGE_KEY = `vnpay_payment_context_${result.booking.id}`;
@@ -282,22 +314,21 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     totalAmount: totalAmountFormatted,
                     vehicleId,
                     vehicleImageUrl: vehicleImageUrl || "",
-                    startDate,
-                    endDate,
+                    startDate: startDateDisplay,
+                    endDate: endDateDisplay,
                     duration,
                     rentalDays,
                     branchName,
                     insurancePlan,
-                    securityDeposit,
+                    securityDeposit: `${securityDepositAmount.toLocaleString()}đ`,
                 });
             } 
-            // ========== ZALOPAY PAYMENT ==========
             else if (selectedPaymentMethod === "zalopay") {
-                console.log("🔄 Creating ZaloPay booking...");
+                console.log("Creating ZaloPay booking...");
                 
                 const result = await container.booking.create.zalopay.execute(bookingInput);
 
-                console.log("✅ ZaloPay booking created:", {
+                console.log("ZaloPay booking created:", {
                     bookingId: result.booking.id,
                     zaloPayUrl: result.vnpayUrl,
                 });
@@ -307,14 +338,14 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     vehicleId,
                     vehicleName,
                     vehicleImageUrl,
-                    startDate,
-                    endDate,
+                    startDate: startDateDisplay,
+                    endDate: endDateDisplay,
                     duration,
                     rentalDays,
                     branchName,
                     insurancePlan,
                     totalAmount: totalAmountFormatted,
-                    securityDeposit,
+                    securityDeposit: `${securityDepositAmount.toLocaleString()}đ`,
                 };
 
                 const STORAGE_KEY = `zalopay_payment_context_${result.booking.id}`;
@@ -325,18 +356,18 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     vehicleId,
                     vehicleName,
                     vehicleImageUrl,
-                    startDate,
-                    endDate,
+                    startDate: startDateDisplay,
+                    endDate: endDateDisplay,
                     duration,
                     rentalDays,
                     branchName,
                     insurancePlan,
                     totalAmount: totalAmountFormatted,
-                    securityDeposit,
+                    securityDeposit: `${securityDepositAmount.toLocaleString()}đ`,
                 });
 
                 setTimeout(async () => {
-                    console.log("📱 Opening ZaloPay app with URL:", result.vnpayUrl);
+                    console.log("Opening ZaloPay app with URL:", result.vnpayUrl);
                     
                     const canOpen = await Linking.canOpenURL(result.vnpayUrl);
                     if (canOpen) {
@@ -354,30 +385,18 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 }, 500);
             }
         } catch (error: any) {
-            console.error("❌ Payment failed:", error);
+            console.error("Payment failed:", error);
             Alert.alert("Lỗi thanh toán", error.message || "Đã xảy ra lỗi khi xử lý thanh toán");
         }
     };
 
-    // ==================== 5. BUTTON TITLE LOGIC ====================
     const getButtonTitle = (): string => {
         if (bookingLoading) {
             return "Đang xử lý...";
         }
-        
-        switch (selectedPaymentMethod) {
-            case "wallet":
-                return `Thanh toán ${totalAmountFormatted}`;
-            case "vnpay":
-                return `Thanh toán ${totalAmountFormatted}`;
-            case "zalopay":
-                return `Thanh toán ${totalAmountFormatted}`;
-            default:
-                return `Thanh toán ${totalAmountFormatted}`;
-        }
+        return `Thanh toán ${totalAmountFormatted}`;
     };
 
-    // ==================== 6. RENDER ====================
     return (
         <View style={styles.container}>
             <PageHeader title="Xác nhận thanh toán" onBack={() => navigation.goBack()} />
@@ -388,16 +407,14 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* ========== BOOKING SUMMARY ========== */}
                 <BookingSummaryCard
                     vehicleName={vehicleName}
-                    rentalPeriod={`${startDate} - ${endDate}`}
+                    rentalPeriod={`${startDateDisplay} - ${endDateDisplay}`}
                     duration={duration}
                     branchName={branchName}
                     insurancePlan={insurancePlan}
                 />
 
-                {/* ========== COST BREAKDOWN (MOVED UP) ========== */}
                 <CostBreakdown
                     rentalFee={rentalFee}
                     insuranceFee={insuranceFee}
@@ -407,11 +424,9 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     holidayDayCount={holidayDayCount}
                 />
 
-                {/* ========== PAYMENT METHOD SECTION ========== */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Chọn phương thức thanh toán</Text>
                     
-                    {/* ========== WALLET PAYMENT OPTION ========== */}
                     <PaymentMethodCard
                         isSelected={selectedPaymentMethod === "wallet"}
                         onSelect={() => setSelectedPaymentMethod("wallet")}
@@ -420,7 +435,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                         isSufficient={isSufficient}
                     />
 
-                    {/* ========== VNPAY PAYMENT OPTION ========== */}
                     <TouchableOpacity
                         style={[
                             styles.paymentOption,
@@ -447,7 +461,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                         </View>
                     </TouchableOpacity>
 
-                    {/* ========== ZALOPAY PAYMENT OPTION ========== */}
                     <TouchableOpacity
                         style={[
                             styles.paymentOption,
@@ -475,11 +488,9 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* ========== PAYMENT NOTICES ========== */}
                 <PaymentNotices />
             </ScrollView>
 
-            {/* ========== STICKY FOOTER WITH PAYMENT BUTTON ========== */}
             <View style={styles.footer}>
                 <View style={styles.totalPreview}>
                     <Text style={styles.totalPreviewLabel}>Tổng thanh toán</Text>
@@ -500,7 +511,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
     );
 };
 
-// ==================== 7. STYLES ====================
 const styles = StyleSheet.create({
     container: { 
         flex: 1, 
@@ -547,8 +557,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: "700",
     },
-    
-    // Payment Option Styles
     paymentOption: {
         backgroundColor: "#1a1a1a",
         borderRadius: 12,
@@ -565,8 +573,6 @@ const styles = StyleSheet.create({
         flexDirection: "row", 
         alignItems: "flex-start" 
     },
-    
-    // Radio Button Styles
     radioButton: {
         width: 24,
         height: 24,
@@ -584,8 +590,6 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: "#4169E1",
     },
-    
-    // Payment Option Content Styles
     paymentOptionContent: { 
         flex: 1 
     },
@@ -609,8 +613,6 @@ const styles = StyleSheet.create({
         color: "#666", 
         fontSize: 12 
     },
-    
-    // Badge Styles
     vnpayBadge: {
         backgroundColor: "#4169E1",
         paddingHorizontal: 8,
@@ -633,8 +635,6 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "600"
     },
-    
-    // Loading/Center Styles
     center: { 
         flex: 1, 
         justifyContent: "center", 

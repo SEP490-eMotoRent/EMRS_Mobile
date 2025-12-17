@@ -15,8 +15,8 @@ export interface CreateVNPayBookingInput {
     vehicleModelId: string;
     averageRentalPrice: number;
     insurancePackageId?: string;
-    totalRentalFee?: number;  // ← Make optional
-    renterId: string;
+    totalRentalFee: number;
+    // REMOVED: renterId - backend gets it from JWT token
 }
 
 export interface VNPayBookingResultWithExpiry {
@@ -29,19 +29,22 @@ export class CreateVNPayBookingUseCase {
     constructor(private bookingRepository: BookingRepository) {}
 
     async execute(input: CreateVNPayBookingInput): Promise<VNPayBookingResultWithExpiry> {
-        // Create mock renter
+        // Backend will populate renterId from JWT
+        const placeholderRenterId = "";
+        
+        // Create mock renter (backend will replace with real data)
         const mockRenter = new Renter(
-            input.renterId,
+            placeholderRenterId,
             "unknown@email.com",
             "",
             "",
-            input.renterId,
+            placeholderRenterId,
             "mock-membership",
             false,
             ""
         );
 
-        // Create mock vehicle model
+        // Create mock vehicle model (backend will replace with real data)
         const mockVehicleModel = new VehicleModel(
             input.vehicleModelId,
             "Unknown Model",
@@ -57,8 +60,8 @@ export class CreateVNPayBookingUseCase {
 
         // Construct Booking entity
         const booking = new Booking(
-            "", // id - will be set by backend
-            "", // bookingCode - will be set by backend
+            "", // id - backend generates
+            "", // bookingCode - backend generates
             input.baseRentalFee,
             input.depositAmount,
             input.rentalDays,
@@ -71,13 +74,13 @@ export class CreateVNPayBookingUseCase {
             0, // crossBranchFee
             0, // totalChargingFee
             0, // totalAdditionalFee
-            undefined, // ✅ earlyHandoverFee - ADD THIS LINE!
+            undefined, // earlyHandoverFee
             input.totalRentalFee,
             input.totalRentalFee, // totalAmount
             0, // refundAmount
             "Pending", // bookingStatus - VNPay creates as Pending
             input.vehicleModelId,
-            input.renterId,
+            placeholderRenterId, // renterId - backend populates from JWT
             mockRenter,
             mockVehicleModel,
             undefined, // vehicleId

@@ -11,30 +11,30 @@ export const useCreateBooking = (useCase: CreateBookingUseCase) => {
         vehicleModelId: string;
         startDatetime: Date;
         endDatetime: Date;
-        handoverBranchId: string;        // ✅ ADDED - Required
+        handoverBranchId: string;
         rentalDays: number;
         rentalHours: number;
         baseRentalFee: number;
         depositAmount: number;
         rentingRate: number;
         averageRentalPrice: number;
-        insurancePackageId?: string;     // ✅ ADDED - Optional
+        insurancePackageId?: string;
         totalRentalFee: number;
-        renterId: string;
+        // REMOVED: renterId - backend gets it from JWT
     }) => {
         try {
             setLoading(true);
             setError(null);
             
-            console.log("🚀 Creating booking with:", JSON.stringify(input, null, 2));
+            console.log("Creating booking with:", JSON.stringify(input, null, 2));
             
             const result = await useCase.execute(input);
             
-            console.log("✅ Booking created:", result.id);
+            console.log("Booking created:", result.id);
             setBooking(result);
             return result;
         } catch (err: any) {
-            console.error("❌ Booking creation error:", err);
+            console.error("Booking creation error:", err);
             setError(err.message || "Failed to create booking");
             throw err;
         } finally {

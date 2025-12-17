@@ -6,7 +6,16 @@ interface BranchMarkerProps {
     isSelected?: boolean;
 }
 
-// ✅ SIMPLIFIED - Remove custom comparison that might cause issues
+/**
+ * BranchMarker - EXACT same approach as LocationPinMarker
+ * 
+ * Copied from LocationPin that WORKS:
+ * - Container: 36×48 ✅
+ * - Bubble: 32×32 ✅
+ * - Icon: 12 ✅
+ * - Padding: 3 ✅
+ * - Pointer: 8×12 ✅
+ */
 export const BranchMarker: React.FC<BranchMarkerProps> = React.memo(({ isSelected = false }) => {
     return (
         <View 
@@ -16,7 +25,7 @@ export const BranchMarker: React.FC<BranchMarkerProps> = React.memo(({ isSelecte
             <View style={[styles.bubble, isSelected && styles.bubbleSelected]}>
                 <FontAwesome 
                     name="motorcycle" 
-                    size={16}
+                    size={12}
                     color={isSelected ? "#000" : "#fff"}
                 />
             </View>
@@ -31,18 +40,19 @@ const styles = StyleSheet.create({
     container: {
         alignItems: "center",
         justifyContent: "flex-start",
-        width: 40,
-        height: 50,
+        width: 36,
+        height: 48,
     },
     bubble: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         backgroundColor: "#1a1a1a",
         borderWidth: 2,
         borderColor: "#b8a4ff",
         alignItems: "center",
         justifyContent: "center",
+        padding: 3,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.4,

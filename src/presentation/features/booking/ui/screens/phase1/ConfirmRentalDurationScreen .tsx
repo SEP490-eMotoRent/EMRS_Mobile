@@ -151,13 +151,12 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
      * Navigate to insurance plans with final validation
      */
     const handleContinue = () => {
-        // Final validation before navigation
         if (!validateCurrentDuration()) {
-            console.warn("⚠️ Cannot continue with invalid duration");
+            console.warn("Cannot continue with invalid duration");
             return;
         }
 
-        console.log("✅ Continuing to insurance plans for vehicle:", vehicleId);
+        console.log("Continuing to insurance plans for vehicle:", vehicleId);
         navigation.navigate('InsurancePlans', { 
             vehicleId,
             vehicleName,
@@ -166,14 +165,24 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             branchName,
             pricePerDay,
             securityDeposit,
-            startDate,
-            endDate,
+            
+            // Pass ISO strings for backend
+            startDateISO: startDateISO,
+            endDateISO: endDateISO,
+            
+            // Pass display strings for UI
+            startDateDisplay: startDate,
+            endDateDisplay: endDate,
+            
             duration,
             rentalDays: displayDays,
-            rentalPrice: totalRentalFee,
+            
+            // Pass numbers (not formatted strings)
+            rentalFeeAmount: totalRentalFee,
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
+            
             vehicleCategory: category,
             holidaySurcharge,
             holidayDayCount: holidayDays.length,

@@ -16,26 +16,29 @@ export interface CreateBookingInput {
     averageRentalPrice: number;
     insurancePackageId?: string;
     totalRentalFee: number;
-    renterId: string;
+    // REMOVED: renterId - backend extracts it from JWT token
 }
 
 export class CreateBookingUseCase {
     constructor(private bookingRepository: BookingRepository) {}
 
     async execute(input: CreateBookingInput): Promise<Booking> {
-        // Create mock renter (to be populated by backend later)
+        // Backend will populate renterId from JWT, so we use placeholder for frontend entity
+        const placeholderRenterId = ""; // Backend will replace this
+        
+        // Create mock renter (to be populated by backend after creation)
         const mockRenter = new Renter(
-            input.renterId,
+            placeholderRenterId,
             "unknown@email.com",
             "",
             "",
-            input.renterId,
+            placeholderRenterId,
             "mock-membership",
             false,
             ""
         );
 
-        // Create mock vehicle model (to be populated by backend later)
+        // Create mock vehicle model (to be populated by backend after creation)
         const mockVehicleModel = new VehicleModel(
             input.vehicleModelId,
             "Unknown Model",
@@ -51,8 +54,8 @@ export class CreateBookingUseCase {
 
         // Construct Booking entity in the correct order
         const booking = new Booking(
-            "", // id
-            "", // bookingCode
+            "", // id - backend generates
+            "", // bookingCode - backend generates
             input.baseRentalFee,
             input.depositAmount,
             input.rentalDays,
@@ -71,7 +74,7 @@ export class CreateBookingUseCase {
             0, // refundAmount
             "Pending", // bookingStatus
             input.vehicleModelId,
-            input.renterId,
+            placeholderRenterId, // renterId - backend populates from JWT
             mockRenter,
             mockVehicleModel,
             undefined, // vehicleId
@@ -97,6 +100,7 @@ export class CreateBookingUseCase {
             false // isDeleted
         );
         
+        // Repository sends data to backend, which returns proper Booking with renterId populated
         return await this.bookingRepository.create(booking);
     }
 }
