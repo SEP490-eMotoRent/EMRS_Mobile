@@ -21,7 +21,7 @@ import { useCreateBooking } from "../../../hooks/useCreateBooking";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { BookingSummaryCard } from "../../organisms/booking/BookingSummaryCard";
-import { CostBreakdown } from "../../organisms/CostBreakdown";
+import { PricingBreakdown } from "../../organisms/booking/PricingBreakdown";
 import { PaymentMethodCard } from "../../organisms/payment/PaymentMethodCard";
 import { PaymentNotices } from "../../organisms/payment/PaymentNotices";
 
@@ -415,13 +415,29 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     insurancePlan={insurancePlan}
                 />
 
-                <CostBreakdown
-                    rentalFee={rentalFee}
-                    insuranceFee={insuranceFee}
-                    securityDeposit={securityDeposit}
-                    total={totalAmountFormatted}
-                    holidaySurcharge={holidaySurcharge}
-                    holidayDayCount={holidayDayCount}
+                {/* NEW: Unified PricingBreakdown Component (Simple Mode) */}
+                <PricingBreakdown
+                    // Rental subtotal
+                    rentalSubtotal={rentalFeeAmount}
+                    
+                    // Surcharges
+                    holidaySurcharge={holidaySurcharge > 0 ? {
+                        amount: holidaySurcharge,
+                        dayCount: holidayDayCount,
+                    } : undefined}
+                    
+                    // Insurance
+                    insuranceFee={insuranceFeeAmount}
+                    insuranceName={insurancePlan}
+                    
+                    // Deposit
+                    securityDeposit={securityDepositAmount}
+                    
+                    // Total
+                    total={totalAmount}
+                    
+                    // Simple breakdown
+                    showDetailedBreakdown={false}
                 />
 
                 <View style={styles.section}>

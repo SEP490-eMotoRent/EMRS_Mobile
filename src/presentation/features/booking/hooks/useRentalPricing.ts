@@ -41,13 +41,24 @@ export interface RentalPricingResult {
 }
 
 /**
- * Hook for calculating rental pricing with progressive tier hourly pricing
+ * UPDATED: Hook for calculating rental pricing with progressive tier hourly pricing
+ * NOW USING WHITEBOARD FORMULA (Subtractive Discounts)
  * 
- * Progressive Tier Formula:
- * - 70 days → 60 days discounted (2 months), 10 days regular
- * - Base = (Hourly_Rate × Discounted_Hours × 0.90) + (Hourly_Rate × Regular_Hours)
- * - Holiday surcharge applied to the rate of each specific day
- * - Membership discount applied on top of everything
+ * Whiteboard Formula:
+ * A = Base price per day
+ * B = Normal days = A × (days - λ) × (1 - %mem - %month)
+ * C = Holiday days = A × λ × (1 + %holiday) × (1 - %mem - %month)
+ * D = B + C
+ * 
+ * KEY CHANGE: Membership discount is now applied SUBTRACTIVELY with config discount
+ * Previously: Sequential application (base × config × membership)
+ * Now: Subtractive application (base × (1 - config - membership))
+ * 
+ * Example:
+ * - Config discount: 10%
+ * - Membership discount: 5%
+ * - Old method: 0.90 × 0.95 = 0.855 (14.5% off)
+ * - New method: 1 - 0.10 - 0.05 = 0.85 (15% off) ✅
  * 
  * @param startDate - Rental start date/time
  * @param endDate - Rental end date/time
@@ -87,7 +98,7 @@ export const useRentalPricing = (
         error: holidayError,
     } = useHolidayPricing();
 
-    // Calculate combined pricing with progressive tiers
+    // Calculate combined pricing with progressive tiers + WHITEBOARD FORMULA
     const pricing = useMemo(() => {
         if (rateLoading || membershipLoading || holidayLoading) {
             const hourlyRate = dailyRate / 24;
@@ -108,40 +119,35 @@ export const useRentalPricing = (
             };
         }
 
-        // Step 1: Calculate with progressive tier + holiday surcharge
-        const basePricing = calculateCombinedRentalFee(
+        // ⭐ KEY CHANGE: Now passing membershipDiscountPercentage to calculator
+        // This enables SUBTRACTIVE discount calculation (1 - %mem - %month)
+        const result = calculateCombinedRentalFee(
             startDate,
             endDate,
             dailyRate,
             totalHours,
             holidays,
-            rentingRate
+            rentingRate,
+            membershipDiscountPercentage // ← NEW PARAMETER
         );
 
-        // Step 2: Apply membership discount on top (sequential)
-        const membershipRate = 1 - (membershipDiscountPercentage / 100);
-        const membershipDiscountAmount = Math.round(basePricing.totalRentalFee * (membershipDiscountPercentage / 100));
-        const finalTotalRentalFee = Math.round(basePricing.totalRentalFee * membershipRate);
-
-        console.log("💰 Pricing breakdown:", {
+        console.log("💰 [useRentalPricing] Pricing breakdown:", {
             totalHours,
             equivalentDays,
             durationType,
-            discountPercentage: `${discountPercentage}%`,
-            progressiveTiers: basePricing.progressiveTierBreakdown,
-            baseRentalFee: basePricing.baseRentalFee,
-            discountAmount: basePricing.discountAmount,
-            holidaySurcharge: basePricing.holidaySurcharge,
-            beforeMembership: basePricing.totalRentalFee,
-            membershipDiscount: membershipDiscountAmount,
-            finalTotal: finalTotalRentalFee,
+            configDiscount: `${discountPercentage}%`,
+            membershipDiscount: `${membershipDiscountPercentage}%`,
+            combinedDiscount: `${(discountPercentage + membershipDiscountPercentage)}%`,
+            discountMethod: "SUBTRACTIVE (Whiteboard Formula)",
+            progressiveTiers: result.progressiveTierBreakdown,
+            baseRentalFee: result.baseRentalFee,
+            discountAmount: result.discountAmount,
+            holidaySurcharge: result.holidaySurcharge,
+            membershipDiscountAmount: result.membershipDiscountAmount,
+            finalTotal: result.totalRentalFee,
         });
 
-        return {
-            ...basePricing,
-            totalRentalFee: finalTotalRentalFee,
-            membershipDiscountAmount,
-        };
+        return result;
     }, [
         startDate,
         endDate,
@@ -149,10 +155,13 @@ export const useRentalPricing = (
         totalHours,
         holidays,
         rentingRate,
-        membershipDiscountPercentage,
+        membershipDiscountPercentage, // ← Added to dependencies
         rateLoading,
         membershipLoading,
         holidayLoading,
+        discountPercentage,
+        equivalentDays,
+        durationType,
     ]);
 
     // Calculate average price per day for display
