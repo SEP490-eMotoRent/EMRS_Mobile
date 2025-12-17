@@ -148,6 +148,9 @@ export class RentalReturnRemoteDataSourceImpl
         "ReturnImageUrls",
         JSON.stringify(request.returnImageUrls)
       );
+      request.returnImageUrls.forEach((file, index) => {
+        formData.append("ReturnImages", file);
+      });
       formData.append("ChecklistImage", request.checkListImage);
 
       console.log("=== FormData Content ===");
@@ -185,10 +188,9 @@ export class RentalReturnRemoteDataSourceImpl
         request.endBatteryPercentage.toString()
       );
       formData.append("Notes", request.notes);
-      formData.append(
-        "ReturnImageUrls",
-        JSON.stringify(request.returnImageUrls)
-      );
+      request.returnImages.forEach((file, index) => {
+        formData.append("ReturnImages", file);
+      });
       formData.append("ChecklistImage", request.checkListImage);
 
       console.log("=== FormData Content ===");

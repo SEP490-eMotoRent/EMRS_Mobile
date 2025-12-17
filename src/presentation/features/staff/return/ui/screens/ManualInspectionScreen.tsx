@@ -487,7 +487,9 @@ export const ManualInspectionScreen: React.FC = () => {
             actualReturnDatetime: new Date().toISOString(),
             endOdometerKm: parseInt(endOdometerKm),
             endBatteryPercentage: parseInt(endBatteryPercentage),
-            returnImageUrls: photos,
+            returnImages: Object.values(returnPhotos).filter(
+              (uri): uri is string => !!uri
+            ),
             checkListImage: capturedChecklistUri,
           });
         if (updateReturnReceiptResponse.success) {
@@ -1376,7 +1378,6 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
   },
   actionButtonsContainer: {
-    marginHorizontal: 16,
     marginTop: 8,
     gap: 12,
   },

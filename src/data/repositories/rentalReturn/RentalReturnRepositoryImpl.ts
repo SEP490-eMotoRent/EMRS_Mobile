@@ -92,7 +92,14 @@ export class RentalReturnRepositoryImpl implements RentalReturnRepository {
       endOdometerKm: input.endOdometerKm,
       endBatteryPercentage: input.endBatteryPercentage,
       notes: input.notes,
-      returnImageUrls: input.returnImageUrls,
+      returnImages: input.returnImages.map(
+        (uri, index) =>
+          ({
+            uri,
+            type: "image/jpeg",
+            name: `return_${Date.now()}_${index}.jpg`,
+          } as any)
+      ),
       checkListImage: {
         uri: input.checkListImage,
         type: "image/png",
