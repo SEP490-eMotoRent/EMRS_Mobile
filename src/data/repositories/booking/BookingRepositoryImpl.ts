@@ -492,12 +492,12 @@ export class BookingRepositoryImpl implements BookingRepository {
 
     const booking = new Booking(
       dto.id,
-      dto.bookingCode, // ✅ Backend sends bookingCode
+      dto.bookingCode,
       dto.baseRentalFee,
       dto.depositAmount,
       dto.rentalDays,
       dto.rentalHours,
-      dto.rentingRate, // ✅ Backend sends rentingRate
+      dto.rentingRate,
       dto.lateReturnFee || 0,
       dto.averageRentalPrice,
       0, // excessKmFee
@@ -970,30 +970,30 @@ export class BookingRepositoryImpl implements BookingRepository {
     );
 
     return new Vehicle(
-        dto.id,
-        dto.licensePlate,
-        dto.color,
-        dto.currentOdometerKm,
-        dto.batteryHealthPercentage,
-        dto.status,
-        "", // description
-        "unknown", // branchId
-        dto.vehicleModel?.id, // vehicleModelId
-        undefined, // branch
-        vehicleModel, // vehicleModel
-        [], // rentalReceipts
-        [], // bookings
-        [], // vehicleTransferOrders
-        [], // repairRequests
-        undefined, // dateManufacturing
-        undefined, // purchaseDate
-        undefined, // gpsDeviceIdent
-        undefined, // flespiDeviceId
-        // ✅ REMOVED dto.fileUrl - not part of entity
-        new Date(), // createdAt
-        null, // updatedAt
-        null, // deletedAt
-        false // isDeleted
+      dto.id,
+      dto.licensePlate,
+      dto.color,
+      dto.currentOdometerKm,
+      dto.batteryHealthPercentage,
+      dto.status,
+      "",
+      "unknown",
+      dto.vehicleModel?.id,
+      undefined,
+      vehicleModel,
+      [],
+      [],
+      [],
+      [],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new Date(), // createdAt
+      null, // updatedAt
+      null, // deletedAt
+      false,
+      dto.fileUrl
     );
   }
 

@@ -35,6 +35,7 @@ export interface VehicleResponse {
     status?: string;
     description?: string;
     purchaseDate?: string;
+    fileUrl?: string[];
 }
 
 export interface VehicleModelResponse {
