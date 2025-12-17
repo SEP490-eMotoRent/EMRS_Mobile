@@ -7,7 +7,7 @@ export interface BookingResponse {
     depositAmount: number;
     rentalDays: number;
     rentalHours: number;
-    rentingRate: number;
+    // rentingRate: number;
     lateReturnFee: number;
     averageRentalPrice: number;
     totalRentalFee: number;

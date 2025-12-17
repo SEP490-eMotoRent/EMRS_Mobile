@@ -11,6 +11,7 @@ import { VehicleCategory } from "../../../hooks/useRentingRate";
 import { DateTimeSelector } from "../../molecules/DateTimeSelector";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
+import { PricingBreakdown } from "../../organisms/booking/PricingBreakdown";
 import { BookingSummary } from "../../organisms/booking/BookingSummary";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -120,12 +121,12 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
     // Calculate display days for booking summary
-    // const displayDays = Math.ceil(totalHours / 24);
     const displayDays = Math.floor(totalHours / 24);
     const displayHours = Math.floor(totalHours % 24);
     const rentalDurationText = displayHours > 0 
         ? `${displayDays} Ngày ${displayHours} Giờ` 
         : `${displayDays} Ngày`;
+    
     console.log("📊 Rental calculation:", {
         category,
         totalHours,
@@ -152,13 +153,12 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
      * Navigate to insurance plans with final validation
      */
     const handleContinue = () => {
-        // Final validation before navigation
         if (!validateCurrentDuration()) {
-            console.warn("⚠️ Cannot continue with invalid duration");
+            console.warn("Cannot continue with invalid duration");
             return;
         }
 
-        console.log("✅ Continuing to insurance plans for vehicle:", vehicleId);
+        console.log("Continuing to insurance plans for vehicle:", vehicleId);
         navigation.navigate('InsurancePlans', { 
             vehicleId,
             vehicleName,
@@ -167,14 +167,24 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             branchName,
             pricePerDay,
             securityDeposit,
-            startDate,
-            endDate,
+            
+            // Pass ISO strings for backend
+            startDateISO: startDateISO,
+            endDateISO: endDateISO,
+            
+            // Pass display strings for UI
+            startDateDisplay: startDate,
+            endDateDisplay: endDate,
+            
             duration,
             rentalDays: displayDays,
-            rentalPrice: totalRentalFee,
+            
+            // Pass numbers (not formatted strings)
+            rentalFeeAmount: totalRentalFee,
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
+            
             vehicleCategory: category,
             holidaySurcharge,
             holidayDayCount: holidayDays.length,
@@ -414,12 +424,44 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     </View>
                 )}
                 
-                <BookingSummary
+                {/* NEW: Unified PricingBreakdown Component */}
+                <PricingBreakdown
+                    // Base rental
+                    baseRentalFee={baseRentalFee}
                     rentalDays={displayDays}
-                    rentalDurationText={rentalDurationText}
-                    rentalPrice={`${totalRentalFee.toLocaleString()}đ`}
-                    securityDeposit={`${securityDeposit.toLocaleString()}đ`}
-                    total={`${total.toLocaleString()}đ`}
+                    
+                    // Discounts (only pass if monthly/yearly)
+                    configDiscount={hasDiscount && durationType !== "daily" ? {
+                        percentage: discountPercentage,
+                        amount: discountAmount,
+                        type: durationType as "monthly" | "yearly",
+                    } : undefined}
+                    
+                    membershipDiscount={hasMembershipDiscount ? {
+                        percentage: membershipDiscountPercentage,
+                        amount: membershipDiscountAmount,
+                        tier: membershipTier,
+                    } : undefined}
+                    
+                    // Surcharges
+                    holidaySurcharge={hasHolidaySurcharge ? {
+                        amount: holidaySurcharge,
+                        dayCount: holidayDays.length,
+                    } : undefined}
+                    
+                    // Rental subtotal
+                    rentalSubtotal={totalRentalFee}
+                    
+                    // Additional fees
+                    insuranceFee={0}
+                    insuranceName="Phí bảo hiểm (chưa chọn)"
+                    securityDeposit={securityDeposit}
+                    
+                    // Final total
+                    total={total}
+                    
+                    // Show full breakdown on this screen
+                    showDetailedBreakdown={true}
                 />
             </ScrollView>
 

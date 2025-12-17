@@ -83,6 +83,7 @@ export type BookingStackParamList = {
     vehicleCategory: string;
     dateRange?: string;
   };
+  
   InsurancePlans: {
     vehicleId: string;
     vehicleName: string;
@@ -91,39 +92,64 @@ export type BookingStackParamList = {
     branchName: string;
     pricePerDay: number;
     securityDeposit: number;
-    startDate: string;
-    endDate: string;
+    
+    // ISO strings for backend
+    startDateISO: string | null;
+    endDateISO: string | null;
+    
+    // Display strings for UI
+    startDateDisplay: string;
+    endDateDisplay: string;
+    
     duration: string;
     rentalDays: number;
-    rentalPrice: number;
+    
+    // Numbers for calculations
+    rentalFeeAmount: number;
     baseRentalFee: number;
     rentingRate: number;
     averageRentalPrice: number;
+    
     vehicleCategory: string;
     holidaySurcharge: number;
     holidayDayCount: number;
-    // NEW: Membership data
     membershipDiscountPercentage: number;
     membershipDiscountAmount: number;
     membershipTier: string;
   };
+  
   PaymentConfirmation: {
     vehicleId: string;
     vehicleName: string;
     vehicleImageUrl?: string;
     branchId: string;
     branchName: string;
-    startDate: string;
     pricePerDay: number;
-    endDate: string;
+    
+    // ISO strings for backend
+    startDateISO: string | null;
+    endDateISO: string | null;
+    
+    // Display strings for UI
+    startDateDisplay: string;
+    endDateDisplay: string;
+    
     duration: string;
     rentalDays: number;
     insurancePlan: string;
-    insurancePlanId?: string;
+    insurancePlanId: string;
+    
+    // Numbers for calculations
+    rentalFeeAmount: number;
+    insuranceFeeAmount: number;
+    securityDepositAmount: number;
+    
+    // Formatted strings for display
     rentalFee: string;
     insuranceFee: string;
     securityDeposit: string;
     total: string;
+    
     baseRentalFee: number;
     rentingRate: number;
     averageRentalPrice: number;
@@ -134,6 +160,7 @@ export type BookingStackParamList = {
     membershipDiscountAmount: number;
     membershipTier: string;
   };
+  
   VNPayWebView: {
     vnpayUrl: string;
     bookingId: string;
@@ -150,6 +177,7 @@ export type BookingStackParamList = {
     insurancePlan: string;
     securityDeposit: string;
   };
+  
   VNPayCallback: {
     vnp_ResponseCode?: string;
     vnp_TxnRef?: string;
@@ -159,6 +187,7 @@ export type BookingStackParamList = {
     vnp_BankCode?: string;
     vnp_SecureHash?: string;
   };
+  
   PaymentProcessing: {
     bookingId: string;
     vehicleName: string;
@@ -173,11 +202,13 @@ export type BookingStackParamList = {
     insurancePlan: string;
     securityDeposit: string;
   };
+  
   PaymentFailed: {
     bookingId: string;
     vehicleName: string;
     errorMessage?: string;
   };
+  
   DigitalContract: {
     vehicleId: string;
     vehicleName: string;
@@ -192,6 +223,7 @@ export type BookingStackParamList = {
     securityDeposit: string;
     contractNumber: string;
   };
+  
   Trips: undefined;
 
   ZaloPayWebView: {

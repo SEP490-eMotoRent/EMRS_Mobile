@@ -5,8 +5,7 @@ import {
     ActivityIndicator, 
     ScrollView, 
     StyleSheet, 
-    Text, 
-    TouchableOpacity,
+    Text,
     View 
 } from "react-native";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
@@ -16,8 +15,8 @@ import { useInsurancePackages } from "../../../hooks/useInsurancePackages";
 import { PageHeader } from "../../molecules/PageHeader";
 import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { VehicleInfoHeader } from "../../molecules/VehicleInfoHeader";
-import { InfoTooltip } from "../../molecules/InfoTooltip";
 import { InsurancePlan, InsurancePlanCard } from "../../organisms/insurance/InsurancePlanCard";
+import { PricingBreakdown } from "../../organisms/booking/PricingBreakdown";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
@@ -36,12 +35,6 @@ const noProtectionPlan: InsurancePlan = {
     ],
 };
 
-/**
- * InsurancePlansScreen - Screen Component
- * 
- * Insurance plan selection screen following Atomic Design principles.
- * Uses InfoTooltip molecule for cancellation policy display.
- */
 export const InsurancePlansScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
@@ -54,14 +47,24 @@ export const InsurancePlansScreen: React.FC = () => {
         branchName,
         pricePerDay,
         securityDeposit,
-        startDate, 
-        endDate, 
+        
+        // ISO strings for backend
+        startDateISO,
+        endDateISO,
+        
+        // Display strings for UI
+        startDateDisplay,
+        endDateDisplay,
+        
         duration, 
         rentalDays,
-        rentalPrice,
+        
+        // Numbers for calculations
+        rentalFeeAmount,
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
+        
         vehicleCategory,
         holidaySurcharge,
         holidayDayCount,
@@ -71,12 +74,10 @@ export const InsurancePlansScreen: React.FC = () => {
     } = route.params;
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
-    const [showTooltip, setShowTooltip] = useState(false);
 
     const { packages, loading, error, refetch } = useInsurancePackages();
 
     const insurancePlans: InsurancePlan[] = useMemo(() => {
-        // Sort packages by price (lowest to highest)
         const sortedPackages = [...packages].sort((a, b) => a.packageFee - b.packageFee);
         const apiPlans = sortedPackages.map(pkg => transformToInsurancePlan(pkg));
         return [noProtectionPlan, ...apiPlans];
@@ -84,14 +85,6 @@ export const InsurancePlansScreen: React.FC = () => {
 
     const handleBack = () => {
         navigation.goBack();
-    };
-
-    const handleShowTooltip = () => {
-        setShowTooltip(true);
-    };
-
-    const handleHideTooltip = () => {
-        setShowTooltip(false);
     };
 
     const selectedPlan = insurancePlans.find(p => p.id === selectedPlanId);
@@ -105,10 +98,10 @@ export const InsurancePlansScreen: React.FC = () => {
         ? "MIỄN PHÍ" 
         : formatVND(insuranceFeeValue);
     
-    const rentalFee = `${rentalPrice.toLocaleString()}đ`;
+    const rentalFee = `${rentalFeeAmount.toLocaleString()}đ`;
     const depositFee = `${securityDeposit.toLocaleString()}đ`;
     
-    const fullTotalAmount = rentalPrice + insuranceFeeValue + securityDeposit;
+    const fullTotalAmount = rentalFeeAmount + insuranceFeeValue + securityDeposit;
     const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
 
     const handleContinue = () => {
@@ -119,16 +112,31 @@ export const InsurancePlansScreen: React.FC = () => {
             branchId,
             branchName,
             pricePerDay,
-            startDate,
-            endDate,
+            
+            // Pass ISO strings for backend
+            startDateISO,
+            endDateISO,
+            
+            // Pass display strings for UI
+            startDateDisplay,
+            endDateDisplay,
+            
             duration,
             rentalDays,
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
-            rentalFee: `${rentalPrice.toLocaleString()}đ`,
-            insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
+            
+            // Pass numbers for calculations
+            rentalFeeAmount: rentalFeeAmount,
+            insuranceFeeAmount: insuranceFeeValue,
+            securityDepositAmount: securityDeposit,
+            
+            // Keep formatted strings for display
+            rentalFee: `${rentalFeeAmount.toLocaleString()}đ`,
+            insuranceFee: insuranceFeeValue === 0 ? "MIỄN PHÍ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
             total: fullTotal,
+            
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
@@ -191,7 +199,7 @@ export const InsurancePlansScreen: React.FC = () => {
             >
                 <VehicleInfoHeader
                     vehicleName={vehicleName}
-                    rentalPeriod={`${startDate} - ${endDate}`}
+                    rentalPeriod={`${startDateDisplay} - ${endDateDisplay}`}
                 />
 
                 <Text style={styles.sectionTitle}>Chọn gói bảo vệ</Text>
@@ -211,60 +219,30 @@ export const InsurancePlansScreen: React.FC = () => {
                     />
                 ))}
 
-                <View style={styles.summaryCard}>
-                    <Text style={styles.summaryTitle}>Chi tiết chi phí</Text>
+                {/* NEW: Unified PricingBreakdown Component (Simple Mode) */}
+                <PricingBreakdown
+                    // Rental subtotal (already calculated from previous screen)
+                    rentalSubtotal={rentalFeeAmount}
                     
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Phí thuê xe</Text>
-                        <Text style={styles.summaryValue}>{rentalFee}</Text>
-                    </View>
-
-                    {holidaySurcharge > 0 && (
-                        <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabelHoliday}>
-                                ↳ Bao gồm phụ thu lễ ({holidayDayCount} ngày)
-                            </Text>
-                            <Text style={styles.summaryValueHoliday}>
-                                +{holidaySurcharge.toLocaleString()}đ
-                            </Text>
-                        </View>
-                    )}
+                    // Surcharges (pass from route params)
+                    holidaySurcharge={holidaySurcharge > 0 ? {
+                        amount: holidaySurcharge,
+                        dayCount: holidayDayCount,
+                    } : undefined}
                     
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Phí bảo hiểm</Text>
-                        <Text style={styles.summaryValue}>{insuranceFee}</Text>
-                    </View>
+                    // Insurance
+                    insuranceFee={insuranceFeeValue}
+                    insuranceName={selectedPlan?.title}
                     
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Tiền đặt cọc</Text>
-                        <View style={styles.depositRow}>
-                            <Text style={styles.summaryValue}>{depositFee}</Text>
-                            <TouchableOpacity 
-                                onPress={handleShowTooltip}
-                                style={styles.infoButton}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <View style={styles.infoIcon}>
-                                    <Text style={styles.infoIconText}>ⓘ</Text>
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+                    // Deposit
+                    securityDeposit={securityDeposit}
                     
-                    <View style={styles.divider} />
+                    // Total
+                    total={fullTotalAmount}
                     
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.totalLabel}>Tổng cộng</Text>
-                        <Text style={styles.totalValue}>{fullTotal}</Text>
-                    </View>
-
-                    {/* ✅ Using reusable InfoTooltip component (Atomic Design) */}
-                    <InfoTooltip
-                        message="Hủy đặt xe trong vòng 24 giờ sẽ được hoàn 100% tiền đặt cọc."
-                        isVisible={showTooltip}
-                        onHide={handleHideTooltip}
-                    />
-                </View>
+                    // Simple breakdown (no base price shown)
+                    showDetailedBreakdown={false}
+                />
             </ScrollView>
 
             <View style={styles.footer}>
@@ -338,81 +316,5 @@ const styles = StyleSheet.create({
         marginTop: 12,
         minWidth: 200,
         backgroundColor: "#374151",
-    },
-    summaryCard: {
-        backgroundColor: "#1a1a1a",
-        borderRadius: 12,
-        padding: 16,
-        marginTop: 24,
-        borderWidth: 1,
-        borderColor: "#333",
-        position: "relative",
-    },
-    summaryTitle: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "700",
-        marginBottom: 16,
-    },
-    summaryRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 12,
-    },
-    summaryLabel: {
-        color: "#999",
-        fontSize: 14,
-    },
-    summaryValue: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    summaryLabelHoliday: {
-        color: "#fca5a5",
-        fontSize: 12,
-        marginLeft: 12,
-    },
-    summaryValueHoliday: {
-        color: "#fca5a5",
-        fontSize: 12,
-        fontWeight: "500",
-    },
-    depositRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-    },
-    infoButton: {
-        padding: 2,
-    },
-    infoIcon: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        backgroundColor: "rgba(212, 197, 249, 0.1)",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    infoIconText: {
-        fontSize: 13,
-        color: "#d4c5f9",
-        fontWeight: "600",
-    },
-    divider: {
-        height: 1,
-        backgroundColor: "#333",
-        marginVertical: 12,
-    },
-    totalLabel: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "700",
-    },
-    totalValue: {
-        color: "#00ff00",
-        fontSize: 18,
-        fontWeight: "700",
     },
 });
