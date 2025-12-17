@@ -17,7 +17,7 @@ export class VehicleRepositoryImpl implements VehicleRepository {
         const request: CreateVehicleRequest = {
             licensePlate: vehicle.licensePlate,
             color: vehicle.color,
-            yearOfManufacture: vehicle.yearOfManufacture?.toISOString(),
+            dateManufacturing: vehicle.dateManufacturing?.toISOString(),
             currentOdometerKm: vehicle.currentOdometerKm,
             batteryHealthPercentage: vehicle.batteryHealthPercentage,
             status: vehicle.status,
@@ -139,8 +139,8 @@ export class VehicleRepositoryImpl implements VehicleRepository {
         );
 
         // Convert date strings to Date objects
-        const yearOfManufacture = model.yearOfManufacture 
-            ? new Date(model.yearOfManufacture) 
+        const dateManufacturing = model.dateManufacturing 
+            ? new Date(model.dateManufacturing) 
             : undefined;
         const purchaseDate = model.purchaseDate 
             ? new Date(model.purchaseDate) 
@@ -162,13 +162,16 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             [],
             [],
             [],
-            yearOfManufacture,
+            [],
+            dateManufacturing,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
             model?.fileUrl,
-            purchaseDate,
-            new Date(),
-            null,
-            null,
-            false
         );
     }
 
@@ -232,13 +235,16 @@ export class VehicleRepositoryImpl implements VehicleRepository {
             [],
             [],
             [],
+            [],
             undefined,
-            model?.fileUrl,
             undefined,
-            new Date(),
-            null,
-            null,
-            false
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            model.fileUrl,
         );
     }
 }

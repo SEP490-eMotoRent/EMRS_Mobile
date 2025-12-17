@@ -31,6 +31,9 @@ export interface VehicleResponse {
     color: string;
     yearOfManufacture: string;
     currentOdometerKm: number;
+    batteryHealthPercentage: number;
+    status: string;
+    fileUrl?: string[];
 }
 
 export interface VehicleModelResponse {

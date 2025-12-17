@@ -1,7 +1,7 @@
 export interface CreateVehicleRequest {
     licensePlate: string;
     color: string;
-    yearOfManufacture?: string;
+    dateManufacturing?: string;
     currentOdometerKm: number;
     batteryHealthPercentage: number;
     status: string;

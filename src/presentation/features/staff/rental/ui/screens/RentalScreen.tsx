@@ -338,8 +338,7 @@ export const RentalScreen: React.FC = () => {
                     {booking.renter?.account?.fullname}
                   </Text>
                   <Text style={styles.customerBranch}>
-                    {/* {booking.handoverBranch?.branchName} */}
-                    District 2 Branch
+                    {booking.handoverBranch?.branchName}
                   </Text>
                 </View>
                 <Image

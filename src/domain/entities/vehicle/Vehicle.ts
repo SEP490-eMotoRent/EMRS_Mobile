@@ -27,6 +27,7 @@ export class Vehicle implements BaseEntity {
     public vehicleModelId: string;
     public gpsDeviceIdent?: string; // ADDED
     public flespiDeviceId?: number; // ADDED
+    public fileUrl?: string[];
 
     public branch: Branch;
     public vehicleModel: VehicleModel;
@@ -60,7 +61,8 @@ export class Vehicle implements BaseEntity {
         createdAt: Date = new Date(),
         updatedAt: Date | null = null,
         deletedAt: Date | null = null,
-        isDeleted: boolean = false
+        isDeleted: boolean = false,
+        fileUrl?: string[]
     ) {
         this.id = id;
         this.createdAt = createdAt;
@@ -82,7 +84,7 @@ export class Vehicle implements BaseEntity {
         this.purchaseDate = purchaseDate;
         this.gpsDeviceIdent = gpsDeviceIdent;
         this.flespiDeviceId = flespiDeviceId;
-
+        this.fileUrl = fileUrl;
         // Relations
         this.branch = branch;
         this.vehicleModel = vehicleModel;

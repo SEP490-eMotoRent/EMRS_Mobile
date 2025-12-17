@@ -5,7 +5,7 @@ export interface VehicleResponse {
     id: string;
     licensePlate: string;
     color: string;
-    yearOfManufacture?: Date;
+    dateManufacturing?: Date;
     currentOdometerKm: number;
     batteryHealthPercentage: number;
     status: string;
