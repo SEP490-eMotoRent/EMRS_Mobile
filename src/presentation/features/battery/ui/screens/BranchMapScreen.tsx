@@ -19,6 +19,65 @@ import { RouteLine } from "../molecules/RouteLine";
 import { useLocation } from "../../context/LocationContext";
 import { BranchInfoCard } from "../organisms/BranchInfoCard";
 
+/**
+ * BranchMarkerWrapper - Optimized marker component that prevents unnecessary re-renders
+ * 
+ * Applies same optimization strategy as MapScreen:
+ * - Uses tracksViewChanges intelligently (only true during selection change)
+ * - Memoized to prevent re-creation on parent re-renders
+ * - 200ms timing for 32×32 markers
+ */
+const BranchMarkerWrapper = React.memo(({ 
+  branch, 
+  isSelected, 
+  onPress 
+}: { 
+  branch: Branch; 
+  isSelected: boolean; 
+  onPress: () => void;
+}) => {
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+  
+  // Disable view tracking after initial render (prevents blink on map pan/zoom)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTracksViewChanges(false);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // Enable tracking whenever isSelected CHANGES (both true->false and false->true)
+  useEffect(() => {
+    setTracksViewChanges(true);
+    const timer = setTimeout(() => {
+      setTracksViewChanges(false);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [isSelected]);
+  
+  return (
+    <Marker
+      key={branch.id}
+      coordinate={{
+        latitude: branch.latitude,
+        longitude: branch.longitude,
+      }}
+      onPress={onPress}
+      anchor={{ x: 0.5, y: 1 }}
+      tracksViewChanges={tracksViewChanges}
+      identifier={`branch-${branch.id}`}
+    >
+      <BranchMapMarker isSelected={isSelected} />
+    </Marker>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison: only re-render if selection state changes
+  return prevProps.isSelected === nextProps.isSelected && 
+         prevProps.branch.id === nextProps.branch.id;
+});
+
+BranchMarkerWrapper.displayName = 'BranchMarkerWrapper';
+
 export const BranchMapScreen: React.FC = () => {
   const { branches, loading, error, refetch } = useBranches();
   const { location } = useLocation();
@@ -27,41 +86,41 @@ export const BranchMapScreen: React.FC = () => {
   const [showRoute, setShowRoute] = useState(false);
   const [routeDistance, setRouteDistance] = useState<string>("");
   const [routeDuration, setRouteDuration] = useState<string>("");
-  const [region, setRegion] = useState<Region>({
-    latitude: location?.latitude || 0,
-    longitude: location?.longitude || 0,
+  const [initialRegion] = useState<Region>({
+    latitude: location?.latitude || 10.8231,
+    longitude: location?.longitude || 106.6297,
     latitudeDelta: 0.02,
     longitudeDelta: 0.02,
   });
 
-  // Update region when branches are loaded
+  // Fit map to show all branches and user location
   useEffect(() => {
-    if (!location) return;
-    if (branches.length > 0) {
-      const allLatitudes = [
-        location.latitude,
-        ...branches.map((b) => b.latitude),
-      ];
-      const allLongitudes = [
-        location.longitude,
-        ...branches.map((b) => b.longitude),
-      ];
+    if (!location || branches.length === 0) return;
+    
+    const allLatitudes = [
+      location.latitude,
+      ...branches.map((b) => b.latitude),
+    ];
+    const allLongitudes = [
+      location.longitude,
+      ...branches.map((b) => b.longitude),
+    ];
 
-      const minLat = Math.min(...allLatitudes);
-      const maxLat = Math.max(...allLatitudes);
-      const minLng = Math.min(...allLongitudes);
-      const maxLng = Math.max(...allLongitudes);
+    const minLat = Math.min(...allLatitudes);
+    const maxLat = Math.max(...allLatitudes);
+    const minLng = Math.min(...allLongitudes);
+    const maxLng = Math.max(...allLongitudes);
 
-      const latDelta = (maxLat - minLat) * 1.5;
-      const lngDelta = (maxLng - minLng) * 1.5;
+    const latDelta = (maxLat - minLat) * 1.5;
+    const lngDelta = (maxLng - minLng) * 1.5;
 
-      setRegion({
-        latitude: (minLat + maxLat) / 2,
-        longitude: (minLng + maxLng) / 2,
-        latitudeDelta: Math.max(latDelta, 0.05),
-        longitudeDelta: Math.max(lngDelta, 0.05),
-      });
-    }
+    // Animate to new region instead of setting state
+    mapRef.current?.animateToRegion({
+      latitude: (minLat + maxLat) / 2,
+      longitude: (minLng + maxLng) / 2,
+      latitudeDelta: Math.max(latDelta, 0.05),
+      longitudeDelta: Math.max(lngDelta, 0.05),
+    }, 1000);
   }, [branches, location]);
 
   const handleBranchPress = (branch: Branch) => {
@@ -112,21 +171,16 @@ export const BranchMapScreen: React.FC = () => {
       />
       {location ? (
         <View style={styles.mapContainer}>
+          {/* ✅ FIXED: Using initialRegion instead of region for smoother performance */}
           <MapView
             ref={mapRef}
             key={branches?.length}
             provider={PROVIDER_GOOGLE}
             style={styles.map}
             mapType="standard"
-            region={region}
+            initialRegion={initialRegion}
             showsUserLocation={false}
             showsMyLocationButton={false}
-            initialRegion={{
-              latitude: location?.latitude,
-              longitude: location?.longitude,
-              latitudeDelta: 0.02,
-              longitudeDelta: 0.02,
-            }}
           >
             {/* Custom User Location Marker */}
             {location && (
@@ -137,6 +191,7 @@ export const BranchMapScreen: React.FC = () => {
                 }}
                 anchor={{ x: 0.5, y: 0.5 }}
                 flat
+                tracksViewChanges={true}
               >
                 <UserLocationMarker />
               </Marker>
@@ -157,21 +212,14 @@ export const BranchMapScreen: React.FC = () => {
               />
             )}
 
-            {/* Branch Markers */}
+            {/* ✅ FIXED: Branch Markers with optimization wrapper */}
             {branches.map((branch) => (
-              <Marker
+              <BranchMarkerWrapper
                 key={branch.id}
-                coordinate={{
-                  latitude: branch.latitude,
-                  longitude: branch.longitude,
-                }}
+                branch={branch}
+                isSelected={selectedBranch?.id === branch.id}
                 onPress={() => handleBranchPress(branch)}
-                anchor={{ x: 0.5, y: 0.75 }}
-              >
-                <BranchMapMarker
-                  isSelected={selectedBranch?.id === branch.id}
-                />
-              </Marker>
+              />
             ))}
           </MapView>
 

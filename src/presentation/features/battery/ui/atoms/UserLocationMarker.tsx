@@ -3,10 +3,11 @@ import { View, StyleSheet, Animated } from "react-native";
 
 export const UserLocationMarker: React.FC = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    // Pulsing animation
-    Animated.loop(
+    // Smooth pulsing animation
+    animationRef.current = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.3,
@@ -19,8 +20,18 @@ export const UserLocationMarker: React.FC = () => {
           useNativeDriver: true,
         }),
       ])
-    ).start();
-  }, []);
+    );
+    
+    animationRef.current.start();
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+        animationRef.current = null;
+      }
+      pulseAnim.setValue(1);
+    };
+  }, [pulseAnim]);
 
   return (
     <View style={styles.container}>
@@ -34,7 +45,7 @@ export const UserLocationMarker: React.FC = () => {
         ]}
       />
       
-      {/* Main location dot - perfectly centered */}
+      {/* Main blue dot */}
       <View style={styles.mainDot}>
         <View style={styles.innerDot} />
       </View>
@@ -44,23 +55,22 @@ export const UserLocationMarker: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     alignItems: "center",
     justifyContent: "center",
   },
   pulseCircle: {
     position: "absolute",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#4A90E2",
-    opacity: 0.3,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(74, 144, 226, 0.25)",
   },
   mainDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: "#4A90E2",
     borderWidth: 3,
     borderColor: "#fff",
@@ -73,9 +83,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   innerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: "#fff",
   },
 });

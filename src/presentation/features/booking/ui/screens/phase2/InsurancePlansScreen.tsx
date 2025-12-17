@@ -35,12 +35,6 @@ const noProtectionPlan: InsurancePlan = {
     ],
 };
 
-/**
- * InsurancePlansScreen - Screen Component
- * 
- * Insurance plan selection screen following Atomic Design principles.
- * Uses InfoTooltip molecule for cancellation policy display.
- */
 export const InsurancePlansScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
@@ -53,14 +47,24 @@ export const InsurancePlansScreen: React.FC = () => {
         branchName,
         pricePerDay,
         securityDeposit,
-        startDate, 
-        endDate, 
+        
+        // ISO strings for backend
+        startDateISO,
+        endDateISO,
+        
+        // Display strings for UI
+        startDateDisplay,
+        endDateDisplay,
+        
         duration, 
         rentalDays,
-        rentalPrice,
+        
+        // Numbers for calculations
+        rentalFeeAmount,
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
+        
         vehicleCategory,
         holidaySurcharge,
         holidayDayCount,
@@ -75,7 +79,6 @@ export const InsurancePlansScreen: React.FC = () => {
     const { packages, loading, error, refetch } = useInsurancePackages();
 
     const insurancePlans: InsurancePlan[] = useMemo(() => {
-        // Sort packages by price (lowest to highest)
         const sortedPackages = [...packages].sort((a, b) => a.packageFee - b.packageFee);
         const apiPlans = sortedPackages.map(pkg => transformToInsurancePlan(pkg));
         return [noProtectionPlan, ...apiPlans];
@@ -104,10 +107,10 @@ export const InsurancePlansScreen: React.FC = () => {
         ? "MIỄN PHÍ" 
         : formatVND(insuranceFeeValue);
     
-    const rentalFee = `${rentalPrice.toLocaleString()}đ`;
+    const rentalFee = `${rentalFeeAmount.toLocaleString()}đ`;
     const depositFee = `${securityDeposit.toLocaleString()}đ`;
     
-    const fullTotalAmount = rentalPrice + insuranceFeeValue + securityDeposit;
+    const fullTotalAmount = rentalFeeAmount + insuranceFeeValue + securityDeposit;
     const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
 
     const handleContinue = () => {
@@ -118,16 +121,31 @@ export const InsurancePlansScreen: React.FC = () => {
             branchId,
             branchName,
             pricePerDay,
-            startDate,
-            endDate,
+            
+            // Pass ISO strings for backend
+            startDateISO,
+            endDateISO,
+            
+            // Pass display strings for UI
+            startDateDisplay,
+            endDateDisplay,
+            
             duration,
             rentalDays,
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
-            rentalFee: `${rentalPrice.toLocaleString()}đ`,
-            insuranceFee: insuranceFeeValue === 0 ? "0đ" : `${insuranceFeeValue.toLocaleString()}đ`,
+            
+            // Pass numbers for calculations
+            rentalFeeAmount: rentalFeeAmount,
+            insuranceFeeAmount: insuranceFeeValue,
+            securityDepositAmount: securityDeposit,
+            
+            // Keep formatted strings for display
+            rentalFee: `${rentalFeeAmount.toLocaleString()}đ`,
+            insuranceFee: insuranceFeeValue === 0 ? "MIỄN PHÍ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
             total: fullTotal,
+            
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
@@ -190,7 +208,7 @@ export const InsurancePlansScreen: React.FC = () => {
             >
                 <VehicleInfoHeader
                     vehicleName={vehicleName}
-                    rentalPeriod={`${startDate} - ${endDate}`}
+                    rentalPeriod={`${startDateDisplay} - ${endDateDisplay}`}
                 />
 
                 <Text style={styles.sectionTitle}>Chọn gói bảo vệ</Text>
@@ -257,7 +275,6 @@ export const InsurancePlansScreen: React.FC = () => {
                         <Text style={styles.totalValue}>{fullTotal}</Text>
                     </View>
 
-                    {/* ✅ Using reusable InfoTooltip component (Atomic Design) */}
                     <InfoTooltip
                         message="Hủy đặt xe trong vòng 24 giờ sẽ được hoàn 100% tiền đặt cọc."
                         isVisible={showTooltip}

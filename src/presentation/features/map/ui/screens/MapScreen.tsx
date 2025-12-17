@@ -54,9 +54,12 @@ LocationPinWrapper.displayName = 'LocationPinWrapper';
  * BranchMarkerWrapper - Optimized marker component that prevents unnecessary re-renders
  * 
  * Key optimizations:
- * - Uses tracksViewChanges intelligently (only true during selection change)
- * - Memoized to prevent re-creation on parent re-renders
- * - CRITICAL FIX: Enables tracking on ANY isSelected change (true OR false)
+ * 1. Uses tracksViewChanges intelligently (only true during selection change)
+ * 2. Memoized to prevent re-creation on parent re-renders
+ * 3. CRITICAL: Timing adjusted for 32×32 markers (increased to 200ms for consistency)
+ * 
+ * TIMING FIX: Increased from 150ms → 200ms for smaller 32×32 markers
+ * Smaller markers render faster, need more time for state to settle and avoid race conditions
  */
 const BranchMarkerWrapper = React.memo(({ 
     branch, 
@@ -74,7 +77,7 @@ const BranchMarkerWrapper = React.memo(({
     useEffect(() => {
         const timer = setTimeout(() => {
             setTracksViewChanges(false);
-        }, 150);
+        }, 200); // INCREASED: 150 → 200ms for 32×32 markers
         return () => clearTimeout(timer);
     }, []);
     
@@ -84,7 +87,7 @@ const BranchMarkerWrapper = React.memo(({
         setTracksViewChanges(true);
         const timer = setTimeout(() => {
             setTracksViewChanges(false);
-        }, 150);
+        }, 200); // ✅ INCREASED: 150 → 200ms for 32×32 markers
         return () => clearTimeout(timer);
     }, [isSelected]); // Triggers on ANY change (true -> false OR false -> true)
     
@@ -106,7 +109,7 @@ const BranchMarkerWrapper = React.memo(({
 }, (prevProps, nextProps) => {
     // Custom comparison: only re-render if selection state changes
     return prevProps.isSelected === nextProps.isSelected && 
-           prevProps.branch.id === nextProps.branch.id;
+        prevProps.branch.id === nextProps.branch.id;
 });
 
 BranchMarkerWrapper.displayName = 'BranchMarkerWrapper';
@@ -128,7 +131,7 @@ export const MapScreen: React.FC = () => {
     const { branches, loading, error, refetch } = useBranches();
     
     // Manage map region and geocoding
-    // ✅ FIXED: Removed setRegion to prevent controlled component behavior
+    // FIXED: Removed setRegion to prevent controlled component behavior
     const { region, /* setRegion, */ searchedLocation } = useMapRegion({ branches, address });
     
     // Handle all map interactions (branch clicks, bottom sheet, etc.)
@@ -192,7 +195,7 @@ export const MapScreen: React.FC = () => {
         }
     }, [refetch, bottomSheetVisible, handleBottomSheetClose]);
 
-    // ❌ REMOVED: Region change handler that was causing drag resistance
+    // REMOVED: Region change handler that was causing drag resistance
     // This created a feedback loop: user drags → handler updates state → map re-renders → resistance
     /*
     const regionChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -247,13 +250,13 @@ export const MapScreen: React.FC = () => {
             {/* 
                 Google Maps with optimized markers
                 
-                ✅ CRITICAL FIX: Using initialRegion instead of region prop
+            CRITICAL FIX: Using initialRegion instead of region prop
                 - initialRegion: Sets starting position but doesn't control the map
                 - User can drag freely without React state interfering
                 - No resistance or rubber-band effect when dragging
                 - Map only resets when component remounts or geocoding updates
                 
-                ❌ REMOVED: onRegionChangeComplete handler that was causing resistance
+            REMOVED: onRegionChangeComplete handler that was causing resistance
             */}
             <MapView
                 provider={PROVIDER_GOOGLE}
@@ -268,9 +271,9 @@ export const MapScreen: React.FC = () => {
                 {/* 
                     Searched location pin (green flag) - VISIBLE & NON-INTERACTIVE
                     
-                    ✅ tracksViewChanges={true}: Allows proper rendering
-                    ✅ tappable={false}: Cannot be clicked
-                    ✅ stopPropagation={true}: No event bubbling
+                    tracksViewChanges={true}: Allows proper rendering
+                    tappable={false}: Cannot be clicked
+                    stopPropagation={true}: No event bubbling
                 */}
                 {searchedLocation && (
                     <Marker
@@ -339,7 +342,7 @@ export const MapScreen: React.FC = () => {
                         ? {
                             latitude: selectedBranch.latitude,
                             longitude: selectedBranch.longitude,
-                          }
+                        }
                         : undefined
                 }
                 searchedLocation={searchedLocation || undefined}

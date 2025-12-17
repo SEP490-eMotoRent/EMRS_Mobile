@@ -2,6 +2,15 @@ import { FontAwesome } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
+/**
+ * LocationPinMarker - Optimized marker with proper icon sizing
+ * 
+ * FIXES:
+ * 1. Bubble: 32×32 (compact but visible) ✅
+ * 2. Icon: 12 (properly sized) ✅
+ * 3. Padding: 3px (prevents cropping) ✅
+ * 4. Pointer: BIGGER for clarity (8px wider, 12px taller)
+ */
 export const LocationPinMarker: React.FC = React.memo(() => {
     return (
         <View 
@@ -11,7 +20,7 @@ export const LocationPinMarker: React.FC = React.memo(() => {
             <View style={styles.bubble}>
                 <FontAwesome 
                     name="flag" 
-                    size={16}
+                    size={12}
                     color="#fff"
                 />
             </View>
@@ -26,18 +35,19 @@ const styles = StyleSheet.create({
     container: {
         alignItems: "center",
         justifyContent: "flex-start",
-        width: 40,
-        height: 50,
+        width: 36,
+        height: 48,
     },
     bubble: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         backgroundColor: "#1a1a1a",
         borderWidth: 2,
         borderColor: "#10B981",
         alignItems: "center",
         justifyContent: "center",
+        padding: 3,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.4,

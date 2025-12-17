@@ -6,6 +6,7 @@ import { BranchUI } from "../../hooks/useVehicleBranches";
 import { AvailableBadge } from "../atoms/badges/AvailableBadge";
 import { SectionTitle } from "../atoms/text/SectionTitle";
 import { BranchInfoItem } from "../molecules/BranchInfoItem";
+import { BranchMarker } from "../../../map/ui/atoms/markers/BranchMarker";
 
 interface PickupLocationSectionProps {
     branches: BranchUI[];
@@ -70,7 +71,7 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                                     style={[
                                         styles.dropdownItem,
                                         isSelected && styles.dropdownItemSelected,
-                                        !isAvailable && styles.dropdownItemUnavailable, // ✅ NEW
+                                        !isAvailable && styles.dropdownItemUnavailable,
                                     ]}
                                     onPress={() => {
                                         onBranchSelect(branch.id);
@@ -82,18 +83,18 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                                         <Text style={[
                                             styles.dropdownItemText,
                                             isSelected && styles.dropdownItemTextSelected,
-                                            !isAvailable && styles.dropdownItemTextUnavailable, // ✅ NEW
+                                            !isAvailable && styles.dropdownItemTextUnavailable,
                                         ]}>
                                             {branch.name}
                                         </Text>
                                         {branch.vehicleCount !== undefined && (
                                             <View style={[
                                                 styles.dropdownVehicleCount,
-                                                !isAvailable && styles.dropdownVehicleCountUnavailable, // ✅ NEW
+                                                !isAvailable && styles.dropdownVehicleCountUnavailable,
                                             ]}>
                                                 <Text style={[
                                                     styles.dropdownVehicleCountText,
-                                                    !isAvailable && styles.dropdownVehicleCountTextUnavailable, // ✅ NEW
+                                                    !isAvailable && styles.dropdownVehicleCountTextUnavailable,
                                                 ]}>
                                                     {branch.vehicleCount} xe
                                                 </Text>
@@ -102,11 +103,10 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                                     </View>
                                     <Text style={[
                                         styles.dropdownItemAddress,
-                                        !isAvailable && styles.dropdownItemAddressUnavailable, // ✅ NEW
+                                        !isAvailable && styles.dropdownItemAddressUnavailable,
                                     ]}>
                                         {branch.address}
                                     </Text>
-                                    {/* ✅ NEW: Unavailable indicator */}
                                     {!isAvailable && (
                                         <Text style={styles.unavailableLabel}>
                                             Không có sẵn
@@ -119,7 +119,7 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                 )}
             </View>
 
-            {/* Map with Branch Location */}
+            {/* Map with Branch Location - UPDATED MARKER */}
             <View style={styles.mapContainer}>
                 <MapView
                     provider={PROVIDER_GOOGLE}
@@ -135,6 +135,7 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                     pitchEnabled={false}
                     rotateEnabled={false}
                 >
+                    {/* ✅ FIXED: tracksViewChanges={true} for static marker to render */}
                     <Marker
                         coordinate={{
                             latitude: selectedBranch.latitude,
@@ -142,34 +143,26 @@ export const PickupLocationSection: React.FC<PickupLocationSectionProps> = ({
                         }}
                         title={selectedBranch.name}
                         description={selectedBranch.address}
-                        anchor={{ x: 0.5, y: 0.75 }}
+                        anchor={{ x: 0.5, y: 1 }}
+                        tracksViewChanges={true}
                     >
-                        <View style={styles.markerContainer}>
-                            <View style={styles.markerBubble}>
-                                <FontAwesome 
-                                    name="motorcycle" 
-                                    size={16} 
-                                    color="#fff" 
-                                />
-                            </View>
-                            <View style={styles.markerPointer} />
-                        </View>
+                        <BranchMarker isSelected={false} />
                     </Marker>
                 </MapView>
             </View>
 
-            {/* ✅ UPDATED: Branch Info Card - Better styling */}
+            {/* Branch Info Card */}
             <View style={styles.branchCard}>
                 <View style={styles.branchHeader}>
                     <Text style={styles.branchName}>{selectedBranch.name}</Text>
                     {selectedBranch.vehicleCount !== undefined && (
                         <View style={[
                             styles.vehicleCountBadge,
-                            (selectedBranch.vehicleCount ?? 0) === 0 && styles.vehicleCountBadgeUnavailable, // ✅ NEW
+                            (selectedBranch.vehicleCount ?? 0) === 0 && styles.vehicleCountBadgeUnavailable,
                         ]}>
                             <Text style={[
                                 styles.vehicleCountText,
-                                (selectedBranch.vehicleCount ?? 0) === 0 && styles.vehicleCountTextUnavailable, // ✅ NEW
+                                (selectedBranch.vehicleCount ?? 0) === 0 && styles.vehicleCountTextUnavailable,
                             ]}>
                                 {selectedBranch.vehicleCount} xe
                             </Text>
@@ -238,7 +231,6 @@ const styles = StyleSheet.create({
     dropdownItemSelected: {
         backgroundColor: "#1a1a1a",
     },
-    // ✅ NEW: Unavailable item styling
     dropdownItemUnavailable: {
         opacity: 0.6,
     },
@@ -257,7 +249,6 @@ const styles = StyleSheet.create({
     dropdownItemTextSelected: {
         color: "#a78bfa",
     },
-    // ✅ NEW: Unavailable text styling
     dropdownItemTextUnavailable: {
         color: "#666",
     },
@@ -267,7 +258,6 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 8,
     },
-    // ✅ NEW: Unavailable badge styling
     dropdownVehicleCountUnavailable: {
         backgroundColor: "#2a2a2a",
         borderWidth: 1,
@@ -278,7 +268,6 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "600",
     },
-    // ✅ NEW: Unavailable count text styling
     dropdownVehicleCountTextUnavailable: {
         color: "#666",
     },
@@ -286,11 +275,9 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 12,
     },
-    // ✅ NEW: Unavailable address styling
     dropdownItemAddressUnavailable: {
         color: "#555",
     },
-    // ✅ NEW: Unavailable label
     unavailableLabel: {
         color: "#ff6b6b",
         fontSize: 11,
@@ -310,33 +297,8 @@ const styles = StyleSheet.create({
         width: "100%",
         height: "100%",
     },
-    markerContainer: {
-        alignItems: "center",
-    },
-    markerBubble: {
-        backgroundColor: "#000",
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: "center",
-        justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        elevation: 5,
-    },
-    markerPointer: {
-        marginTop: -4,
-        width: 0,
-        height: 0,
-        borderLeftWidth: 10,
-        borderRightWidth: 10,
-        borderTopWidth: 18,
-        borderLeftColor: "transparent",
-        borderRightColor: "transparent",
-        borderTopColor: "#000",
-    },
+    // ❌ REMOVED: Old marker styles (no longer needed)
+    // markerContainer, markerBubble, markerPointer
     branchCard: {
         backgroundColor: "#000",
         padding: 20,
@@ -364,7 +326,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "rgba(34, 197, 94, 0.3)",
     },
-    // ✅ NEW: Unavailable badge styling in branch card
     vehicleCountBadgeUnavailable: {
         backgroundColor: "rgba(255, 107, 107, 0.15)",
         borderColor: "rgba(255, 107, 107, 0.3)",
@@ -374,7 +335,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "700",
     },
-    // ✅ NEW: Unavailable text styling in branch card
     vehicleCountTextUnavailable: {
         color: "#ff6b6b",
     },

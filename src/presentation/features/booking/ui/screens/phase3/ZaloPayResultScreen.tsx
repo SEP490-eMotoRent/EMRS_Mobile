@@ -58,14 +58,20 @@ export const ZaloPayResultScreen: React.FC = () => {
     const [bookingContext, setBookingContext] = useState<BookingContext | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [pollingEnabled, setPollingEnabled] = useState(true);
+    const hasHandled = useRef(false);
 
     const { bookingId } = route.params;
 
     // ==================== STATUS POLLING ====================
     useBookingStatusPolling({
         bookingId,
-        enabled: pollingEnabled && paymentStatus === 'pending',
+        enabled: pollingEnabled && paymentStatus === 'pending' && !hasHandled.current,
         onStatusChange: (status) => {
+            if (hasHandled.current) {
+                console.log('⚠️ Already handled, ignoring polling result');
+                return;
+            }
+            
             console.log('═══════════════════════════════════════════════════');
             console.log('🔔 [ZALOPAY POLLING] Status change detected:', status);
             console.log('═══════════════════════════════════════════════════');
@@ -74,6 +80,7 @@ export const ZaloPayResultScreen: React.FC = () => {
                 console.log('✅ [ZALOPAY POLLING] Payment confirmed via polling!');
                 console.log('🎯 [ZALOPAY POLLING] Deep link may have failed, but polling caught it');
                 
+                hasHandled.current = true;
                 setPollingEnabled(false);
                 setPaymentStatus('success');
                 
@@ -82,6 +89,7 @@ export const ZaloPayResultScreen: React.FC = () => {
                 }, 2000);
             } else if (status === 'Cancelled') {
                 console.log('❌ [ZALOPAY POLLING] Booking cancelled');
+                hasHandled.current = true;
                 setPollingEnabled(false);
                 setPaymentStatus('failed');
                 setErrorMessage(
@@ -123,14 +131,20 @@ export const ZaloPayResultScreen: React.FC = () => {
         console.log('🔔 [CALLBACK] Starting callback handling');
         console.log('═══════════════════════════════════════════════════');
         
+        if (hasHandled.current) {
+            console.log('⚠️ [CALLBACK] Already handled, ignoring duplicate');
+            return;
+        }
+        
         if (isProcessing) {
             console.log('⏳ [CALLBACK] Already processing, ignoring duplicate');
             return;
         }
 
         console.log('📥 [CALLBACK] Raw URL:', url);
+        hasHandled.current = true;
         setIsProcessing(true);
-        setPollingEnabled(false); // Stop polling when callback fires
+        setPollingEnabled(false);
 
         try {
             const params = parseCallbackUrl(url);

@@ -16,12 +16,8 @@ export interface CreateZaloPayBookingInput {
     averageRentalPrice: number;
     insurancePackageId?: string;
     totalRentalFee: number;
-    renterId: string;
-    holidaySurcharge?: number;
-    holidayDayCount?: number;
-    membershipDiscountPercentage?: number;
-    membershipDiscountAmount?: number;
-    membershipTier?: string;
+    // REMOVED: renterId - backend gets it from JWT token
+    // REMOVED: holidaySurcharge, holidayDayCount, membership fields - frontend only
 }
 
 export interface ZaloPayBookingResultWithExpiry {
@@ -36,19 +32,22 @@ export class CreateZaloPayBookingUseCase {
     async execute(input: CreateZaloPayBookingInput): Promise<ZaloPayBookingResultWithExpiry> {
         console.log("🔄 [USE CASE] Creating ZaloPay booking...");
 
-        // Create mock renter
+        // Backend will populate renterId from JWT
+        const placeholderRenterId = "";
+
+        // Create mock renter (backend will replace with real data)
         const mockRenter = new Renter(
-            input.renterId,
+            placeholderRenterId,
             "unknown@email.com",
             "",
             "",
-            input.renterId,
+            placeholderRenterId,
             "mock-membership",
             false,
             ""
         );
 
-        // Create mock vehicle model
+        // Create mock vehicle model (backend will replace with real data)
         const mockVehicleModel = new VehicleModel(
             input.vehicleModelId,
             "Unknown Model",
@@ -64,8 +63,8 @@ export class CreateZaloPayBookingUseCase {
 
         // Construct Booking entity
         const booking = new Booking(
-            "", // id - will be set by backend
-            "", // bookingCode - will be set by backend
+            "", // id - backend generates
+            "", // bookingCode - backend generates
             input.baseRentalFee,
             input.depositAmount,
             input.rentalDays,
@@ -84,7 +83,7 @@ export class CreateZaloPayBookingUseCase {
             0, // refundAmount
             "Pending", // bookingStatus - ZaloPay creates as Pending
             input.vehicleModelId,
-            input.renterId,
+            placeholderRenterId, // renterId - backend populates from JWT
             mockRenter,
             mockVehicleModel,
             undefined, // vehicleId
