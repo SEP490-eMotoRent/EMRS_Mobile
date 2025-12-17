@@ -23,6 +23,7 @@ export type HomeStackParamList = {
   Home: undefined;
   Browse: NavigatorScreenParams<BrowseStackParamList>;
   Booking: NavigatorScreenParams<BookingStackParamList>;
+  ProfileTab: NavigatorScreenParams<ProfileStackParamList>;
   ListView: {
     location: string;
     dateRange: string;

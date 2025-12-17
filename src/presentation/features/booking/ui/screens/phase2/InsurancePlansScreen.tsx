@@ -18,6 +18,7 @@ import { ProgressIndicator } from "../../molecules/ProgressIndicator";
 import { VehicleInfoHeader } from "../../molecules/VehicleInfoHeader";
 import { InfoTooltip } from "../../molecules/InfoTooltip";
 import { InsurancePlan, InsurancePlanCard } from "../../organisms/insurance/InsurancePlanCard";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsurancePlans'>;
@@ -179,7 +180,7 @@ export const InsurancePlansScreen: React.FC = () => {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <PageHeader title="Gói bảo hiểm" onBack={handleBack} />
             <ProgressIndicator currentStep={2} totalSteps={4} />
 
@@ -273,7 +274,7 @@ export const InsurancePlansScreen: React.FC = () => {
                     disabled={!selectedPlanId}
                 />
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 

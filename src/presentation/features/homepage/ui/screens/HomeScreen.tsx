@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
     },
     stickySearchContainer: {
         backgroundColor: '#000000',
-        paddingHorizontal: 16,
         paddingTop: 12,
         paddingBottom: 16,
         borderBottomWidth: 1,

@@ -1,5 +1,10 @@
 import { AntDesign } from "@expo/vector-icons";
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  RouteProp,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -32,6 +37,7 @@ import { colors } from "../../../../../common/theme/colors";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useAppSelector } from "../../../../authentication/store/hooks";
 import { SectionHeader } from "../molecules/SectionHeader";
+import { RootState } from "../../../../authentication/store";
 type BookingDetailsScreenNavigationProp = any;
 
 type BookingDetailsScreenRouteProp = RouteProp<
@@ -42,7 +48,7 @@ type BookingDetailsScreenRouteProp = RouteProp<
 export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<BookingDetailsScreenRouteProp>();
   const navigation = useNavigation<BookingDetailsScreenNavigationProp>();
-  const user = useAppSelector((state) => state.auth.user);
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [contract, setContract] = useState<RentalContract | null>(null);
   const [rentalReceipts, setRentalReceipts] = useState<RentalReceipt[] | null>(
@@ -56,7 +62,7 @@ export const BookingDetailsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [showReceiptListModal, setShowReceiptListModal] = useState(false);
-  const [isRefetching, setIsRefetching] = useState(false);  
+  const [isRefetching, setIsRefetching] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,7 +71,10 @@ export const BookingDetailsScreen: React.FC = () => {
     }, [])
   );
   useEffect(() => {
-    if (booking?.bookingStatus === "Returned" || booking?.bookingStatus === "Completed") {
+    if (
+      booking?.bookingStatus === "Returned" ||
+      booking?.bookingStatus === "Completed"
+    ) {
       fetchSummary();
     }
   }, [booking?.bookingStatus]);
@@ -89,7 +98,10 @@ export const BookingDetailsScreen: React.FC = () => {
 
   const fetchRentalReceipt = async () => {
     try {
-      const response = await container.booking.receiptRepository.getListRentalReceipt(bookingId);
+      const response =
+        await container.booking.receiptRepository.getListRentalReceipt(
+          bookingId
+        );
       setRentalReceipts(response.data || []);
     } catch (error) {
       console.error("Error fetching rental receipt:", error);
@@ -152,7 +164,8 @@ export const BookingDetailsScreen: React.FC = () => {
               Toast.show({
                 type: "error",
                 text1: "Lỗi",
-                text2: error.message || "Không thể hủy đặt xe. Vui lòng thử lại.",
+                text2:
+                  error.message || "Không thể hủy đặt xe. Vui lòng thử lại.",
               });
             }
           },
@@ -161,7 +174,7 @@ export const BookingDetailsScreen: React.FC = () => {
     );
   };
 
-const getLastReceipt = () => {
+  const getLastReceipt = () => {
     const receipts = rentalReceipts;
     const bookingVehicleId = booking?.vehicle?.id || booking?.vehicleId || null;
     const lastReceipt = receipts?.length
@@ -491,16 +504,16 @@ const getLastReceipt = () => {
             {/* Vehicle Model */}
             {booking?.vehicle?.id && (
               <>
-            <View style={styles.iconRow}>
-              <View style={styles.iconLeft}>
+                <View style={styles.iconRow}>
+                  <View style={styles.iconLeft}>
                     <AntDesign name="idcard" size={14} color="#7DB3FF" />
-                <Text style={styles.iconLabel}>Mã xe thuê</Text>
-              </View>
-              <Text style={styles.iconValue}>
-                #{booking?.vehicle?.id.slice(-12) || "-"}
-              </Text>
-            </View>
-            <View style={styles.divider} />
+                    <Text style={styles.iconLabel}>Mã xe thuê</Text>
+                  </View>
+                  <Text style={styles.iconValue}>
+                    #{booking?.vehicle?.id.slice(-12) || "-"}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
               </>
             )}
             <View style={styles.iconRow}>
@@ -546,7 +559,8 @@ const getLastReceipt = () => {
                     <Text style={styles.branchQuickText}>
                       {booking?.bookingStatus === "Returned" ||
                       booking?.bookingStatus === "Completed"
-                        ? booking?.handoverBranch?.id === booking?.returnBranch?.id
+                        ? booking?.handoverBranch?.id ===
+                          booking?.returnBranch?.id
                           ? "Chỉ đường"
                           : "Chỉ đường nhận xe"
                         : "Chỉ đường nhận xe"}
@@ -555,7 +569,10 @@ const getLastReceipt = () => {
                 )}
                 {booking?.handoverBranch?.phone && (
                   <TouchableOpacity
-                    style={[styles.branchQuickBtn, styles.branchQuickBtnHandoverCall]}
+                    style={[
+                      styles.branchQuickBtn,
+                      styles.branchQuickBtnHandoverCall,
+                    ]}
                     onPress={handleCallHandoverBranch}
                     activeOpacity={0.7}
                   >
@@ -612,7 +629,11 @@ const getLastReceipt = () => {
                             styles.branchQuickIconWrapReturn,
                           ]}
                         >
-                          <AntDesign name="environment" size={14} color="#FFB300" />
+                          <AntDesign
+                            name="environment"
+                            size={14}
+                            color="#FFB300"
+                          />
                         </View>
                         <Text
                           style={[
@@ -692,29 +713,29 @@ const getLastReceipt = () => {
         </View>
         {booking?.vehicle?.id && (
           <>
-          <TouchableOpacity
-            style={styles.vehicleDetailsBtn}
-            activeOpacity={0.85}
-            onPress={openVehicleDetails}
-          >
-            <View style={styles.vehicleDetailsLeft}>
-              <View style={styles.vehicleIconBadge}>
-                <AntDesign name="car" size={18} color="#000" />
+            <TouchableOpacity
+              style={styles.vehicleDetailsBtn}
+              activeOpacity={0.85}
+              onPress={openVehicleDetails}
+            >
+              <View style={styles.vehicleDetailsLeft}>
+                <View style={styles.vehicleIconBadge}>
+                  <AntDesign name="car" size={18} color="#000" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.vehicleDetailsTitle}>
+                    Xem thông tin xe đang thuê
+                  </Text>
+                  <Text style={styles.vehicleDetailsSubtitle}>
+                    {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
+                    {booking?.vehicleModel?.modelName ||
+                      booking?.vehicle?.vehicleModel?.modelName ||
+                      "Đang cập nhật"}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.vehicleDetailsTitle}>
-                  Xem thông tin xe đang thuê
-                </Text>
-                <Text style={styles.vehicleDetailsSubtitle}>
-                  {booking?.vehicle?.licensePlate || "Chưa có biển số"} ·{" "}
-                  {booking?.vehicleModel?.modelName ||
-                    booking?.vehicle?.vehicleModel?.modelName ||
-                    "Đang cập nhật"}
-                </Text>
-              </View>
-            </View>
-            <AntDesign name="arrow-right" size={18} color="#fff" />
-          </TouchableOpacity>
+              <AntDesign name="arrow-right" size={18} color="#fff" />
+            </TouchableOpacity>
 
             {/* Charging history CTA - navigate to booking charging list */}
             <TouchableOpacity
@@ -831,112 +852,118 @@ const getLastReceipt = () => {
         )}
 
         {/* Return Summary */}
-        {(booking?.bookingStatus === "Returned" || booking?.bookingStatus === "Completed") && summary && (
-        <View style={styles.section}>
-          <SectionHeader title="Tóm tắt trả xe" icon="profile" />
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryHeaderRow}>
-              <Text style={styles.summaryHeaderTitle}>Tính toán</Text>
-              <View style={styles.summaryPill}>
-                <Text style={styles.summaryPillText}>Biên bản bàn giao</Text>
+        {(booking?.bookingStatus === "Returned" ||
+          booking?.bookingStatus === "Completed") &&
+          summary && (
+            <View style={styles.section}>
+              <SectionHeader title="Tóm tắt trả xe" icon="profile" />
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryHeaderRow}>
+                  <Text style={styles.summaryHeaderTitle}>Tính toán</Text>
+                  <View style={styles.summaryPill}>
+                    <Text style={styles.summaryPillText}>
+                      Biên bản bàn giao
+                    </Text>
+                  </View>
+                </View>
+
+                {summary?.totalChargingFee !== 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryKey}>Phí sạc pin</Text>
+                    <Text style={styles.summaryVal}>
+                      {formatVnd(summary?.totalChargingFee || 0)}
+                    </Text>
+                  </View>
+                )}
+                {summary?.feesBreakdown?.damageDetails?.length > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryKey}>Phí hư hỏng</Text>
+                    <Text style={styles.summaryVal}>
+                      {formatVnd(
+                        summary?.feesBreakdown.damageDetails.reduce(
+                          (acc, detail) => acc + detail.amount,
+                          0
+                        ) || 0
+                      )}
+                    </Text>
+                  </View>
+                )}
+                {summary?.feesBreakdown?.cleaningFee !== 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryKey}>Phí vệ sinh</Text>
+                    <Text style={styles.summaryVal}>
+                      {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
+                    </Text>
+                  </View>
+                )}
+                {summary?.feesBreakdown?.crossBranchFee !== 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
+                    <Text style={styles.summaryVal}>
+                      {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
+                    </Text>
+                  </View>
+                )}
+                {summary?.feesBreakdown?.excessKmFee !== 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
+                    <Text style={styles.summaryVal}>
+                      {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
+                    </Text>
+                  </View>
+                )}
+                {summary?.feesBreakdown?.lateReturnFee !== 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryKey}>Trả muộn</Text>
+                    <Text style={styles.summaryVal}>
+                      {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.divider} />
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Tổng phụ phí</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.totalAmount || 0)}
+                  </Text>
+                </View>
+
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryKey}>Tiền cọc</Text>
+                  <Text style={styles.summaryVal}>
+                    {formatVnd(summary?.depositAmount || 0)}
+                  </Text>
+                </View>
+
+                <View style={styles.divider} />
+                <View style={[styles.summaryRow]}>
+                  <Text style={styles.summaryTotalLabel}>
+                    {summary?.refundAmount >= 0
+                      ? "Số tiền hoàn lại"
+                      : "Số tiền cần thanh toán thêm"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryTotalValue,
+                      {
+                        color:
+                          summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
+                      },
+                    ]}
+                  >
+                    {formatVnd(Math.abs(summary?.refundAmount || 0))}
+                  </Text>
+                </View>
+                {summary?.refundAmount < 0 && (
+                  <Text style={styles.paymentNote}>
+                    Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển
+                    khoản.
+                  </Text>
+                )}
               </View>
             </View>
-
-            {summary?.totalChargingFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí sạc pin</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.totalChargingFee || 0)}
-                </Text>
-              </View>
-            )}
-              {summary?.feesBreakdown?.damageDetails?.length > 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí hư hỏng</Text>
-                <Text style={styles.summaryVal}>
-                    {formatVnd(
-                      summary?.feesBreakdown.damageDetails.reduce(
-                        (acc, detail) => acc + detail.amount,
-                        0
-                      ) || 0
-                    )}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.cleaningFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí vệ sinh</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.cleaningFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.crossBranchFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí chuyển chi nhánh</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.crossBranchFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.excessKmFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Phí quá quãng đường</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.excessKmFee || 0)}
-                </Text>
-              </View>
-            )}
-            {summary?.feesBreakdown?.lateReturnFee !== 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryKey}>Trả muộn</Text>
-                <Text style={styles.summaryVal}>
-                  {formatVnd(summary?.feesBreakdown.lateReturnFee || 0)}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.divider} />
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Tổng phụ phí</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.totalAmount || 0)}
-              </Text>
-            </View>
-
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Tiền cọc</Text>
-              <Text style={styles.summaryVal}>
-                {formatVnd(summary?.depositAmount || 0)}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-            <View style={[styles.summaryRow]}>
-              <Text style={styles.summaryTotalLabel}>
-                {summary?.refundAmount >= 0
-                  ? "Số tiền hoàn lại"
-                  : "Số tiền cần thanh toán thêm"}
-              </Text>
-              <Text
-                style={[
-                  styles.summaryTotalValue,
-                  {
-                    color: summary?.refundAmount >= 0 ? "#22C55E" : "#F97316", // xanh: hoàn tiền, cam: cần trả thêm
-                  },
-                ]}
-              >
-                {formatVnd(Math.abs(summary?.refundAmount || 0))}
-              </Text>
-            </View>
-            {summary?.refundAmount < 0 && (
-              <Text style={styles.paymentNote}>
-                Số tiền này sẽ được thanh toán thêm qua ví hoặc chuyển khoản.
-              </Text>
-            )}
-          </View>
-        </View>
-        )}
+          )}
 
         {hasRentalReceipt && (
           <View style={styles.section}>
@@ -964,18 +991,18 @@ const getLastReceipt = () => {
               </TouchableOpacity>
               {(booking?.bookingStatus === "Completed" ||
                 booking?.bookingStatus === "Returned") &&
-                  getLastReceipt()?.returnVehicleImageFiles?.length > 0 && (
-                    // rentalReceipts?.[0]?.checkListReturnFile &&
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.returnReportBtn]}
-                      onPress={openReturnReceiptReport}
-                >
-                  <AntDesign name="file-text" size={18} color="#000" />
-                  <Text style={styles.returnReportBtnText}>
-                    Xem biên bản trả xe
-                  </Text>
-                </TouchableOpacity>
-                  )}
+                getLastReceipt()?.returnVehicleImageFiles?.length > 0 && (
+                  // rentalReceipts?.[0]?.checkListReturnFile &&
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.returnReportBtn]}
+                    onPress={openReturnReceiptReport}
+                  >
+                    <AntDesign name="file-text" size={18} color="#000" />
+                    <Text style={styles.returnReportBtnText}>
+                      Xem biên bản trả xe
+                    </Text>
+                  </TouchableOpacity>
+                )}
             </InfoCard>
           </View>
         )}
@@ -1088,7 +1115,8 @@ const getLastReceipt = () => {
         )}
         {booking?.bookingStatus === "Booked" &&
           hasRentalReceipt &&
-          !hasContract && (
+          !hasContract &&
+          user?.role === "STAFF" && (
             <View style={styles.contractCreateRow}>
               <TouchableOpacity
                 style={[
@@ -1109,7 +1137,7 @@ const getLastReceipt = () => {
               </TouchableOpacity>
             </View>
           )}
-        {booking?.bookingStatus === "Renting" && (
+        {booking?.bookingStatus === "Renting" && user?.role === "STAFF" && (
           <View style={styles.editRow}>
             <TouchableOpacity
               style={[styles.actionBtn, styles.gpsBtn]}
@@ -1858,7 +1886,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    marginTop: 20,
   },
   modalBack: {
     padding: 6,

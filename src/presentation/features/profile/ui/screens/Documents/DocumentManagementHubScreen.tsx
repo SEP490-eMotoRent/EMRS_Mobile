@@ -4,7 +4,6 @@ import React, { useCallback } from 'react';
 import {
     ActivityIndicator,
     RefreshControl,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     TouchableOpacity,
@@ -16,6 +15,7 @@ import { useRenterProfile } from '../../../hooks/profile/useRenterProfile';
 import { Button } from '../../atoms/Button';
 import { Icon } from '../../atoms/Icons/Icons';
 import { Text } from '../../atoms/Text';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type DocumentManagementHubNavigationProp = StackNavigationProp<
     ProfileStackParamList,

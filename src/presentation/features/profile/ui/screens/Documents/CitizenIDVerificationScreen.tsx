@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { DocumentResponse } from '../../../../../../data/models/account/renter/RenterResponse';
 import { useCreateDocument } from '../../../hooks/documents/useCreateDocument';
 import { useDeleteDocument } from '../../../hooks/documents/useDeleteDocument';
@@ -12,6 +12,7 @@ import { Icon } from '../../atoms/Icons/Icons';
 import { Text } from '../../atoms/Text';
 import { DocumentSection } from '../../organisms/ProfileOrganism/DocumentSection';
 import { DocumentDatePicker } from '../../molecules/Documents/DocumentDatePicker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Helper: Normalize URI to string
 const normalizeUri = (uri: string | string[] | undefined): string | undefined => {

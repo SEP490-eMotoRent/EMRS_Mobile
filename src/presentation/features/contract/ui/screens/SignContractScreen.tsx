@@ -26,6 +26,7 @@ import { SignContractUseCase } from "../../../../../domain/usecases/contract/Sig
 import Toast from "react-native-toast-message";
 import { useAppSelector } from "../../../authentication/store/hooks";
 import { RootState } from "../../../authentication/store";
+import Pdf from "react-native-pdf";
 
 type SignContractScreenRouteProp = RouteProp<
   TripStackParamList,
@@ -157,62 +158,24 @@ export const SignContractScreen: React.FC = () => {
       setSubmitting(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.container}>
+      <ScreenHeader
+        title="Ký hợp đồng kỹ thuật số"
+        subtitle={`Người ký: ${fullName}`}
+        onBack={() => navigation.goBack()}
+      />
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <ScreenHeader
-          title="Ký hợp đồng kỹ thuật số"
-          subtitle={`Người ký: ${fullName}`}
-          onBack={() => navigation.goBack()}
-        />
-
-        {/* Contract Card */}
         <View style={styles.card}>
-          {/* <View style={styles.cardHeaderRow}>
-            <View style={styles.previewRow}>
-              {booking?.vehicle?.fileUrl?.map((url, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: url }}
-                  style={styles.preview}
-                  resizeMode="cover"
-                />
-              ))}
-            </View>
-          </View>
-
-          <Text style={styles.vehicleName}>
-            {booking?.vehicleModel?.modelName || "VinFast Evo200"}
-          </Text>
-          <Text style={styles.dates}>
-            Sep 01 - Sep 07, 2025{"\n"}7 days 4 hours
-          </Text>
-
-          <View style={styles.rowBetween}>
-            <Text style={styles.metaGrey}>Pickup Location</Text>
-            <Text style={styles.metaVal}>District 2, eMotoRent Branch</Text>
-          </View>
-          <View style={styles.rowBetween}>
-            <Text style={styles.metaGrey}>Total Amount</Text>
-            <Text style={styles.metaAmount}>2,670,000đ</Text>
-          </View>
-          <View style={styles.rowBetween}>
-            <Text style={styles.metaGrey}>Security Deposit</Text>
-            <Text style={styles.metaVal}>2,000,000đ (refundable)</Text>
-          </View> */}
-
-          {/* Contract PDF */}
           {contract?.contractPdfUrl ? (
             <View style={styles.webviewWrap}>
-              <WebView
-                source={{ uri: contract.contractPdfUrl }}
-                originWhitelist={["*"]}
+              <Pdf
+                source={{ uri: contract.contractPdfUrl, cache: true }}
                 style={styles.webview}
-                automaticallyAdjustContentInsets
-                javaScriptEnabled
-                domStorageEnabled
+                enablePaging={false}
+                horizontal={false}
+                enableAnnotationRendering
+                onError={(error) => console.log(error)}
               />
             </View>
           ) : null}

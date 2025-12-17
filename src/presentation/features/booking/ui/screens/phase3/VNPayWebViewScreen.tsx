@@ -8,6 +8,7 @@ import { container } from '../../../../../../core/di/ServiceContainer';
 import { BookingStackParamList } from '../../../../../shared/navigation/StackParameters/types';
 import { useBookingStatusPolling } from '../../../hooks/useBookingStatusPolling';
 import { PageHeader } from '../../molecules/PageHeader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RoutePropType = any;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'VNPayWebView'>;
@@ -351,7 +352,7 @@ export const VNPayWebViewScreen: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <PageHeader title="Thanh toán VNPay" onBack={handleBack} />
 
             {timeLeft > 0 && (
@@ -398,7 +399,7 @@ export const VNPayWebViewScreen: React.FC = () => {
                     Sau khi thanh toán, ứng dụng sẽ tự động quay lại
                 </Text>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
