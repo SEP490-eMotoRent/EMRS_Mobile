@@ -9,7 +9,7 @@ export interface UpdateReturnReceiptUseCaseInput {
     endOdometerKm: number;
     endBatteryPercentage: number;
     notes: string;
-    returnImageUrls: string[];
+    returnImages: string[];
     checkListImage: string;
 }
 
