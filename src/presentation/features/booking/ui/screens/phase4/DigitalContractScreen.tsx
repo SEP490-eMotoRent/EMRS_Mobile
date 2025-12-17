@@ -27,6 +27,7 @@ import { ContractGenerationProgress } from "../../organisms/contract/ContractGen
 import { NextStepsCard } from "../../organisms/NextStepsCard";
 import { PaymentSuccessHeader } from "../../organisms/payment/PaymentSuccessHeader";
 import { useRenterProfile } from "../../../../profile/hooks/profile/useRenterProfile";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type RoutePropType = RouteProp<BookingStackParamList, "DigitalContract">;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, "DigitalContract">;
@@ -133,7 +134,7 @@ export const DigitalContractScreen: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.progressContainer}>
                 <ProgressIndicator currentStep={4} totalSteps={4} />
             </View>
@@ -344,7 +345,7 @@ export const DigitalContractScreen: React.FC = () => {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </SafeAreaView>
     );
 };
 

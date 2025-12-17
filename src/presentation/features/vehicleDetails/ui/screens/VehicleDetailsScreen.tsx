@@ -108,7 +108,6 @@ export const VehicleDetailsScreen: React.FC = () => {
       ? [data.imageUrl] 
       : ['https://via.placeholder.com/400x300?text=No+Image'];
 
-  console.log('🖼️ Vehicle images:', images);
 
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
   const securityDeposit = data.depositAmount > 0 ? data.depositAmount : 2000000;
@@ -150,7 +149,9 @@ export const VehicleDetailsScreen: React.FC = () => {
   };
 
   const handleGoToDocuments = () => {
-    navigation.navigate('DocumentManagement');
+    navigation.navigate('ProfileTab', {
+      screen: 'DocumentManagement',
+    });
   };
 
   return (
@@ -357,6 +358,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+    paddingHorizontal: 16,
   },
   scrollView: {
     flex: 1,

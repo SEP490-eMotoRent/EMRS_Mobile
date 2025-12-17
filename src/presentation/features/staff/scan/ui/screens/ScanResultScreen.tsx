@@ -103,7 +103,7 @@ export const ScanResultScreen: React.FC = () => {
             {loaded && (
               <>
                 <Text style={styles.verificationStatus}>
-                  Danh tính đã được xác minh - 98% khớp
+                  Danh tính đã được xác minh
                 </Text>
                 <Text style={styles.verificationDescription}>
                   Danh tính khách hàng đã được xác nhận
@@ -112,24 +112,6 @@ export const ScanResultScreen: React.FC = () => {
             )}
           </View>
         </View>
-
-        {/* Match Confidence */}
-        {/* <View style={styles.confidenceCard}>
-          <View style={styles.confidenceSection}>
-            <View style={styles.confidenceImages}>
-              <View style={styles.confidenceImage}>
-                <Image source={{ uri: renter.faceScanUrl }} style={styles.confidenceImage} />
-              </View>
-              <View style={styles.confidenceImage}>
-                <Image source={{ uri: renter.faceScanUrl }} style={styles.confidenceImage} />
-              </View>
-            </View>
-            <View>
-              <Text style={styles.confidenceLabel}>Match Confidence</Text>
-              <Text style={styles.confidenceValue}>98%</Text>
-            </View>
-          </View>
-        </View> */}
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
