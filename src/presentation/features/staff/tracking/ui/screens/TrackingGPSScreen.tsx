@@ -17,6 +17,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { TrackingVehicleUseCase } from "../../../../../../domain/usecases/vehicle/TrackingVehicleUseCase";
 import sl from "../../../../../../core/di/InjectionContainer";
 import { VehicleTrackingResponse } from "../../../../../../data/models/vehicle/VehicleTrackingResponse";
+import Toast from "react-native-toast-message";
 type TrackingGPSRouteProp = RouteProp<StaffStackParamList, "TrackingGPS">;
 
 export const TrackingGPSScreen: React.FC = () => {
@@ -105,7 +106,12 @@ export const TrackingGPSScreen: React.FC = () => {
     });
 
     client.on("error", (err) => {
-      setMqttError(err.message);
+      Toast.show({
+        text1: "Lỗi",
+        text2: " Vehicle phải có DeviceId hoặc IMEI",
+        type: "error",
+      });
+      setMqttError("Xe này hiện chưa hỗ trợ tracking GPS");
     });
 
     client.on("message", (_, payload) => {
