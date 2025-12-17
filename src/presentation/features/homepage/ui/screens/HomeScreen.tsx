@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchBar } from '../../../../common/components/atoms/inputs/SearchBar';
 import { BookingModal } from '../../../../common/components/organisms/bookingSearchBar/BookingModal';
@@ -23,8 +23,8 @@ type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 export const HomeScreen: React.FC = () => {
     const navigation = useNavigation<HomeScreenNavigationProp>();
     const [modalVisible, setModalVisible] = useState(false);
-    // NEW: State to store pre-filled address
     const [prefilledAddress, setPrefilledAddress] = useState<string | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
 
     // Use paginated hook for real vehicle data
     const {
@@ -32,6 +32,7 @@ export const HomeScreen: React.FC = () => {
         loading,
         error,
         loadInitial,
+        refresh,
     } = useVehicleModelsPaginated();
 
     // Load initial data on mount
@@ -60,6 +61,13 @@ export const HomeScreen: React.FC = () => {
         return shuffled.slice(0, 5);
     }, [items, defaultDateRange]);
 
+    // Handle pull-to-refresh
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await refresh();
+        setRefreshing(false);
+    };
+
     const handleViewAllBikes = () => {
         navigation.navigate('ListView', {
             location: 'Ho Chi Minh City, Vietnam',
@@ -68,25 +76,25 @@ export const HomeScreen: React.FC = () => {
         });
     };
 
-    // ✅ NEW: Handle bike card press - navigate to VehicleDetails
+    // Handle bike card press - navigate to VehicleDetails
     const handleBikePress = (bike: Bike) => {
         navigation.navigate('Browse', {
             screen: 'VehicleDetails',
             params: {
-            vehicleId: bike.id,
-            dateRange: defaultDateRange,
-            location: 'Ho Chi Minh City, Vietnam',
+                vehicleId: bike.id,
+                dateRange: defaultDateRange,
+                location: 'Ho Chi Minh City, Vietnam',
             }
         });
     };
 
-    // NEW: Handle city selection
+    // Handle city selection
     const handleCitySelect = (cityAddress: string) => {
         setPrefilledAddress(cityAddress);
         setModalVisible(true);
     };
 
-    // NEW: Handle modal close - reset pre-filled address
+    // Handle modal close - reset pre-filled address
     const handleModalClose = () => {
         setModalVisible(false);
         setPrefilledAddress(null);
@@ -99,11 +107,21 @@ export const HomeScreen: React.FC = () => {
                 <SearchBar onPress={() => setModalVisible(true)} />
             </View>
 
-            {/* Scrollable Content */}
+            {/* Scrollable Content with Pull-to-Refresh */}
             <ScrollView
                 style={styles.content}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#A78BFA" // Purple color for iOS spinner
+                        colors={['#A78BFA']} // Purple color for Android spinner
+                        title="Đang làm mới..." // iOS pull-to-refresh text
+                        titleColor="#9CA3AF" // Gray color for title
+                    />
+                }
             >
                 <HeroSection />
                 {/* <CategoryCardsSection />
@@ -113,15 +131,15 @@ export const HomeScreen: React.FC = () => {
                     loading={loading}
                     error={error}
                     onViewAll={handleViewAllBikes}
-                    onBikePress={handleBikePress} // NEW: Pass bike press handler
+                    onBikePress={handleBikePress}
+                    onRetry={onRefresh} // Pass retry handler to section
                 />
-                {/* UPDATED: Pass city select handler */}
                 <PopularCitiesSection onCityPress={handleCitySelect} />
                 <AdvantagesSection />
                 <ReviewsSection />
             </ScrollView>
 
-            {/* UPDATED: Pass initial address and custom close handler */}
+            {/* Booking Modal */}
             <BookingModal
                 visible={modalVisible}
                 onClose={handleModalClose}

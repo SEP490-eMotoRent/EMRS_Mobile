@@ -23,6 +23,43 @@ interface SearchParams {
 }
 
 const PAGE_SIZE = 10; // Number of items per page
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second base delay
+
+/**
+ * Helper function to check if error is transient (network/timeout/server error)
+ */
+const isTransientError = (err: any): boolean => {
+    return (
+        err instanceof TypeError || // Network errors
+        err?.message?.toLowerCase().includes('timeout') ||
+        err?.message?.toLowerCase().includes('network') ||
+        err?.message?.toLowerCase().includes('transient') ||
+        err?.response?.status >= 500 // Server errors
+    );
+};
+
+/**
+ * Helper function to retry async operations with exponential backoff
+ */
+const retryWithBackoff = async <T,>(
+    operation: () => Promise<T>,
+    operationName: string,
+    retryCount = 0
+): Promise<T> => {
+    try {
+        return await operation();
+    } catch (err) {
+        if (isTransientError(err) && retryCount < MAX_RETRIES) {
+            const delay = RETRY_DELAY * Math.pow(2, retryCount);
+            console.log(`🔄 [RETRY] ${operationName} - Thử lại lần ${retryCount + 1}/${MAX_RETRIES} sau ${delay}ms`);
+            
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return retryWithBackoff(operation, operationName, retryCount + 1);
+        }
+        throw err; // Re-throw if not transient or max retries exceeded
+    }
+};
 
 export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
     const [items, setItems] = useState<VehicleModelSearchItem[]>([]);
@@ -38,7 +75,7 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
     const hasMore = currentPage < totalPages;
 
     /**
-     * Load initial page (page 1)
+     * Load initial page (page 1) with retry logic
      */
     const loadInitial = useCallback(async (params: SearchParams = {}) => {
         setLoading(true);
@@ -48,13 +85,18 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
         try {
             console.log("🔄 [PAGINATED HOOK] Loading initial page...");
             
-            const dataSource = container.vehicle.modelRepository;
-            const response = await dataSource.searchPaginated(
-                1, // First page
-                PAGE_SIZE,
-                params.startTime,
-                params.endTime,
-                params.branchId
+            const response = await retryWithBackoff(
+                async () => {
+                    const dataSource = container.vehicle.modelRepository;
+                    return await dataSource.searchPaginated(
+                        1, // First page
+                        PAGE_SIZE,
+                        params.startTime,
+                        params.endTime,
+                        params.branchId
+                    );
+                },
+                'Load Initial'
             );
 
             setItems(response.items);
@@ -64,7 +106,7 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
 
             console.log(`✅ [PAGINATED HOOK] Loaded ${response.items.length} items (Page 1/${response.totalPages})`);
         } catch (err: any) {
-            const errorMessage = err.message || 'Failed to load vehicles';
+            const errorMessage = err.message || 'Không thể tải dữ liệu xe';
             setError(errorMessage);
             console.error('❌ [PAGINATED HOOK] Error loading initial:', err);
         } finally {
@@ -73,7 +115,7 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
     }, []);
 
     /**
-     * Load next page and append to existing items
+     * Load next page and append to existing items with retry logic
      */
     const loadMore = useCallback(async () => {
         if (!hasMore || loadingMore || loading) {
@@ -88,13 +130,18 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
             const nextPage = currentPage + 1;
             console.log(`🔄 [PAGINATED HOOK] Loading page ${nextPage}...`);
             
-            const dataSource = container.vehicle.modelRepository;
-            const response = await dataSource.searchPaginated(
-                nextPage,
-                PAGE_SIZE,
-                searchParams.startTime,
-                searchParams.endTime,
-                searchParams.branchId
+            const response = await retryWithBackoff(
+                async () => {
+                    const dataSource = container.vehicle.modelRepository;
+                    return await dataSource.searchPaginated(
+                        nextPage,
+                        PAGE_SIZE,
+                        searchParams.startTime,
+                        searchParams.endTime,
+                        searchParams.branchId
+                    );
+                },
+                `Load More (Page ${nextPage})`
             );
 
             // ✅ Append new items to existing list
@@ -105,7 +152,7 @@ export function useVehicleModelsPaginated(): UseVehicleModelsPaginatedResult {
 
             console.log(`✅ [PAGINATED HOOK] Loaded ${response.items.length} more items (Page ${nextPage}/${response.totalPages})`);
         } catch (err: any) {
-            const errorMessage = err.message || 'Failed to load more vehicles';
+            const errorMessage = err.message || 'Không thể tải thêm xe';
             setError(errorMessage);
             console.error('❌ [PAGINATED HOOK] Error loading more:', err);
         } finally {
