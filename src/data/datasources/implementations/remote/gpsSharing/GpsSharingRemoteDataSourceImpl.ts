@@ -83,7 +83,7 @@ export class GpsSharingRemoteDataSourceImpl
 
   async cancel(sessionId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await this.axiosClient.put<ApiResponse<any>>(
+      const response = await this.axiosClient.delete<ApiResponse<any>>(
         ApiEndpoints.gpsSharing.cancel(sessionId)
       );
       return response.data;

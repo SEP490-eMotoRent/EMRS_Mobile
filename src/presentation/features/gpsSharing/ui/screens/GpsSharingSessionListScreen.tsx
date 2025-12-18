@@ -473,23 +473,25 @@ export const GpsSharingSessionListScreen: React.FC = () => {
           )}
 
           {/* Cancel Button */}
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => handleCancelSession(item.sessionId)}
-            disabled={cancelingSessionId === item.sessionId}
-            activeOpacity={0.8}
-          >
-            <View style={styles.cancelButtonContent}>
-              {cancelingSessionId === item.sessionId ? (
-                <ActivityIndicator size="small" color="#FF6B6B" />
-              ) : (
-                <>
-                  <AntDesign name="close-circle" size={16} color="#FF6B6B" />
-                  <Text style={styles.cancelButtonText}>Hủy chia sẻ</Text>
-                </>
-              )}
-            </View>
-          </TouchableOpacity>
+          {isActive && (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => handleCancelSession(item.sessionId)}
+              disabled={cancelingSessionId === item.sessionId}
+              activeOpacity={0.8}
+            >
+              <View style={styles.cancelButtonContent}>
+                {cancelingSessionId === item.sessionId ? (
+                  <ActivityIndicator size="small" color="#FF6B6B" />
+                ) : (
+                  <>
+                    <AntDesign name="close-circle" size={16} color="#FF6B6B" />
+                    <Text style={styles.cancelButtonText}>Hủy chia sẻ</Text>
+                  </>
+                )}
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       </TouchableOpacity>
     );
