@@ -10,4 +10,5 @@ export interface GpsSharingRepository {
     getSession(sessionId: string): Promise<ApiResponse<SessionDetailResponse>>;
     getSessions(): Promise<ApiResponse<any[]>>;
     getSessionsByRenterId(renterId: string): Promise<ApiResponse<any[]>>;
+    cancel(sessionId: string): Promise<ApiResponse<any>>;
 }

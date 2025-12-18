@@ -80,4 +80,16 @@ export class GpsSharingRemoteDataSourceImpl
       };
     }
   }
+
+  async cancel(sessionId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await this.axiosClient.put<ApiResponse<any>>(
+        ApiEndpoints.gpsSharing.cancel(sessionId)
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error canceling session:", error);
+      throw error;
+    }
+  }
 }

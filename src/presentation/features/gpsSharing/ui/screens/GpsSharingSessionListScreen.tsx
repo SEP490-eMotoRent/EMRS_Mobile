@@ -22,6 +22,7 @@ import { ScreenHeader } from "../../../../common/components/organisms/ScreenHead
 import { colors } from "../../../../common/theme/colors";
 import Toast from "react-native-toast-message";
 import { GetSessionByRenterIdUseCase } from "../../../../../domain/usecases/gpsSharing/GetSessionByRenterIdUseCase";
+import { CancelGpsSharingSessionUseCase } from "../../../../../domain/usecases/gpsSharing/CancelGpsSharingSessionUseCase";
 import { Booking } from "../../../../../domain/entities/booking/Booking";
 
 export const GpsSharingSessionListScreen: React.FC = () => {
@@ -37,19 +38,24 @@ export const GpsSharingSessionListScreen: React.FC = () => {
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
+  const [cancelingSessionId, setCancelingSessionId] = useState<string | null>(
+    null
+  );
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const booking = await fetchCurrentBooking();
-        await fetchSessions(booking?.renterId);
-      } catch (error) {
-        console.error("Error initializing GPS sharing sessions:", error);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const init = async () => {
+        try {
+          const booking = await fetchCurrentBooking();
+          await fetchSessions(booking?.renterId);
+        } catch (error) {
+          console.error("Error initializing GPS sharing sessions:", error);
+        }
+      };
 
-    init();
-  }, []);
+      init();
+    }, [])
+  );
 
   const fetchCurrentBooking = async (): Promise<Booking | null> => {
     try {
@@ -147,8 +153,7 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       const getSessionByRenterIdUseCase = new GetSessionByRenterIdUseCase(
         sl.get("GpsSharingRepository")
       );
-      const response =
-        await getSessionByRenterIdUseCase.execute(renterId);
+      const response = await getSessionByRenterIdUseCase.execute(renterId);
 
       if (response.success && response.data) {
         setSessions(response.data);
@@ -255,6 +260,60 @@ export const GpsSharingSessionListScreen: React.FC = () => {
         guestRenterName: item.guestRenterName,
       });
     }
+  };
+
+  const handleCancelSession = async (sessionId: string) => {
+    Alert.alert(
+      "Hủy chia sẻ GPS",
+      "Bạn có chắc chắn muốn hủy session chia sẻ GPS này?",
+      [
+        {
+          text: "Không",
+          style: "cancel",
+        },
+        {
+          text: "Hủy session",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setCancelingSessionId(sessionId);
+              const cancelUseCase = new CancelGpsSharingSessionUseCase(
+                sl.get("GpsSharingRepository")
+              );
+              const response = await cancelUseCase.execute(sessionId);
+
+              if (response.success) {
+                Toast.show({
+                  type: "success",
+                  text1: "Thành công",
+                  text2: "Đã hủy session chia sẻ GPS",
+                });
+                // Refresh sessions list
+                const booking = await fetchCurrentBooking();
+                await fetchSessions(booking?.renterId);
+              } else {
+                Toast.show({
+                  type: "error",
+                  text1: "Lỗi",
+                  text2: response.message || "Không thể hủy session",
+                });
+              }
+            } catch (error: any) {
+              console.error("Error canceling session:", error);
+              Toast.show({
+                type: "error",
+                text1: "Lỗi",
+                text2:
+                  error.response?.data?.message ||
+                  "Đã xảy ra lỗi khi hủy session",
+              });
+            } finally {
+              setCancelingSessionId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderSessionItem = ({ item }: { item: any }) => {
@@ -412,6 +471,25 @@ export const GpsSharingSessionListScreen: React.FC = () => {
               </Text>
             </View>
           )}
+
+          {/* Cancel Button */}
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => handleCancelSession(item.sessionId)}
+            disabled={cancelingSessionId === item.sessionId}
+            activeOpacity={0.8}
+          >
+            <View style={styles.cancelButtonContent}>
+              {cancelingSessionId === item.sessionId ? (
+                <ActivityIndicator size="small" color="#FF6B6B" />
+              ) : (
+                <>
+                  <AntDesign name="close-circle" size={16} color="#FF6B6B" />
+                  <Text style={styles.cancelButtonText}>Hủy chia sẻ</Text>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     );
@@ -671,6 +749,28 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#81C784",
     fontWeight: "600",
+  },
+  cancelButton: {
+    marginTop: 12,
+    borderRadius: 14,
+    overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,107,107,0.3)",
+    backgroundColor: "rgba(255,107,107,0.1)",
+  },
+  cancelButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FF6B6B",
+    letterSpacing: 0.3,
   },
   cardHeaderGradient: {
     backgroundColor: "rgba(125,179,255,0.05)",

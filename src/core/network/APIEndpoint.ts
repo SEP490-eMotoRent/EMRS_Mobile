@@ -190,6 +190,7 @@ export const ApiEndpoints = {
     getSession: (sessionId: string) => `/GPSSharing/session/${sessionId}`,
     getSessions: "/GPSSharing/sessions",
     getSessionsByRenterId: (renterId: string) => `/GPSSharing/sessions/renter/${renterId}`,
+    cancel: (sessionId: string) => `/GPSSharing/session/${sessionId}/cancel`,
   },
 
   // Additional Fees endpoints
