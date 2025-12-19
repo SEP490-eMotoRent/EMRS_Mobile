@@ -66,8 +66,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
     const safeBalance = walletBalance ?? 0;
 
-    const {
-        vehicleId,
+    const { 
+        vehicleId, 
         vehicleName,
         vehicleImageUrl,
         branchId,
@@ -79,6 +79,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
         endDateDisplay,
         duration,
         rentalDays,
+        rentalHours,
         insurancePlan,
         insurancePlanId,
         rentalFeeAmount,
@@ -415,17 +416,18 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     averagePricePerDay={averageRentalPrice}
                     baseRentalFee={baseRentalFee}
                     rentalDays={rentalDays}
+                    rentalHours={rentalHours} // ← USE IT HERE
                     configDiscount={discountPercentage > 0 && durationType !== "daily" ? {
                         percentage: discountPercentage,
                         amount: discountAmount,
                         type: durationType as "monthly" | "yearly",
                         appliesTo: "all",
                     } : undefined}
-                    membershipDiscount={membershipDiscountPercentage > 0 ? {
+                    membershipDiscount={{
                         percentage: membershipDiscountPercentage,
                         amount: membershipDiscountAmount,
                         tier: membershipTier,
-                    } : undefined}
+                    }}
                     holidaySurcharge={holidaySurcharge > 0 ? {
                         amount: holidaySurcharge,
                         dayCount: holidayDayCount,

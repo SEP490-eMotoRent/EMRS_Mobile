@@ -73,8 +73,11 @@ export const useRentalPricing = (
     totalHours: number,
     vehicleCategory: VehicleCategory
 ): RentalPricingResult => {
-    // Calculate equivalent days for discount tier determination
+    // Calculate equivalent days for discount tier determination (whole days only)
     const equivalentDays = Math.floor(totalHours / 24);
+
+    // Calculate exact days including hours for accurate average price (e.g., 7.5 days)
+    const totalDaysExact = totalHours / 24;
 
     // Fetch configuration discount based on total days
     const {
@@ -134,6 +137,7 @@ export const useRentalPricing = (
         console.log("💰 [useRentalPricing] Pricing breakdown:", {
             totalHours,
             equivalentDays,
+            totalDaysExact,
             durationType,
             configDiscount: `${discountPercentage}%`,
             membershipDiscount: `${membershipDiscountPercentage}%`,
@@ -164,9 +168,10 @@ export const useRentalPricing = (
         durationType,
     ]);
 
-    // Calculate average price per day for display
-    const averageRentalPrice = equivalentDays > 0
-        ? Math.round(pricing.totalRentalFee / equivalentDays)
+    // Calculate average price per day for display (using exact days with hours)
+    // Example: 7 days 12 hours = 7.5 days → 750,000đ / 7.5 = 100,000đ/ngày
+    const averageRentalPrice = totalDaysExact > 0
+        ? Math.round(pricing.totalRentalFee / totalDaysExact)
         : dailyRate;
 
     return {
