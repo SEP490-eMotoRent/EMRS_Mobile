@@ -103,6 +103,7 @@ export type BookingStackParamList = {
     
     duration: string;
     rentalDays: number;
+    rentalHours: number; // ← ADD THIS
     
     // Numbers for calculations
     rentalFeeAmount: number;
@@ -127,9 +128,10 @@ export type BookingStackParamList = {
       name: string;
       count: number;
       surchargePercentage: number;
-      baseAfterDiscount: number;      // NEW
-      surchargeAmount: number;         // NEW
+      baseAfterDiscount: number;
+      surchargeAmount: number;
       totalPricePerDay: number;
+      date?: Date; // ← ALSO ADD THIS IF NOT THERE
     }>;
   };
 
@@ -151,6 +153,7 @@ export type BookingStackParamList = {
     
     duration: string;
     rentalDays: number;
+    rentalHours: number;
     insurancePlan: string;
     insurancePlanId: string;
     
@@ -185,9 +188,10 @@ export type BookingStackParamList = {
       name: string;
       count: number;
       surchargePercentage: number;
-      baseAfterDiscount: number;      // NEW
-      surchargeAmount: number;         // NEW
+      baseAfterDiscount: number;
+      surchargeAmount: number;
       totalPricePerDay: number;
+      date?: Date;
     }>;
   };
   

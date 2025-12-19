@@ -53,6 +53,7 @@ export const InsurancePlansScreen: React.FC = () => {
         endDateDisplay,
         duration, 
         rentalDays,
+        rentalHours, // ← NOW RECEIVED FROM ROUTE
         rentalFeeAmount,
         baseRentalFee,
         rentingRate,
@@ -101,7 +102,6 @@ export const InsurancePlansScreen: React.FC = () => {
     const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
 
     const hasDiscount = discountPercentage > 0;
-    const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
     const handleContinue = () => {
         navigation.navigate('PaymentConfirmation', {
@@ -117,6 +117,7 @@ export const InsurancePlansScreen: React.FC = () => {
             endDateDisplay,
             duration,
             rentalDays,
+            rentalHours, // ← PASS IT FORWARD
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
             rentalFeeAmount: rentalFeeAmount,
@@ -217,17 +218,18 @@ export const InsurancePlansScreen: React.FC = () => {
                     averagePricePerDay={averageRentalPrice}
                     baseRentalFee={baseRentalFee}
                     rentalDays={rentalDays}
+                    rentalHours={rentalHours} // ← USE IT HERE
                     configDiscount={hasDiscount && durationType !== "daily" ? {
                         percentage: discountPercentage,
                         amount: discountAmount,
                         type: durationType as "monthly" | "yearly",
                         appliesTo: "all",
                     } : undefined}
-                    membershipDiscount={hasMembershipDiscount ? {
+                    membershipDiscount={{
                         percentage: membershipDiscountPercentage,
                         amount: membershipDiscountAmount,
                         tier: membershipTier,
-                    } : undefined}
+                    }}
                     holidaySurcharge={holidaySurcharge > 0 ? {
                         amount: holidaySurcharge,
                         dayCount: holidayDayCount,

@@ -103,7 +103,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const total = useMemo(() => totalRentalFee + securityDeposit, [totalRentalFee, securityDeposit]);
     const hasDiscount = discountPercentage > 0;
-    const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
     const displayDays = Math.floor(totalHours / 24);
     const displayHours = Math.floor(totalHours % 24);
@@ -115,6 +114,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         category,
         totalHours,
         displayDays,
+        displayHours,
         durationType,
         rentingRate,
         discountPercentage: `${discountPercentage}%`,
@@ -157,6 +157,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             
             duration,
             rentalDays: displayDays,
+            rentalHours: displayHours, // ← ADDED THIS
             
             rentalFeeAmount: totalRentalFee,
             baseRentalFee,
@@ -181,7 +182,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 baseAfterDiscount: day.basePrice,
                 surchargeAmount: day.surchargeAmount,
                 totalPricePerDay: day.totalPrice,
-                date: day.date, // ← ADDED
+                date: day.date,
             })),
         });
     };
@@ -269,7 +270,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                             baseAfterDiscount: day.basePrice,
                             surchargeAmount: day.surchargeAmount,
                             totalPricePerDay: day.totalPrice,
-                            date: day.date, // ← ADDED
+                            date: day.date,
                         })),
                     } : undefined}
                     rentalSubtotal={totalRentalFee}
