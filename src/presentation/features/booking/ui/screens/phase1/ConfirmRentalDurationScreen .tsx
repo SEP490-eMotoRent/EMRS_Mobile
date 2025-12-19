@@ -181,6 +181,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 baseAfterDiscount: day.basePrice,
                 surchargeAmount: day.surchargeAmount,
                 totalPricePerDay: day.totalPrice,
+                date: day.date, // ← ADDED
             })),
         });
     };
@@ -268,6 +269,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                             baseAfterDiscount: day.basePrice,
                             surchargeAmount: day.surchargeAmount,
                             totalPricePerDay: day.totalPrice,
+                            date: day.date, // ← ADDED
                         })),
                     } : undefined}
                     rentalSubtotal={totalRentalFee}

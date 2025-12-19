@@ -113,11 +113,22 @@ export const EditProfileScreen = ({ navigation }: any) => {
     setAddress(renter.address || "");
     setDateOfBirth(renterResponse.dateOfBirth || "");
 
-    // Phone: remove +84 if exists
+    // ✅ Smart phone formatting for Vietnamese numbers
     let phone = renter.phone || "";
     if (phone.startsWith("+84")) phone = phone.substring(3);
     else if (phone.startsWith("84")) phone = phone.substring(2);
-    setPhoneNumber(phone.replace(/\D/g, ""));
+    
+    const cleanPhone = phone.replace(/\D/g, "");
+    
+    // Add leading 0 if:
+    // - Phone is exactly 9 digits AND doesn't already start with 0
+    // - This handles backend format (+84779...) → displays as 0779...
+    const displayPhone = 
+      cleanPhone.length === 9 && !cleanPhone.startsWith('0')
+        ? `0${cleanPhone}`
+        : cleanPhone;
+    
+    setPhoneNumber(displayPhone);
 
     // Avatar: use new object format
     const avatarUrl = renterResponse.avatar?.fileUrl;
@@ -225,6 +236,17 @@ export const EditProfileScreen = ({ navigation }: any) => {
   const handleDateOfBirthPress = () => setShowDatePicker(true);
   const handleDateOfBirthConfirm = (date: string) => setDateOfBirth(date);
 
+  // ✅ NEW: Phone number validation and formatting
+  const handlePhoneNumberChange = (text: string) => {
+    // Remove all non-digit characters
+    const digitsOnly = text.replace(/\D/g, '');
+    
+    // Limit to 10 digits (handles both 0779... and 779... formats)
+    const limited = digitsOnly.slice(0, 10);
+    
+    setPhoneNumber(limited);
+  };
+
   // Document upload functions (your existing ones — keep them as-is)
   const handleCitizenUpload = (method: "camera" | "gallery") => {
     /* your code */
@@ -251,11 +273,52 @@ export const EditProfileScreen = ({ navigation }: any) => {
     /* your code */
   };
 
-  // FINAL SAVE — FIXED TO WORK WITH CURRENT BACKEND
+  // ✅ UPDATED: Enhanced validation
+  const validateProfile = (): { valid: boolean; message?: string } => {
+    // Check full name
+    if (!fullName.trim()) {
+      return { valid: false, message: "Vui lòng nhập họ tên" };
+    }
+
+    // Check email
+    if (!email.trim()) {
+      return { valid: false, message: "Vui lòng nhập email" };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { valid: false, message: "Email không hợp lệ" };
+    }
+
+    // ✅ Check phone number (9-10 digits, flexible for both formats)
+    // Accepts: 0779123456 (10 digits) or 779123456 (9 digits without leading 0)
+    if (!phoneNumber || (phoneNumber.length !== 9 && phoneNumber.length !== 10)) {
+      return { 
+        valid: false, 
+        message: "Số điện thoại phải có 9-10 chữ số" 
+      };
+    }
+
+    // Check address
+    if (!address.trim()) {
+      return { valid: false, message: "Vui lòng nhập địa chỉ" };
+    }
+
+    // Check date of birth
+    if (!dateOfBirth) {
+      return { valid: false, message: "Vui lòng chọn ngày sinh" };
+    }
+
+    return { valid: true };
+  };
+
+  // ✅ UPDATED: Save with validation
   const handleSave = async () => {
     try {
-      if (!email || !phoneNumber || !address) {
-        Alert.alert("Lỗi", "Email, số điện thoại và địa chỉ là bắt buộc");
+      // Validate before saving
+      const validation = validateProfile();
+      if (!validation.valid) {
+        Alert.alert("Lỗi", validation.message || "Thông tin không hợp lệ");
         return;
       }
 
@@ -359,7 +422,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
         onChangePhoto={pickImage}
         onFullNameChange={setFullName}
         onEmailChange={setEmail}
-        onPhoneNumberChange={setPhoneNumber}
+        onPhoneNumberChange={handlePhoneNumberChange}
         onDatePress={handleDateOfBirthPress}
         onAddressChange={setAddress}
         onCitizenIdChange={setCitizenIdNumber}
