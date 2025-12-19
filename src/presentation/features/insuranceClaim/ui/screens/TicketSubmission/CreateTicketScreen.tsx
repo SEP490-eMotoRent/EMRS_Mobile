@@ -16,47 +16,22 @@ import {
     View,
 } from "react-native";
 import { container } from "../../../../../../core/di/ServiceContainer";
-import { TicketTypeDisplay, TicketTypeEnum } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
+import { TicketTypeEnum } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
 import { BackButton } from "../../../../../common/components";
 import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { TripStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useCreateTicket } from "../../../hooks/Ticket/useCreateTicket";
+import { Icon } from "../../atoms";
+import { TicketTypeConfig, TICKET_TYPE_CONFIGS } from "../../atoms/icons/ticketTypeConfig";
 
 type RoutePropType = RouteProp<TripStackParamList, "CreateTicket">;
 type NavigationPropType = StackNavigationProp<TripStackParamList, "CreateTicket">;
 
-interface TicketTypeOption {
-    type: TicketTypeEnum;
-    label: string;
-    icon: string;
-    description: string;
-}
-
-const TICKET_TYPE_OPTIONS: TicketTypeOption[] = [
-    {
-        type: TicketTypeEnum.WeakBattery,
-        label: TicketTypeDisplay['WeakBattery'],
-        icon: "🔋",
-        description: "Pin yếu hoặc hết pin bất thường",
-    },
-    {
-        type: TicketTypeEnum.FlatTyre,
-        label: TicketTypeDisplay['FlatTyre'],
-        icon: "🛞",
-        description: "Lốp xe bị xẹp hoặc hư hỏng",
-    },
-    {
-        type: TicketTypeEnum.UsageGuidance,
-        label: TicketTypeDisplay['UsageGuidance'],
-        icon: "❓",
-        description: "Cần hướng dẫn sử dụng xe",
-    },
-    {
-        type: TicketTypeEnum.OtherTechnical,
-        label: TicketTypeDisplay['OtherTechnical'],
-        icon: "⚙️",
-        description: "Các vấn đề kỹ thuật khác",
-    },
+const TICKET_TYPE_OPTIONS: TicketTypeConfig[] = [
+    TICKET_TYPE_CONFIGS[TicketTypeEnum.WeakBattery],
+    TICKET_TYPE_CONFIGS[TicketTypeEnum.FlatTyre],
+    TICKET_TYPE_CONFIGS[TicketTypeEnum.UsageGuidance],
+    TICKET_TYPE_CONFIGS[TicketTypeEnum.OtherTechnical],
 ];
 
 export const CreateTicketScreen: React.FC = () => {
@@ -79,7 +54,6 @@ export const CreateTicketScreen: React.FC = () => {
 
     const handleSelectType = (type: TicketTypeEnum) => {
         setSelectedType(type);
-        // Auto-fill title based on type
         const option = TICKET_TYPE_OPTIONS.find((o) => o.type === type);
         if (option) {
             setTitle(option.label);
@@ -150,7 +124,6 @@ export const CreateTicketScreen: React.FC = () => {
             return;
         }
 
-        // Convert URIs to file objects for FormData
         const attachmentFiles = await Promise.all(
             attachments.map(async (uri, index) => {
                 return {
@@ -187,7 +160,6 @@ export const CreateTicketScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
             <View style={styles.header}>
                 <BackButton onPress={handleBack} label="Quay lại" />
                 <View style={styles.headerTextBlock}>
@@ -206,10 +178,9 @@ export const CreateTicketScreen: React.FC = () => {
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
-                    {/* Vehicle Info Card */}
                     <View style={styles.vehicleCard}>
                         <View style={styles.vehicleIcon}>
-                            <Text style={styles.vehicleIconText}>🏍</Text>
+                            <Icon name="motorcycle" size={24} color="#d4c5f9" />
                         </View>
                         <View style={styles.vehicleInfo}>
                             <Text style={styles.vehicleName}>{vehicleName}</Text>
@@ -219,7 +190,6 @@ export const CreateTicketScreen: React.FC = () => {
                         </View>
                     </View>
 
-                    {/* Ticket Type Selection */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Loại sự cố *</Text>
                         <View style={styles.typeGrid}>
@@ -229,15 +199,29 @@ export const CreateTicketScreen: React.FC = () => {
                                     style={[
                                         styles.typeCard,
                                         selectedType === option.type && styles.typeCardSelected,
+                                        selectedType === option.type && {
+                                            borderColor: option.color,
+                                        }
                                     ]}
                                     onPress={() => handleSelectType(option.type)}
                                     activeOpacity={0.7}
                                 >
-                                    <Text style={styles.typeIcon}>{option.icon}</Text>
+                                    <View style={[
+                                        styles.typeIconContainer,
+                                        { backgroundColor: `${option.color}20` }
+                                    ]}>
+                                        <Icon 
+                                            name={option.icon} 
+                                            size={24} 
+                                            color={option.color} 
+                                        />
+                                    </View>
                                     <Text
                                         style={[
                                             styles.typeLabel,
-                                            selectedType === option.type && styles.typeLabelSelected,
+                                            selectedType === option.type && {
+                                                color: option.color
+                                            }
                                         ]}
                                     >
                                         {option.label}
@@ -248,7 +232,6 @@ export const CreateTicketScreen: React.FC = () => {
                         </View>
                     </View>
 
-                    {/* Title Input */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Tiêu đề *</Text>
                         <TextInput
@@ -262,7 +245,6 @@ export const CreateTicketScreen: React.FC = () => {
                         <Text style={styles.charCount}>{title.length}/100</Text>
                     </View>
 
-                    {/* Description Input */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Mô tả chi tiết *</Text>
                         <TextInput
@@ -279,12 +261,10 @@ export const CreateTicketScreen: React.FC = () => {
                         <Text style={styles.charCount}>{description.length}/1000</Text>
                     </View>
 
-                    {/* Attachments */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Ảnh đính kèm (tùy chọn)</Text>
                         <Text style={styles.sectionHint}>Tối đa 5 ảnh</Text>
 
-                        {/* Attachment Preview */}
                         {attachments.length > 0 && (
                             <ScrollView
                                 horizontal
@@ -298,21 +278,20 @@ export const CreateTicketScreen: React.FC = () => {
                                             style={styles.removeButton}
                                             onPress={() => handleRemoveAttachment(index)}
                                         >
-                                            <Text style={styles.removeButtonText}>✕</Text>
+                                            <Icon name="close" size={12} color="#fff" />
                                         </TouchableOpacity>
                                     </View>
                                 ))}
                             </ScrollView>
                         )}
 
-                        {/* Add Photo Buttons */}
                         <View style={styles.photoButtons}>
                             <TouchableOpacity
                                 style={styles.photoButton}
                                 onPress={handleTakePhoto}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.photoButtonIcon}>📷</Text>
+                                <Icon name="camera" size={20} color="#d4c5f9" />
                                 <Text style={styles.photoButtonText}>Chụp ảnh</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -320,7 +299,7 @@ export const CreateTicketScreen: React.FC = () => {
                                 onPress={handlePickImage}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.photoButtonIcon}>🖼</Text>
+                                <Icon name="document" size={20} color="#d4c5f9" />
                                 <Text style={styles.photoButtonText}>Chọn từ thư viện</Text>
                             </TouchableOpacity>
                         </View>
@@ -330,7 +309,6 @@ export const CreateTicketScreen: React.FC = () => {
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            {/* Footer */}
             <View style={styles.footer}>
                 <PrimaryButton
                     title={loading ? "Đang gửi..." : "Gửi báo cáo"}
@@ -339,7 +317,6 @@ export const CreateTicketScreen: React.FC = () => {
                 />
             </View>
 
-            {/* Loading Overlay */}
             {loading && (
                 <View style={styles.loadingOverlay}>
                     <View style={styles.loadingBox}>
@@ -406,9 +383,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginRight: 12,
     },
-    vehicleIconText: {
-        fontSize: 24,
-    },
     vehicleInfo: {
         flex: 1,
     },
@@ -451,21 +425,21 @@ const styles = StyleSheet.create({
         borderColor: "#2a2a2a",
     },
     typeCardSelected: {
-        borderColor: "#d4c5f9",
         backgroundColor: "#1a1a2a",
     },
-    typeIcon: {
-        fontSize: 28,
-        marginBottom: 8,
+    typeIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 12,
     },
     typeLabel: {
         color: "#fff",
         fontSize: 14,
         fontWeight: "700",
         marginBottom: 4,
-    },
-    typeLabelSelected: {
-        color: "#d4c5f9",
     },
     typeDescription: {
         color: "#666",
@@ -514,11 +488,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    removeButtonText: {
-        color: "#fff",
-        fontSize: 12,
-        fontWeight: "700",
-    },
     photoButtons: {
         flexDirection: "row",
         gap: 12,
@@ -534,9 +503,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#2a2a2a",
         gap: 8,
-    },
-    photoButtonIcon: {
-        fontSize: 20,
     },
     photoButtonText: {
         color: "#fff",

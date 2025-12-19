@@ -10,11 +10,12 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { TicketStatusDisplay, TicketTypeDisplay } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
+import { TicketStatusDisplay } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
 import { BackButton } from "../../../../../common/components";
 import { TripStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useGetTicketDetail } from "../../../hooks/Ticket/useGetTicketDetail";
 import { container } from "../../../../../../core/di/ServiceContainer";
+import { Icon } from "../../atoms";
 
 type RoutePropType = RouteProp<TripStackParamList, "TicketDetail">;
 type NavigationPropType = StackNavigationProp<TripStackParamList, "TicketDetail">;
@@ -32,18 +33,18 @@ const getStatusColor = (status: string): string => {
     }
 };
 
-const getTicketTypeIcon = (ticketType: string): string => {
+const getTicketTypeConfig = (ticketType: string) => {
     switch (ticketType) {
         case "WeakBattery":
-            return "🔋";
+            return { icon: 'battery-low' as const, color: '#f59e0b', label: 'Yếu pin' };
         case "FlatTyre":
-            return "🛞";
+            return { icon: 'tire-flat' as const, color: '#ef4444', label: 'Xẹp lốp' };
         case "UsageGuidance":
-            return "❓";
+            return { icon: 'question-circle' as const, color: '#3b82f6', label: 'Hướng dẫn sử dụng' };
         case "OtherTechnical":
-            return "⚙️";
+            return { icon: 'tools' as const, color: '#8b5cf6', label: 'Kỹ thuật khác' };
         default:
-            return "🎫";
+            return { icon: 'ticket' as const, color: '#666', label: 'Khác' };
     }
 };
 
@@ -109,7 +110,7 @@ export const TicketDetailScreen: React.FC = () => {
                     <BackButton onPress={handleBack} label="Quay lại" />
                 </View>
                 <View style={styles.errorContainer}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <Icon name="warning" size={48} color="#ef4444" />
                     <Text style={styles.errorText}>{error || "Không tìm thấy ticket"}</Text>
                     <TouchableOpacity style={styles.retryButton} onPress={refetch}>
                         <Text style={styles.retryButtonText}>Thử lại</Text>
@@ -118,6 +119,8 @@ export const TicketDetailScreen: React.FC = () => {
             </View>
         );
     }
+
+    const typeConfig = getTicketTypeConfig(ticket.ticketType);
 
     return (
         <View style={styles.container}>
@@ -170,12 +173,17 @@ export const TicketDetailScreen: React.FC = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Loại sự cố</Text>
                     <View style={styles.typeCard}>
-                        <Text style={styles.typeIcon}>
-                            {getTicketTypeIcon(ticket.ticketType)}
-                        </Text>
-                        <Text style={styles.typeLabel}>
-                            {TicketTypeDisplay[ticket.ticketType as keyof typeof TicketTypeDisplay] || ticket.ticketType}
-                        </Text>
+                        <View style={[
+                            styles.typeIconContainer,
+                            { backgroundColor: `${typeConfig.color}20` }
+                        ]}>
+                            <Icon 
+                                name={typeConfig.icon} 
+                                size={28} 
+                                color={typeConfig.color} 
+                            />
+                        </View>
+                        <Text style={styles.typeLabel}>{typeConfig.label}</Text>
                     </View>
                 </View>
 
@@ -218,14 +226,20 @@ export const TicketDetailScreen: React.FC = () => {
                     <Text style={styles.sectionTitle}>Thông tin</Text>
                     <View style={styles.metadataCard}>
                         <View style={styles.metadataRow}>
-                            <Text style={styles.metadataLabel}>Mã ticket</Text>
+                            <View style={styles.metadataLabelContainer}>
+                                <Icon name="ticket" size={16} color="#666" />
+                                <Text style={styles.metadataLabel}>Mã ticket</Text>
+                            </View>
                             <Text style={styles.metadataValue}>
                                 #{ticket.id.slice(-8).toUpperCase()}
                             </Text>
                         </View>
                         <View style={styles.metadataDivider} />
                         <View style={styles.metadataRow}>
-                            <Text style={styles.metadataLabel}>Ngày tạo</Text>
+                            <View style={styles.metadataLabelContainer}>
+                                <Icon name="calendar" size={16} color="#666" />
+                                <Text style={styles.metadataLabel}>Ngày tạo</Text>
+                            </View>
                             <Text style={styles.metadataValue}>
                                 {formatDate(ticket.createdAt)}
                             </Text>
@@ -234,7 +248,10 @@ export const TicketDetailScreen: React.FC = () => {
                             <>
                                 <View style={styles.metadataDivider} />
                                 <View style={styles.metadataRow}>
-                                    <Text style={styles.metadataLabel}>Nhân viên xử lý</Text>
+                                    <View style={styles.metadataLabelContainer}>
+                                        <Icon name="checkmark" size={16} color="#666" />
+                                        <Text style={styles.metadataLabel}>Nhân viên xử lý</Text>
+                                    </View>
                                     <Text style={styles.metadataValue}>Đã được phân công</Text>
                                 </View>
                             </>
@@ -291,14 +308,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         padding: 24,
     },
-    errorIcon: {
-        fontSize: 48,
-        marginBottom: 16,
-    },
     errorText: {
         color: "#ef4444",
         fontSize: 16,
         textAlign: "center",
+        marginTop: 16,
         marginBottom: 16,
     },
     retryButton: {
@@ -364,8 +378,12 @@ const styles = StyleSheet.create({
         padding: 16,
         gap: 12,
     },
-    typeIcon: {
-        fontSize: 28,
+    typeIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
     },
     typeLabel: {
         color: "#fff",
@@ -412,6 +430,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingVertical: 8,
     },
+    metadataLabelContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
     metadataLabel: {
         color: "#666",
         fontSize: 14,
@@ -420,6 +443,9 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 14,
         fontWeight: "600",
+        textAlign: "right",
+        flex: 1,
+        marginLeft: 12,
     },
     metadataDivider: {
         height: 1,

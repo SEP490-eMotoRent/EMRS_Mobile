@@ -47,37 +47,25 @@ export const InsurancePlansScreen: React.FC = () => {
         branchName,
         pricePerDay,
         securityDeposit,
-        
-        // ISO strings for backend
         startDateISO,
         endDateISO,
-        
-        // Display strings for UI
         startDateDisplay,
         endDateDisplay,
-        
         duration, 
         rentalDays,
-        
-        // Numbers for calculations
         rentalFeeAmount,
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
-        
         vehicleCategory,
         holidaySurcharge,
         holidayDayCount,
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
-        
-        // Discount info for detailed breakdown
         discountPercentage,
         discountAmount,
         durationType,
-        
-        // NEW: Receive holidays array
         holidays,
     } = route.params;
     
@@ -123,31 +111,21 @@ export const InsurancePlansScreen: React.FC = () => {
             branchId,
             branchName,
             pricePerDay,
-            
-            // Pass ISO strings for backend
             startDateISO,
             endDateISO,
-            
-            // Pass display strings for UI
             startDateDisplay,
             endDateDisplay,
-            
             duration,
             rentalDays,
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
-            
-            // Pass numbers for calculations
             rentalFeeAmount: rentalFeeAmount,
             insuranceFeeAmount: insuranceFeeValue,
             securityDepositAmount: securityDeposit,
-            
-            // Keep formatted strings for display
             rentalFee: `${rentalFeeAmount.toLocaleString()}đ`,
             insuranceFee: insuranceFeeValue === 0 ? "MIỄN PHÍ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
             total: fullTotal,
-            
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
@@ -157,13 +135,9 @@ export const InsurancePlansScreen: React.FC = () => {
             membershipDiscountPercentage,
             membershipDiscountAmount,
             membershipTier,
-            
-            // Pass discount info
             discountPercentage,
             discountAmount,
             durationType,
-            
-            // NEW: Pass holidays array forward
             holidays,
         });
     };
@@ -238,50 +212,32 @@ export const InsurancePlansScreen: React.FC = () => {
                     />
                 ))}
 
-                {/* Full Detailed Breakdown with Holiday Details */}
                 <PricingBreakdown
-                    // Per-day pricing
                     originalPricePerDay={pricePerDay}
                     averagePricePerDay={averageRentalPrice}
-                    
-                    // Base rental
                     baseRentalFee={baseRentalFee}
                     rentalDays={rentalDays}
-                    
-                    // Discounts (only pass if monthly/yearly)
                     configDiscount={hasDiscount && durationType !== "daily" ? {
                         percentage: discountPercentage,
                         amount: discountAmount,
                         type: durationType as "monthly" | "yearly",
+                        appliesTo: "all",
                     } : undefined}
-                    
                     membershipDiscount={hasMembershipDiscount ? {
                         percentage: membershipDiscountPercentage,
                         amount: membershipDiscountAmount,
                         tier: membershipTier,
                     } : undefined}
-                    
-                    // Surcharges WITH holiday details
                     holidaySurcharge={holidaySurcharge > 0 ? {
                         amount: holidaySurcharge,
                         dayCount: holidayDayCount,
-                        holidays: holidays, // <-- NOW PASSING THE FULL ARRAY
+                        holidays: holidays,
                     } : undefined}
-                    
-                    // Rental subtotal
                     rentalSubtotal={rentalFeeAmount}
-                    
-                    // Insurance
                     insuranceFee={insuranceFeeValue}
                     insuranceName={selectedPlan?.title}
-                    
-                    // Deposit
                     securityDeposit={securityDeposit}
-                    
-                    // Total
                     total={fullTotalAmount}
-                    
-                    // Show detailed breakdown
                     showDetailedBreakdown={true}
                 />
             </ScrollView>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
@@ -38,7 +39,14 @@ export interface IconProps {
         | 'edit'
         | 'warning'
         | 'checkmark'
-        | 'send';
+        | 'send'
+        // Ticket icons
+        | 'battery-low'
+        | 'tire-flat'
+        | 'question-circle'
+        | 'tools'
+        | 'ticket'
+        | 'motorcycle';
     color?: string;
     size?: number;
 }
@@ -78,6 +86,14 @@ export const Icon: React.FC<IconProps> = ({ name, color = '#fff', size = 24 }) =
         'warning': { library: 'Ionicons', iconName: 'warning-outline' },
         'checkmark': { library: 'Ionicons', iconName: 'checkmark-circle' },
         'send': { library: 'Ionicons', iconName: 'send' },
+        
+        // Ticket icons
+        'battery-low': { library: 'FontAwesome5', iconName: 'battery-quarter' },
+        'tire-flat': { library: 'MaterialCommunityIcons', iconName: 'tire-alert' },
+        'question-circle': { library: 'FontAwesome', iconName: 'question-circle' },
+        'tools': { library: 'FontAwesome5', iconName: 'tools' },
+        'ticket': { library: 'FontAwesome', iconName: 'ticket' },
+        'motorcycle': { library: 'FontAwesome5', iconName: 'motorcycle' },
     };
 
     const iconConfig = iconMap[name];

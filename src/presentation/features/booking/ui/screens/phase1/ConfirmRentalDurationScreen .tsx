@@ -34,9 +34,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     } = route.params;
     const navigation = useNavigation<NavigationPropType>();
 
-    /**
-     * Convert 24-hour time to Vietnamese 12-hour format (SA/CH)
-     */
     const convertTo12HourFormat = (time24: string): string => {
         const [hourStr, minute] = time24.split(':');
         let hour = parseInt(hourStr);
@@ -54,9 +51,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const branchOpenTimeSACH = branchOpenTime ? convertTo12HourFormat(branchOpenTime) : "6:00 SA";
     const branchCloseTimeSACH = branchCloseTime ? convertTo12HourFormat(branchCloseTime) : "10:00 CH";
 
-    /**
-     * Parse initial date range from route params or use defaults
-     */
     const initialDateRangeISO = useMemo(() => {
         if (dateRange) {
             console.log('📅 Parsing Vietnamese dateRange:', dateRange);
@@ -66,9 +60,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         return DateHelper.getDefaultDateRangeForBooking();
     }, [dateRange]);
 
-    /**
-     * Use rental duration hook for state management and validation
-     */
     const {
         startDate,
         endDate,
@@ -86,9 +77,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const category = (vehicleCategory?.toUpperCase() || "ECONOMY") as VehicleCategory;
 
-    /**
-     * Use rental pricing hook for progressive tier hourly pricing
-     */
     const {
         rentingRate,
         discountPercentage,
@@ -117,7 +105,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const hasDiscount = discountPercentage > 0;
     const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
-    // Calculate display days for booking summary
     const displayDays = Math.floor(totalHours / 24);
     const displayHours = Math.floor(totalHours % 24);
     const rentalDurationText = displayHours > 0 
@@ -146,9 +133,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         navigation.goBack();
     };
 
-    /**
-     * Navigate to insurance plans with final validation
-     */
     const handleContinue = () => {
         if (!validateCurrentDuration()) {
             console.warn("Cannot continue with invalid duration");
@@ -165,18 +149,15 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             pricePerDay,
             securityDeposit,
             
-            // Pass ISO strings for backend
             startDateISO: startDateISO,
             endDateISO: endDateISO,
             
-            // Pass display strings for UI
             startDateDisplay: startDate,
             endDateDisplay: endDate,
             
             duration,
             rentalDays: displayDays,
             
-            // Pass numbers (not formatted strings)
             rentalFeeAmount: totalRentalFee,
             baseRentalFee,
             rentingRate,
@@ -189,26 +170,21 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             membershipDiscountAmount,
             membershipTier,
             
-            // Pass discount info for detailed breakdown
             discountPercentage: hasDiscount ? discountPercentage : 0,
             discountAmount: hasDiscount ? discountAmount : 0,
             durationType: durationType,
             
-            // NEW: Pass individual holiday days with breakdown data
             holidays: holidayDays.map(day => ({
                 name: day.holiday.holidayName,
                 count: 1,
                 surchargePercentage: Math.round((day.holiday.priceMultiplier - 1) * 100),
-                baseAfterDiscount: day.basePrice,        // The 126,000đ
-                surchargeAmount: day.surchargeAmount,    // The +63,000đ
-                totalPricePerDay: day.totalPrice,        // The 189,000đ
+                baseAfterDiscount: day.basePrice,
+                surchargeAmount: day.surchargeAmount,
+                totalPricePerDay: day.totalPrice,
             })),
         });
     };
 
-    /**
-     * UI Helper Functions
-     */
     const getCategoryLabel = (cat: VehicleCategory): string => {
         switch (cat) {
             case "ECONOMY": return "Phổ thông";
@@ -229,7 +205,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         }
     };
     
-    // Determine if continue button should be disabled
     const isContinueDisabled = loading || !isValid;
     
     return (
@@ -266,32 +241,23 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     </View>
                 )}
                 
-                {/* NEW: Unified PricingBreakdown with all banners merged inside */}
                 <PricingBreakdown
-                    // Per-day pricing
                     originalPricePerDay={pricePerDay}
                     averagePricePerDay={averageRentalPrice}
-                    
-                    // Base rental
                     baseRentalFee={baseRentalFee}
                     rentalDays={displayDays}
-                    
-                    // Discounts with full details
+                    rentalHours={displayHours}
                     configDiscount={hasDiscount && durationType !== "daily" ? {
                         percentage: discountPercentage,
                         amount: discountAmount,
                         type: durationType as "monthly" | "yearly",
-                        discountedDays: Math.floor(progressiveTierBreakdown.discountedHours / 24),
-                        regularDays: Math.ceil(progressiveTierBreakdown.regularHours / 24),
+                        appliesTo: "all",
                     } : undefined}
-                    
                     membershipDiscount={{
                         percentage: membershipDiscountPercentage,
                         amount: membershipDiscountAmount,
                         tier: membershipTier,
                     }}
-                    
-                    // Holiday surcharge with individual day breakdown
                     holidaySurcharge={hasHolidaySurcharge ? {
                         amount: holidaySurcharge,
                         dayCount: holidayDays.length,
@@ -304,19 +270,11 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                             totalPricePerDay: day.totalPrice,
                         })),
                     } : undefined}
-                    
-                    // Rental subtotal
                     rentalSubtotal={totalRentalFee}
-                    
-                    // Additional fees
                     insuranceFee={0}
                     insuranceName="Phí bảo hiểm (chưa chọn)"
                     securityDeposit={securityDeposit}
-                    
-                    // Final total
                     total={total}
-                    
-                    // Show full breakdown on this screen
                     showDetailedBreakdown={true}
                 />
             </ScrollView>

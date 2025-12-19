@@ -6,12 +6,12 @@ interface PricingBreakdownProps {
     averagePricePerDay?: number;
     baseRentalFee?: number;
     rentalDays?: number;
+    rentalHours?: number;
     configDiscount?: {
         percentage: number;
         amount: number;
         type: "monthly" | "yearly";
-        discountedDays?: number;
-        regularDays?: number;
+        appliesTo?: "all" | "partial";
     };
     membershipDiscount?: {
         percentage: number;
@@ -25,8 +25,8 @@ interface PricingBreakdownProps {
             name: string;
             count: number;
             surchargePercentage: number;
-            baseAfterDiscount: number;      // NEW
-            surchargeAmount: number;         // NEW
+            baseAfterDiscount: number;
+            surchargeAmount: number;
             totalPricePerDay: number;
         }>;
     };
@@ -43,6 +43,7 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
     averagePricePerDay,
     baseRentalFee,
     rentalDays,
+    rentalHours,
     configDiscount,
     membershipDiscount,
     holidaySurcharge,
@@ -83,9 +84,18 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
         }
     };
 
-    // Calculate effective price per day for config discount
     const getEffectivePricePerDay = (originalPrice: number, discountPercentage: number): number => {
         return originalPrice * (1 - discountPercentage / 100);
+    };
+
+    const formatRentalDuration = (): string => {
+        if (!rentalDays) return "";
+        
+        if (rentalHours && rentalHours > 0) {
+            return `${rentalDays} ngày ${rentalHours} giờ`;
+        }
+        
+        return `${rentalDays} ngày`;
     };
 
     const hasPriceDifference = originalPricePerDay && averagePricePerDay && 
@@ -95,7 +105,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
         <View style={styles.container}>
             <Text style={styles.title}>Chi tiết thanh toán</Text>
 
-            {/* Per-Day Pricing Section */}
             {showDetailedBreakdown && originalPricePerDay && averagePricePerDay && (
                 <>
                     <View style={styles.pricePerDaySection}>
@@ -143,17 +152,15 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                 </>
             )}
 
-            {/* Base Rental Fee */}
             {showDetailedBreakdown && baseRentalFee && rentalDays && (
                 <View style={styles.section}>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Phí thuê gốc ({rentalDays} ngày)</Text>
+                        <Text style={styles.label}>Phí thuê gốc ({formatRentalDuration()})</Text>
                         <Text style={styles.baseValue}>
                             {baseRentalFee.toLocaleString()}đ
                         </Text>
                     </View>
 
-                    {/* COLLAPSIBLE Discounts Section */}
                     {hasAnyDiscount && (
                         <View style={styles.collapsibleCard}>
                             <TouchableOpacity
@@ -183,9 +190,9 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                                                 <Text style={styles.detailItemTitle}>
                                                     • {getDiscountLabel(configDiscount.type)} ({configDiscount.percentage}%)
                                                 </Text>
-                                                {configDiscount.discountedDays && configDiscount.regularDays && (
+                                                {configDiscount.appliesTo === "all" && (
                                                     <Text style={styles.detailItemSubtitle}>
-                                                        {configDiscount.discountedDays} ngày giảm giá, {configDiscount.regularDays} ngày giá thường
+                                                        Áp dụng cho tất cả {rentalDays} ngày
                                                     </Text>
                                                 )}
                                             </View>
@@ -219,7 +226,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                         </View>
                     )}
 
-                    {/* COLLAPSIBLE Surcharges Section */}
                     {hasAnySurcharge && (
                         <View style={styles.collapsibleCard}>
                             <TouchableOpacity
@@ -253,7 +259,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                                         </Text>
                                     </View>
                                     
-                                    {/* Holiday Details - WITH SURCHARGE BREAKDOWN */}
                                     {holidaySurcharge.holidays && (
                                         <View style={styles.holidayDetailList}>
                                             {holidaySurcharge.holidays.map((holiday, index) => (
@@ -265,7 +270,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                                                         <Text style={styles.holidayDetailPercentage}>
                                                             Phụ thu {holiday.surchargePercentage}%
                                                         </Text>
-                                                        {/* NEW: Show the breakdown formula */}
                                                         <Text style={styles.holidayDetailFormula}>
                                                             {holiday.baseAfterDiscount.toLocaleString()}đ + {holiday.surchargeAmount.toLocaleString()}đ
                                                         </Text>
@@ -284,7 +288,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
 
                     <View style={styles.divider} />
 
-                    {/* Rental Subtotal */}
                     <View style={styles.row}>
                         <Text style={styles.subtotalLabel}>Tổng phí thuê xe</Text>
                         <Text style={styles.subtotalValue}>
@@ -294,7 +297,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                 </View>
             )}
 
-            {/* Insurance Fee */}
             <View style={styles.row}>
                 <Text style={styles.label}>
                     {insuranceName || "Phí bảo hiểm"}
@@ -308,7 +310,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                 )}
             </View>
 
-            {/* Security Deposit */}
             <View style={styles.row}>
                 <View style={styles.depositLabelRow}>
                     <Text style={styles.label}>Tiền đặt cọc</Text>
@@ -323,7 +324,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
 
             <View style={styles.thickDivider} />
 
-            {/* Final Total */}
             <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Tổng thanh toán</Text>
                 <Text style={styles.totalValue}>
@@ -349,8 +349,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         marginBottom: 16,
     },
-    
-    // Per-day pricing
     pricePerDaySection: {
         marginBottom: 0,
     },
@@ -401,7 +399,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "700",
     },
-    
     section: {
         marginBottom: 0,
     },
@@ -425,8 +422,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
     },
-    
-    // COLLAPSIBLE CARD STYLES
     collapsibleCard: {
         backgroundColor: "#0f0f0f",
         borderRadius: 8,
@@ -474,8 +469,6 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 10,
     },
-    
-    // COLLAPSIBLE CONTENT
     collapsibleContent: {
         paddingHorizontal: 12,
         paddingBottom: 12,
@@ -521,8 +514,6 @@ const styles = StyleSheet.create({
     detailItemDisabled: {
         color: "#666",
     },
-    
-    // Surcharge main item
     surchargeMainItem: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -549,8 +540,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "700",
     },
-    
-    // Holiday detail list - WITH FORMULA
     holidayDetailList: {
         marginTop: 4,
         paddingLeft: 12,
@@ -588,7 +577,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         textAlign: "right",
     },
-    
     freeValue: {
         color: "#22c55e",
         fontSize: 14,
