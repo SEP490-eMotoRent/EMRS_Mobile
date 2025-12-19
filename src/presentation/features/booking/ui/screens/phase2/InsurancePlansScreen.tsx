@@ -71,6 +71,14 @@ export const InsurancePlansScreen: React.FC = () => {
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
+        
+        // Discount info for detailed breakdown
+        discountPercentage,
+        discountAmount,
+        durationType,
+        
+        // NEW: Receive holidays array
+        holidays,
     } = route.params;
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
@@ -103,6 +111,9 @@ export const InsurancePlansScreen: React.FC = () => {
     
     const fullTotalAmount = rentalFeeAmount + insuranceFeeValue + securityDeposit;
     const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
+
+    const hasDiscount = discountPercentage > 0;
+    const hasMembershipDiscount = membershipDiscountPercentage > 0;
 
     const handleContinue = () => {
         navigation.navigate('PaymentConfirmation', {
@@ -146,6 +157,14 @@ export const InsurancePlansScreen: React.FC = () => {
             membershipDiscountPercentage,
             membershipDiscountAmount,
             membershipTier,
+            
+            // Pass discount info
+            discountPercentage,
+            discountAmount,
+            durationType,
+            
+            // NEW: Pass holidays array forward
+            holidays,
         });
     };
 
@@ -219,16 +238,38 @@ export const InsurancePlansScreen: React.FC = () => {
                     />
                 ))}
 
-                {/* NEW: Unified PricingBreakdown Component (Simple Mode) */}
+                {/* Full Detailed Breakdown with Holiday Details */}
                 <PricingBreakdown
-                    // Rental subtotal (already calculated from previous screen)
-                    rentalSubtotal={rentalFeeAmount}
+                    // Per-day pricing
+                    originalPricePerDay={pricePerDay}
+                    averagePricePerDay={averageRentalPrice}
                     
-                    // Surcharges (pass from route params)
+                    // Base rental
+                    baseRentalFee={baseRentalFee}
+                    rentalDays={rentalDays}
+                    
+                    // Discounts (only pass if monthly/yearly)
+                    configDiscount={hasDiscount && durationType !== "daily" ? {
+                        percentage: discountPercentage,
+                        amount: discountAmount,
+                        type: durationType as "monthly" | "yearly",
+                    } : undefined}
+                    
+                    membershipDiscount={hasMembershipDiscount ? {
+                        percentage: membershipDiscountPercentage,
+                        amount: membershipDiscountAmount,
+                        tier: membershipTier,
+                    } : undefined}
+                    
+                    // Surcharges WITH holiday details
                     holidaySurcharge={holidaySurcharge > 0 ? {
                         amount: holidaySurcharge,
                         dayCount: holidayDayCount,
+                        holidays: holidays, // <-- NOW PASSING THE FULL ARRAY
                     } : undefined}
+                    
+                    // Rental subtotal
+                    rentalSubtotal={rentalFeeAmount}
                     
                     // Insurance
                     insuranceFee={insuranceFeeValue}
@@ -240,8 +281,8 @@ export const InsurancePlansScreen: React.FC = () => {
                     // Total
                     total={fullTotalAmount}
                     
-                    // Simple breakdown (no base price shown)
-                    showDetailedBreakdown={false}
+                    // Show detailed breakdown
+                    showDetailedBreakdown={true}
                 />
             </ScrollView>
 

@@ -107,6 +107,14 @@ export const PaymentConfirmationScreen: React.FC = () => {
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
+        
+        // Discount info
+        discountPercentage,
+        discountAmount,
+        durationType,
+        
+        // NEW: Receive holidays array
+        holidays,
     } = route.params;
 
     const parsePrice = (price: string): number => {
@@ -416,16 +424,38 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     insurancePlan={insurancePlan}
                 />
 
-                {/* NEW: Unified PricingBreakdown Component (Simple Mode) */}
+                {/* Full Detailed Breakdown (matching ConfirmRentalDuration) */}
                 <PricingBreakdown
-                    // Rental subtotal
-                    rentalSubtotal={rentalFeeAmount}
+                    // Per-day pricing
+                    originalPricePerDay={pricePerDay}
+                    averagePricePerDay={averageRentalPrice}
                     
-                    // Surcharges
+                    // Base rental
+                    baseRentalFee={baseRentalFee}
+                    rentalDays={rentalDays}
+                    
+                    // Discounts (only pass if monthly/yearly)
+                    configDiscount={discountPercentage > 0 && durationType !== "daily" ? {
+                        percentage: discountPercentage,
+                        amount: discountAmount,
+                        type: durationType as "monthly" | "yearly",
+                    } : undefined}
+                    
+                    membershipDiscount={membershipDiscountPercentage > 0 ? {
+                        percentage: membershipDiscountPercentage,
+                        amount: membershipDiscountAmount,
+                        tier: membershipTier,
+                    } : undefined}
+                    
+                    // Surcharges WITH holiday details
                     holidaySurcharge={holidaySurcharge > 0 ? {
                         amount: holidaySurcharge,
                         dayCount: holidayDayCount,
+                        holidays: holidays, // <-- NOW PASSING THE FULL ARRAY
                     } : undefined}
+                    
+                    // Rental subtotal
+                    rentalSubtotal={rentalFeeAmount}
                     
                     // Insurance
                     insuranceFee={insuranceFeeAmount}
@@ -437,8 +467,8 @@ export const PaymentConfirmationScreen: React.FC = () => {
                     // Total
                     total={totalAmount}
                     
-                    // Simple breakdown
-                    showDetailedBreakdown={false}
+                    // Show detailed breakdown
+                    showDetailedBreakdown={true}
                 />
 
                 <View style={styles.section}>
