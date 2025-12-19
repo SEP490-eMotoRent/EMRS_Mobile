@@ -925,7 +925,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryKey}>Tổng phụ phí</Text>
                   <Text style={styles.summaryVal}>
-                    {formatVnd(summary?.totalAmount || 0)}
+                    {formatVnd((summary?.totalChargingFee + summary?.totalAdditionalFees) || 0)}
                   </Text>
                 </View>
 
