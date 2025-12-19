@@ -28,6 +28,7 @@ interface PricingBreakdownProps {
             baseAfterDiscount: number;
             surchargeAmount: number;
             totalPricePerDay: number;
+            date?: Date;
         }>;
     };
     rentalSubtotal: number;
@@ -54,18 +55,29 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
     total,
     showDetailedBreakdown = true,
 }) => {
-    const [isDiscountExpanded, setIsDiscountExpanded] = useState(false);
-    const [isSurchargeExpanded, setIsSurchargeExpanded] = useState(false);
+    const [isNormalDaysExpanded, setIsNormalDaysExpanded] = useState(false);
+    const [isHolidayDaysExpanded, setIsHolidayDaysExpanded] = useState(false);
     
     const hasConfigDiscount = configDiscount && configDiscount.amount > 0;
     const hasMembershipDiscount = membershipDiscount && membershipDiscount.amount > 0;
     const hasHolidaySurcharge = holidaySurcharge && holidaySurcharge.amount > 0;
     const hasInsurance = insuranceFee > 0;
     
-    const totalDiscount = (configDiscount?.amount || 0) + (membershipDiscount?.amount || 0);
-    const totalSurcharge = holidaySurcharge?.amount || 0;
-    const hasAnyDiscount = totalDiscount > 0;
-    const hasAnySurcharge = totalSurcharge > 0;
+    const holidayDayCount = holidaySurcharge?.dayCount || 0;
+    const normalDayCount = (rentalDays || 0) - holidayDayCount;
+    
+    // Calculate C = sum of all holiday day totals
+    const holidayDaysTotal = holidaySurcharge?.holidays?.reduce((sum, h) => 
+        sum + (h.totalPricePerDay * h.count), 0
+    ) || 0;
+    
+    // Calculate B = rental subtotal - C
+    const normalDaysTotal = rentalSubtotal - holidayDaysTotal;
+    
+    // Calculate effective price per day for normal days (after all discounts)
+    const effectivePricePerNormalDay = normalDayCount > 0 
+        ? Math.round(normalDaysTotal / normalDayCount)
+        : 0;
 
     const getDiscountLabel = (type: "monthly" | "yearly"): string => {
         if (type === "monthly") return "Giảm giá thuê tháng";
@@ -84,22 +96,30 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
         }
     };
 
-    const getEffectivePricePerDay = (originalPrice: number, discountPercentage: number): number => {
-        return originalPrice * (1 - discountPercentage / 100);
-    };
-
-    const formatRentalDuration = (): string => {
-        if (!rentalDays) return "";
-        
-        if (rentalHours && rentalHours > 0) {
-            return `${rentalDays} ngày ${rentalHours} giờ`;
+    const formatRentalDuration = (days: number, hours?: number): string => {
+        if (hours && hours > 0) {
+            return `${days} ngày ${hours} giờ`;
         }
-        
-        return `${rentalDays} ngày`;
+        return `${days} ngày`;
     };
 
-    const hasPriceDifference = originalPricePerDay && averagePricePerDay && 
-        originalPricePerDay !== averagePricePerDay;
+    /**
+     * Format date to Vietnamese display
+     * Example: "1/5" for May 1st
+     */
+    const formatHolidayDate = (date?: Date): string => {
+        if (!date) return "";
+        const d = new Date(date);
+        return `${d.getDate()}/${d.getMonth() + 1}`;
+    };
+
+    // Only show price comparison if there's an actual discount (average < original)
+    const hasActualDiscount = originalPricePerDay && averagePricePerDay && 
+        averagePricePerDay < originalPricePerDay;
+    
+    // Show surcharge indicator if average > original
+    const hasSurcharge = originalPricePerDay && averagePricePerDay && 
+        averagePricePerDay > originalPricePerDay;
 
     return (
         <View style={styles.container}>
@@ -112,24 +132,24 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                             <Text style={styles.label}>Giá gốc mỗi ngày</Text>
                             <Text style={[
                                 styles.value,
-                                hasPriceDifference && styles.strikethroughValue
+                                hasActualDiscount && styles.strikethroughValue
                             ]}>
                                 {originalPricePerDay.toLocaleString()}đ/ngày
                             </Text>
                         </View>
                         
-                        {hasPriceDifference && (
+                        {(hasActualDiscount || hasSurcharge) && (
                             <View style={styles.row}>
                                 <View style={styles.averageLabelRow}>
                                     <Text style={styles.averageLabel}>Giá trung bình</Text>
-                                    {(averagePricePerDay < originalPricePerDay) && (
+                                    {hasActualDiscount && (
                                         <View style={styles.savingsBadge}>
                                             <Text style={styles.savingsBadgeText}>
                                                 Tiết kiệm {Math.round(((originalPricePerDay - averagePricePerDay) / originalPricePerDay) * 100)}%
                                             </Text>
                                         </View>
                                     )}
-                                    {(averagePricePerDay > originalPricePerDay) && (
+                                    {hasSurcharge && (
                                         <View style={styles.surchargeBadge}>
                                             <Text style={styles.surchargeBadgeText}>
                                                 +{Math.round(((averagePricePerDay - originalPricePerDay) / originalPricePerDay) * 100)}%
@@ -139,8 +159,8 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                                 </View>
                                 <Text style={[
                                     styles.averageValue,
-                                    averagePricePerDay < originalPricePerDay && styles.averageValueDiscount,
-                                    averagePricePerDay > originalPricePerDay && styles.averageValueSurcharge
+                                    hasActualDiscount && styles.averageValueDiscount,
+                                    hasSurcharge && styles.averageValueSurcharge
                                 ]}>
                                     {averagePricePerDay.toLocaleString()}đ/ngày
                                 </Text>
@@ -152,135 +172,159 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                 </>
             )}
 
-            {showDetailedBreakdown && baseRentalFee && rentalDays && (
+            {showDetailedBreakdown && rentalDays !== undefined && (
                 <View style={styles.section}>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Phí thuê gốc ({formatRentalDuration()})</Text>
-                        <Text style={styles.baseValue}>
-                            {baseRentalFee.toLocaleString()}đ
-                        </Text>
+                    {/* B - Ngày thường */}
+                    <View style={styles.collapsibleCard}>
+                        <TouchableOpacity
+                            onPress={() => setIsNormalDaysExpanded(!isNormalDaysExpanded)}
+                            activeOpacity={0.7}
+                            style={styles.collapsibleHeader}
+                        >
+                            <View style={styles.collapsibleHeaderLeft}>
+                                <Text style={styles.collapsibleIcon}>📅</Text>
+                                <Text style={styles.collapsibleTitle}>Ngày thường</Text>
+                            </View>
+                            <View style={styles.collapsibleHeaderRight}>
+                                <Text style={styles.normalDaysAmount}>
+                                    {normalDaysTotal.toLocaleString()}đ
+                                </Text>
+                                <Text style={styles.toggleIcon}>
+                                    {isNormalDaysExpanded ? '▲' : '▼'}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                        
+                        {isNormalDaysExpanded && (
+                            <View style={styles.collapsibleContent}>
+                                <View style={styles.mainRow}>
+                                    <View style={styles.mainRowLeft}>
+                                        <Text style={styles.mainRowTitle}>
+                                            {(hasConfigDiscount || hasMembershipDiscount) ? 'Giá sau giảm giá' : 'Chi phí ngày thường'}
+                                        </Text>
+                                        <Text style={styles.mainRowSubtitle}>
+                                            {effectivePricePerNormalDay.toLocaleString()}đ/ngày × {formatRentalDuration(normalDayCount, rentalHours)}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.mainRowAmount}>
+                                        {normalDaysTotal.toLocaleString()}đ
+                                    </Text>
+                                </View>
+
+                                {(hasConfigDiscount || hasMembershipDiscount) && (
+                                    <View style={styles.discountDetailsSection}>
+                                        <Text style={styles.discountDetailsTitle}>Giảm giá đã áp dụng:</Text>
+                                        
+                                        {hasConfigDiscount && (
+                                            <View style={styles.discountDetailRow}>
+                                                <Text style={styles.discountDetailLabel}>
+                                                    • {getDiscountLabel(configDiscount.type)}
+                                                </Text>
+                                                <Text style={styles.discountDetailValue}>
+                                                    {configDiscount.percentage}%
+                                                </Text>
+                                            </View>
+                                        )}
+                                        
+                                        {/* Always show membership */}
+                                        <View style={styles.discountDetailRow}>
+                                            <Text style={[
+                                                styles.discountDetailLabel,
+                                                !hasMembershipDiscount && styles.discountDetailDisabled
+                                            ]}>
+                                                • Thành viên {getMembershipTierLabel(membershipDiscount?.tier || "BRONZE")}
+                                            </Text>
+                                            <Text style={[
+                                                styles.discountDetailValue,
+                                                !hasMembershipDiscount && styles.discountDetailDisabled
+                                            ]}>
+                                                {membershipDiscount?.percentage || 0}%
+                                            </Text>
+                                        </View>
+
+                                        {originalPricePerDay && (
+                                            <Text style={styles.effectivePriceNote}>
+                                                Giá sau giảm: {effectivePricePerNormalDay.toLocaleString()}đ/ngày
+                                            </Text>
+                                        )}
+                                    </View>
+                                )}
+
+                                {!hasConfigDiscount && !hasMembershipDiscount && (
+                                    <View style={styles.noDiscountNote}>
+                                        <Text style={styles.noDiscountText}>
+                                            Không có giảm giá áp dụng
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
+                        )}
                     </View>
 
-                    {hasAnyDiscount && (
+                    {/* C - Ngày lễ */}
+                    {hasHolidaySurcharge && holidaySurcharge && (
                         <View style={styles.collapsibleCard}>
                             <TouchableOpacity
-                                onPress={() => setIsDiscountExpanded(!isDiscountExpanded)}
+                                onPress={() => setIsHolidayDaysExpanded(!isHolidayDaysExpanded)}
                                 activeOpacity={0.7}
                                 style={styles.collapsibleHeader}
                             >
                                 <View style={styles.collapsibleHeaderLeft}>
-                                    <Text style={styles.collapsibleIcon}>📉</Text>
-                                    <Text style={styles.collapsibleTitle}>Giảm giá & Ưu đãi</Text>
+                                    <Text style={styles.collapsibleIcon}>🎉</Text>
+                                    <Text style={styles.collapsibleTitle}>Ngày lễ</Text>
                                 </View>
                                 <View style={styles.collapsibleHeaderRight}>
-                                    <Text style={styles.discountAmount}>
-                                        -{totalDiscount.toLocaleString()}đ
+                                    <Text style={styles.holidayDaysAmount}>
+                                        {holidayDaysTotal.toLocaleString()}đ
                                     </Text>
                                     <Text style={styles.toggleIcon}>
-                                        {isDiscountExpanded ? '▲' : '▼'}
+                                        {isHolidayDaysExpanded ? '▲' : '▼'}
                                     </Text>
                                 </View>
                             </TouchableOpacity>
                             
-                            {isDiscountExpanded && (
+                            {isHolidayDaysExpanded && holidaySurcharge.holidays && (
                                 <View style={styles.collapsibleContent}>
-                                    {hasConfigDiscount && originalPricePerDay && (
-                                        <View style={styles.detailItem}>
-                                            <View style={styles.detailItemLeft}>
-                                                <Text style={styles.detailItemTitle}>
-                                                    • {getDiscountLabel(configDiscount.type)} ({configDiscount.percentage}%)
-                                                </Text>
-                                                {configDiscount.appliesTo === "all" && (
-                                                    <Text style={styles.detailItemSubtitle}>
-                                                        Áp dụng cho tất cả {rentalDays} ngày
-                                                    </Text>
-                                                )}
-                                            </View>
-                                            <View style={styles.detailItemRight}>
-                                                <Text style={styles.detailItemAmount}>
-                                                    -{configDiscount.amount.toLocaleString()}đ
-                                                </Text>
-                                                <Text style={styles.effectivePriceText}>
-                                                    Giá sau giảm: {Math.round(getEffectivePricePerDay(originalPricePerDay, configDiscount.percentage)).toLocaleString()}đ/ngày
-                                                </Text>
-                                            </View>
-                                        </View>
-                                    )}
-                                    
-                                    <View style={styles.detailItem}>
-                                        <Text style={[
-                                            styles.detailItemTitle,
-                                            !hasMembershipDiscount && styles.detailItemDisabled
-                                        ]}>
-                                            • Thành viên {getMembershipTierLabel(membershipDiscount?.tier || "BRONZE")} ({membershipDiscount?.percentage || 0}%)
-                                        </Text>
-                                        <Text style={[
-                                            styles.detailItemAmount,
-                                            !hasMembershipDiscount && styles.detailItemDisabled
-                                        ]}>
-                                            {hasMembershipDiscount ? `-${membershipDiscount.amount.toLocaleString()}đ` : '0đ'}
+                                    <View style={styles.mainRow}>
+                                        <Text style={styles.mainRowTitle}>Phụ thu ngày lễ</Text>
+                                        <Text style={styles.mainRowAmount}>
+                                            {holidayDaysTotal.toLocaleString()}đ
                                         </Text>
                                     </View>
-                                </View>
-                            )}
-                        </View>
-                    )}
 
-                    {hasAnySurcharge && (
-                        <View style={styles.collapsibleCard}>
-                            <TouchableOpacity
-                                onPress={() => setIsSurchargeExpanded(!isSurchargeExpanded)}
-                                activeOpacity={0.7}
-                                style={styles.collapsibleHeader}
-                            >
-                                <View style={styles.collapsibleHeaderLeft}>
-                                    <Text style={styles.collapsibleIcon}>📈</Text>
-                                    <Text style={styles.collapsibleTitle}>Phụ thu</Text>
-                                </View>
-                                <View style={styles.collapsibleHeaderRight}>
-                                    <Text style={styles.surchargeAmount}>
-                                        +{totalSurcharge.toLocaleString()}đ
+                                    <Text style={styles.holidayCountText}>
+                                        {holidayDayCount} ngày lễ
                                     </Text>
-                                    <Text style={styles.toggleIcon}>
-                                        {isSurchargeExpanded ? '▲' : '▼'}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                            
-                            {isSurchargeExpanded && holidaySurcharge && (
-                                <View style={styles.collapsibleContent}>
-                                    <View style={styles.surchargeMainItem}>
-                                        <View style={styles.surchargeMainLeft}>
-                                            <Text style={styles.surchargeMainTitle}>• Phụ thu ngày lễ</Text>
-                                            <Text style={styles.surchargeMainSubtitle}>{holidaySurcharge.dayCount} ngày lễ</Text>
-                                        </View>
-                                        <Text style={styles.surchargeMainAmount}>
-                                            +{holidaySurcharge.amount.toLocaleString()}đ
-                                        </Text>
-                                    </View>
-                                    
-                                    {holidaySurcharge.holidays && (
-                                        <View style={styles.holidayDetailList}>
-                                            {holidaySurcharge.holidays.map((holiday, index) => (
+
+                                    <View style={styles.holidayDetailList}>
+                                        {holidaySurcharge.holidays.map((holiday, index) => {
+                                            const dateDisplay = formatHolidayDate(holiday.date);
+                                            return (
                                                 <View key={index} style={styles.holidayDetailItem}>
                                                     <View style={styles.holidayDetailLeft}>
-                                                        <Text style={styles.holidayDetailName}>
-                                                            • {holiday.name} {holiday.count > 1 ? `(${holiday.count} ngày)` : ''}
-                                                        </Text>
-                                                        <Text style={styles.holidayDetailPercentage}>
-                                                            Phụ thu {holiday.surchargePercentage}%
-                                                        </Text>
+                                                        <View style={styles.holidayNameRow}>
+                                                            <Text style={styles.holidayDetailName}>
+                                                                • {holiday.name}
+                                                            </Text>
+                                                            {dateDisplay && (
+                                                                <View style={styles.holidayDateBadge}>
+                                                                    <Text style={styles.holidayDateText}>
+                                                                        {dateDisplay}
+                                                                    </Text>
+                                                                </View>
+                                                            )}
+                                                        </View>
                                                         <Text style={styles.holidayDetailFormula}>
-                                                            {holiday.baseAfterDiscount.toLocaleString()}đ + {holiday.surchargeAmount.toLocaleString()}đ
+                                                            Phụ thu {holiday.surchargePercentage}% • {holiday.baseAfterDiscount.toLocaleString()}đ + {holiday.surchargeAmount.toLocaleString()}đ
                                                         </Text>
                                                     </View>
                                                     <Text style={styles.holidayDetailPrice}>
                                                         {holiday.totalPricePerDay.toLocaleString()}đ/ngày
                                                     </Text>
                                                 </View>
-                                            ))}
-                                        </View>
-                                    )}
+                                            );
+                                        })}
+                                    </View>
                                 </View>
                             )}
                         </View>
@@ -288,6 +332,7 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
 
                     <View style={styles.divider} />
 
+                    {/* D = B + C */}
                     <View style={styles.row}>
                         <Text style={styles.subtotalLabel}>Tổng phí thuê xe</Text>
                         <Text style={styles.subtotalValue}>
@@ -297,6 +342,7 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                 </View>
             )}
 
+            {/* Insurance */}
             <View style={styles.row}>
                 <Text style={styles.label}>
                     {insuranceName || "Phí bảo hiểm"}
@@ -310,6 +356,7 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                 )}
             </View>
 
+            {/* Security Deposit */}
             <View style={styles.row}>
                 <View style={styles.depositLabelRow}>
                     <Text style={styles.label}>Tiền đặt cọc</Text>
@@ -324,6 +371,7 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
 
             <View style={styles.thickDivider} />
 
+            {/* Total */}
             <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Tổng thanh toán</Text>
                 <Text style={styles.totalValue}>
@@ -366,6 +414,7 @@ const styles = StyleSheet.create({
     averageValue: {
         fontSize: 15,
         fontWeight: "700",
+        color: "#fff",
     },
     averageValueDiscount: {
         color: "#22c55e",
@@ -412,11 +461,6 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 14,
     },
-    baseValue: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "600",
-    },
     value: {
         color: "#fff",
         fontSize: 14,
@@ -455,13 +499,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
     },
-    discountAmount: {
-        color: "#22c55e",
+    normalDaysAmount: {
+        color: "#fff",
         fontSize: 14,
         fontWeight: "700",
     },
-    surchargeAmount: {
-        color: "#ef4444",
+    holidayDaysAmount: {
+        color: "#fff",
         fontSize: 14,
         fontWeight: "700",
     },
@@ -475,74 +519,88 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#222",
     },
-    detailItem: {
+    mainRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "flex-start",
         paddingTop: 8,
         marginBottom: 8,
     },
-    detailItemLeft: {
+    mainRowLeft: {
         flex: 1,
         marginRight: 12,
     },
-    detailItemRight: {
-        alignItems: "flex-end",
-    },
-    detailItemTitle: {
+    mainRowTitle: {
         color: "#22c55e",
         fontSize: 13,
         fontWeight: "700",
         marginBottom: 4,
     },
-    detailItemSubtitle: {
+    mainRowSubtitle: {
         color: "#86efac",
         fontSize: 11,
         fontStyle: "italic",
     },
-    effectivePriceText: {
+    mainRowAmount: {
+        color: "#fff",
+        fontSize: 13,
+        fontWeight: "700",
+    },
+    discountDetailsSection: {
+        backgroundColor: "#1a1a1a",
+        borderRadius: 6,
+        padding: 10,
+        marginTop: 4,
+    },
+    discountDetailsTitle: {
+        color: "#22c55e",
+        fontSize: 11,
+        fontWeight: "700",
+        marginBottom: 6,
+    },
+    discountDetailRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 4,
+    },
+    discountDetailLabel: {
+        color: "#86efac",
+        fontSize: 11,
+    },
+    discountDetailValue: {
+        color: "#86efac",
+        fontSize: 11,
+        fontWeight: "700",
+    },
+    discountDetailDisabled: {
+        color: "#666",
+    },
+    effectivePriceNote: {
         color: "#22c55e",
         fontSize: 10,
         fontWeight: "600",
+        marginTop: 6,
+    },
+    noDiscountNote: {
+        backgroundColor: "#1a1a1a",
+        borderRadius: 6,
+        padding: 10,
         marginTop: 4,
     },
-    detailItemAmount: {
-        color: "#fff",
-        fontSize: 13,
-        fontWeight: "700",
-    },
-    detailItemDisabled: {
+    noDiscountText: {
         color: "#666",
+        fontSize: 11,
+        fontStyle: "italic",
+        textAlign: "center",
     },
-    surchargeMainItem: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        paddingTop: 8,
-        marginBottom: 8,
-    },
-    surchargeMainLeft: {
-        flex: 1,
-        marginRight: 12,
-    },
-    surchargeMainTitle: {
-        color: "#ef4444",
-        fontSize: 13,
-        fontWeight: "700",
-        marginBottom: 2,
-    },
-    surchargeMainSubtitle: {
+    holidayCountText: {
         color: "#fca5a5",
         fontSize: 11,
-    },
-    surchargeMainAmount: {
-        color: "#fff",
-        fontSize: 13,
-        fontWeight: "700",
+        marginBottom: 8,
     },
     holidayDetailList: {
         marginTop: 4,
-        paddingLeft: 12,
     },
     holidayDetailItem: {
         flexDirection: "row",
@@ -554,21 +612,31 @@ const styles = StyleSheet.create({
         flex: 1,
         marginRight: 12,
     },
-    holidayDetailName: {
-        color: "#fca5a5",
-        fontSize: 12,
-        fontWeight: "600",
-        marginBottom: 2,
+    holidayNameRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 4,
     },
-    holidayDetailPercentage: {
+    holidayDetailName: {
+        color: "#ef4444",
+        fontSize: 12,
+        fontWeight: "700",
+    },
+    holidayDateBadge: {
+        backgroundColor: "rgba(239, 68, 68, 0.2)",
+        paddingHorizontal: 5,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    holidayDateText: {
         color: "#fca5a5",
-        fontSize: 10,
-        opacity: 0.7,
+        fontSize: 9,
+        fontWeight: "700",
     },
     holidayDetailFormula: {
         color: "#fca5a5",
         fontSize: 10,
-        marginTop: 2,
         opacity: 0.8,
     },
     holidayDetailPrice: {
@@ -623,7 +691,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 12,
     },
     totalLabel: {
         color: "#fff",

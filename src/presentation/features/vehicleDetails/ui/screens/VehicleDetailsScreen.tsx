@@ -46,10 +46,53 @@ export const VehicleDetailsScreen: React.FC = () => {
     error: branchesError,
   } = useVehicleBranches(vehicleId);
 
-  const { renterResponse } = useRenterProfile();
+  const { renter, renterResponse } = useRenterProfile();
 
+  // ✅ NEW: Check if profile is complete
+  const checkProfileComplete = () => {
+    if (!renter || !renterResponse) {
+      return { 
+        complete: false, 
+        missing: ['Thông tin cá nhân chưa đầy đủ'] 
+      };
+    }
+
+    const missing: string[] = [];
+
+    // Check required personal info
+    if (!renter.account?.fullname?.trim()) {
+      missing.push('Họ Tên');
+    }
+
+    // Check phone (must be valid Vietnamese number)
+    const phone = renter.phone || '';
+    const cleanPhone = phone.replace(/^\+84/, '0').replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length !== 10 || !cleanPhone.startsWith('0')) {
+      missing.push('Số Điện Thoại (10 chữ số)');
+    }
+
+    if (!renter.address?.trim()) {
+      missing.push('Địa Chỉ');
+    }
+
+    if (!renterResponse.dateOfBirth?.trim()) {
+      missing.push('Ngày Sinh');
+    }
+
+    return {
+      complete: missing.length === 0,
+      missing,
+    };
+  };
+
+  // ✅ UPDATED: Check documents complete
   const checkDocumentsComplete = () => {
-    if (!renterResponse) return { complete: false, missing: ['Căn Cước Công Dân', 'Giấy Phép Lái Xe'] };
+    if (!renterResponse) {
+      return { 
+        complete: false, 
+        missing: ['Căn Cước Công Dân', 'Giấy Phép Lái Xe'] 
+      };
+    }
 
     const citizenDoc = renterResponse.documents.find(
       doc => doc.documentType === 'Citizen'
@@ -72,6 +115,7 @@ export const VehicleDetailsScreen: React.FC = () => {
     };
   };
 
+  const profileStatus = checkProfileComplete();
   const documentsStatus = checkDocumentsComplete();
 
   React.useEffect(() => {
@@ -101,19 +145,23 @@ export const VehicleDetailsScreen: React.FC = () => {
     );
   }
 
-  // ✅ FIX: Convert single imageUrl to array, or use images array if it exists
   const images = Array.isArray(data.images) 
     ? data.images 
     : data.imageUrl 
       ? [data.imageUrl] 
       : ['https://via.placeholder.com/400x300?text=No+Image'];
 
-
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
   const securityDeposit = data.depositAmount > 0 ? data.depositAmount : 2000000;
 
   const hasAvailableVehicles = selectedBranch && (selectedBranch.vehicleCount ?? 0) > 0;
-  const isBookingDisabled = !selectedBranchId || !hasAvailableVehicles || !documentsStatus.complete;
+  
+  // ✅ UPDATED: Block booking if profile incomplete OR documents incomplete
+  const isBookingDisabled = 
+    !selectedBranchId || 
+    !hasAvailableVehicles || 
+    !profileStatus.complete || 
+    !documentsStatus.complete;
 
   const handleBooking = () => {
     if (!selectedBranchId || !selectedBranch) {
@@ -122,6 +170,11 @@ export const VehicleDetailsScreen: React.FC = () => {
 
     if (!hasAvailableVehicles) {
       console.warn('⚠️ Cannot book - no vehicles available at selected branch');
+      return;
+    }
+
+    if (!profileStatus.complete) {
+      console.warn('⚠️ Cannot book - profile incomplete');
       return;
     }
 
@@ -148,6 +201,12 @@ export const VehicleDetailsScreen: React.FC = () => {
     });
   };
 
+  const handleGoToProfile = () => {
+    navigation.navigate('ProfileTab', {
+      screen: 'EditProfile',
+    });
+  };
+
   const handleGoToDocuments = () => {
     navigation.navigate('ProfileTab', {
       screen: 'DocumentManagement',
@@ -169,12 +228,10 @@ export const VehicleDetailsScreen: React.FC = () => {
 
         <ImageGallery images={images} />
 
-        {/* Vehicle Name */}
         <View style={styles.nameContainer}>
           <Text style={styles.vehicleName}>{data.name}</Text>
         </View>
 
-        {/* Specs as vertical list - "Đặc Điểm" */}
         <View style={styles.specsSection}>
           <Text style={styles.sectionTitle}>Đặc Điểm</Text>
           
@@ -223,7 +280,6 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Security Deposit Card */}
         <View style={styles.depositCard}>
           <View style={styles.depositHeader}>
             <Icon name="wallet" size={20} color="#B8A4FF" />
@@ -234,7 +290,6 @@ export const VehicleDetailsScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Description with Vietnamese buttons */}
         {data.description && data.description !== "No description." && (
           <View style={styles.descriptionContainer}>
             <View style={styles.descriptionHeader}>
@@ -258,25 +313,76 @@ export const VehicleDetailsScreen: React.FC = () => {
           </View>
         )}
 
-        {/* ALWAYS SHOW: Document Verification Section */}
+        {/* ✅ NEW: Profile Completion Warning */}
         <View style={[
-          styles.documentsWarning,
-          documentsStatus.complete && styles.documentsWarningComplete
+          styles.requirementWarning,
+          profileStatus.complete && styles.requirementWarningComplete
         ]}>
-          <View style={styles.documentsWarningHeader}>
+          <View style={styles.requirementWarningHeader}>
+            <Icon 
+              name="person" 
+              size={24} 
+              color={profileStatus.complete ? "#10b981" : "#B8A4FF"} 
+            />
+            <View style={styles.requirementWarningTextContainer}>
+              <Text style={[
+                styles.requirementWarningTitle,
+                profileStatus.complete && styles.requirementWarningTitleComplete
+              ]}>
+                {profileStatus.complete ? 'Thông Tin Đã Đầy Đủ' : 'Yêu Cầu Thông Tin Cá Nhân'}
+              </Text>
+              <Text style={styles.requirementWarningMessage}>
+                {profileStatus.complete 
+                  ? 'Thông tin cá nhân của bạn đã được hoàn tất.'
+                  : 'Vui lòng hoàn thiện thông tin cá nhân để đặt xe:'}
+              </Text>
+            </View>
+          </View>
+          
+          {!profileStatus.complete && profileStatus.missing.length > 0 && (
+            <View style={styles.missingList}>
+              {profileStatus.missing.map((item, index) => (
+                <View key={index} style={styles.missingItem}>
+                  <Icon name="close" size={18} color="#ef4444" />
+                  <Text style={styles.missingText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <TouchableOpacity 
+            style={[
+              styles.actionButton,
+              profileStatus.complete && styles.actionButtonComplete
+            ]}
+            onPress={handleGoToProfile}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.actionButtonText}>
+              {profileStatus.complete ? 'Quản Lý Thông Tin' : 'Hoàn Thiện Thông Tin'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ✅ UPDATED: Document Verification Section */}
+        <View style={[
+          styles.requirementWarning,
+          documentsStatus.complete && styles.requirementWarningComplete
+        ]}>
+          <View style={styles.requirementWarningHeader}>
             <Icon 
               name="document" 
               size={24} 
               color={documentsStatus.complete ? "#10b981" : "#B8A4FF"} 
             />
-            <View style={styles.documentsWarningTextContainer}>
+            <View style={styles.requirementWarningTextContainer}>
               <Text style={[
-                styles.documentsWarningTitle,
-                documentsStatus.complete && styles.documentsWarningTitleComplete
+                styles.requirementWarningTitle,
+                documentsStatus.complete && styles.requirementWarningTitleComplete
               ]}>
                 {documentsStatus.complete ? 'Giấy Tờ Đã Xác Thực' : 'Yêu Cầu Giấy Tờ'}
               </Text>
-              <Text style={styles.documentsWarningMessage}>
+              <Text style={styles.requirementWarningMessage}>
                 {documentsStatus.complete 
                   ? 'Bạn đã tải đầy đủ giấy tờ cần thiết để đặt xe.'
                   : 'Bạn cần tải lên đầy đủ giấy tờ để đặt xe:'}
@@ -284,25 +390,25 @@ export const VehicleDetailsScreen: React.FC = () => {
             </View>
           </View>
           
-          <View style={styles.documentsList}>
-            <View style={styles.documentItem}>
+          <View style={styles.missingList}>
+            <View style={styles.missingItem}>
               <Icon 
                 name={documentsStatus.hasCitizen ? "checkmark" : "close"} 
                 size={18} 
                 color={documentsStatus.hasCitizen ? "#10b981" : "#ef4444"} 
               />
-              <Text style={documentsStatus.hasCitizen ? styles.documentTextComplete : styles.documentTextMissing}>
+              <Text style={documentsStatus.hasCitizen ? styles.completeText : styles.missingText}>
                 Căn Cước Công Dân (CCCD)
               </Text>
             </View>
             
-            <View style={styles.documentItem}>
+            <View style={styles.missingItem}>
               <Icon 
                 name={documentsStatus.hasLicense ? "checkmark" : "close"} 
                 size={18} 
                 color={documentsStatus.hasLicense ? "#10b981" : "#ef4444"} 
               />
-              <Text style={documentsStatus.hasLicense ? styles.documentTextComplete : styles.documentTextMissing}>
+              <Text style={documentsStatus.hasLicense ? styles.completeText : styles.missingText}>
                 Giấy Phép Lái Xe
               </Text>
             </View>
@@ -310,19 +416,18 @@ export const VehicleDetailsScreen: React.FC = () => {
 
           <TouchableOpacity 
             style={[
-              styles.uploadDocumentsButton,
-              documentsStatus.complete && styles.uploadDocumentsButtonComplete
+              styles.actionButton,
+              documentsStatus.complete && styles.actionButtonComplete
             ]}
             onPress={handleGoToDocuments}
             activeOpacity={0.7}
           >
-            <Text style={styles.uploadDocumentsButtonText}>
+            <Text style={styles.actionButtonText}>
               {documentsStatus.complete ? 'Quản Lý Giấy Tờ' : 'Tải Lên Giấy Tờ'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Pickup Location */}
         <PickupLocationSection
           branches={branches}
           branchesError={branchesError}
@@ -330,7 +435,6 @@ export const VehicleDetailsScreen: React.FC = () => {
           onBranchSelect={setSelectedBranchId}
         />
 
-        {/* Warning message when no vehicles available */}
         {selectedBranch && (selectedBranch.vehicleCount ?? 0) === 0 && (
           <View style={styles.unavailableWarning}>
             <Icon name="warning" size={24} color="#ff6b6b" />
@@ -517,7 +621,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  documentsWarning: {
+  requirementWarning: {
     backgroundColor: "#1a1a2a",
     padding: 20,
     borderRadius: 16,
@@ -525,63 +629,63 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#3a3a4a",
   },
-  documentsWarningComplete: {
+  requirementWarningComplete: {
     backgroundColor: "#1a2a1a",
     borderColor: "#2a4a2a",
   },
-  documentsWarningHeader: {
+  requirementWarningHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: 16,
   },
-  documentsWarningTextContainer: {
+  requirementWarningTextContainer: {
     flex: 1,
     marginLeft: 12,
   },
-  documentsWarningTitle: {
+  requirementWarningTitle: {
     color: "#B8A4FF",
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 6,
   },
-  documentsWarningTitleComplete: {
+  requirementWarningTitleComplete: {
     color: "#10b981",
   },
-  documentsWarningMessage: {
+  requirementWarningMessage: {
     color: "#c4b5fd",
     fontSize: 14,
     lineHeight: 20,
   },
-  documentsList: {
+  missingList: {
     gap: 12,
     marginBottom: 16,
   },
-  documentItem: {
+  missingItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
-  documentTextComplete: {
+  completeText: {
     color: "#10b981",
     fontSize: 15,
     fontWeight: "500",
   },
-  documentTextMissing: {
+  missingText: {
     color: "#ff9999",
     fontSize: 15,
     fontWeight: "500",
   },
-  uploadDocumentsButton: {
+  actionButton: {
     backgroundColor: "#B8A4FF",
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
     alignItems: "center",
   },
-  uploadDocumentsButtonComplete: {
+  actionButtonComplete: {
     backgroundColor: "#10b981",
   },
-  uploadDocumentsButtonText: {
+  actionButtonText: {
     color: "#000",
     fontSize: 16,
     fontWeight: "700",
