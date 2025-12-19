@@ -16,7 +16,7 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
         const [notifications, setNotifications] = useState<boolean>(true);
     return (
         <View style={styles.quickSettings}>
-        <Text style={styles.sectionTitle}>Cài Đặt</Text>
+        {/* <Text style={styles.sectionTitle}>Cài Đặt</Text> */}
         
         <View style={styles.settingsGroup}>
             {/* <SettingToggle

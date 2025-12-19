@@ -10,11 +10,12 @@ import {
     View,
 } from "react-native";
 import { TicketResponse } from "../../../../../../data/models/ticket/TicketResponse";
-import { TicketTypeDisplay, TicketStatusDisplay } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
+import { TicketStatusDisplay } from "../../../../../../domain/entities/operations/tickets/TicketEnums";
 import { BackButton } from "../../../../../common/components";
 import { TripStackParamList } from "../../../../../shared/navigation/StackParameters/types";
 import { useGetTicketsByBookingId } from "../../../hooks/Ticket/useGetTicketsByBookingId";
 import { container } from "../../../../../../core/di/ServiceContainer";
+import { Icon } from "../../atoms";
 
 type RoutePropType = RouteProp<TripStackParamList, "TicketList">;
 type NavigationPropType = StackNavigationProp<TripStackParamList, "TicketList">;
@@ -32,18 +33,18 @@ const getStatusColor = (status: string): string => {
     }
 };
 
-const getTicketTypeIcon = (ticketType: string): string => {
+const getTicketTypeConfig = (ticketType: string) => {
     switch (ticketType) {
         case "WeakBattery":
-            return "🔋";
+            return { icon: 'battery-low' as const, color: '#f59e0b', label: 'Yếu pin' };
         case "FlatTyre":
-            return "🛞";
+            return { icon: 'tire-flat' as const, color: '#ef4444', label: 'Xẹp lốp' };
         case "UsageGuidance":
-            return "❓";
+            return { icon: 'question-circle' as const, color: '#3b82f6', label: 'Hướng dẫn sử dụng' };
         case "OtherTechnical":
-            return "⚙️";
+            return { icon: 'tools' as const, color: '#8b5cf6', label: 'Kỹ thuật khác' };
         default:
-            return "🎫";
+            return { icon: 'ticket' as const, color: '#666', label: 'Khác' };
     }
 };
 
@@ -83,58 +84,73 @@ export const TicketListScreen: React.FC = () => {
         });
     };
 
-    const renderTicketItem = ({ item }: { item: TicketResponse }) => (
-        <TouchableOpacity
-            style={styles.ticketCard}
-            onPress={() => handleViewDetail(item.id)}
-            activeOpacity={0.7}
-        >
-            <View style={styles.ticketHeader}>
-                <View style={styles.ticketTypeContainer}>
-                    <Text style={styles.ticketTypeIcon}>
-                        {getTicketTypeIcon(item.ticketType)}
-                    </Text>
-                    <Text style={styles.ticketType}>
-                        {TicketTypeDisplay[item.ticketType as keyof typeof TicketTypeDisplay] || item.ticketType}
-                    </Text>
-                </View>
-                <View
-                    style={[
-                        styles.statusBadge,
-                        { backgroundColor: `${getStatusColor(item.status)}20` },
-                    ]}
-                >
+    const renderTicketItem = ({ item }: { item: TicketResponse }) => {
+        const typeConfig = getTicketTypeConfig(item.ticketType);
+        
+        return (
+            <TouchableOpacity
+                style={styles.ticketCard}
+                onPress={() => handleViewDetail(item.id)}
+                activeOpacity={0.7}
+            >
+                <View style={styles.ticketHeader}>
+                    <View style={styles.ticketTypeContainer}>
+                        <View style={[
+                            styles.ticketTypeIconContainer,
+                            { backgroundColor: `${typeConfig.color}15` }
+                        ]}>
+                            <Icon 
+                                name={typeConfig.icon} 
+                                size={18} 
+                                color={typeConfig.color} 
+                            />
+                        </View>
+                        <Text style={styles.ticketType}>{typeConfig.label}</Text>
+                    </View>
                     <View
                         style={[
-                            styles.statusDot,
-                            { backgroundColor: getStatusColor(item.status) },
-                        ]}
-                    />
-                    <Text
-                        style={[
-                            styles.statusText,
-                            { color: getStatusColor(item.status) },
+                            styles.statusBadge,
+                            { backgroundColor: `${getStatusColor(item.status)}20` },
                         ]}
                     >
-                        {TicketStatusDisplay[item.status] || item.status}
-                    </Text>
+                        <View
+                            style={[
+                                styles.statusDot,
+                                { backgroundColor: getStatusColor(item.status) },
+                            ]}
+                        />
+                        <Text
+                            style={[
+                                styles.statusText,
+                                { color: getStatusColor(item.status) },
+                            ]}
+                        >
+                            {TicketStatusDisplay[item.status] || item.status}
+                        </Text>
+                    </View>
                 </View>
-            </View>
 
-            <Text style={styles.ticketTitle} numberOfLines={2}>
-                {item.title}
-            </Text>
+                <Text style={styles.ticketTitle} numberOfLines={2}>
+                    {item.title}
+                </Text>
 
-            <Text style={styles.ticketDescription} numberOfLines={2}>
-                {item.description}
-            </Text>
+                <Text style={styles.ticketDescription} numberOfLines={2}>
+                    {item.description}
+                </Text>
 
-            <View style={styles.ticketFooter}>
-                <Text style={styles.ticketDate}>{formatDate(item.createdAt)}</Text>
-                <Text style={styles.viewMore}>Xem chi tiết →</Text>
-            </View>
-        </TouchableOpacity>
-    );
+                <View style={styles.ticketFooter}>
+                    <View style={styles.ticketDateContainer}>
+                        <Icon name="calendar" size={12} color="#666" />
+                        <Text style={styles.ticketDate}>{formatDate(item.createdAt)}</Text>
+                    </View>
+                    <View style={styles.viewMoreContainer}>
+                        <Text style={styles.viewMore}>Xem chi tiết</Text>
+                        <Icon name="arrow" size={12} color="#d4c5f9" />
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     const renderFooter = () => {
         if (!hasMore) return null;
@@ -149,7 +165,7 @@ export const TicketListScreen: React.FC = () => {
         if (loading) return null;
         return (
             <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>📭</Text>
+                <Icon name="ticket" size={64} color="#2a2a2a" />
                 <Text style={styles.emptyTitle}>Chưa có ticket nào</Text>
                 <Text style={styles.emptyMessage}>
                     Bạn chưa gửi báo cáo sự cố nào cho chuyến đi này
@@ -185,7 +201,7 @@ export const TicketListScreen: React.FC = () => {
                     </View>
                 </View>
                 <View style={styles.errorContainer}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <Icon name="warning" size={48} color="#ef4444" />
                     <Text style={styles.errorText}>{error}</Text>
                     <TouchableOpacity style={styles.retryButton} onPress={refetch}>
                         <Text style={styles.retryButtonText}>Thử lại</Text>
@@ -273,8 +289,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
     },
-    ticketTypeIcon: {
-        fontSize: 20,
+    ticketTypeIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
     },
     ticketType: {
         color: "#999",
@@ -318,9 +338,19 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#2a2a2a",
     },
+    ticketDateContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
     ticketDate: {
         color: "#666",
         fontSize: 12,
+    },
+    viewMoreContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
     },
     viewMore: {
         color: "#d4c5f9",
@@ -343,14 +373,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         padding: 24,
     },
-    errorIcon: {
-        fontSize: 48,
-        marginBottom: 16,
-    },
     errorText: {
         color: "#ef4444",
         fontSize: 16,
         textAlign: "center",
+        marginTop: 16,
         marginBottom: 16,
     },
     retryButton: {
@@ -373,14 +400,11 @@ const styles = StyleSheet.create({
         paddingTop: 60,
         paddingHorizontal: 32,
     },
-    emptyIcon: {
-        fontSize: 64,
-        marginBottom: 16,
-    },
     emptyTitle: {
         color: "#fff",
         fontSize: 18,
         fontWeight: "700",
+        marginTop: 16,
         marginBottom: 8,
         textAlign: "center",
     },
