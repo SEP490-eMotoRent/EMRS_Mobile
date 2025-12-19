@@ -1,14 +1,13 @@
-// hooks/IncidentManagement/useLocation.ts (NEW)
-
 import { useState, useEffect } from 'react';
 import * as Location from 'expo-location';
 
 interface LocationData {
-    address: string;
+    address: string | null; // Can be null now
     coords: {
         latitude: number;
         longitude: number;
-    };
+    } | null; // Can be null now
+    isValid: boolean; // New flag to indicate if this is real GPS data
 }
 
 interface UseLocationResult {
@@ -33,8 +32,9 @@ export const useLocation = (): UseLocationResult => {
             if (status !== 'granted') {
                 setError('Location permission denied');
                 setLocation({
-                    address: 'Location permission denied',
-                    coords: { latitude: 0, longitude: 0 }
+                    address: null,
+                    coords: null,
+                    isValid: false,
                 });
                 setIsLoading(false);
                 return;
@@ -72,30 +72,34 @@ export const useLocation = (): UseLocationResult => {
                     ].filter(Boolean).join(', ');
 
                     setLocation({
-                        address: addressString || `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
+                        address: addressString || null,
                         coords: {
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude,
                         },
+                        isValid: true,
                     });
                 } else {
+                    // No geocoding result - we have coords but no address
                     setLocation({
-                        address: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
+                        address: null,
                         coords: {
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude,
                         },
+                        isValid: true, // Coords are valid even without address
                     });
                 }
             } catch (geocodeError) {
-                // Geocoding failed, just use coordinates
-                console.log('Geocoding failed, using coordinates');
+                // Geocoding failed - we have coords but no address
+                console.log('Geocoding failed, using coordinates only');
                 setLocation({
-                    address: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
+                    address: null,
                     coords: {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude,
                     },
+                    isValid: true, // Coords are valid even without address
                 });
             }
 
@@ -104,10 +108,11 @@ export const useLocation = (): UseLocationResult => {
             console.error('Location error:', err);
             setError(err.message || 'Failed to get location');
             
-            // Set fallback location
+            // Complete failure - no valid data
             setLocation({
-                address: 'Unable to fetch location - Please enter manually',
-                coords: { latitude: 0, longitude: 0 }
+                address: null,
+                coords: null,
+                isValid: false,
             });
             
             setIsLoading(false);

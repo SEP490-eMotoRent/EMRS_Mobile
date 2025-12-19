@@ -51,11 +51,16 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
 
     const [manualLocation, setManualLocation] = useState<string>('');
 
+    // Only auto-fill location if we have a VALID address from GPS
     useEffect(() => {
-        if (location && !formData.incidentLocation && !manualLocation) {
-            const autoLocation = location.address || 
-                `GPS: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
-            setIncidentLocation(autoLocation);
+        if (
+            location?.isValid && 
+            location.address && 
+            location.address.trim() !== '' &&
+            !formData.incidentLocation && 
+            !manualLocation
+        ) {
+            setIncidentLocation(location.address);
         }
     }, [location, formData.incidentLocation, manualLocation, setIncidentLocation]);
 
@@ -68,6 +73,37 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
             hour: 'numeric',
             minute: '2-digit',
         });
+    };
+
+    const getLocationDisplay = (): string => {
+        if (isLoadingLocation) {
+            return 'Đang lấy vị trí...';
+        }
+        
+        // Show address only if valid and exists
+        if (location?.isValid && location.address) {
+            return location.address;
+        }
+        
+        // Show coordinates if we have them but no address
+        if (location?.isValid && location.coords) {
+            return `GPS: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
+        }
+        
+        return 'Không lấy được vị trí';
+    };
+
+    const getCoordinatesDisplay = (): string => {
+        if (isLoadingLocation) {
+            return 'Đang tải tọa độ GPS...';
+        }
+        
+        // Only show coordinates if valid
+        if (location?.isValid && location.coords) {
+            return `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
+        }
+        
+        return 'Không có tọa độ GPS';
     };
 
     const handleLocationChange = (text: string) => {
@@ -136,19 +172,12 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                <ProgressBar progress={progress} />
+                <ProgressBar progress={progress} label="Tiến độ biểu mẫu" />
 
                 <IncidentInfoSection
                     dateTime={getCurrentDateTimeDisplay()}
-                    location={
-                        location?.address || 
-                        (location ? `GPS: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}` : 'Đang lấy vị trí...')
-                    }
-                    address={
-                        location
-                            ? `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`
-                            : 'Đang tải tọa độ GPS...'
-                    }
+                    location={getLocationDisplay()}
+                    address={getCoordinatesDisplay()}
                     isLoadingLocation={isLoadingLocation}
                     onRefreshLocation={refreshLocation}
                 />

@@ -51,13 +51,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <View style={styles.profileHeader}>
-      {/* Account Verification Badge */}
-      {documents.length === 0 && (
-        <View style={styles.verificationBadge}>
-          <Badge type="error">Cần Xác Thực Tài Khoản</Badge>
-        </View>
-      )}
-
       <View style={styles.topSection}>
         {/* Avatar */}
         {avatar ? (
@@ -104,7 +97,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </Text>
         </View>
       </View>
-
+      {documents.length === 0 && (
+        <View style={styles.verificationBadge}>
+          <Badge type="error">Cần Xác Thực Tài Khoản</Badge>
+        </View>
+      )}
       {/* Stats Row - Improved design */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>

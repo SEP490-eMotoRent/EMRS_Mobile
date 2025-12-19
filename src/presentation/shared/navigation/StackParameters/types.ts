@@ -103,6 +103,7 @@ export type BookingStackParamList = {
     
     duration: string;
     rentalDays: number;
+    rentalHours: number; // ← ADD THIS
     
     // Numbers for calculations
     rentalFeeAmount: number;
@@ -116,8 +117,24 @@ export type BookingStackParamList = {
     membershipDiscountPercentage: number;
     membershipDiscountAmount: number;
     membershipTier: string;
+    
+    // Discount info for detailed breakdown
+    discountPercentage: number;
+    discountAmount: number;
+    durationType: string;
+    
+    // NEW: Holiday details array with breakdown
+    holidays?: Array<{
+      name: string;
+      count: number;
+      surchargePercentage: number;
+      baseAfterDiscount: number;
+      surchargeAmount: number;
+      totalPricePerDay: number;
+      date?: Date; // ← ALSO ADD THIS IF NOT THERE
+    }>;
   };
-  
+
   PaymentConfirmation: {
     vehicleId: string;
     vehicleName: string;
@@ -136,6 +153,7 @@ export type BookingStackParamList = {
     
     duration: string;
     rentalDays: number;
+    rentalHours: number;
     insurancePlan: string;
     insurancePlanId: string;
     
@@ -159,6 +177,22 @@ export type BookingStackParamList = {
     membershipDiscountPercentage: number;
     membershipDiscountAmount: number;
     membershipTier: string;
+    
+    // Discount info for detailed breakdown
+    discountPercentage: number;
+    discountAmount: number;
+    durationType: string;
+    
+    // NEW: Holiday details array with breakdown
+    holidays?: Array<{
+      name: string;
+      count: number;
+      surchargePercentage: number;
+      baseAfterDiscount: number;
+      surchargeAmount: number;
+      totalPricePerDay: number;
+      date?: Date;
+    }>;
   };
   
   VNPayWebView: {

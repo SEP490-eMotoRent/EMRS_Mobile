@@ -47,30 +47,27 @@ export const InsurancePlansScreen: React.FC = () => {
         branchName,
         pricePerDay,
         securityDeposit,
-        
-        // ISO strings for backend
         startDateISO,
         endDateISO,
-        
-        // Display strings for UI
         startDateDisplay,
         endDateDisplay,
-        
         duration, 
         rentalDays,
-        
-        // Numbers for calculations
+        rentalHours, // ← NOW RECEIVED FROM ROUTE
         rentalFeeAmount,
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
-        
         vehicleCategory,
         holidaySurcharge,
         holidayDayCount,
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
+        discountPercentage,
+        discountAmount,
+        durationType,
+        holidays,
     } = route.params;
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
@@ -104,6 +101,8 @@ export const InsurancePlansScreen: React.FC = () => {
     const fullTotalAmount = rentalFeeAmount + insuranceFeeValue + securityDeposit;
     const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
 
+    const hasDiscount = discountPercentage > 0;
+
     const handleContinue = () => {
         navigation.navigate('PaymentConfirmation', {
             vehicleId,
@@ -112,31 +111,22 @@ export const InsurancePlansScreen: React.FC = () => {
             branchId,
             branchName,
             pricePerDay,
-            
-            // Pass ISO strings for backend
             startDateISO,
             endDateISO,
-            
-            // Pass display strings for UI
             startDateDisplay,
             endDateDisplay,
-            
             duration,
             rentalDays,
+            rentalHours, // ← PASS IT FORWARD
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
-            
-            // Pass numbers for calculations
             rentalFeeAmount: rentalFeeAmount,
             insuranceFeeAmount: insuranceFeeValue,
             securityDepositAmount: securityDeposit,
-            
-            // Keep formatted strings for display
             rentalFee: `${rentalFeeAmount.toLocaleString()}đ`,
             insuranceFee: insuranceFeeValue === 0 ? "MIỄN PHÍ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
             total: fullTotal,
-            
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
@@ -146,6 +136,10 @@ export const InsurancePlansScreen: React.FC = () => {
             membershipDiscountPercentage,
             membershipDiscountAmount,
             membershipTier,
+            discountPercentage,
+            discountAmount,
+            durationType,
+            holidays,
         });
     };
 
@@ -219,29 +213,34 @@ export const InsurancePlansScreen: React.FC = () => {
                     />
                 ))}
 
-                {/* NEW: Unified PricingBreakdown Component (Simple Mode) */}
                 <PricingBreakdown
-                    // Rental subtotal (already calculated from previous screen)
-                    rentalSubtotal={rentalFeeAmount}
-                    
-                    // Surcharges (pass from route params)
+                    originalPricePerDay={pricePerDay}
+                    averagePricePerDay={averageRentalPrice}
+                    baseRentalFee={baseRentalFee}
+                    rentalDays={rentalDays}
+                    rentalHours={rentalHours} // ← USE IT HERE
+                    configDiscount={hasDiscount && durationType !== "daily" ? {
+                        percentage: discountPercentage,
+                        amount: discountAmount,
+                        type: durationType as "monthly" | "yearly",
+                        appliesTo: "all",
+                    } : undefined}
+                    membershipDiscount={{
+                        percentage: membershipDiscountPercentage,
+                        amount: membershipDiscountAmount,
+                        tier: membershipTier,
+                    }}
                     holidaySurcharge={holidaySurcharge > 0 ? {
                         amount: holidaySurcharge,
                         dayCount: holidayDayCount,
+                        holidays: holidays,
                     } : undefined}
-                    
-                    // Insurance
+                    rentalSubtotal={rentalFeeAmount}
                     insuranceFee={insuranceFeeValue}
                     insuranceName={selectedPlan?.title}
-                    
-                    // Deposit
                     securityDeposit={securityDeposit}
-                    
-                    // Total
                     total={fullTotalAmount}
-                    
-                    // Simple breakdown (no base price shown)
-                    showDetailedBreakdown={false}
+                    showDetailedBreakdown={true}
                 />
             </ScrollView>
 

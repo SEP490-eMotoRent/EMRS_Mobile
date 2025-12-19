@@ -1,51 +1,13 @@
-import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Animated } from "react-native";
+import React from "react";
+import { View, StyleSheet } from "react-native";
 
 export const UserLocationMarker: React.FC = () => {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
-
-  useEffect(() => {
-    // Smooth pulsing animation
-    animationRef.current = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.3,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    
-    animationRef.current.start();
-
-    return () => {
-      if (animationRef.current) {
-        animationRef.current.stop();
-        animationRef.current = null;
-      }
-      pulseAnim.setValue(1);
-    };
-  }, [pulseAnim]);
-
   return (
     <View style={styles.container}>
-      {/* Pulsing outer circle */}
-      <Animated.View
-        style={[
-          styles.pulseCircle,
-          {
-            transform: [{ scale: pulseAnim }],
-          },
-        ]}
-      />
+      {/* Smaller static outer circle */}
+      <View style={styles.staticCircle} />
       
-      {/* Main blue dot */}
+      {/* Bigger main blue dot */}
       <View style={styles.mainDot}>
         <View style={styles.innerDot} />
       </View>
@@ -55,22 +17,22 @@ export const UserLocationMarker: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    width: 60,
-    height: 60,
+    width: 40,          // Reduced from 50
+    height: 40,         // Reduced from 50
     alignItems: "center",
     justifyContent: "center",
   },
-  pulseCircle: {
+  staticCircle: {
     position: "absolute",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 24,          // Reduced from 32
+    height: 24,         // Reduced from 32
+    borderRadius: 12,   // Half of 24
     backgroundColor: "rgba(74, 144, 226, 0.25)",
   },
   mainDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 22,          // Increased from 18
+    height: 22,         // Increased from 18
+    borderRadius: 11,   // Half of 22
     backgroundColor: "#4A90E2",
     borderWidth: 3,
     borderColor: "#fff",
@@ -83,9 +45,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   innerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,           // Slightly increased from 6
+    height: 7,          // Slightly increased from 6
+    borderRadius: 3.5,  // Half of 7
     backgroundColor: "#fff",
   },
 });
