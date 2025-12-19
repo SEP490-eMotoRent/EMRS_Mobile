@@ -28,4 +28,8 @@ export class GpsSharingRepositoryImpl implements GpsSharingRepository {
     async getSessionsByRenterId(renterId: string): Promise<ApiResponse<any[]>> {
         return await this.remoteDataSource.getSessionsByRenterId(renterId);
     }
+
+    async cancel(sessionId: string): Promise<ApiResponse<any>> {
+        return await this.remoteDataSource.cancel(sessionId);
+    }
 }

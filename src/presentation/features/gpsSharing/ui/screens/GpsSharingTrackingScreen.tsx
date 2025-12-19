@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -17,9 +18,11 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import sl from "../../../../../core/di/InjectionContainer";
 import { SessionDetailResponse } from "../../../../../data/models/gpsSharing/SessionDetailResponse";
 import { GetGpsSharingSessionDetailUseCase } from "../../../../../domain/usecases/gpsSharing/GetGpsSharingSessionDetailUseCase";
+import { CancelGpsSharingSessionUseCase } from "../../../../../domain/usecases/gpsSharing/CancelGpsSharingSessionUseCase";
 import CustomMapViewDirections from "../organisms/CustomMapViewDirections";
 import { useAppSelector } from "../../../authentication/store/hooks";
 import { RootState } from "../../../authentication/store";
+import Toast from "react-native-toast-message";
 
 type DeviceLocation = {
   lat: number;
@@ -51,6 +54,7 @@ export const GpsSharingTrackingScreen: React.FC = () => {
   const [mqttError, setMqttError] = useState<string | null>(null);
   const [sessionDetail, setSessionDetail] =
     useState<SessionDetailResponse | null>(null);
+  const [canceling, setCanceling] = useState(false);
   const mapRef = useRef<MapView | null>(null);
   const ownerClientRef = useRef<MqttClient | null>(null);
   const guestClientRef = useRef<MqttClient | null>(null);
@@ -432,6 +436,68 @@ export const GpsSharingTrackingScreen: React.FC = () => {
     );
   }, [mapRef, sessionDetail, user, ownerLocation, guestLocation]);
 
+  const handleCancelSession = useCallback(() => {
+    if (!sessionId) return;
+
+    Alert.alert(
+      "Hủy chia sẻ GPS",
+      "Bạn có chắc chắn muốn hủy session chia sẻ GPS này?",
+      [
+        {
+          text: "Không",
+          style: "cancel",
+        },
+        {
+          text: "Hủy session",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setCanceling(true);
+              const cancelUseCase = new CancelGpsSharingSessionUseCase(
+                sl.get("GpsSharingRepository")
+              );
+              const response = await cancelUseCase.execute(sessionId);
+
+              if (response.success) {
+                Toast.show({
+                  type: "success",
+                  text1: "Thành công",
+                  text2: "Đã hủy session chia sẻ GPS",
+                });
+                // Disconnect MQTT clients
+                if (ownerClientRef.current) {
+                  ownerClientRef.current.end(true);
+                }
+                if (guestClientRef.current) {
+                  guestClientRef.current.end(true);
+                }
+                // Navigate back
+                navigation.goBack();
+              } else {
+                Toast.show({
+                  type: "error",
+                  text1: "Lỗi",
+                  text2: response.message || "Không thể hủy session",
+                });
+              }
+            } catch (error: any) {
+              console.error("Error canceling session:", error);
+              Toast.show({
+                type: "error",
+                text1: "Lỗi",
+                text2:
+                  error.response?.data?.message ||
+                  "Đã xảy ra lỗi khi hủy session",
+              });
+            } finally {
+              setCanceling(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [sessionId, navigation]);
+
   return (
     <View style={styles.container}>
       {/* Full Screen Map */}
@@ -695,6 +761,29 @@ export const GpsSharingTrackingScreen: React.FC = () => {
               <Text style={styles.errorText}>{mqttError}</Text>
             </View>
           )}
+
+          {/* Cancel Session Button */}
+          <TouchableOpacity
+            style={styles.cancelSessionButton}
+            onPress={handleCancelSession}
+            disabled={canceling}
+            activeOpacity={0.8}
+          >
+            <View style={styles.cancelSessionButtonContent}>
+              {canceling ? (
+                <ActivityIndicator size="small" color="#FF6B6B" />
+              ) : (
+                <>
+                  <View style={styles.cancelSessionIconContainer}>
+                    <AntDesign name="close-circle" size={18} color="#FF6B6B" />
+                  </View>
+                  <Text style={styles.cancelSessionButtonText}>
+                    Hủy chia sẻ GPS
+                  </Text>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
         </BottomSheetView>
       </BottomSheet>
     </View>
@@ -1011,6 +1100,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#FF8A80",
     fontWeight: "500",
+  },
+  cancelSessionButton: {
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,107,107,0.4)",
+    backgroundColor: "rgba(255,107,107,0.12)",
+  },
+  cancelSessionButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  cancelSessionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,107,107,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelSessionButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#FF6B6B",
+    letterSpacing: 0.5,
   },
 });
 
