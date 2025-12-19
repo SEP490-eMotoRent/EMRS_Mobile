@@ -216,15 +216,15 @@ export const ManualInspectionScreen: React.FC = () => {
     const ok = await ensurePermissions();
     if (!ok) {
       Alert.alert(
-        "Permission required",
-        "Please grant camera and media permissions."
+        "Yêu cầu quyền truy cập",
+        "Vui lòng cấp quyền truy cập camera và phương tiện."
       );
       return;
     }
 
-    Alert.alert("Thêm ảnh", "Chọn nguồn ảnh", [
+    Alert.alert("Thêm ảnh", "Chọn nguồn", [
       {
-        text: "Camera",
+        text: "Máy ảnh",
         onPress: async () => {
           const res = await ImagePicker.launchCameraAsync({
             allowsEditing: true,

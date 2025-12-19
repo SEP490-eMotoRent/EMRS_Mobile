@@ -47,39 +47,6 @@ export const ChargingListBookingScreen: React.FC = () => {
     }
   };
 
-  const getStatusStyle = (status: "PAID" | "PENDING" | "CANCELLED") => {
-    switch (status) {
-      case "PAID":
-        return {
-          label: "Đã thanh toán",
-          container: styles.statusPaid,
-          text: styles.statusPaidText,
-          iconColor: "#22C55E",
-        };
-      case "PENDING":
-        return {
-          label: "Đang chờ",
-          container: styles.statusPending,
-          text: styles.statusPendingText,
-          iconColor: "#FACC15",
-        };
-      case "CANCELLED":
-        return {
-          label: "Đã hủy",
-          container: styles.statusCancelled,
-          text: styles.statusCancelledText,
-          iconColor: "#F97316",
-        };
-      default:
-        return {
-          label: status,
-          container: styles.statusPending,
-          text: styles.statusPendingText,
-          iconColor: "#9CA3AF",
-        };
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -146,7 +113,6 @@ export const ChargingListBookingScreen: React.FC = () => {
             </View>
           ) : (
             chargingList.map((session, index) => {
-              const statusStyle = getStatusStyle("PAID");
               const batteryDelta =
                 (session as any).batteryPercentageCharged ??
                 session.endBatteryPercentage - session.startBatteryPercentage;
@@ -166,16 +132,6 @@ export const ChargingListBookingScreen: React.FC = () => {
                           {new Date(session.chargingDate).toLocaleString("en-GB")}
                         </Text>
                       </View>
-                    </View>
-                    <View style={[styles.statusBadge, statusStyle.container]}>
-                      <AntDesign
-                        name="check-circle"
-                        size={12}
-                        color={statusStyle.iconColor}
-                      />
-                      <Text style={[styles.statusText, statusStyle.text]}>
-                        {statusStyle.label}
-                      </Text>
                     </View>
                   </View>
 
@@ -229,13 +185,6 @@ export const ChargingListBookingScreen: React.FC = () => {
                         Thời gian sạc: {new Date(session.chargingDate).toLocaleString("en-GB")}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      style={styles.sessionActionBtn}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.sessionActionText}>Xem chi tiết</Text>
-                      <AntDesign name="arrow-right" size={14} color="#C9B6FF" />
-                    </TouchableOpacity>
                   </View>
                 </View>
               );

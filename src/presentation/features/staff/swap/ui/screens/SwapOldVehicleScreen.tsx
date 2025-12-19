@@ -108,15 +108,15 @@ export const SwapOldVehicleScreen: React.FC = () => {
     const ok = await ensurePermissions();
     if (!ok) {
       Alert.alert(
-        "Permission required",
-        "Please grant camera and media permissions."
+        "Yêu cầu quyền truy cập",
+        "Vui lòng cấp quyền truy cập camera và phương tiện."
       );
       return;
     }
 
-    Alert.alert("Add photo", "Choose source", [
+    Alert.alert("Thêm ảnh", "Chọn nguồn", [
       {
-        text: "Camera",
+        text: "Máy ảnh",
         onPress: async () => {
           const res = await ImagePicker.launchCameraAsync({
             allowsEditing: true,
@@ -128,7 +128,7 @@ export const SwapOldVehicleScreen: React.FC = () => {
         },
       },
       {
-        text: "Library",
+        text: "Thư viện",
         onPress: async () => {
           const res = await ImagePicker.launchImageLibraryAsync({
             allowsEditing: true,
@@ -140,7 +140,7 @@ export const SwapOldVehicleScreen: React.FC = () => {
           }
         },
       },
-      { text: "Cancel", style: "cancel" },
+      { text: "Hủy", style: "cancel" },
     ]);
   };
 

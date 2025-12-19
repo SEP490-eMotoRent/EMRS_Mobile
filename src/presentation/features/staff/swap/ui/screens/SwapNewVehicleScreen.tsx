@@ -106,15 +106,15 @@ export const SwapNewVehicleScreen: React.FC = () => {
     const ok = await ensurePermissions();
     if (!ok) {
       Alert.alert(
-        "Permission required",
-        "Please grant camera and media permissions."
+        "Yêu cầu quyền truy cập",
+        "Vui lòng cấp quyền truy cập camera và phương tiện."
       );
       return;
     }
 
-    Alert.alert("Add photo", "Choose source", [
+    Alert.alert("Thêm ảnh", "Chọn nguồn", [
       {
-        text: "Camera",
+        text: "Máy ảnh",
         onPress: async () => {
           const res = await ImagePicker.launchCameraAsync({
             allowsEditing: true,
@@ -126,7 +126,7 @@ export const SwapNewVehicleScreen: React.FC = () => {
         },
       },
       {
-        text: "Library",
+        text: "Thư viện",
         onPress: async () => {
           const res = await ImagePicker.launchImageLibraryAsync({
             allowsEditing: true,
@@ -138,7 +138,7 @@ export const SwapNewVehicleScreen: React.FC = () => {
           }
         },
       },
-      { text: "Cancel", style: "cancel" },
+      { text: "Hủy", style: "cancel" },
     ]);
   };
 
@@ -199,13 +199,13 @@ export const SwapNewVehicleScreen: React.FC = () => {
 
     // Validate battery
     if (!battery || battery.trim() === "") {
-      newErrors.battery = "Vui lòng nhập % pin/xăng";
+      newErrors.battery = "Vui lòng nhập % pin";
       isValid = false;
       shakeError(batteryShakeAnim);
     } else {
       const batteryNum = parseInt(battery);
       if (isNaN(batteryNum) || batteryNum < 0 || batteryNum > 100) {
-        newErrors.battery = "Pin/xăng phải là số từ 0 đến 100";
+        newErrors.battery = "Pin phải là số từ 0 đến 100";
         isValid = false;
         shakeError(batteryShakeAnim);
       }
@@ -451,12 +451,12 @@ export const SwapNewVehicleScreen: React.FC = () => {
               <Text style={styles.errorText}>{errors.odometer}</Text>
             </View>
           )}
-          <Text style={styles.label}>Mức pin/xăng</Text>
+          <Text style={styles.label}>Mức pin</Text>
           <Animated.View style={{ transform: [{ translateX: batteryShakeAnim }] }}>
             <TextInput
               style={[styles.input, errors.battery && styles.inputError]}
               keyboardType="numeric"
-              placeholder="Nhập % pin/xăng"
+              placeholder="Nhập % pin"
               placeholderTextColor={colors.text.secondary}
               value={battery}
               onChangeText={(text) => {
