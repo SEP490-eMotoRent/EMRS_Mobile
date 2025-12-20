@@ -6,12 +6,14 @@ export interface DescriptionSectionProps {
     value: string;
     onChangeText: (text: string) => void;
     error?: string;
+    onFocus?: () => void;
 }
 
 export const DescriptionSection: React.FC<DescriptionSectionProps> = ({
     value,
     onChangeText,
     error,
+    onFocus,
 }) => {
     const charCount = value.length;
     const maxChars = 500;
@@ -34,6 +36,7 @@ export const DescriptionSection: React.FC<DescriptionSectionProps> = ({
                     placeholderTextColor="#666"
                     value={value}
                     onChangeText={onChangeText}
+                    onFocus={onFocus}
                     numberOfLines={6}
                     maxLength={maxChars}
                     textAlignVertical="top"

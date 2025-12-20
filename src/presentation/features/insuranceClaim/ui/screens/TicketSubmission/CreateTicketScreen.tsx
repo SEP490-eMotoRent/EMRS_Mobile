@@ -1,11 +1,12 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
     ActivityIndicator,
     Alert,
     Image,
+    Keyboard,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -41,10 +42,36 @@ export const CreateTicketScreen: React.FC = () => {
 
     const { createTicket, loading } = useCreateTicket(container.support.tickets.create);
 
+    const scrollViewRef = useRef<ScrollView>(null);
+    const titleInputRef = useRef<View>(null);
+    const descriptionInputRef = useRef<View>(null);
+
     const [selectedType, setSelectedType] = useState<TicketTypeEnum | null>(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [attachments, setAttachments] = useState<string[]>([]);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+    // Handle keyboard events
+    useEffect(() => {
+        const keyboardWillShow = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            (e) => {
+                setKeyboardHeight(e.endCoordinates.height);
+            }
+        );
+        const keyboardWillHide = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => {
+                setKeyboardHeight(0);
+            }
+        );
+
+        return () => {
+            keyboardWillShow.remove();
+            keyboardWillHide.remove();
+        };
+    }, []);
 
     const handleBack = () => {
         if (navigation.canGoBack()) {
@@ -156,6 +183,22 @@ export const CreateTicketScreen: React.FC = () => {
         }
     };
 
+    // Scroll helpers for input focus
+    const scrollToInput = (ref: React.RefObject<View>) => {
+        setTimeout(() => {
+            ref.current?.measureLayout(
+                scrollViewRef.current as any,
+                (x, y) => {
+                    scrollViewRef.current?.scrollTo({
+                        y: y - 80,
+                        animated: true,
+                    });
+                },
+                () => {}
+            );
+        }, 100);
+    };
+
     const isFormValid = selectedType !== null && title.trim() && description.trim();
 
     return (
@@ -170,13 +213,16 @@ export const CreateTicketScreen: React.FC = () => {
 
             <KeyboardAvoidingView
                 style={styles.flex}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
             >
                 <ScrollView
+                    ref={scrollViewRef}
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                 >
                     <View style={styles.vehicleCard}>
                         <View style={styles.vehicleIcon}>
@@ -232,7 +278,10 @@ export const CreateTicketScreen: React.FC = () => {
                         </View>
                     </View>
 
-                    <View style={styles.section}>
+                    <View 
+                        ref={titleInputRef}
+                        style={styles.section}
+                    >
                         <Text style={styles.sectionTitle}>Tiêu đề *</Text>
                         <TextInput
                             style={styles.input}
@@ -240,12 +289,17 @@ export const CreateTicketScreen: React.FC = () => {
                             placeholderTextColor="#666"
                             value={title}
                             onChangeText={setTitle}
+                            onFocus={() => scrollToInput(titleInputRef)}
                             maxLength={100}
+                            returnKeyType="next"
                         />
                         <Text style={styles.charCount}>{title.length}/100</Text>
                     </View>
 
-                    <View style={styles.section}>
+                    <View 
+                        ref={descriptionInputRef}
+                        style={styles.section}
+                    >
                         <Text style={styles.sectionTitle}>Mô tả chi tiết *</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
@@ -253,6 +307,7 @@ export const CreateTicketScreen: React.FC = () => {
                             placeholderTextColor="#666"
                             value={description}
                             onChangeText={setDescription}
+                            onFocus={() => scrollToInput(descriptionInputRef)}
                             multiline
                             numberOfLines={5}
                             textAlignVertical="top"
@@ -305,11 +360,12 @@ export const CreateTicketScreen: React.FC = () => {
                         </View>
                     </View>
 
-                    <View style={styles.bottomSpacing} />
+                    {/* Dynamic bottom spacing based on keyboard */}
+                    <View style={{ height: keyboardHeight > 0 ? 350 : 120 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, keyboardHeight > 0 && { paddingBottom: 16 }]}>
                 <PrimaryButton
                     title={loading ? "Đang gửi..." : "Gửi báo cáo"}
                     onPress={handleSubmit}
@@ -508,9 +564,6 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 14,
         fontWeight: "600",
-    },
-    bottomSpacing: {
-        height: 100,
     },
     footer: {
         padding: 16,

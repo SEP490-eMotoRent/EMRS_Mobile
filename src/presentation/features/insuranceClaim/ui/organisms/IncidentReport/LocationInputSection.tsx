@@ -6,12 +6,14 @@ export interface LocationInputSectionProps {
     value: string;
     onChangeText: (text: string) => void;
     error?: string;
+    onFocus?: () => void;
 }
 
 export const LocationInputSection: React.FC<LocationInputSectionProps> = ({ 
     value,
     onChangeText,
     error,
+    onFocus,
 }) => (
     <View style={styles.section}>
         <View style={styles.header}>
@@ -29,6 +31,7 @@ export const LocationInputSection: React.FC<LocationInputSectionProps> = ({
                 placeholderTextColor="#666"
                 value={value}
                 onChangeText={onChangeText}
+                onFocus={onFocus}
                 multiline
             />
         </View>

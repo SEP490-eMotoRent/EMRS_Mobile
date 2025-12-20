@@ -1,7 +1,17 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { 
+    ActivityIndicator, 
+    Alert, 
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView, 
+    StyleSheet, 
+    Text, 
+    View 
+} from 'react-native';
 import { CreateInsuranceClaimRequest } from '../../../../../data/models/insurance/insuranceClaim/CreateInsuranceClaimRequest';
 import { TripStackParamList } from '../../../../shared/navigation/StackParameters/types';
 import { useCreateInsuranceClaim } from '../../hooks/IncidentManagement/useCreateInsuranceClaim';
@@ -34,6 +44,10 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
     const route = useRoute<RouteProp>();
     const { bookingId } = route.params;
 
+    const scrollViewRef = useRef<ScrollView>(null);
+    const locationInputRef = useRef<View>(null);
+    const descriptionInputRef = useRef<View>(null);
+
     const {
         formData,
         errors,
@@ -50,6 +64,28 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
     const { isLoading, error: apiError, createClaim } = useCreateInsuranceClaim();
 
     const [manualLocation, setManualLocation] = useState<string>('');
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+    // Handle keyboard events
+    useEffect(() => {
+        const keyboardWillShow = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            (e) => {
+                setKeyboardHeight(e.endCoordinates.height);
+            }
+        );
+        const keyboardWillHide = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => {
+                setKeyboardHeight(0);
+            }
+        );
+
+        return () => {
+            keyboardWillShow.remove();
+            keyboardWillHide.remove();
+        };
+    }, []);
 
     // Only auto-fill location if we have a VALID address from GPS
     useEffect(() => {
@@ -80,12 +116,10 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
             return 'Đang lấy vị trí...';
         }
         
-        // Show address only if valid and exists
         if (location?.isValid && location.address) {
             return location.address;
         }
         
-        // Show coordinates if we have them but no address
         if (location?.isValid && location.coords) {
             return `GPS: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
         }
@@ -98,7 +132,6 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
             return 'Đang tải tọa độ GPS...';
         }
         
-        // Only show coordinates if valid
         if (location?.isValid && location.coords) {
             return `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
         }
@@ -154,6 +187,22 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
         }
     };
 
+    // Scroll helpers for input focus
+    const scrollToInput = (ref: React.RefObject<View>) => {
+        setTimeout(() => {
+            ref.current?.measureLayout(
+                scrollViewRef.current as any,
+                (x, y) => {
+                    scrollViewRef.current?.scrollTo({
+                        y: y - 100,
+                        animated: true,
+                    });
+                },
+                () => {}
+            );
+        }, 100);
+    };
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -167,48 +216,72 @@ export const IncidentReportScreen: React.FC<IncidentReportScreenProps> = () => {
                 </View>
             </View>
 
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
+            <KeyboardAvoidingView
+                style={styles.keyboardAvoid}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                <ProgressBar progress={progress} label="Tiến độ biểu mẫu" />
+                <ScrollView
+                    ref={scrollViewRef}
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                >
+                    <ProgressBar progress={progress} label="Tiến độ biểu mẫu" />
 
-                <IncidentInfoSection
-                    dateTime={getCurrentDateTimeDisplay()}
-                    location={getLocationDisplay()}
-                    address={getCoordinatesDisplay()}
-                    isLoadingLocation={isLoadingLocation}
-                    onRefreshLocation={refreshLocation}
-                />
+                    <IncidentInfoSection
+                        dateTime={getCurrentDateTimeDisplay()}
+                        location={getLocationDisplay()}
+                        address={getCoordinatesDisplay()}
+                        isLoadingLocation={isLoadingLocation}
+                        onRefreshLocation={refreshLocation}
+                    />
 
-                <PhotosDocumentationSection
-                    photos={formData.photos}
-                    onAddPhoto={addPhoto}
-                    onRemovePhoto={removePhoto}
-                    bookingId={bookingId}
-                />
+                    <PhotosDocumentationSection
+                        photos={formData.photos}
+                        onAddPhoto={addPhoto}
+                        onRemovePhoto={removePhoto}
+                        bookingId={bookingId}
+                    />
 
-                <LocationInputSection
-                    value={formData.incidentLocation}
-                    onChangeText={handleLocationChange}
-                    error={errors.incidentLocation}
-                />
-
-                <DescriptionSection
-                    value={formData.description}
-                    onChangeText={setDescription}
-                    error={errors.description}
-                />
-
-                {isLoading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#d4c5f9" />
+                    <View 
+                        ref={locationInputRef}
+                        onLayout={() => {}}
+                    >
+                        <LocationInputSection
+                            value={formData.incidentLocation}
+                            onChangeText={handleLocationChange}
+                            error={errors.incidentLocation}
+                            onFocus={() => scrollToInput(locationInputRef)}
+                        />
                     </View>
-                ) : (
-                    <SubmitButton onPress={handleSubmit} />
-                )}
-            </ScrollView>
+
+                    <View 
+                        ref={descriptionInputRef}
+                        onLayout={() => {}}
+                    >
+                        <DescriptionSection
+                            value={formData.description}
+                            onChangeText={setDescription}
+                            error={errors.description}
+                            onFocus={() => scrollToInput(descriptionInputRef)}
+                        />
+                    </View>
+
+                    {isLoading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#d4c5f9" />
+                        </View>
+                    ) : (
+                        <SubmitButton onPress={handleSubmit} />
+                    )}
+
+                    {/* Extra padding when keyboard is visible */}
+                    <View style={{ height: keyboardHeight > 0 ? 300 : 100 }} />
+                </ScrollView>
+            </KeyboardAvoidingView>
         </View>
     );
 };
@@ -239,6 +312,9 @@ const styles = StyleSheet.create({
     headerSubtitle: {
         fontSize: 15,
         color: '#666',
+    },
+    keyboardAvoid: {
+        flex: 1,
     },
     scrollView: {
         flex: 1,
