@@ -26,68 +26,6 @@ type TicketListScreenNavigationProp = StackNavigationProp<
 
 type TicketListScreenRouteProp = RouteProp<StaffStackParamList, "TicketList">;
 
-// const mockTickets: Ticket[] = [
-//   {
-//     id: "1",
-//     ticketNumber: "TKT-2024-001",
-//     status: "pending",
-//     priority: "urgent",
-//     title: "Xe không khởi động được",
-//     description: "Xe không thể khởi động, có tiếng kêu lạ từ động cơ",
-//     renterName: "Nguyễn Văn A",
-//     renterPhone: "0901234567",
-//     vehicleLicensePlate: "59K1-55345",
-//     vehicleModel: "VinFast Theon S",
-//     location: "123 Nguyễn Huệ, Quận 1, TP.HCM",
-//     createdAt: "2024-01-15T10:30:00Z",
-//   },
-//   {
-//     id: "2",
-//     ticketNumber: "TKT-2024-002",
-//     status: "in_progress",
-//     priority: "high",
-//     title: "Pin xe hết nhanh",
-//     description: "Pin xe chỉ chạy được 20km thay vì 150km như quảng cáo",
-//     renterName: "Trần Thị B",
-//     renterPhone: "0912345678",
-//     vehicleLicensePlate: "59K1-55346",
-//     vehicleModel: "VinFast Klara S",
-//     location: "456 Lê Lợi, Quận 3, TP.HCM",
-//     createdAt: "2024-01-15T09:15:00Z",
-//     assignedAt: "2024-01-15T09:30:00Z",
-//   },
-//   {
-//     id: "3",
-//     ticketNumber: "TKT-2024-003",
-//     status: "resolved",
-//     priority: "medium",
-//     title: "Lốp xe bị xẹp",
-//     description: "Lốp sau bị xẹp, cần thay thế",
-//     renterName: "Lê Văn C",
-//     renterPhone: "0923456789",
-//     vehicleLicensePlate: "59K1-55347",
-//     vehicleModel: "VinFast Theon S",
-//     location: "789 Điện Biên Phủ, Quận Bình Thạnh, TP.HCM",
-//     createdAt: "2024-01-14T14:20:00Z",
-//     assignedAt: "2024-01-14T14:35:00Z",
-//     resolvedAt: "2024-01-14T16:00:00Z",
-//   },
-//   {
-//     id: "4",
-//     ticketNumber: "TKT-2024-004",
-//     status: "pending",
-//     priority: "medium",
-//     title: "Không thể sạc pin",
-//     description: "Ổ cắm sạc không hoạt động, không thể sạc pin",
-//     renterName: "Phạm Thị D",
-//     renterPhone: "0934567890",
-//     vehicleLicensePlate: "59K1-55348",
-//     vehicleModel: "VinFast Klara A1",
-//     location: "321 Võ Văn Tần, Quận 3, TP.HCM",
-//     createdAt: "2024-01-15T11:00:00Z",
-//   },
-// ];
-
 export const TicketListScreen: React.FC = () => {
   const navigation = useNavigation<TicketListScreenNavigationProp>();
   const route = useRoute<TicketListScreenRouteProp>();
