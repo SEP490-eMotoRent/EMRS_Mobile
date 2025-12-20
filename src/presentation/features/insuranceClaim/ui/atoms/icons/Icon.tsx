@@ -1,4 +1,3 @@
-
 import React from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
@@ -89,7 +88,17 @@ export const Icon: React.FC<IconProps> = ({ name, color = '#fff', size = 24 }) =
         
         // Ticket icons
         'battery-low': { library: 'FontAwesome5', iconName: 'battery-quarter' },
-        'tire-flat': { library: 'MaterialCommunityIcons', iconName: 'tire-alert' },
+        
+        // ⭐ TIRE ICON - Try these in order if one doesn't work:
+        // OPTION 1 (Recommended): Simple tire - most likely to work
+        'tire-flat': { library: 'MaterialCommunityIcons', iconName: 'tire' },
+        
+        // OPTION 2 (Alternative): If above fails, uncomment this:
+        // 'tire-flat': { library: 'Ionicons', iconName: 'alert-circle-outline' },
+        
+        // OPTION 3 (Fallback): If both fail, uncomment this:
+        // 'tire-flat': { library: 'Ionicons', iconName: 'radio-button-off-outline' },
+        
         'question-circle': { library: 'FontAwesome', iconName: 'question-circle' },
         'tools': { library: 'FontAwesome5', iconName: 'tools' },
         'ticket': { library: 'FontAwesome', iconName: 'ticket' },
