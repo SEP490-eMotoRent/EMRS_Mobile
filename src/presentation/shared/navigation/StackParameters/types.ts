@@ -103,7 +103,7 @@ export type BookingStackParamList = {
     
     duration: string;
     rentalDays: number;
-    rentalHours: number; // ← ADD THIS
+    rentalHours: number;
     
     // Numbers for calculations
     rentalFeeAmount: number;
@@ -113,7 +113,6 @@ export type BookingStackParamList = {
     
     vehicleCategory: string;
     holidaySurcharge: number;
-    holidayDayCount: number;
     membershipDiscountPercentage: number;
     membershipDiscountAmount: number;
     membershipTier: string;
@@ -123,16 +122,48 @@ export type BookingStackParamList = {
     discountAmount: number;
     durationType: string;
     
-    // NEW: Holiday details array with breakdown
-    holidays?: Array<{
-      name: string;
-      count: number;
-      surchargePercentage: number;
-      baseAfterDiscount: number;
+    // 4-Component System
+    startPartial?: {
+      date: Date;
+      hours: number;
+      isHoliday: boolean;
+      holiday?: {
+        holidayName: string;
+        priceMultiplier: number;
+      };
+      basePrice: number;
       surchargeAmount: number;
-      totalPricePerDay: number;
-      date?: Date; // ← ALSO ADD THIS IF NOT THERE
+      totalPrice: number;
+      type: "start" | "end";
+    } | null;
+    startPartialAmount?: number;
+    normalFullDays?: number;
+    normalFullDaysAmount?: number;
+    holidayFullDays?: Array<{
+      date: Date;
+      holiday: {
+        holidayName: string;
+        priceMultiplier: number;
+      };
+      basePrice: number;
+      surchargeAmount: number;
+      totalPrice: number;
     }>;
+    holidayFullDaysAmount?: number;
+    endPartial?: {
+      date: Date;
+      hours: number;
+      isHoliday: boolean;
+      holiday?: {
+        holidayName: string;
+        priceMultiplier: number;
+      };
+      basePrice: number;
+      surchargeAmount: number;
+      totalPrice: number;
+      type: "start" | "end";
+    } | null;
+    endPartialAmount?: number;
   };
 
   PaymentConfirmation: {
@@ -173,7 +204,6 @@ export type BookingStackParamList = {
     averageRentalPrice: number;
     vehicleCategory: string;
     holidaySurcharge: number;
-    holidayDayCount: number;
     membershipDiscountPercentage: number;
     membershipDiscountAmount: number;
     membershipTier: string;
@@ -183,16 +213,48 @@ export type BookingStackParamList = {
     discountAmount: number;
     durationType: string;
     
-    // NEW: Holiday details array with breakdown
-    holidays?: Array<{
-      name: string;
-      count: number;
-      surchargePercentage: number;
-      baseAfterDiscount: number;
+    // 4-Component System
+    startPartial?: {
+      date: Date;
+      hours: number;
+      isHoliday: boolean;
+      holiday?: {
+        holidayName: string;
+        priceMultiplier: number;
+      };
+      basePrice: number;
       surchargeAmount: number;
-      totalPricePerDay: number;
-      date?: Date;
+      totalPrice: number;
+      type: "start" | "end";
+    } | null;
+    startPartialAmount?: number;
+    normalFullDays?: number;
+    normalFullDaysAmount?: number;
+    holidayFullDays?: Array<{
+      date: Date;
+      holiday: {
+        holidayName: string;
+        priceMultiplier: number;
+      };
+      basePrice: number;
+      surchargeAmount: number;
+      totalPrice: number;
     }>;
+    holidayFullDaysAmount?: number;
+    endPartial?: {
+      date: Date;
+      hours: number;
+      isHoliday: boolean;
+      holiday?: {
+        holidayName: string;
+        priceMultiplier: number;
+      };
+      basePrice: number;
+      surchargeAmount: number;
+      totalPrice: number;
+      type: "start" | "end";
+    } | null;
+    endPartialAmount?: number;
   };
   
   VNPayWebView: {

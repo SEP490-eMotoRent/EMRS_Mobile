@@ -81,13 +81,22 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
         rentingRate,
         discountPercentage,
         durationType,
-        progressiveTierBreakdown,
         membershipDiscountPercentage,
         membershipTier,
         membershipDiscountAmount,
-        holidayDays,
+        
+        // 4-Component System
+        startPartial,
+        startPartialAmount,
+        normalFullDays,
+        normalFullDaysAmount,
+        holidayFullDays,
+        holidayFullDaysAmount,
+        endPartial,
+        endPartialAmount,
+        
+        // Legacy
         holidaySurcharge,
-        hasHolidaySurcharge,
         baseRentalFee,
         discountAmount,
         totalRentalFee,
@@ -106,27 +115,19 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const displayDays = Math.floor(totalHours / 24);
     const displayHours = Math.floor(totalHours % 24);
-    const rentalDurationText = displayHours > 0 
-        ? `${displayDays} Ngày ${displayHours} Giờ` 
-        : `${displayDays} Ngày`;
     
-    console.log("📊 Rental calculation:", {
+    console.log("📊 4-Component Rental:", {
         category,
         totalHours,
         displayDays,
         displayHours,
-        durationType,
-        rentingRate,
-        discountPercentage: `${discountPercentage}%`,
-        progressiveTiers: progressiveTierBreakdown,
-        membershipTier,
-        membershipDiscountPercentage: `${membershipDiscountPercentage}%`,
-        membershipDiscountAmount,
-        holidayDays: holidayDays.length,
-        holidaySurcharge,
-        baseRentalFee,
-        totalRentalFee,
-        discountAmount,
+        components: {
+            startPartial: startPartialAmount,
+            normalFullDays: normalFullDaysAmount,
+            holidayFullDays: holidayFullDaysAmount,
+            endPartial: endPartialAmount,
+        },
+        total: totalRentalFee,
     });
 
     const handleBack = () => {
@@ -157,7 +158,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             
             duration,
             rentalDays: displayDays,
-            rentalHours: displayHours, // ← ADDED THIS
+            rentalHours: displayHours,
             
             rentalFeeAmount: totalRentalFee,
             baseRentalFee,
@@ -166,7 +167,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             
             vehicleCategory: category,
             holidaySurcharge,
-            holidayDayCount: holidayDays.length,
             membershipDiscountPercentage,
             membershipDiscountAmount,
             membershipTier,
@@ -175,36 +175,49 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             discountAmount: hasDiscount ? discountAmount : 0,
             durationType: durationType,
             
-            holidays: holidayDays.map(day => ({
-                name: day.holiday.holidayName,
-                count: 1,
-                surchargePercentage: Math.round((day.holiday.priceMultiplier - 1) * 100),
-                baseAfterDiscount: day.basePrice,
-                surchargeAmount: day.surchargeAmount,
-                totalPricePerDay: day.totalPrice,
+            // 4-Component Data
+            startPartial: startPartial ? {
+                date: startPartial.date,
+                hours: startPartial.hours,
+                isHoliday: startPartial.isHoliday,
+                holiday: startPartial.holiday ? {
+                    holidayName: startPartial.holiday.holidayName,
+                    priceMultiplier: startPartial.holiday.priceMultiplier,
+                } : undefined,
+                basePrice: startPartial.basePrice,
+                surchargeAmount: startPartial.surchargeAmount,
+                totalPrice: startPartial.totalPrice,
+                type: startPartial.type,
+            } : null,
+            startPartialAmount,
+            normalFullDays,
+            normalFullDaysAmount,
+            holidayFullDays: holidayFullDays.map(day => ({
                 date: day.date,
+                holiday: {
+                    holidayName: day.holiday.holidayName,
+                    priceMultiplier: day.holiday.priceMultiplier,
+                },
+                basePrice: day.basePrice,
+                surchargeAmount: day.surchargeAmount,
+                totalPrice: day.totalPrice,
             })),
+            holidayFullDaysAmount,
+            endPartial: endPartial ? {
+                date: endPartial.date,
+                hours: endPartial.hours,
+                isHoliday: endPartial.isHoliday,
+                holiday: endPartial.holiday ? {
+                    holidayName: endPartial.holiday.holidayName,
+                    priceMultiplier: endPartial.holiday.priceMultiplier,
+                } : undefined,
+                basePrice: endPartial.basePrice,
+                surchargeAmount: endPartial.surchargeAmount,
+                totalPrice: endPartial.totalPrice,
+                type: endPartial.type,
+            } : null,
+            endPartialAmount,
         });
-    };
-
-    const getCategoryLabel = (cat: VehicleCategory): string => {
-        switch (cat) {
-            case "ECONOMY": return "Phổ thông";
-            case "STANDARD": return "Trung cấp";
-            case "PREMIUM": return "Cao cấp";
-            default: return cat;
-        }
-    };
-
-    const getMembershipIcon = (tier: string): string => {
-        switch (tier.toUpperCase()) {
-            case "BRONZE": return "🥉";
-            case "SILVER": return "🥈";
-            case "GOLD": return "🥇";
-            case "PLATINUM": return "💎";
-            case "DIAMOND": return "👑";
-            default: return "🥉";
-        }
     };
     
     const isContinueDisabled = loading || !isValid;
@@ -246,9 +259,17 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                 <PricingBreakdown
                     originalPricePerDay={pricePerDay}
                     averagePricePerDay={averageRentalPrice}
-                    baseRentalFee={baseRentalFee}
-                    rentalDays={displayDays}
-                    rentalHours={displayHours}
+                    
+                    // 4-Component System
+                    startPartial={startPartial}
+                    startPartialAmount={startPartialAmount}
+                    normalFullDays={normalFullDays}
+                    normalFullDaysAmount={normalFullDaysAmount}
+                    holidayFullDays={holidayFullDays}
+                    holidayFullDaysAmount={holidayFullDaysAmount}
+                    endPartial={endPartial}
+                    endPartialAmount={endPartialAmount}
+                    
                     configDiscount={hasDiscount && durationType !== "daily" ? {
                         percentage: discountPercentage,
                         amount: discountAmount,
@@ -260,19 +281,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                         amount: membershipDiscountAmount,
                         tier: membershipTier,
                     }}
-                    holidaySurcharge={hasHolidaySurcharge ? {
-                        amount: holidaySurcharge,
-                        dayCount: holidayDays.length,
-                        holidays: holidayDays.map(day => ({
-                            name: day.holiday.holidayName,
-                            count: 1,
-                            surchargePercentage: Math.round((day.holiday.priceMultiplier - 1) * 100),
-                            baseAfterDiscount: day.basePrice,
-                            surchargeAmount: day.surchargeAmount,
-                            totalPricePerDay: day.totalPrice,
-                            date: day.date,
-                        })),
-                    } : undefined}
+                    
                     rentalSubtotal={totalRentalFee}
                     insuranceFee={0}
                     insuranceName="Phí bảo hiểm (chưa chọn)"

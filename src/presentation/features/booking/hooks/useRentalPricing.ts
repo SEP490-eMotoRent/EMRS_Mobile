@@ -3,6 +3,8 @@ import { HolidayPricing } from "../../../../domain/entities/financial/HolidayPri
 import {
     calculateCombinedRentalFee,
     HolidayDay,
+    PartialDayDetail,
+    FourComponentResult,
     ProgressiveTierBreakdown,
 } from "../utils/holidayPricingCalculator";
 import { useHolidayPricing } from "./useHolidayPricing";
@@ -23,9 +25,19 @@ export interface RentalPricingResult {
     membershipTier: string;
     membershipDiscountAmount: number;
 
-    // Holiday surcharge
+    // 4-Component System
+    startPartial: PartialDayDetail | null;
+    startPartialAmount: number;
+    normalFullDays: number;
+    normalFullDaysAmount: number;
+    holidayFullDays: HolidayDay[];
+    holidayFullDaysAmount: number;
+    endPartial: PartialDayDetail | null;
+    endPartialAmount: number;
+
+    // Legacy holiday info (for compatibility)
     holidays: HolidayPricing[];
-    holidayDays: HolidayDay[];
+    holidayDays: HolidayDay[]; // All holiday days (full + partials)
     holidaySurcharge: number;
     hasHolidaySurcharge: boolean;
 
@@ -41,24 +53,16 @@ export interface RentalPricingResult {
 }
 
 /**
- * UPDATED: Hook for calculating rental pricing with progressive tier hourly pricing
- * NOW USING WHITEBOARD FORMULA (Subtractive Discounts)
+ * UPDATED: Hook for calculating rental pricing with 4-COMPONENT SYSTEM
  * 
- * Whiteboard Formula:
- * A = Base price per day
- * B = Normal days = A × (days - λ) × (1 - %mem - %month)
- * C = Holiday days = A × λ × (1 + %holiday) × (1 - %mem - %month)
- * D = B + C
+ * New Formula:
+ * D = StartPartial + B + C + EndPartial + insurance + deposit
  * 
- * KEY CHANGE: Membership discount is now applied SUBTRACTIVELY with config discount
- * Previously: Sequential application (base × config × membership)
- * Now: Subtractive application (base × (1 - config - membership))
- * 
- * Example:
- * - Config discount: 10%
- * - Membership discount: 5%
- * - Old method: 0.90 × 0.95 = 0.855 (14.5% off)
- * - New method: 1 - 0.10 - 0.05 = 0.85 (15% off) ✅
+ * Where:
+ * - StartPartial = (A / 24) × startHours × multiplier_start
+ * - B = A × normalFullDays × (1 - %mem - %monthly)
+ * - C = A × holidayFullDays × (1 + %holiday - %mem - %monthly)
+ * - EndPartial = (A / 24) × endHours × multiplier_end
  * 
  * @param startDate - Rental start date/time
  * @param endDate - Rental end date/time
@@ -101,29 +105,31 @@ export const useRentalPricing = (
         error: holidayError,
     } = useHolidayPricing();
 
-    // Calculate combined pricing with progressive tiers + WHITEBOARD FORMULA
+    // Calculate 4-component pricing
     const pricing = useMemo(() => {
         if (rateLoading || membershipLoading || holidayLoading) {
             const hourlyRate = dailyRate / 24;
             const baseEstimate = Math.round(hourlyRate * totalHours);
 
-            return {
+            const emptyResult: FourComponentResult = {
+                startPartial: null,
+                startPartialAmount: 0,
+                normalFullDays: 0,
+                normalFullDaysAmount: 0,
+                holidayFullDays: [],
+                holidayFullDaysAmount: 0,
+                endPartial: null,
+                endPartialAmount: 0,
                 baseRentalFee: baseEstimate,
                 discountAmount: 0,
                 holidaySurcharge: 0,
                 totalRentalFee: baseEstimate,
-                holidayDays: [] as HolidayDay[],
                 membershipDiscountAmount: 0,
-                progressiveTierBreakdown: {
-                    discountedHours: 0,
-                    regularHours: totalHours,
-                    discountTier: "none" as const,
-                },
             };
+
+            return emptyResult;
         }
 
-        // ⭐ KEY CHANGE: Now passing membershipDiscountPercentage to calculator
-        // This enables SUBTRACTIVE discount calculation (1 - %mem - %month)
         const result = calculateCombinedRentalFee(
             startDate,
             endDate,
@@ -131,23 +137,22 @@ export const useRentalPricing = (
             totalHours,
             holidays,
             rentingRate,
-            membershipDiscountPercentage // ← NEW PARAMETER
+            membershipDiscountPercentage
         );
 
-        console.log("💰 [useRentalPricing] Pricing breakdown:", {
+        console.log("💰 [useRentalPricing] 4-Component Breakdown:", {
             totalHours,
             equivalentDays,
             totalDaysExact,
             durationType,
             configDiscount: `${discountPercentage}%`,
             membershipDiscount: `${membershipDiscountPercentage}%`,
-            combinedDiscount: `${(discountPercentage + membershipDiscountPercentage)}%`,
-            discountMethod: "SUBTRACTIVE (Whiteboard Formula)",
-            progressiveTiers: result.progressiveTierBreakdown,
-            baseRentalFee: result.baseRentalFee,
-            discountAmount: result.discountAmount,
-            holidaySurcharge: result.holidaySurcharge,
-            membershipDiscountAmount: result.membershipDiscountAmount,
+            components: {
+                startPartial: result.startPartialAmount,
+                normalFullDays: result.normalFullDaysAmount,
+                holidayFullDays: result.holidayFullDaysAmount,
+                endPartial: result.endPartialAmount,
+            },
             finalTotal: result.totalRentalFee,
         });
 
@@ -159,7 +164,7 @@ export const useRentalPricing = (
         totalHours,
         holidays,
         rentingRate,
-        membershipDiscountPercentage, // ← Added to dependencies
+        membershipDiscountPercentage,
         rateLoading,
         membershipLoading,
         holidayLoading,
@@ -174,6 +179,38 @@ export const useRentalPricing = (
         ? Math.round(pricing.totalRentalFee / totalDaysExact)
         : dailyRate;
 
+    // Combine all holiday days (full + partials) for legacy compatibility
+    const allHolidayDays: HolidayDay[] = [
+        ...pricing.holidayFullDays,
+        // Add start partial if it's a holiday
+        ...(pricing.startPartial?.isHoliday && pricing.startPartial.holiday ? [{
+            date: pricing.startPartial.date,
+            holiday: pricing.startPartial.holiday,
+            dayIndex: -1, // Special index for partial
+            isInDiscountedPeriod: true,
+            basePrice: pricing.startPartial.basePrice,
+            surchargeAmount: pricing.startPartial.surchargeAmount,
+            totalPrice: pricing.startPartial.totalPrice,
+        }] : []),
+        // Add end partial if it's a holiday
+        ...(pricing.endPartial?.isHoliday && pricing.endPartial.holiday ? [{
+            date: pricing.endPartial.date,
+            holiday: pricing.endPartial.holiday,
+            dayIndex: -2, // Special index for partial
+            isInDiscountedPeriod: true,
+            basePrice: pricing.endPartial.basePrice,
+            surchargeAmount: pricing.endPartial.surchargeAmount,
+            totalPrice: pricing.endPartial.totalPrice,
+        }] : []),
+    ];
+
+    // Create tier breakdown for compatibility
+    const tierBreakdown: ProgressiveTierBreakdown = {
+        discountedHours: equivalentDays >= 30 ? totalHours : 0,
+        regularHours: equivalentDays < 30 ? totalHours : 0,
+        discountTier: durationType === "yearly" ? "yearly" : durationType === "monthly" ? "monthly" : "none",
+    };
+
     return {
         // Configuration discount
         rentingRate,
@@ -181,16 +218,26 @@ export const useRentalPricing = (
         durationType,
 
         // Progressive tier breakdown
-        progressiveTierBreakdown: pricing.progressiveTierBreakdown,
+        progressiveTierBreakdown: tierBreakdown,
 
         // Membership discount
         membershipDiscountPercentage,
         membershipTier,
         membershipDiscountAmount: pricing.membershipDiscountAmount,
 
-        // Holiday surcharge
+        // 4-Component System
+        startPartial: pricing.startPartial,
+        startPartialAmount: pricing.startPartialAmount,
+        normalFullDays: pricing.normalFullDays,
+        normalFullDaysAmount: pricing.normalFullDaysAmount,
+        holidayFullDays: pricing.holidayFullDays,
+        holidayFullDaysAmount: pricing.holidayFullDaysAmount,
+        endPartial: pricing.endPartial,
+        endPartialAmount: pricing.endPartialAmount,
+
+        // Legacy holiday info
         holidays,
-        holidayDays: pricing.holidayDays,
+        holidayDays: allHolidayDays,
         holidaySurcharge: pricing.holidaySurcharge,
         hasHolidaySurcharge: pricing.holidaySurcharge > 0,
 
