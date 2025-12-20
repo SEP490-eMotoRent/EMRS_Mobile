@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
   TextInput,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
@@ -14,13 +13,14 @@ import { AntDesign, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { InfoCard } from "../../../../../common/components/molecules/InfoCard";
-import { PrimaryButton } from "../../../../../common/components/atoms/buttons/PrimaryButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { Booking } from "../../../../../../domain/entities/booking/Booking";
 import { GetBookingListUseCase } from "../../../../../../domain/usecases/booking/GetBookingListUseCase";
 import sl from "../../../../../../core/di/InjectionContainer";
+
+import { useAppSelector } from "../../../../authentication/store/hooks";
+import { RootState } from "../../../../authentication/store";
 
 type RentalScreenNavigationProp = StackNavigationProp<
   StaffStackParamList,
@@ -36,7 +36,7 @@ export const RentalScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [rentedBookings, setRentedBookings] = useState<Booking[] | null>(null);
   const [handoverSchedule, setHandoverSchedule] = useState<Booking[] | null>(null);
-
+  const user = useAppSelector((state: RootState) => state.auth.user);
   useEffect(() => {
     fetchBookings(1);
   }, []);
@@ -264,7 +264,6 @@ export const RentalScreen: React.FC = () => {
       </View>
     </View>
   );
-
   const renderRentedTab = () => (
     <View style={styles.tabContent}>
       {/* Search Section */}
@@ -449,7 +448,7 @@ export const RentalScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         title="Cho thuê xe"
-        subtitle="District 2 Branch"
+        subtitle={user?.branchName || "Đang tải chi nhánh..."}
         showBackButton={false}
       />
       <ScrollView contentContainerStyle={styles.scrollContent}>

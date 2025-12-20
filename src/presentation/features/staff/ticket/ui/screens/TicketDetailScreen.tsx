@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  Image,
+  Modal,
+  Dimensions,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -46,6 +49,7 @@ export const TicketDetailScreen: React.FC = () => {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -356,19 +360,26 @@ export const TicketDetailScreen: React.FC = () => {
             </View>
             {ticket.attachments && ticket.attachments.length > 0 && (
               <View style={styles.attachmentsContainer}>
-                <Text style={styles.attachmentsLabel}>Đính kèm:</Text>
-                {ticket.attachments.map((attachment, index) => (
-                  <TouchableOpacity
-                    key={attachment.id || index}
-                    style={styles.attachmentItem}
-                    onPress={() => Linking.openURL(attachment.fileUrl)}
-                  >
-                    <AntDesign name="file" size={14} color="#C9B6FF" />
-                    <Text style={styles.attachmentText} numberOfLines={1}>
-                      {attachment.docNo || `File ${index + 1}`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                <Text style={styles.attachmentsLabel}>Ảnh đính kèm ({ticket.attachments.length}):</Text>
+                <View style={styles.attachmentsGrid}>
+                  {ticket.attachments.map((attachment, index) => (
+                    <TouchableOpacity
+                      key={attachment.id || index}
+                      style={styles.attachmentImageContainer}
+                      onPress={() => setSelectedImage(attachment.fileUrl)}
+                      activeOpacity={0.8}
+                    >
+                      <Image
+                        source={{ uri: attachment.fileUrl }}
+                        style={styles.attachmentImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.imageOverlay}>
+                        <AntDesign name="eye" size={16} color="#fff" />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             )}
           </InfoCard>
@@ -398,10 +409,6 @@ export const TicketDetailScreen: React.FC = () => {
                   value={booking.endDatetime.toLocaleString("en-GB")}
                 />
               )}
-              <InfoItem
-                label="Giá thuê xe"
-                value={formatVnd(booking.baseRentalFee || 0)}
-              />
               <TouchableOpacity
                 style={styles.viewBookingButton}
                 onPress={handleViewBooking}
@@ -548,6 +555,31 @@ export const TicketDetailScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Image Modal */}
+      <Modal
+        visible={selectedImage !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedImage(null)}
+      >
+        <View style={styles.imageModalContainer}>
+          <TouchableOpacity
+            style={styles.imageModalCloseButton}
+            onPress={() => setSelectedImage(null)}
+            activeOpacity={0.8}
+          >
+            <AntDesign name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+          {selectedImage && (
+            <Image
+              source={{ uri: selectedImage }}
+              style={styles.imageModalImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -619,24 +651,61 @@ const styles = StyleSheet.create({
     borderTopColor: "#2A2A2A",
   },
   attachmentsLabel: {
-    color: colors.text.secondary,
-    fontSize: 12,
-    marginBottom: 8,
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 12,
   },
-  attachmentItem: {
+  attachmentsGrid: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#131313",
-    borderRadius: 8,
-    marginBottom: 6,
+    flexWrap: "wrap",
+    gap: 12,
   },
-  attachmentText: {
-    color: "#C9B6FF",
-    fontSize: 12,
+  attachmentImageContainer: {
+    width: (Dimensions.get("window").width - 64) / 3,
+    height: (Dimensions.get("window").width - 64) / 3,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#1A1A1A",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    position: "relative",
+  },
+  attachmentImage: {
+    width: "100%",
+    height: "100%",
+  },
+  imageOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageModalContainer: {
     flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.95)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageModalCloseButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
+  imageModalImage: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
   },
   viewBookingButton: {
     flexDirection: "row",
