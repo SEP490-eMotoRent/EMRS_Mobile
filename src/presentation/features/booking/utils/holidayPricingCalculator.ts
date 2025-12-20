@@ -10,21 +10,40 @@ export interface HolidayDay {
     totalPrice: number;
 }
 
-export interface HolidayPricingResult {
-    /** Days that fall on holidays */
-    holidayDays: HolidayDay[];
-    /** Total number of holiday days */
-    holidayDayCount: number;
-    /** Total surcharge amount */
-    totalSurcharge: number;
-    /** Base rental fee without surcharge */
+export interface PartialDayDetail {
+    date: Date;
+    hours: number;
+    isHoliday: boolean;
+    holiday?: HolidayPricing;
+    basePrice: number;
+    surchargeAmount: number;
+    totalPrice: number;
+    type: "start" | "end";
+}
+
+export interface FourComponentResult {
+    // Start Partial
+    startPartial: PartialDayDetail | null;
+    startPartialAmount: number;
+
+    // B - Normal Full Days
+    normalFullDays: number;
+    normalFullDaysAmount: number;
+
+    // C - Holiday Full Days
+    holidayFullDays: HolidayDay[];
+    holidayFullDaysAmount: number;
+
+    // End Partial
+    endPartial: PartialDayDetail | null;
+    endPartialAmount: number;
+
+    // Totals
     baseRentalFee: number;
-    /** Total rental fee with surcharge */
+    discountAmount: number;
+    holidaySurcharge: number;
     totalRentalFee: number;
-    /** Highest multiplier found */
-    maxMultiplier: number;
-    /** Summary for display */
-    summary: string;
+    membershipDiscountAmount: number;
 }
 
 export interface ProgressiveTierBreakdown {
@@ -34,7 +53,7 @@ export interface ProgressiveTierBreakdown {
 }
 
 /**
- * Constants for tier thresholds
+ * Constants
  */
 const MONTHLY_THRESHOLD_DAYS = 30;
 const YEARLY_THRESHOLD_DAYS = 365;
@@ -49,34 +68,6 @@ const isSameDay = (date1: Date, date2: Date): boolean => {
         date1.getMonth() === date2.getMonth() &&
         date1.getDate() === date2.getDate()
     );
-};
-
-/**
- * Get all dates in a range (inclusive of any day the rental touches)
- * 
- * Business rule: If the rental period overlaps with a day even partially,
- * that day should be included for holiday calculations.
- * 
- * Example:
- * - Pickup: April 30, 10:00 AM
- * - Return: May 1, 10:00 PM
- * - Result: [April 30, May 1] ✅ Both days included
- */
-const getDatesInRange = (startDate: Date, endDate: Date): Date[] => {
-    const dates: Date[] = [];
-    const current = new Date(startDate);
-    current.setHours(0, 0, 0, 0);
-
-    const end = new Date(endDate);
-    end.setHours(0, 0, 0, 0);
-
-    // Use <= to include the end date if rental extends into it
-    while (current <= end) {
-        dates.push(new Date(current));
-        current.setDate(current.getDate() + 1);
-    }
-
-    return dates;
 };
 
 /**
@@ -95,14 +86,7 @@ const findHolidayForDate = (
 };
 
 /**
- * UPDATED: Determine discount tier (QUALIFICATION-BASED, not progressive)
- * 
- * NEW RULE: If you qualify for a tier, ALL days get that discount
- * 
- * Examples:
- * - 70 days → ALL 70 days get monthly discount (not 60+10)
- * - 400 days → ALL 400 days get yearly discount (not 365+35)
- * - 25 days → NO discount
+ * Determine discount tier qualification
  */
 const determineDiscountTier = (totalHours: number): {
     discountTier: "yearly" | "monthly" | "none";
@@ -110,99 +94,29 @@ const determineDiscountTier = (totalHours: number): {
 } => {
     const totalDays = totalHours / HOURS_PER_DAY;
 
-    // Check for yearly qualification
     if (totalDays >= YEARLY_THRESHOLD_DAYS) {
-        return {
-            discountTier: "yearly",
-            appliesTo: "all",
-        };
+        return { discountTier: "yearly", appliesTo: "all" };
     }
 
-    // Check for monthly qualification
     if (totalDays >= MONTHLY_THRESHOLD_DAYS) {
-        return {
-            discountTier: "monthly",
-            appliesTo: "all",
-        };
+        return { discountTier: "monthly", appliesTo: "all" };
     }
 
-    // No discount qualification
-    return {
-        discountTier: "none",
-        appliesTo: "none",
-    };
+    return { discountTier: "none", appliesTo: "none" };
 };
-
-// ============================================================================
-// COMMENTED OUT: OLD PROGRESSIVE TIER LOGIC
-// ============================================================================
-/*
-const calculateProgressiveTiers = (totalHours: number): ProgressiveTierBreakdown => {
-    const totalDays = totalHours / HOURS_PER_DAY;
-
-    // Check for yearly discount
-    if (totalDays >= YEARLY_THRESHOLD_DAYS) {
-        const fullYears = Math.floor(totalDays / YEARLY_THRESHOLD_DAYS);
-        const discountedDays = fullYears * YEARLY_THRESHOLD_DAYS;
-        const remainingDays = totalDays - discountedDays;
-
-        return {
-            discountedHours: discountedDays * HOURS_PER_DAY,
-            regularHours: remainingDays * HOURS_PER_DAY,
-            discountTier: "yearly",
-        };
-    }
-
-    // Check for monthly discount
-    if (totalDays >= MONTHLY_THRESHOLD_DAYS) {
-        const fullMonths = Math.floor(totalDays / MONTHLY_THRESHOLD_DAYS);
-        const discountedDays = fullMonths * MONTHLY_THRESHOLD_DAYS;
-        const remainingDays = totalDays - discountedDays;
-
-        return {
-            discountedHours: discountedDays * HOURS_PER_DAY,
-            regularHours: remainingDays * HOURS_PER_DAY,
-            discountTier: "monthly",
-        };
-    }
-
-    // No discount
-    return {
-        discountedHours: 0,
-        regularHours: totalHours,
-        discountTier: "none",
-    };
-};
-*/
 
 /**
- * UPDATED: Calculate combined pricing with TIER QUALIFICATION
- * NOW USING WHITEBOARD FORMULA (Tier Qualification + Subtractive Discounts)
+ * NEW: Calculate 4-component rental fee
  * 
- * Whiteboard Formula:
- * A = Base price per day (gốc thuê)
- * B = Normal days price = A × (1 - %mem - %monthly) × (ngày - λ + giờ/24)
- * C = Holiday days price = A × (1 + %holiday - %mem - %monthly)
- * D = B + C
- * 
- * Where:
- * - λ (lambda) = number of holiday days
- * - %mem = membership discount percentage (as decimal)
- * - %monthly = monthly/yearly discount percentage (as decimal)
- * - %holiday = holiday surcharge percentage (as decimal)
- * 
- * KEY CHANGES:
- * 1. TIER QUALIFICATION: All days get discount if qualified (not progressive chunks)
- * 2. SUBTRACTIVE DISCOUNTS: (1 - %mem - %monthly)
- * 3. ADDITIVE HOLIDAY SURCHARGE: (1 + %holiday - %mem - %monthly)
+ * D = StartPartial + B + C + EndPartial + insurance + deposit
  * 
  * @param startDate - Rental start date/time
  * @param endDate - Rental end date/time
- * @param dailyRate - Price per day (24 hours)
+ * @param dailyRate - Price per day (A)
  * @param totalHours - Total rental hours
  * @param holidays - List of holiday pricings
- * @param configDiscountRate - Configuration discount rate (e.g., 0.90 for 10% monthly discount)
- * @param membershipDiscountPercentage - Membership discount percentage (e.g., 5 for 5%)
+ * @param configDiscountRate - Config discount rate (e.g., 0.90 for 10% off)
+ * @param membershipDiscountPercentage - Membership discount % (e.g., 5 for 5%)
  */
 export const calculateCombinedRentalFee = (
     startDate: Date,
@@ -212,282 +126,266 @@ export const calculateCombinedRentalFee = (
     holidays: HolidayPricing[],
     configDiscountRate: number,
     membershipDiscountPercentage: number = 0
-): {
-    baseRentalFee: number;
-    discountAmount: number;
-    holidaySurcharge: number;
-    totalRentalFee: number;
-    holidayDays: HolidayDay[];
-    progressiveTierBreakdown: ProgressiveTierBreakdown;
-    membershipDiscountAmount: number;
-} => {
-    // Step 1: Calculate hourly rate and total days
+): FourComponentResult => {
     const hourlyRate = dailyRate / HOURS_PER_DAY;
-    const totalDays = totalHours / HOURS_PER_DAY;
 
-    // Step 2: Determine discount tier qualification (NEW APPROACH)
+    // Determine discount tier
     const tierQualification = determineDiscountTier(totalHours);
-    
-    // For backward compatibility, create a tier breakdown object
-    const tierBreakdown: ProgressiveTierBreakdown = {
-        discountedHours: tierQualification.appliesTo === "all" ? totalHours : 0,
-        regularHours: tierQualification.appliesTo === "none" ? totalHours : 0,
-        discountTier: tierQualification.discountTier,
-    };
-
-    // Step 3: Find holiday days (λ)
-    const rentalDates = getDatesInRange(startDate, endDate);
-    const holidayDays: HolidayDay[] = [];
-    
-    rentalDates.forEach((date, dayIndex) => {
-        const holiday = findHolidayForDate(date, holidays);
-        if (holiday) {
-            holidayDays.push({
-                date,
-                holiday,
-                dayIndex,
-                isInDiscountedPeriod: tierQualification.appliesTo === "all",
-                basePrice: 0,
-                surchargeAmount: 0,
-                totalPrice: 0,
-            });
-        }
-    });
-
-    const lambda = holidayDays.length;
-
-    // Step 4: Calculate SUBTRACTIVE discount rate (WHITEBOARD FORMULA)
     const configDiscountPercentage = (1 - configDiscountRate) * 100;
     const configDiscountDecimal = configDiscountPercentage / 100;
     const membershipDiscountDecimal = membershipDiscountPercentage / 100;
     const combinedDiscountRate = 1 - membershipDiscountDecimal - configDiscountDecimal;
 
-    console.log("💰 [WHITEBOARD] Discount calculation:", {
+    console.log("🔧 [4-COMPONENT] Discount setup:", {
         configDiscount: `${configDiscountPercentage.toFixed(1)}%`,
         membershipDiscount: `${membershipDiscountPercentage}%`,
         combinedRate: combinedDiscountRate.toFixed(3),
-        totalDiscount: `${((1 - combinedDiscountRate) * 100).toFixed(1)}%`,
-        method: "SUBTRACTIVE (1 - %mem - %monthly)",
         tierQualification: tierQualification.discountTier,
-        appliesTo: tierQualification.appliesTo,
-    });
-
-    // Step 5: Calculate B - Normal days (ALL DAYS GET DISCOUNT IF QUALIFIED)
-    const normalDaysCount = totalDays - lambda;
-    const normalDaysFee = Math.round(dailyRate * normalDaysCount * combinedDiscountRate);
-    
-    // Calculate discount amount
-    const totalBeforeDiscount = dailyRate * normalDaysCount;
-    const discountAmount = Math.round(totalBeforeDiscount * (1 - combinedDiscountRate));
-    
-    console.log("🔵 [WHITEBOARD] Normal days (B):", {
-        normalDays: normalDaysCount.toFixed(2),
-        normalDaysFee: normalDaysFee.toLocaleString(),
-        allDaysDiscounted: tierQualification.appliesTo === "all",
     });
 
     // ========================================================================
-    // COMMENTED OUT: OLD PROGRESSIVE TIER LOGIC
+    // STEP 1: Calculate StartPartial
     // ========================================================================
-    /*
-    // Step 5: Calculate B - Normal days with progressive pricing
-    let normalDaysFee = 0;
-    let discountAmount = 0;
+    let startPartial: PartialDayDetail | null = null;
+    let startPartialAmount = 0;
 
-    if (discountedHours > 0) {
-        // Has progressive discount
-        const discountedDays = discountedHours / HOURS_PER_DAY;
-        const regularDays = regularHours / HOURS_PER_DAY;
-        
-        // Distribute holiday days across periods proportionally
-        const holidayInDiscountedPeriod = Math.min(
-            lambda, 
-            Math.floor(lambda * (discountedDays / totalDays))
-        );
-        const holidayInRegularPeriod = lambda - holidayInDiscountedPeriod;
-        
-        const discountedNormalDays = discountedDays - holidayInDiscountedPeriod;
-        const regularNormalDays = regularDays - holidayInRegularPeriod;
-        
-        // Calculate normal days fee with combined discount
-        const discountedPortion = dailyRate * discountedNormalDays * combinedDiscountRate;
-        const regularPortion = dailyRate * regularNormalDays * combinedDiscountRate; // ❌ OLD: Applied discount to regular days too
-        
-        normalDaysFee = Math.round(discountedPortion + regularPortion);
-        
-        // Calculate discount amount
-        const totalBeforeDiscount = dailyRate * (totalDays - lambda);
-        discountAmount = Math.round(totalBeforeDiscount * (1 - combinedDiscountRate));
-        
-        console.log("🔵 [WHITEBOARD] Normal days (B):", {
-            discountedNormalDays: discountedNormalDays.toFixed(2),
-            regularNormalDays: regularNormalDays.toFixed(2),
-            normalDaysFee: normalDaysFee.toLocaleString(),
-        });
-    } else {
-        // No progressive discount
-        const normalDaysCount = totalDays - lambda;
-        normalDaysFee = Math.round(dailyRate * normalDaysCount * combinedDiscountRate);
-        
-        const totalBeforeDiscount = dailyRate * normalDaysCount;
-        discountAmount = Math.round(totalBeforeDiscount * (1 - combinedDiscountRate));
-        
-        console.log("🔵 [WHITEBOARD] Normal days (B):", {
-            normalDays: normalDaysCount,
-            normalDaysFee: normalDaysFee.toLocaleString(),
-        });
-    }
-    */
+    const startHour = startDate.getHours();
+    const startRemainingHours = 24 - startHour;
 
-    // Step 6: Calculate C - Holiday days with ADDITIVE surcharge (WHITEBOARD FORMULA)
-    let holidayDaysFee = 0;
-    let totalHolidaySurcharge = 0;
-    
-    holidayDays.forEach((holidayDay, index) => {
-        const holidayMultiplier = holidayDay.holiday.priceMultiplier;
-        const holidaySurchargePercentage = holidayMultiplier - 1; // e.g., 1.5 → 0.5 (50%)
+    // Check if start date is a holiday
+    const startDateNormalized = new Date(startDate);
+    startDateNormalized.setHours(0, 0, 0, 0);
+    const startHoliday = findHolidayForDate(startDateNormalized, holidays);
+
+    if (isSameDay(startDate, endDate)) {
+        // Same day rental - only calculate total hours
+        const sameDayHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
         
-        // WHITEBOARD: C = A × (1 + %holiday - %mem - %monthly)
-        const holidayRate = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
-        const holidayTotalPrice = Math.round(dailyRate * holidayRate);
-        
-        // Base price with discounts applied (what the day would cost without holiday)
-        const holidayBasePrice = Math.round(dailyRate * combinedDiscountRate);
-        const surchargeAmount = holidayTotalPrice - holidayBasePrice;
-        
-        holidayDay.basePrice = holidayBasePrice;
-        holidayDay.totalPrice = holidayTotalPrice;
-        holidayDay.surchargeAmount = surchargeAmount;
-        
-        holidayDaysFee += holidayTotalPrice;
-        totalHolidaySurcharge += surchargeAmount;
-    });
-    
-    if (lambda > 0) {
-        console.log("🔴 [WHITEBOARD] Holiday days (C):", {
-            holidayDays: lambda,
-            holidayDaysFee: holidayDaysFee.toLocaleString(),
-            totalSurcharge: totalHolidaySurcharge.toLocaleString(),
-            formula: "A × (1 + %holiday - %mem - %monthly)",
+        let multiplier = combinedDiscountRate; // Default: normal
+        if (startHoliday) {
+            const holidaySurchargePercentage = startHoliday.priceMultiplier - 1;
+            multiplier = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
+        }
+
+        const totalPrice = Math.round(hourlyRate * sameDayHours * multiplier);
+        const basePrice = Math.round(hourlyRate * sameDayHours * combinedDiscountRate);
+        const surcharge = startHoliday ? totalPrice - basePrice : 0;
+
+        startPartial = {
+            date: startDateNormalized,
+            hours: sameDayHours,
+            isHoliday: !!startHoliday,
+            holiday: startHoliday || undefined,
+            basePrice,
+            surchargeAmount: surcharge,
+            totalPrice,
+            type: "start",
+        };
+        startPartialAmount = totalPrice;
+
+        console.log("🟡 [StartPartial - Same Day]:", {
+            hours: sameDayHours,
+            isHoliday: !!startHoliday,
+            amount: startPartialAmount,
         });
+
+        // Same day rental - no B, C, or EndPartial
+        return {
+            startPartial,
+            startPartialAmount,
+            normalFullDays: 0,
+            normalFullDaysAmount: 0,
+            holidayFullDays: [],
+            holidayFullDaysAmount: 0,
+            endPartial: null,
+            endPartialAmount: 0,
+            baseRentalFee: Math.round(hourlyRate * sameDayHours),
+            discountAmount: 0,
+            holidaySurcharge: surcharge,
+            totalRentalFee: startPartialAmount,
+            membershipDiscountAmount: Math.round(hourlyRate * sameDayHours * membershipDiscountDecimal),
+        };
     }
 
-    // ========================================================================
-    // REMOVED: OLD MULTIPLICATIVE HOLIDAY LOGIC
-    // ========================================================================
-    // const holidayTotalPrice = Math.round(dailyRate * holidayMultiplier * combinedDiscountRate);
-    // ❌ This was WRONG - should be additive, not multiplicative
+    // Multi-day rental - calculate start partial
+    let multiplier = combinedDiscountRate; // Default: normal day
+    if (startHoliday) {
+        const holidaySurchargePercentage = startHoliday.priceMultiplier - 1;
+        multiplier = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
+    }
 
-    // Step 7: Calculate D - Total rental fee
-    const totalRentalFee = normalDaysFee + holidayDaysFee;
+    const startTotalPrice = Math.round(hourlyRate * startRemainingHours * multiplier);
+    const startBasePrice = Math.round(hourlyRate * startRemainingHours * combinedDiscountRate);
+    const startSurcharge = startHoliday ? startTotalPrice - startBasePrice : 0;
+
+    startPartial = {
+        date: startDateNormalized,
+        hours: startRemainingHours,
+        isHoliday: !!startHoliday,
+        holiday: startHoliday || undefined,
+        basePrice: startBasePrice,
+        surchargeAmount: startSurcharge,
+        totalPrice: startTotalPrice,
+        type: "start",
+    };
+    startPartialAmount = startTotalPrice;
+
+    console.log("🟡 [StartPartial]:", {
+        date: startDateNormalized.toDateString(),
+        hours: startRemainingHours,
+        isHoliday: !!startHoliday,
+        amount: startPartialAmount,
+    });
+
+    // ========================================================================
+    // STEP 2: Calculate EndPartial
+    // ========================================================================
+    let endPartial: PartialDayDetail | null = null;
+    let endPartialAmount = 0;
+
+    const endHour = endDate.getHours();
+    const endDateNormalized = new Date(endDate);
+    endDateNormalized.setHours(0, 0, 0, 0);
+    const endHoliday = findHolidayForDate(endDateNormalized, holidays);
+
+    let endMultiplier = combinedDiscountRate; // Default: normal day
+    if (endHoliday) {
+        const holidaySurchargePercentage = endHoliday.priceMultiplier - 1;
+        endMultiplier = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
+    }
+
+    const endTotalPrice = Math.round(hourlyRate * endHour * endMultiplier);
+    const endBasePrice = Math.round(hourlyRate * endHour * combinedDiscountRate);
+    const endSurcharge = endHoliday ? endTotalPrice - endBasePrice : 0;
+
+    endPartial = {
+        date: endDateNormalized,
+        hours: endHour,
+        isHoliday: !!endHoliday,
+        holiday: endHoliday || undefined,
+        basePrice: endBasePrice,
+        surchargeAmount: endSurcharge,
+        totalPrice: endTotalPrice,
+        type: "end",
+    };
+    endPartialAmount = endTotalPrice;
+
+    console.log("🟡 [EndPartial]:", {
+        date: endDateNormalized.toDateString(),
+        hours: endHour,
+        isHoliday: !!endHoliday,
+        amount: endPartialAmount,
+    });
+
+    // ========================================================================
+    // STEP 3: Get all FULL days between start and end (exclude partials)
+    // ========================================================================
+    const fullDayStart = new Date(startDateNormalized);
+    fullDayStart.setDate(fullDayStart.getDate() + 1); // Day after start
+
+    const fullDayEnd = new Date(endDateNormalized); // Day of end (but we don't include it)
+
+    const fullDays: Date[] = [];
+    const current = new Date(fullDayStart);
     
-    // Calculate base without any discounts for display
+    while (current < fullDayEnd) {
+        fullDays.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+    }
+
+    console.log("📅 [Full Days Between]:", {
+        count: fullDays.length,
+        range: fullDays.length > 0 
+            ? `${fullDays[0].toDateString()} → ${fullDays[fullDays.length - 1].toDateString()}`
+            : "none",
+    });
+
+    // ========================================================================
+    // STEP 4: Separate B (normal full days) and C (holiday full days)
+    // ========================================================================
+    const holidayFullDays: HolidayDay[] = [];
+    let normalFullDaysCount = 0;
+
+    fullDays.forEach((day, index) => {
+        const holiday = findHolidayForDate(day, holidays);
+        
+        if (holiday) {
+            // This is a holiday full day (C)
+            const holidaySurchargePercentage = holiday.priceMultiplier - 1;
+            const holidayRate = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
+            const holidayTotalPrice = Math.round(dailyRate * holidayRate);
+            const holidayBasePrice = Math.round(dailyRate * combinedDiscountRate);
+            const surchargeAmount = holidayTotalPrice - holidayBasePrice;
+
+            holidayFullDays.push({
+                date: day,
+                holiday,
+                dayIndex: index,
+                isInDiscountedPeriod: tierQualification.appliesTo === "all",
+                basePrice: holidayBasePrice,
+                surchargeAmount,
+                totalPrice: holidayTotalPrice,
+            });
+        } else {
+            // This is a normal full day (B)
+            normalFullDaysCount++;
+        }
+    });
+
+    const normalFullDaysAmount = Math.round(dailyRate * normalFullDaysCount * combinedDiscountRate);
+    const holidayFullDaysAmount = holidayFullDays.reduce((sum, h) => sum + h.totalPrice, 0);
+
+    console.log("🔵 [B - Normal Full Days]:", {
+        count: normalFullDaysCount,
+        amount: normalFullDaysAmount,
+    });
+
+    console.log("🔴 [C - Holiday Full Days]:", {
+        count: holidayFullDays.length,
+        amount: holidayFullDaysAmount,
+    });
+
+    // ========================================================================
+    // STEP 5: Calculate totals
+    // ========================================================================
+    const totalRentalFee = startPartialAmount + normalFullDaysAmount + holidayFullDaysAmount + endPartialAmount;
+    const totalDays = totalHours / HOURS_PER_DAY;
     const baseWithoutDiscounts = Math.round(dailyRate * totalDays);
-    const totalDiscountAmount = baseWithoutDiscounts - totalRentalFee + totalHolidaySurcharge;
+    const totalHolidaySurcharge = startSurcharge + endSurcharge + holidayFullDays.reduce((sum, h) => sum + h.surchargeAmount, 0);
     const membershipDiscountAmount = Math.round(dailyRate * totalDays * membershipDiscountDecimal);
-    
-    console.log("💚 [WHITEBOARD] Final (D = B + C):", {
-        normalDaysFee: normalDaysFee.toLocaleString(),
-        holidayDaysFee: holidayDaysFee.toLocaleString(),
-        totalRentalFee: totalRentalFee.toLocaleString(),
+
+    console.log("💚 [TOTAL - 4 Components]:", {
+        startPartial: startPartialAmount,
+        B: normalFullDaysAmount,
+        C: holidayFullDaysAmount,
+        endPartial: endPartialAmount,
+        total: totalRentalFee,
     });
 
     return {
+        startPartial,
+        startPartialAmount,
+        normalFullDays: normalFullDaysCount,
+        normalFullDaysAmount,
+        holidayFullDays,
+        holidayFullDaysAmount,
+        endPartial,
+        endPartialAmount,
         baseRentalFee: baseWithoutDiscounts,
-        discountAmount: totalDiscountAmount,
+        discountAmount: baseWithoutDiscounts - totalRentalFee + totalHolidaySurcharge,
         holidaySurcharge: totalHolidaySurcharge,
-        totalRentalFee: totalRentalFee,
-        holidayDays,
-        progressiveTierBreakdown: tierBreakdown,
+        totalRentalFee,
         membershipDiscountAmount,
     };
 };
 
 /**
- * Calculate holiday pricing for a rental period (legacy, for backward compatibility)
+ * Legacy function for backward compatibility
  */
-export const calculateHolidayPricing = (
-    startDate: Date,
-    endDate: Date,
-    dailyRate: number,
-    holidays: HolidayPricing[]
-): HolidayPricingResult => {
-    const rentalDates = getDatesInRange(startDate, endDate);
-    const holidayDays: HolidayDay[] = [];
-    let totalSurcharge = 0;
-    let maxMultiplier = 1;
-
-    rentalDates.forEach((date, index) => {
-        const holiday = findHolidayForDate(date, holidays);
-
-        if (holiday) {
-            const surchargeAmount = Math.round(dailyRate * (holiday.priceMultiplier - 1));
-            const totalPrice = Math.round(dailyRate * holiday.priceMultiplier);
-
-            holidayDays.push({
-                date,
-                holiday,
-                dayIndex: index,
-                isInDiscountedPeriod: false,
-                basePrice: dailyRate,
-                surchargeAmount,
-                totalPrice,
-            });
-
-            totalSurcharge += surchargeAmount;
-
-            if (holiday.priceMultiplier > maxMultiplier) {
-                maxMultiplier = holiday.priceMultiplier;
-            }
-        }
-    });
-
-    const totalDays = rentalDates.length;
-    const baseRentalFee = totalDays * dailyRate;
-    const totalRentalFee = baseRentalFee + totalSurcharge;
-
-    // Build summary
-    let summary = "";
-    if (holidayDays.length > 0) {
-        const uniqueHolidays = [...new Set(holidayDays.map(h => h.holiday.holidayName))];
-        summary = `${holidayDays.length} ngày lễ (${uniqueHolidays.join(", ")})`;
-    }
-
-    return {
-        holidayDays,
-        holidayDayCount: holidayDays.length,
-        totalSurcharge,
-        baseRentalFee,
-        totalRentalFee,
-        maxMultiplier,
-        summary,
-    };
+export const calculateHolidayPricing = (): any => {
+    throw new Error("Use calculateCombinedRentalFee instead");
 };
 
-/**
- * Format holiday surcharge for display
- */
-export const formatHolidaySurchargeDisplay = (
-    holidayDays: HolidayDay[]
-): string => {
-    if (holidayDays.length === 0) return "";
-
-    const grouped = holidayDays.reduce((acc, day) => {
-        const name = day.holiday.holidayName;
-        if (!acc[name]) {
-            acc[name] = {
-                name,
-                days: 0,
-                multiplier: day.holiday.priceMultiplier,
-                totalSurcharge: 0,
-            };
-        }
-        acc[name].days++;
-        acc[name].totalSurcharge += day.surchargeAmount;
-        return acc;
-    }, {} as Record<string, { name: string; days: number; multiplier: number; totalSurcharge: number }>);
-
-    return Object.values(grouped)
-        .map(g => `${g.name}: ${g.days} ngày (+${Math.round((g.multiplier - 1) * 100)}%)`)
-        .join("\n");
+export const formatHolidaySurchargeDisplay = (): string => {
+    throw new Error("Use calculateCombinedRentalFee instead");
 };

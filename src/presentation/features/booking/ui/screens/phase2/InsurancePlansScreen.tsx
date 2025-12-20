@@ -53,21 +53,29 @@ export const InsurancePlansScreen: React.FC = () => {
         endDateDisplay,
         duration, 
         rentalDays,
-        rentalHours, // ← NOW RECEIVED FROM ROUTE
+        rentalHours,
         rentalFeeAmount,
         baseRentalFee,
         rentingRate,
         averageRentalPrice,
         vehicleCategory,
         holidaySurcharge,
-        holidayDayCount,
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
         discountPercentage,
         discountAmount,
         durationType,
-        holidays,
+        
+        // 4-Component Data
+        startPartial,
+        startPartialAmount,
+        normalFullDays,
+        normalFullDaysAmount,
+        holidayFullDays,
+        holidayFullDaysAmount,
+        endPartial,
+        endPartialAmount,
     } = route.params;
     
     const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
@@ -91,15 +99,7 @@ export const InsurancePlansScreen: React.FC = () => {
         ? 0
         : selectedPackage?.packageFee || 0;
     
-    const insuranceFee = insuranceFeeValue === 0 
-        ? "MIỄN PHÍ" 
-        : formatVND(insuranceFeeValue);
-    
-    const rentalFee = `${rentalFeeAmount.toLocaleString()}đ`;
-    const depositFee = `${securityDeposit.toLocaleString()}đ`;
-    
     const fullTotalAmount = rentalFeeAmount + insuranceFeeValue + securityDeposit;
-    const fullTotal = `${fullTotalAmount.toLocaleString()}đ`;
 
     const hasDiscount = discountPercentage > 0;
 
@@ -117,7 +117,7 @@ export const InsurancePlansScreen: React.FC = () => {
             endDateDisplay,
             duration,
             rentalDays,
-            rentalHours, // ← PASS IT FORWARD
+            rentalHours,
             insurancePlan: selectedPlan?.title || "Không bảo vệ",
             insurancePlanId: selectedPlanId,
             rentalFeeAmount: rentalFeeAmount,
@@ -126,20 +126,28 @@ export const InsurancePlansScreen: React.FC = () => {
             rentalFee: `${rentalFeeAmount.toLocaleString()}đ`,
             insuranceFee: insuranceFeeValue === 0 ? "MIỄN PHÍ" : `${insuranceFeeValue.toLocaleString()}đ`,
             securityDeposit: `${securityDeposit.toLocaleString()}đ`,
-            total: fullTotal,
+            total: `${fullTotalAmount.toLocaleString()}đ`,
             baseRentalFee,
             rentingRate,
             averageRentalPrice,
             vehicleCategory,
             holidaySurcharge,
-            holidayDayCount,
             membershipDiscountPercentage,
             membershipDiscountAmount,
             membershipTier,
             discountPercentage,
             discountAmount,
             durationType,
-            holidays,
+            
+            // 4-Component Data
+            startPartial,
+            startPartialAmount,
+            normalFullDays,
+            normalFullDaysAmount,
+            holidayFullDays,
+            holidayFullDaysAmount,
+            endPartial,
+            endPartialAmount,
         });
     };
 
@@ -216,9 +224,17 @@ export const InsurancePlansScreen: React.FC = () => {
                 <PricingBreakdown
                     originalPricePerDay={pricePerDay}
                     averagePricePerDay={averageRentalPrice}
-                    baseRentalFee={baseRentalFee}
-                    rentalDays={rentalDays}
-                    rentalHours={rentalHours} // ← USE IT HERE
+                    
+                    // 4-Component System
+                    startPartial={startPartial}
+                    startPartialAmount={startPartialAmount}
+                    normalFullDays={normalFullDays}
+                    normalFullDaysAmount={normalFullDaysAmount}
+                    holidayFullDays={holidayFullDays}
+                    holidayFullDaysAmount={holidayFullDaysAmount}
+                    endPartial={endPartial}
+                    endPartialAmount={endPartialAmount}
+                    
                     configDiscount={hasDiscount && durationType !== "daily" ? {
                         percentage: discountPercentage,
                         amount: discountAmount,
@@ -230,11 +246,7 @@ export const InsurancePlansScreen: React.FC = () => {
                         amount: membershipDiscountAmount,
                         tier: membershipTier,
                     }}
-                    holidaySurcharge={holidaySurcharge > 0 ? {
-                        amount: holidaySurcharge,
-                        dayCount: holidayDayCount,
-                        holidays: holidays,
-                    } : undefined}
+                    
                     rentalSubtotal={rentalFeeAmount}
                     insuranceFee={insuranceFeeValue}
                     insuranceName={selectedPlan?.title}

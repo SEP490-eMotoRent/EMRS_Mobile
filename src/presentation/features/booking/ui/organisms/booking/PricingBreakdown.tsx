@@ -1,12 +1,46 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+interface PartialDayDetail {
+    date: Date;
+    hours: number;
+    isHoliday: boolean;
+    holiday?: {
+        holidayName: string;
+        priceMultiplier: number;
+    };
+    basePrice: number;
+    surchargeAmount: number;
+    totalPrice: number;
+    type: "start" | "end";
+}
+
 interface PricingBreakdownProps {
     originalPricePerDay?: number;
     averagePricePerDay?: number;
     baseRentalFee?: number;
     rentalDays?: number;
     rentalHours?: number;
+    
+    // 4-Component System
+    startPartial?: PartialDayDetail | null;
+    startPartialAmount?: number;
+    normalFullDays?: number;
+    normalFullDaysAmount?: number;
+    holidayFullDays?: Array<{
+        date: Date;
+        holiday: {
+            holidayName: string;
+            priceMultiplier: number;
+        };
+        basePrice: number;
+        surchargeAmount: number;
+        totalPrice: number;
+    }>;
+    holidayFullDaysAmount?: number;
+    endPartial?: PartialDayDetail | null;
+    endPartialAmount?: number;
+
     configDiscount?: {
         percentage: number;
         amount: number;
@@ -18,19 +52,7 @@ interface PricingBreakdownProps {
         amount: number;
         tier: string;
     };
-    holidaySurcharge?: {
-        amount: number;
-        dayCount: number;
-        holidays?: Array<{
-            name: string;
-            count: number;
-            surchargePercentage: number;
-            baseAfterDiscount: number;
-            surchargeAmount: number;
-            totalPricePerDay: number;
-            date?: Date;
-        }>;
-    };
+    
     rentalSubtotal: number;
     insuranceFee?: number;
     insuranceName?: string;
@@ -42,12 +64,16 @@ interface PricingBreakdownProps {
 export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
     originalPricePerDay,
     averagePricePerDay,
-    baseRentalFee,
-    rentalDays,
-    rentalHours,
+    startPartial,
+    startPartialAmount = 0,
+    normalFullDays = 0,
+    normalFullDaysAmount = 0,
+    holidayFullDays = [],
+    holidayFullDaysAmount = 0,
+    endPartial,
+    endPartialAmount = 0,
     configDiscount,
     membershipDiscount,
-    holidaySurcharge,
     rentalSubtotal,
     insuranceFee = 0,
     insuranceName,
@@ -55,28 +81,22 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
     total,
     showDetailedBreakdown = true,
 }) => {
+    const [isStartPartialExpanded, setIsStartPartialExpanded] = useState(false);
     const [isNormalDaysExpanded, setIsNormalDaysExpanded] = useState(false);
     const [isHolidayDaysExpanded, setIsHolidayDaysExpanded] = useState(false);
+    const [isEndPartialExpanded, setIsEndPartialExpanded] = useState(false);
     
     const hasConfigDiscount = configDiscount && configDiscount.amount > 0;
     const hasMembershipDiscount = membershipDiscount && membershipDiscount.amount > 0;
-    const hasHolidaySurcharge = holidaySurcharge && holidaySurcharge.amount > 0;
     const hasInsurance = insuranceFee > 0;
-    
-    const holidayDayCount = holidaySurcharge?.dayCount || 0;
-    const normalDayCount = (rentalDays || 0) - holidayDayCount;
-    
-    // Calculate C = sum of all holiday day totals
-    const holidayDaysTotal = holidaySurcharge?.holidays?.reduce((sum, h) => 
-        sum + (h.totalPricePerDay * h.count), 0
-    ) || 0;
-    
-    // Calculate B = rental subtotal - C
-    const normalDaysTotal = rentalSubtotal - holidayDaysTotal;
-    
-    // Calculate effective price per day for normal days (after all discounts)
-    const effectivePricePerNormalDay = normalDayCount > 0 
-        ? Math.round(normalDaysTotal / normalDayCount)
+    const hasStartPartial = startPartial && startPartialAmount > 0;
+    const hasEndPartial = endPartial && endPartialAmount > 0;
+    const hasNormalFullDays = normalFullDays > 0;
+    const hasHolidayFullDays = holidayFullDays.length > 0;
+
+    // Calculate effective price per day for normal full days
+    const effectivePricePerNormalDay = normalFullDays > 0 
+        ? Math.round(normalFullDaysAmount / normalFullDays)
         : 0;
 
     const getDiscountLabel = (type: "monthly" | "yearly"): string => {
@@ -96,17 +116,6 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
         }
     };
 
-    const formatRentalDuration = (days: number, hours?: number): string => {
-        if (hours && hours > 0) {
-            return `${days} ngày ${hours} giờ`;
-        }
-        return `${days} ngày`;
-    };
-
-    /**
-     * Format date to Vietnamese display
-     * Example: "1/5" for May 1st
-     */
     const formatHolidayDate = (date?: Date): string => {
         if (!date) return "";
         const d = new Date(date);
@@ -172,97 +181,176 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                 </>
             )}
 
-            {showDetailedBreakdown && rentalDays !== undefined && (
+            {showDetailedBreakdown && (
                 <View style={styles.section}>
-                    {/* B - Ngày thường */}
-                    <View style={styles.collapsibleCard}>
-                        <TouchableOpacity
-                            onPress={() => setIsNormalDaysExpanded(!isNormalDaysExpanded)}
-                            activeOpacity={0.7}
-                            style={styles.collapsibleHeader}
-                        >
-                            <View style={styles.collapsibleHeaderLeft}>
-                                <Text style={styles.collapsibleIcon}>📅</Text>
-                                <Text style={styles.collapsibleTitle}>Ngày thường</Text>
-                            </View>
-                            <View style={styles.collapsibleHeaderRight}>
-                                <Text style={styles.normalDaysAmount}>
-                                    {normalDaysTotal.toLocaleString()}đ
-                                </Text>
-                                <Text style={styles.toggleIcon}>
-                                    {isNormalDaysExpanded ? '▲' : '▼'}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                        
-                        {isNormalDaysExpanded && (
-                            <View style={styles.collapsibleContent}>
-                                <View style={styles.mainRow}>
-                                    <View style={styles.mainRowLeft}>
-                                        <Text style={styles.mainRowTitle}>
-                                            {(hasConfigDiscount || hasMembershipDiscount) ? 'Giá sau giảm giá' : 'Chi phí ngày thường'}
-                                        </Text>
-                                        <Text style={styles.mainRowSubtitle}>
-                                            {effectivePricePerNormalDay.toLocaleString()}đ/ngày × {formatRentalDuration(normalDayCount, rentalHours)}
-                                        </Text>
-                                    </View>
-                                    <Text style={styles.mainRowAmount}>
-                                        {normalDaysTotal.toLocaleString()}đ
+                    {/* StartPartial */}
+                    {hasStartPartial && startPartial && (
+                        <View style={styles.collapsibleCard}>
+                            <TouchableOpacity
+                                onPress={() => setIsStartPartialExpanded(!isStartPartialExpanded)}
+                                activeOpacity={0.7}
+                                style={styles.collapsibleHeader}
+                            >
+                                <View style={styles.collapsibleHeaderLeft}>
+                                    <Text style={styles.collapsibleIcon}>
+                                        {startPartial.isHoliday ? "🎉" : "📅"}
+                                    </Text>
+                                    <Text style={styles.collapsibleTitle}>
+                                        Ngày bắt đầu ({startPartial.hours}h)
                                     </Text>
                                 </View>
-
-                                {(hasConfigDiscount || hasMembershipDiscount) && (
-                                    <View style={styles.discountDetailsSection}>
-                                        <Text style={styles.discountDetailsTitle}>Giảm giá đã áp dụng:</Text>
-                                        
-                                        {hasConfigDiscount && (
-                                            <View style={styles.discountDetailRow}>
-                                                <Text style={styles.discountDetailLabel}>
-                                                    • {getDiscountLabel(configDiscount.type)}
-                                                </Text>
-                                                <Text style={styles.discountDetailValue}>
-                                                    {configDiscount.percentage}%
-                                                </Text>
-                                            </View>
-                                        )}
-                                        
-                                        {/* Always show membership */}
-                                        <View style={styles.discountDetailRow}>
-                                            <Text style={[
-                                                styles.discountDetailLabel,
-                                                !hasMembershipDiscount && styles.discountDetailDisabled
-                                            ]}>
-                                                • Thành viên {getMembershipTierLabel(membershipDiscount?.tier || "BRONZE")}
+                                <View style={styles.collapsibleHeaderRight}>
+                                    <Text style={[
+                                        styles.normalDaysAmount,
+                                        startPartial.isHoliday && styles.holidayDaysAmount
+                                    ]}>
+                                        {startPartialAmount.toLocaleString()}đ
+                                    </Text>
+                                    <Text style={styles.toggleIcon}>
+                                        {isStartPartialExpanded ? '▲' : '▼'}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                            
+                            {isStartPartialExpanded && (
+                                <View style={styles.collapsibleContent}>
+                                    <View style={styles.mainRow}>
+                                        <View style={styles.mainRowLeft}>
+                                            <Text style={styles.mainRowTitle}>
+                                                {startPartial.isHoliday ? 'Phụ thu ngày lễ' : 'Giá sau giảm giá'}
                                             </Text>
-                                            <Text style={[
-                                                styles.discountDetailValue,
-                                                !hasMembershipDiscount && styles.discountDetailDisabled
-                                            ]}>
-                                                {membershipDiscount?.percentage || 0}%
+                                            <Text style={styles.mainRowSubtitle}>
+                                                {formatHolidayDate(startPartial.date)} • {startPartial.hours} giờ
+                                                {startPartial.isHoliday && ` • ${startPartial.holiday?.holidayName}`}
+                                            </Text>
+                                            {/* ALWAYS SHOW FORMULA */}
+                                            {originalPricePerDay && (
+                                                <Text style={styles.calculationFormula}>
+                                                    {(() => {
+                                                        // Calculate discounted daily rate (or original if no discount)
+                                                        const discountedDaily = configDiscount && membershipDiscount
+                                                            ? Math.round(originalPricePerDay * (1 - configDiscount.percentage/100 - membershipDiscount.percentage/100))
+                                                            : originalPricePerDay;
+                                                        
+                                                        if (startPartial.isHoliday && startPartial.holiday) {
+                                                            const surchargePercent = Math.round((startPartial.holiday.priceMultiplier - 1) * 100);
+                                                            const holidaySurcharge = Math.round(originalPricePerDay * (startPartial.holiday.priceMultiplier - 1));
+                                                            
+                                                            return `Phụ thu ${surchargePercent}% • (${discountedDaily.toLocaleString()}đ + ${holidaySurcharge.toLocaleString()}đ) × ${startPartial.hours} giờ`;
+                                                        }
+                                                        
+                                                        return `${discountedDaily.toLocaleString()}đ/ngày × ${startPartial.hours} giờ`;
+                                                    })()}
+                                                </Text>
+                                            )}
+                                        </View>
+                                        <Text style={styles.mainRowAmount}>
+                                            {startPartialAmount.toLocaleString()}đ
+                                        </Text>
+                                    </View>
+                                    
+                                    {startPartial.isHoliday && startPartial.holiday && (
+                                        <View style={styles.partialHolidayNote}>
+                                            <Text style={styles.partialHolidayNoteText}>
+                                                ⚠️ Ngày bắt đầu trùng {startPartial.holiday.holidayName}
                                             </Text>
                                         </View>
+                                    )}
+                                </View>
+                            )}
+                        </View>
+                    )}
 
-                                        {originalPricePerDay && (
+                    {/* B - Normal Full Days */}
+                    {hasNormalFullDays && (
+                        <View style={styles.collapsibleCard}>
+                            <TouchableOpacity
+                                onPress={() => setIsNormalDaysExpanded(!isNormalDaysExpanded)}
+                                activeOpacity={0.7}
+                                style={styles.collapsibleHeader}
+                            >
+                                <View style={styles.collapsibleHeaderLeft}>
+                                    <Text style={styles.collapsibleIcon}>📅</Text>
+                                    <Text style={styles.collapsibleTitle}>
+                                        Ngày thường ({normalFullDays} ngày)
+                                    </Text>
+                                </View>
+                                <View style={styles.collapsibleHeaderRight}>
+                                    <Text style={styles.normalDaysAmount}>
+                                        {normalFullDaysAmount.toLocaleString()}đ
+                                    </Text>
+                                    <Text style={styles.toggleIcon}>
+                                        {isNormalDaysExpanded ? '▲' : '▼'}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                            
+                            {isNormalDaysExpanded && (
+                                <View style={styles.collapsibleContent}>
+                                    <View style={styles.mainRow}>
+                                        <View style={styles.mainRowLeft}>
+                                            <Text style={styles.mainRowTitle}>
+                                                {(hasConfigDiscount || hasMembershipDiscount) ? 'Giá sau giảm giá' : 'Chi phí ngày thường'}
+                                            </Text>
+                                            <Text style={styles.mainRowSubtitle}>
+                                                {effectivePricePerNormalDay.toLocaleString()}đ/ngày × {normalFullDays} ngày
+                                            </Text>
+                                        </View>
+                                        <Text style={styles.mainRowAmount}>
+                                            {normalFullDaysAmount.toLocaleString()}đ
+                                        </Text>
+                                    </View>
+
+                                    {(hasConfigDiscount || hasMembershipDiscount) && (
+                                        <View style={styles.discountDetailsSection}>
+                                            <Text style={styles.discountDetailsTitle}>Giảm giá đã áp dụng:</Text>
+                                            
+                                            {hasConfigDiscount && (
+                                                <View style={styles.discountDetailRow}>
+                                                    <Text style={styles.discountDetailLabel}>
+                                                        • {getDiscountLabel(configDiscount.type)}
+                                                    </Text>
+                                                    <Text style={styles.discountDetailValue}>
+                                                        {configDiscount.percentage}%
+                                                    </Text>
+                                                </View>
+                                            )}
+                                            
+                                            <View style={styles.discountDetailRow}>
+                                                <Text style={[
+                                                    styles.discountDetailLabel,
+                                                    !hasMembershipDiscount && styles.discountDetailDisabled
+                                                ]}>
+                                                    • Thành viên {getMembershipTierLabel(membershipDiscount?.tier || "BRONZE")}
+                                                </Text>
+                                                <Text style={[
+                                                    styles.discountDetailValue,
+                                                    !hasMembershipDiscount && styles.discountDetailDisabled
+                                                ]}>
+                                                    {membershipDiscount?.percentage || 0}%
+                                                </Text>
+                                            </View>
+
                                             <Text style={styles.effectivePriceNote}>
                                                 Giá sau giảm: {effectivePricePerNormalDay.toLocaleString()}đ/ngày
                                             </Text>
-                                        )}
-                                    </View>
-                                )}
+                                        </View>
+                                    )}
 
-                                {!hasConfigDiscount && !hasMembershipDiscount && (
-                                    <View style={styles.noDiscountNote}>
-                                        <Text style={styles.noDiscountText}>
-                                            Không có giảm giá áp dụng
-                                        </Text>
-                                    </View>
-                                )}
-                            </View>
-                        )}
-                    </View>
+                                    {!hasConfigDiscount && !hasMembershipDiscount && (
+                                        <View style={styles.noDiscountNote}>
+                                            <Text style={styles.noDiscountText}>
+                                                Không có giảm giá áp dụng
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+                        </View>
+                    )}
 
-                    {/* C - Ngày lễ */}
-                    {hasHolidaySurcharge && holidaySurcharge && (
+                    {/* C - Holiday Full Days */}
+                    {hasHolidayFullDays && (
                         <View style={styles.collapsibleCard}>
                             <TouchableOpacity
                                 onPress={() => setIsHolidayDaysExpanded(!isHolidayDaysExpanded)}
@@ -271,11 +359,13 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                             >
                                 <View style={styles.collapsibleHeaderLeft}>
                                     <Text style={styles.collapsibleIcon}>🎉</Text>
-                                    <Text style={styles.collapsibleTitle}>Ngày lễ</Text>
+                                    <Text style={styles.collapsibleTitle}>
+                                        Ngày lễ ({holidayFullDays.length} ngày)
+                                    </Text>
                                 </View>
                                 <View style={styles.collapsibleHeaderRight}>
                                     <Text style={styles.holidayDaysAmount}>
-                                        {holidayDaysTotal.toLocaleString()}đ
+                                        {holidayFullDaysAmount.toLocaleString()}đ
                                     </Text>
                                     <Text style={styles.toggleIcon}>
                                         {isHolidayDaysExpanded ? '▲' : '▼'}
@@ -283,28 +373,26 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                                 </View>
                             </TouchableOpacity>
                             
-                            {isHolidayDaysExpanded && holidaySurcharge.holidays && (
+                            {isHolidayDaysExpanded && (
                                 <View style={styles.collapsibleContent}>
                                     <View style={styles.mainRow}>
                                         <Text style={styles.mainRowTitle}>Phụ thu ngày lễ</Text>
                                         <Text style={styles.mainRowAmount}>
-                                            {holidayDaysTotal.toLocaleString()}đ
+                                            {holidayFullDaysAmount.toLocaleString()}đ
                                         </Text>
                                     </View>
 
-                                    <Text style={styles.holidayCountText}>
-                                        {holidayDayCount} ngày lễ
-                                    </Text>
-
                                     <View style={styles.holidayDetailList}>
-                                        {holidaySurcharge.holidays.map((holiday, index) => {
+                                        {holidayFullDays.map((holiday, index) => {
                                             const dateDisplay = formatHolidayDate(holiday.date);
+                                            const surchargePercent = Math.round((holiday.holiday.priceMultiplier - 1) * 100);
+                                            
                                             return (
                                                 <View key={index} style={styles.holidayDetailItem}>
                                                     <View style={styles.holidayDetailLeft}>
                                                         <View style={styles.holidayNameRow}>
                                                             <Text style={styles.holidayDetailName}>
-                                                                • {holiday.name}
+                                                                • {holiday.holiday.holidayName}
                                                             </Text>
                                                             {dateDisplay && (
                                                                 <View style={styles.holidayDateBadge}>
@@ -315,11 +403,11 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                                                             )}
                                                         </View>
                                                         <Text style={styles.holidayDetailFormula}>
-                                                            Phụ thu {holiday.surchargePercentage}% • {holiday.baseAfterDiscount.toLocaleString()}đ + {holiday.surchargeAmount.toLocaleString()}đ
+                                                            Phụ thu {surchargePercent}% • {holiday.basePrice.toLocaleString()}đ + {holiday.surchargeAmount.toLocaleString()}đ
                                                         </Text>
                                                     </View>
                                                     <Text style={styles.holidayDetailPrice}>
-                                                        {holiday.totalPricePerDay.toLocaleString()}đ/ngày
+                                                        {holiday.totalPrice.toLocaleString()}đ/ngày
                                                     </Text>
                                                 </View>
                                             );
@@ -330,9 +418,87 @@ export const PricingBreakdown: React.FC<PricingBreakdownProps> = ({
                         </View>
                     )}
 
+                    {/* EndPartial */}
+                    {hasEndPartial && endPartial && (
+                        <View style={styles.collapsibleCard}>
+                            <TouchableOpacity
+                                onPress={() => setIsEndPartialExpanded(!isEndPartialExpanded)}
+                                activeOpacity={0.7}
+                                style={styles.collapsibleHeader}
+                            >
+                                <View style={styles.collapsibleHeaderLeft}>
+                                    <Text style={styles.collapsibleIcon}>
+                                        {endPartial.isHoliday ? "🎉" : "📅"}
+                                    </Text>
+                                    <Text style={styles.collapsibleTitle}>
+                                        Ngày kết thúc ({endPartial.hours}h)
+                                    </Text>
+                                </View>
+                                <View style={styles.collapsibleHeaderRight}>
+                                    <Text style={[
+                                        styles.normalDaysAmount,
+                                        endPartial.isHoliday && styles.holidayDaysAmount
+                                    ]}>
+                                        {endPartialAmount.toLocaleString()}đ
+                                    </Text>
+                                    <Text style={styles.toggleIcon}>
+                                        {isEndPartialExpanded ? '▲' : '▼'}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                            
+                            {isEndPartialExpanded && (
+                                <View style={styles.collapsibleContent}>
+                                    <View style={styles.mainRow}>
+                                        <View style={styles.mainRowLeft}>
+                                            <Text style={styles.mainRowTitle}>
+                                                {endPartial.isHoliday ? 'Phụ thu ngày lễ' : 'Giá sau giảm giá'}
+                                            </Text>
+                                            <Text style={styles.mainRowSubtitle}>
+                                                {formatHolidayDate(endPartial.date)} • {endPartial.hours} giờ
+                                                {endPartial.isHoliday && ` • ${endPartial.holiday?.holidayName}`}
+                                            </Text>
+                                            {/* ALWAYS SHOW FORMULA */}
+                                            {originalPricePerDay && (
+                                                <Text style={styles.calculationFormula}>
+                                                    {(() => {
+                                                        // Calculate discounted daily rate (or original if no discount)
+                                                        const discountedDaily = configDiscount && membershipDiscount
+                                                            ? Math.round(originalPricePerDay * (1 - configDiscount.percentage/100 - membershipDiscount.percentage/100))
+                                                            : originalPricePerDay;
+                                                        
+                                                        if (endPartial.isHoliday && endPartial.holiday) {
+                                                            const surchargePercent = Math.round((endPartial.holiday.priceMultiplier - 1) * 100);
+                                                            const holidaySurcharge = Math.round(originalPricePerDay * (endPartial.holiday.priceMultiplier - 1));
+                                                            
+                                                            return `Phụ thu ${surchargePercent}% • (${discountedDaily.toLocaleString()}đ + ${holidaySurcharge.toLocaleString()}đ) × ${endPartial.hours} giờ`;
+                                                        }
+                                                        
+                                                        return `${discountedDaily.toLocaleString()}đ/ngày × ${endPartial.hours} giờ`;
+                                                    })()}
+                                                </Text>
+                                            )}
+                                        </View>
+                                        <Text style={styles.mainRowAmount}>
+                                            {endPartialAmount.toLocaleString()}đ
+                                        </Text>
+                                    </View>
+                                    
+                                    {endPartial.isHoliday && endPartial.holiday && (
+                                        <View style={styles.partialHolidayNote}>
+                                            <Text style={styles.partialHolidayNoteText}>
+                                                ⚠️ Ngày kết thúc trùng {endPartial.holiday.holidayName}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+                        </View>
+                    )}
+
                     <View style={styles.divider} />
 
-                    {/* D = B + C */}
+                    {/* Total Rental Fee */}
                     <View style={styles.row}>
                         <Text style={styles.subtotalLabel}>Tổng phí thuê xe</Text>
                         <Text style={styles.subtotalValue}>
@@ -546,6 +712,11 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "700",
     },
+    partialDetailText: {
+        color: "#86efac",
+        fontSize: 11,
+        flex: 1,
+    },
     discountDetailsSection: {
         backgroundColor: "#1a1a1a",
         borderRadius: 6,
@@ -593,11 +764,6 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontStyle: "italic",
         textAlign: "center",
-    },
-    holidayCountText: {
-        color: "#fca5a5",
-        fontSize: 11,
-        marginBottom: 8,
     },
     holidayDetailList: {
         marginTop: 4,
@@ -701,5 +867,24 @@ const styles = StyleSheet.create({
         color: "#00ff00",
         fontSize: 20,
         fontWeight: "700",
+    },
+    calculationFormula: {
+        color: "#86efac",
+        fontSize: 11,
+        marginTop: 4,
+        fontStyle: "italic",
+    },
+    partialHolidayNote: {
+        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        borderRadius: 6,
+        padding: 8,
+        marginTop: 8,
+        borderLeftWidth: 3,
+        borderLeftColor: "#ef4444",
+    },
+    partialHolidayNoteText: {
+        color: "#fca5a5",
+        fontSize: 11,
+        fontWeight: "600",
     },
 });

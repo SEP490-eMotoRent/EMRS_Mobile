@@ -94,14 +94,22 @@ export const PaymentConfirmationScreen: React.FC = () => {
         averageRentalPrice,
         vehicleCategory,
         holidaySurcharge,
-        holidayDayCount,
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
         discountPercentage,
         discountAmount,
         durationType,
-        holidays,
+        
+        // 4-Component Data
+        startPartial,
+        startPartialAmount,
+        normalFullDays,
+        normalFullDaysAmount,
+        holidayFullDays,
+        holidayFullDaysAmount,
+        endPartial,
+        endPartialAmount,
     } = route.params;
 
     const parsePrice = (price: string): number => {
@@ -125,7 +133,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
     console.log("Frontend pricing breakdown:", {
         holidaySurcharge,
-        holidayDayCount,
+        holidayFullDaysCount: holidayFullDays?.length || 0, // ← FIXED
         membershipDiscountPercentage,
         membershipDiscountAmount,
         membershipTier,
@@ -414,9 +422,17 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 <PricingBreakdown
                     originalPricePerDay={pricePerDay}
                     averagePricePerDay={averageRentalPrice}
-                    baseRentalFee={baseRentalFee}
-                    rentalDays={rentalDays}
-                    rentalHours={rentalHours} // ← USE IT HERE
+                    
+                    // 4-Component System
+                    startPartial={startPartial}
+                    startPartialAmount={startPartialAmount}
+                    normalFullDays={normalFullDays}
+                    normalFullDaysAmount={normalFullDaysAmount}
+                    holidayFullDays={holidayFullDays}
+                    holidayFullDaysAmount={holidayFullDaysAmount}
+                    endPartial={endPartial}
+                    endPartialAmount={endPartialAmount}
+                    
                     configDiscount={discountPercentage > 0 && durationType !== "daily" ? {
                         percentage: discountPercentage,
                         amount: discountAmount,
@@ -428,11 +444,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                         amount: membershipDiscountAmount,
                         tier: membershipTier,
                     }}
-                    holidaySurcharge={holidaySurcharge > 0 ? {
-                        amount: holidaySurcharge,
-                        dayCount: holidayDayCount,
-                        holidays: holidays,
-                    } : undefined}
+                    
                     rentalSubtotal={rentalFeeAmount}
                     insuranceFee={insuranceFeeAmount}
                     insuranceName={insurancePlan}
