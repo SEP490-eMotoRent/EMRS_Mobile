@@ -16,7 +16,7 @@ interface PrimaryButtonProps {
     textStyle?: TextStyle;
     disabled?: boolean;
     loading?: boolean;
-    flex?: boolean; // ✅ NEW: For side-by-side buttons
+    flex?: boolean;
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -26,7 +26,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     textStyle,
     disabled = false,
     loading = false,
-    flex = false, // ✅ NEW
+    flex = false,
 }) => {
     const isDisabled = disabled || loading;
 
@@ -34,7 +34,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         <TouchableOpacity
             style={[
                 styles.button, 
-                flex && styles.flexButton, // ✅ NEW
+                flex && styles.flexButton,
                 style,
                 isDisabled && styles.buttonDisabled
             ]}
@@ -54,7 +54,10 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
                         textStyle,
                         isDisabled && styles.textDisabled
                     ]}
-                    numberOfLines={1} // ✅ NEW: Prevent text overflow
+                    allowFontScaling={false}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
                 >
                     {title}
                 </Text>
@@ -73,14 +76,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         minHeight: 56,
     },
-    flexButton: { // ✅ NEW: For side-by-side buttons
+    flexButton: {
         flex: 1,
-        paddingHorizontal: 12, // Reduce padding for tight spacing
+        paddingHorizontal: 12,
     },
     text: {
         color: colors.button.text,
         fontSize: 16,
         fontWeight: '600',
+        textAlign: 'center',
     },
     buttonDisabled: {
         backgroundColor: '#333',
