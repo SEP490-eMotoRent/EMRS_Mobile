@@ -53,10 +53,17 @@ export const BookingButtonWithPrice: React.FC<BookingButtonWithPriceProps> = ({
             <View style={styles.splitContainer}>
                 {/* Left Side: Price + Date Info */}
                 <View style={styles.priceSection}>
-                <Text style={styles.priceText}>
+                <Text 
+                    style={styles.priceText}
+                    allowFontScaling={false}
+                >
                     {pricePerDay.toLocaleString('vi-VN')}đ / ngày
                 </Text>
-                <Text style={styles.dateText} numberOfLines={1}>
+                <Text 
+                    style={styles.dateText} 
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                >
                     {formattedDateRange}
                 </Text>
                 </View>
@@ -71,10 +78,14 @@ export const BookingButtonWithPrice: React.FC<BookingButtonWithPriceProps> = ({
                 activeOpacity={0.8}
                 disabled={disabled}
                 >
-                <Text style={[
-                    styles.buttonText,
-                    disabled && styles.buttonTextDisabled
-                ]}>
+                <Text 
+                    style={[
+                        styles.buttonText,
+                        disabled && styles.buttonTextDisabled
+                    ]}
+                    allowFontScaling={false}
+                    numberOfLines={1}
+                >
                     Đặt xe
                 </Text>
                 </TouchableOpacity>
@@ -121,9 +132,9 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         paddingHorizontal: 32,
         borderRadius: 16,
-        minWidth: 120,
         alignItems: "center",
         justifyContent: "center",
+        flexShrink: 0, // ✅ Prevent button from shrinking
     },
     buttonDisabled: {
         backgroundColor: "#4b5563",
@@ -133,6 +144,7 @@ const styles = StyleSheet.create({
         color: "#000",
         fontSize: 16,
         fontWeight: "700",
+        textAlign: "center",
     },
     buttonTextDisabled: {
         color: "#9ca3af",

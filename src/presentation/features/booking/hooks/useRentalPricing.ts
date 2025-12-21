@@ -2,14 +2,14 @@ import { useMemo } from "react";
 import { HolidayPricing } from "../../../../domain/entities/financial/HolidayPricing";
 import {
     calculateCombinedRentalFee,
+    FourComponentResult,
     HolidayDay,
     PartialDayDetail,
-    FourComponentResult,
     ProgressiveTierBreakdown,
 } from "../utils/holidayPricingCalculator";
+import { useMembershipDiscount } from "./membership/useMembershipDiscount";
 import { useHolidayPricing } from "./useHolidayPricing";
 import { useRentingRate, VehicleCategory } from "./useRentingRate";
-import { useMembershipDiscount } from "./membership/useMembershipDiscount";
 
 export interface RentalPricingResult {
     // Configuration discount
@@ -109,7 +109,7 @@ export const useRentalPricing = (
     const pricing = useMemo(() => {
         if (rateLoading || membershipLoading || holidayLoading) {
             const hourlyRate = dailyRate / 24;
-            const baseEstimate = Math.round(hourlyRate * totalHours);
+            const baseEstimate = hourlyRate * totalHours;
 
             const emptyResult: FourComponentResult = {
                 startPartial: null,
@@ -176,7 +176,7 @@ export const useRentalPricing = (
     // Calculate average price per day for display (using exact days with hours)
     // Example: 7 days 12 hours = 7.5 days → 750,000đ / 7.5 = 100,000đ/ngày
     const averageRentalPrice = totalDaysExact > 0
-        ? Math.round(pricing.totalRentalFee / totalDaysExact)
+        ? (pricing.totalRentalFee / totalDaysExact)
         : dailyRate;
 
     // Combine all holiday days (full + partials) for legacy compatibility

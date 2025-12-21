@@ -22,23 +22,14 @@ export interface PartialDayDetail {
 }
 
 export interface FourComponentResult {
-    // Start Partial
     startPartial: PartialDayDetail | null;
     startPartialAmount: number;
-
-    // B - Normal Full Days
     normalFullDays: number;
     normalFullDaysAmount: number;
-
-    // C - Holiday Full Days
     holidayFullDays: HolidayDay[];
     holidayFullDaysAmount: number;
-
-    // End Partial
     endPartial: PartialDayDetail | null;
     endPartialAmount: number;
-
-    // Totals
     baseRentalFee: number;
     discountAmount: number;
     holidaySurcharge: number;
@@ -52,16 +43,10 @@ export interface ProgressiveTierBreakdown {
     discountTier: "yearly" | "monthly" | "none";
 }
 
-/**
- * Constants
- */
 const MONTHLY_THRESHOLD_DAYS = 30;
 const YEARLY_THRESHOLD_DAYS = 365;
 const HOURS_PER_DAY = 24;
 
-/**
- * Check if two dates are the same day (ignoring time)
- */
 const isSameDay = (date1: Date, date2: Date): boolean => {
     return (
         date1.getFullYear() === date2.getFullYear() &&
@@ -70,9 +55,6 @@ const isSameDay = (date1: Date, date2: Date): boolean => {
     );
 };
 
-/**
- * Find holiday for a specific date
- */
 const findHolidayForDate = (
     date: Date,
     holidays: HolidayPricing[]
@@ -85,9 +67,6 @@ const findHolidayForDate = (
     return null;
 };
 
-/**
- * Determine discount tier qualification
- */
 const determineDiscountTier = (totalHours: number): {
     discountTier: "yearly" | "monthly" | "none";
     appliesTo: "all" | "none";
@@ -105,19 +84,6 @@ const determineDiscountTier = (totalHours: number): {
     return { discountTier: "none", appliesTo: "none" };
 };
 
-/**
- * NEW: Calculate 4-component rental fee
- * 
- * D = StartPartial + B + C + EndPartial + insurance + deposit
- * 
- * @param startDate - Rental start date/time
- * @param endDate - Rental end date/time
- * @param dailyRate - Price per day (A)
- * @param totalHours - Total rental hours
- * @param holidays - List of holiday pricings
- * @param configDiscountRate - Config discount rate (e.g., 0.90 for 10% off)
- * @param membershipDiscountPercentage - Membership discount % (e.g., 5 for 5%)
- */
 export const calculateCombinedRentalFee = (
     startDate: Date,
     endDate: Date,
@@ -129,7 +95,6 @@ export const calculateCombinedRentalFee = (
 ): FourComponentResult => {
     const hourlyRate = dailyRate / HOURS_PER_DAY;
 
-    // Determine discount tier
     const tierQualification = determineDiscountTier(totalHours);
     const configDiscountPercentage = (1 - configDiscountRate) * 100;
     const configDiscountDecimal = configDiscountPercentage / 100;
@@ -152,7 +117,6 @@ export const calculateCombinedRentalFee = (
     const startHour = startDate.getHours();
     const startRemainingHours = 24 - startHour;
 
-    // Check if start date is a holiday
     const startDateNormalized = new Date(startDate);
     startDateNormalized.setHours(0, 0, 0, 0);
     const startHoliday = findHolidayForDate(startDateNormalized, holidays);
@@ -161,14 +125,15 @@ export const calculateCombinedRentalFee = (
         // Same day rental - only calculate total hours
         const sameDayHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
         
-        let multiplier = combinedDiscountRate; // Default: normal
+        let multiplier = combinedDiscountRate;
         if (startHoliday) {
             const holidaySurchargePercentage = startHoliday.priceMultiplier - 1;
             multiplier = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
         }
 
-        const totalPrice = Math.round(hourlyRate * sameDayHours * multiplier);
-        const basePrice = Math.round(hourlyRate * sameDayHours * combinedDiscountRate);
+        // Keep precision during calculation
+        const totalPrice = hourlyRate * sameDayHours * multiplier;
+        const basePrice = hourlyRate * sameDayHours * combinedDiscountRate;
         const surcharge = startHoliday ? totalPrice - basePrice : 0;
 
         startPartial = {
@@ -190,9 +155,15 @@ export const calculateCombinedRentalFee = (
         });
 
         // Same day rental - no B, C, or EndPartial
+        // ROUND ONLY AT RETURN
         return {
-            startPartial,
-            startPartialAmount,
+            startPartial: {
+                ...startPartial,
+                basePrice: Math.round(basePrice),
+                surchargeAmount: Math.round(surcharge),
+                totalPrice: Math.round(totalPrice),
+            },
+            startPartialAmount: Math.round(startPartialAmount),
             normalFullDays: 0,
             normalFullDaysAmount: 0,
             holidayFullDays: [],
@@ -201,21 +172,22 @@ export const calculateCombinedRentalFee = (
             endPartialAmount: 0,
             baseRentalFee: Math.round(hourlyRate * sameDayHours),
             discountAmount: 0,
-            holidaySurcharge: surcharge,
-            totalRentalFee: startPartialAmount,
+            holidaySurcharge: Math.round(surcharge),
+            totalRentalFee: Math.round(startPartialAmount),
             membershipDiscountAmount: Math.round(hourlyRate * sameDayHours * membershipDiscountDecimal),
         };
     }
 
     // Multi-day rental - calculate start partial
-    let multiplier = combinedDiscountRate; // Default: normal day
+    let multiplier = combinedDiscountRate;
     if (startHoliday) {
         const holidaySurchargePercentage = startHoliday.priceMultiplier - 1;
         multiplier = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
     }
 
-    const startTotalPrice = Math.round(hourlyRate * startRemainingHours * multiplier);
-    const startBasePrice = Math.round(hourlyRate * startRemainingHours * combinedDiscountRate);
+    // Keep precision during calculation
+    const startTotalPrice = hourlyRate * startRemainingHours * multiplier;
+    const startBasePrice = hourlyRate * startRemainingHours * combinedDiscountRate;
     const startSurcharge = startHoliday ? startTotalPrice - startBasePrice : 0;
 
     startPartial = {
@@ -248,14 +220,15 @@ export const calculateCombinedRentalFee = (
     endDateNormalized.setHours(0, 0, 0, 0);
     const endHoliday = findHolidayForDate(endDateNormalized, holidays);
 
-    let endMultiplier = combinedDiscountRate; // Default: normal day
+    let endMultiplier = combinedDiscountRate;
     if (endHoliday) {
         const holidaySurchargePercentage = endHoliday.priceMultiplier - 1;
         endMultiplier = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
     }
 
-    const endTotalPrice = Math.round(hourlyRate * endHour * endMultiplier);
-    const endBasePrice = Math.round(hourlyRate * endHour * combinedDiscountRate);
+    // Keep precision during calculation
+    const endTotalPrice = hourlyRate * endHour * endMultiplier;
+    const endBasePrice = hourlyRate * endHour * combinedDiscountRate;
     const endSurcharge = endHoliday ? endTotalPrice - endBasePrice : 0;
 
     endPartial = {
@@ -281,9 +254,9 @@ export const calculateCombinedRentalFee = (
     // STEP 3: Get all FULL days between start and end (exclude partials)
     // ========================================================================
     const fullDayStart = new Date(startDateNormalized);
-    fullDayStart.setDate(fullDayStart.getDate() + 1); // Day after start
+    fullDayStart.setDate(fullDayStart.getDate() + 1);
 
-    const fullDayEnd = new Date(endDateNormalized); // Day of end (but we don't include it)
+    const fullDayEnd = new Date(endDateNormalized);
 
     const fullDays: Date[] = [];
     const current = new Date(fullDayStart);
@@ -310,11 +283,12 @@ export const calculateCombinedRentalFee = (
         const holiday = findHolidayForDate(day, holidays);
         
         if (holiday) {
-            // This is a holiday full day (C)
             const holidaySurchargePercentage = holiday.priceMultiplier - 1;
             const holidayRate = 1 + holidaySurchargePercentage - membershipDiscountDecimal - configDiscountDecimal;
-            const holidayTotalPrice = Math.round(dailyRate * holidayRate);
-            const holidayBasePrice = Math.round(dailyRate * combinedDiscountRate);
+            
+            // Keep precision during calculation
+            const holidayTotalPrice = dailyRate * holidayRate;
+            const holidayBasePrice = dailyRate * combinedDiscountRate;
             const surchargeAmount = holidayTotalPrice - holidayBasePrice;
 
             holidayFullDays.push({
@@ -327,12 +301,12 @@ export const calculateCombinedRentalFee = (
                 totalPrice: holidayTotalPrice,
             });
         } else {
-            // This is a normal full day (B)
             normalFullDaysCount++;
         }
     });
 
-    const normalFullDaysAmount = Math.round(dailyRate * normalFullDaysCount * combinedDiscountRate);
+    // Keep precision during calculation
+    const normalFullDaysAmount = dailyRate * normalFullDaysCount * combinedDiscountRate;
     const holidayFullDaysAmount = holidayFullDays.reduce((sum, h) => sum + h.totalPrice, 0);
 
     console.log("🔵 [B - Normal Full Days]:", {
@@ -350,9 +324,11 @@ export const calculateCombinedRentalFee = (
     // ========================================================================
     const totalRentalFee = startPartialAmount + normalFullDaysAmount + holidayFullDaysAmount + endPartialAmount;
     const totalDays = totalHours / HOURS_PER_DAY;
-    const baseWithoutDiscounts = Math.round(dailyRate * totalDays);
+    
+    // Keep precision during calculation
+    const baseWithoutDiscounts = dailyRate * totalDays;
     const totalHolidaySurcharge = startSurcharge + endSurcharge + holidayFullDays.reduce((sum, h) => sum + h.surchargeAmount, 0);
-    const membershipDiscountAmount = Math.round(dailyRate * totalDays * membershipDiscountDecimal);
+    const membershipDiscountAmount = dailyRate * totalDays * membershipDiscountDecimal;
 
     console.log("💚 [TOTAL - 4 Components]:", {
         startPartial: startPartialAmount,
@@ -362,26 +338,39 @@ export const calculateCombinedRentalFee = (
         total: totalRentalFee,
     });
 
+    // ROUND ONLY AT FINAL RETURN - to whole đồng
     return {
-        startPartial,
-        startPartialAmount,
+        startPartial: startPartial ? {
+            ...startPartial,
+            basePrice: Math.round(startPartial.basePrice),
+            surchargeAmount: Math.round(startPartial.surchargeAmount),
+            totalPrice: Math.round(startPartial.totalPrice),
+        } : null,
+        startPartialAmount: Math.round(startPartialAmount),
         normalFullDays: normalFullDaysCount,
-        normalFullDaysAmount,
-        holidayFullDays,
-        holidayFullDaysAmount,
-        endPartial,
-        endPartialAmount,
-        baseRentalFee: baseWithoutDiscounts,
-        discountAmount: baseWithoutDiscounts - totalRentalFee + totalHolidaySurcharge,
-        holidaySurcharge: totalHolidaySurcharge,
-        totalRentalFee,
-        membershipDiscountAmount,
+        normalFullDaysAmount: Math.round(normalFullDaysAmount),
+        holidayFullDays: holidayFullDays.map(h => ({
+            ...h,
+            basePrice: Math.round(h.basePrice),
+            surchargeAmount: Math.round(h.surchargeAmount),
+            totalPrice: Math.round(h.totalPrice),
+        })),
+        holidayFullDaysAmount: Math.round(holidayFullDaysAmount),
+        endPartial: endPartial ? {
+            ...endPartial,
+            basePrice: Math.round(endPartial.basePrice),
+            surchargeAmount: Math.round(endPartial.surchargeAmount),
+            totalPrice: Math.round(endPartial.totalPrice),
+        } : null,
+        endPartialAmount: Math.round(endPartialAmount),
+        baseRentalFee: Math.round(baseWithoutDiscounts),
+        discountAmount: Math.round(baseWithoutDiscounts - totalRentalFee + totalHolidaySurcharge),
+        holidaySurcharge: Math.round(totalHolidaySurcharge),
+        totalRentalFee: Math.round(totalRentalFee),
+        membershipDiscountAmount: Math.round(membershipDiscountAmount),
     };
 };
 
-/**
- * Legacy function for backward compatibility
- */
 export const calculateHolidayPricing = (): any => {
     throw new Error("Use calculateCombinedRentalFee instead");
 };
