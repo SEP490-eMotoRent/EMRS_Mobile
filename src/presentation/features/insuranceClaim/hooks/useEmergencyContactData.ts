@@ -50,7 +50,7 @@ export const useEmergencyContactData = (
         setLoading(true);
         setError(null);
         
-        console.log('🚨 Fetching emergency contact data for booking:', bookingId);
+        // console.log(' Fetching emergency contact data for booking:', bookingId);
         
         const booking = await useCase.execute(bookingId);
         
@@ -58,7 +58,7 @@ export const useEmergencyContactData = (
             throw new Error('Booking not found');
         }
 
-        console.log('✅ Booking fetched:', booking.id);
+        // console.log(' Booking fetched:', booking.id);
 
         const emergencyData: EmergencyContactData = {
             vehicleInfo: {
@@ -86,7 +86,7 @@ export const useEmergencyContactData = (
         };
 
         setData(emergencyData);
-        console.log('✅ Emergency contact data set:', emergencyData);
+        // console.log(' Emergency contact data set:', emergencyData);
         } catch (err: any) {
         console.error('❌ Error fetching emergency contact data:', err);
         setError(err.message || 'Failed to load emergency contact data');

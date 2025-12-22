@@ -325,23 +325,23 @@ export const TripsScreen: React.FC = () => {
     };
 
     const handlePayNow = (tripId: string) => {
-        console.log("Thanh toán ngay", tripId);
+        // console.log("Thanh toán ngay", tripId);
     };
 
     const handleExtend = (tripId: string) => {
-        console.log("Gia hạn", tripId);
+        // console.log("Gia hạn", tripId);
     };
 
     const handleRentAgain = (tripId: string) => {
-        console.log("Thuê lại", tripId);
+        // console.log("Thuê lại", tripId);
     };
 
     const handleViewReceipt = (tripId: string) => {
-        console.log("Xem hóa đơn", tripId);
+        // console.log("Xem hóa đơn", tripId);
     };
 
     const handleBookSimilar = (tripId: string) => {
-        console.log("Đặt xe tương tự", tripId);
+        // console.log("Đặt xe tương tự", tripId);
     };
 
     const handleLeaveFeedback = (bookingId: string, vehicleName: string) => {

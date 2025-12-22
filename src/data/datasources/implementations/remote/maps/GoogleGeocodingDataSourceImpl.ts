@@ -29,7 +29,7 @@ export class GoogleGeocodingDataSourceImpl implements GeocodingDataSource {
                 formattedAddress: prediction.description,
             }));
         } catch (error) {
-            console.error('Error searching places:', error);
+            // console.error('Error searching places:', error);
             throw error;
         }
     }
@@ -58,7 +58,7 @@ export class GoogleGeocodingDataSourceImpl implements GeocodingDataSource {
                 formattedAddress: data.result.formatted_address,
             };
         } catch (error) {
-            console.error('Error getting place details:', error);
+            // console.error('Error getting place details:', error);
             throw error;
         }
     }
@@ -84,7 +84,7 @@ export class GoogleGeocodingDataSourceImpl implements GeocodingDataSource {
                 longitude: location.lng,
             };
         } catch (error) {
-            console.error('Error geocoding address:', error);
+            // console.error('Error geocoding address:', error);
             throw error;
         }
     }

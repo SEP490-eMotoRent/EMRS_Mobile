@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-    parseTime,
-    validateRentalDuration,
+    calculateProgressiveTiers,
     calculateRentalDuration,
     formatDuration,
-    calculateProgressiveTiers,
+    parseTime,
+    validateRentalDuration,
 } from "../utils/RentalDurationValidator";
 
 /**
@@ -50,12 +50,12 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
      * Expected format: "2024-12-17 - 2024-12-18 (10:00 SA - 6:00 CH)"
      */
     const handleDateRangeChange = (dateRange: string) => {
-        console.log("📅 Date range changed:", dateRange);
+        // console.log("📅 Date range changed:", dateRange);
 
         const match = dateRange.match(/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})\s*\((.+?)\s*-\s*(.+?)\)/);
 
         if (!match) {
-            console.warn("⚠️ Invalid date range format:", dateRange);
+            // console.warn("⚠️ Invalid date range format:", dateRange);
             return;
         }
 
@@ -90,7 +90,7 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
             setDurationError(validation.error);
             setDuration("--");
             setTotalHours(0);
-            console.warn("⚠️ Invalid duration:", validation.error);
+            // console.warn("⚠️ Invalid duration:", validation.error);
             return;
         }
 
@@ -103,17 +103,17 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
         // Calculate progressive tiers for logging
         const tiers = calculateProgressiveTiers(rentalDuration.totalHours);
 
-        console.log("✅ Duration calculated:", {
-            days: rentalDuration.days,
-            hours: rentalDuration.hours,
-            totalHours: rentalDuration.totalHours,
-            progressiveTiers: {
-                tier: tiers.discountTier,
-                discountedHours: tiers.discountedHours,
-                regularHours: tiers.regularHours,
-                fullPeriods: tiers.fullPeriods,
-            },
-        });
+        // console.log("✅ Duration calculated:", {
+        //     days: rentalDuration.days,
+        //     hours: rentalDuration.hours,
+        //     totalHours: rentalDuration.totalHours,
+        //     progressiveTiers: {
+        //         tier: tiers.discountTier,
+        //         discountedHours: tiers.discountedHours,
+        //         regularHours: tiers.regularHours,
+        //         fullPeriods: tiers.fullPeriods,
+        //     },
+        // });
     };
 
     /**
@@ -124,7 +124,7 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
         
         if (!validation.isValid) {
             setDurationError(validation.error);
-            console.warn("⚠️ Validation failed:", validation.error);
+            // console.warn("⚠️ Validation failed:", validation.error);
             return false;
         }
 
@@ -137,7 +137,7 @@ export const useRentalDuration = (initialDateRangeISO?: string) => {
      */
     useEffect(() => {
         if (initialDateRangeISO) {
-            console.log("🔄 Auto-populating from initial date range:", initialDateRangeISO);
+            // console.log("🔄 Auto-populating from initial date range:", initialDateRangeISO);
             handleDateRangeChange(initialDateRangeISO);
         }
     }, [initialDateRangeISO]);

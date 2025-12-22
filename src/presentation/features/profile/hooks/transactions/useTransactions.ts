@@ -25,7 +25,7 @@ export const useTransactions = () => {
             // Filter out failed transactions - only show successful ones
             const successfulTransactions = result.filter(t => t.status === 'Success');
 
-            console.log('✅ Transactions fetched:', successfulTransactions.length);
+            // console.log('✅ Transactions fetched:', successfulTransactions.length);
             setTransactions(successfulTransactions);
         } catch (err: any) {
             console.error('❌ Failed to fetch transactions:', err);

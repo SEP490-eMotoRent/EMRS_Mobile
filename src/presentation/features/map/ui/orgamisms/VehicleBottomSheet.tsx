@@ -78,25 +78,22 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     }, [distanceKm]);
 
     /**
-     * Handle animation with race condition prevention
-     * 
-     * Critical fixes:
-     * 1. Stop previous animation before starting new one
-     * 2. Check if component is mounted before finishing
-     * 3. Clear animation ref after completion
+     * FIXED: Handle animation with race condition prevention
+     * - Commented out console.logs for performance
+     * - Proper cleanup to prevent memory leaks
      */
     useEffect(() => {
-        console.log('[VehicleBottomSheet] Visible changed to: ', visible);
+        // console.log('[VehicleBottomSheet] Visible changed to: ', visible);
         
         // CRITICAL: Stop any in-progress animation first
         if (animationRef.current) {
-            console.log('[VehicleBottomSheet] Stopping previous animation');
+            // console.log('[VehicleBottomSheet] Stopping previous animation');
             animationRef.current.stop();
             animationRef.current = null;
         }
 
         if (visible) {
-            console.log('[VehicleBottomSheet] Starting open animation');
+            // console.log('[VehicleBottomSheet] Starting open animation');
             
             // Create spring animation for smooth opening
             animationRef.current = Animated.spring(translateY, {
@@ -109,12 +106,12 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
             animationRef.current.start(({ finished }) => {
                 // Only process completion if animation finished naturally and component is mounted
                 if (finished && isMountedRef.current) {
-                    console.log('[VehicleBottomSheet] Open animation completed');
+                    // console.log('[VehicleBottomSheet] Open animation completed');
                     animationRef.current = null;
                 }
             });
         } else {
-            console.log('[VehicleBottomSheet] Starting close animation');
+            // console.log('[VehicleBottomSheet] Starting close animation');
             
             // Create timing animation for quick closing
             animationRef.current = Animated.timing(translateY, {
@@ -126,7 +123,7 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
             animationRef.current.start(({ finished }) => {
                 // Only process completion if animation finished naturally and component is mounted
                 if (finished && isMountedRef.current) {
-                    console.log('[VehicleBottomSheet] Close animation completed');
+                    // console.log('[VehicleBottomSheet] Close animation completed');
                     animationRef.current = null;
                 }
             });
@@ -134,14 +131,15 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     }, [visible, translateY]);
 
     /**
-     * Cleanup: Stop animations and reset position on unmount
-     * Prevents crash from animations trying to update unmounted component
+     * FIXED: Cleanup - Stop animations and reset position on unmount
+     * - Commented out console.log
+     * - Prevents crash from animations trying to update unmounted component
      */
     useEffect(() => {
         isMountedRef.current = true;
         
         return () => {
-            console.log('[VehicleBottomSheet] Unmounting, cleaning up animations');
+            // console.log('[VehicleBottomSheet] Unmounting, cleaning up animations');
             isMountedRef.current = false;
             
             // Stop any running animation
@@ -172,34 +170,36 @@ export const VehicleBottomSheet: React.FC<VehicleBottomSheetProps> = ({
     };
 
     /**
-     * Handle close button press with error tracking
+     * FIXED: Handle close button press with error tracking
+     * - Commented out console.log
      */
     const handleClose = () => {
         try {
-            console.log('[VehicleBottomSheet] Close button pressed');
+            // console.log('[VehicleBottomSheet] Close button pressed');
             trackBreadcrumb('👆 Close button pressed');
             onClose();
         } catch (error) {
-            console.error('[VehicleBottomSheet] Close handler failed: ', error);
+            // console.error('[VehicleBottomSheet] Close handler failed: ', error);
             trackError('JS_ERROR', error, 'Bottom sheet close handler failed');
         }
     };
 
     /**
-     * Handle vehicle booking with validation and error tracking
+     * FIXED: Handle vehicle booking with validation and error tracking
+     * - Commented out console.logs
      */
     const handleBookVehicle = (vehicleId: string) => {
         try {
             if (!vehicleId || typeof vehicleId !== 'string') {
-                console.error('[VehicleBottomSheet] Invalid vehicle ID: ', vehicleId);
+                // console.error('[VehicleBottomSheet] Invalid vehicle ID: ', vehicleId);
                 trackError('STATE_ERROR', new Error('Invalid vehicle ID'), 'Invalid vehicle ID on book', { vehicleId });
                 return;
             }
-            console.log('[VehicleBottomSheet] Booking vehicle: ', vehicleId);
+            // console.log('[VehicleBottomSheet] Booking vehicle: ', vehicleId);
             trackBreadcrumb(`📖 Booking vehicle: ${vehicleId}`);
             onBookVehicle(vehicleId);
         } catch (error) {
-            console.error('[VehicleBottomSheet] Book vehicle failed: ', error);
+            // console.error('[VehicleBottomSheet] Book vehicle failed: ', error);
             trackError('JS_ERROR', error, 'Book vehicle handler failed', { vehicleId });
         }
     };

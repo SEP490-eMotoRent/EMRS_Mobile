@@ -67,12 +67,12 @@ export const BookingDetailsScreen: React.FC = () => {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            console.log('Cancelling booking:', bookingId);
+                            // console.log('Cancelling booking:', bookingId);
 
                             // This is the correct way now
                             await container.booking.cancel.execute(bookingId);
 
-                            console.log('Booking cancelled successfully');
+                            // console.log('Booking cancelled successfully');
 
                             Alert.alert(
                                 'Success',

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { container } from "../../../../core/di/ServiceContainer";
 import { Configuration } from "../../../../domain/entities/configuration/Configuration";
 import { ConfigurationType } from "../../../../domain/entities/configuration/ConfigurationType";
-import { container } from "../../../../core/di/ServiceContainer";
 
 export type VehicleCategory = "ECONOMY" | "STANDARD" | "PREMIUM";
 export type DurationType = "daily" | "monthly" | "yearly";
@@ -40,9 +40,9 @@ export const useRentingRate = (
                     ConfigurationType.RentingDurationRate
                 );
                 setConfigs(result);
-                console.log("📊 Renting rate configs loaded:", result.length);
+                // console.log("📊 Renting rate configs loaded:", result.length);
             } catch (err: any) {
-                console.error("❌ Failed to load renting rate configs:", err);
+                // console.error("❌ Failed to load renting rate configs:", err);
                 setError(err.message || "Failed to load configurations");
             } finally {
                 setLoading(false);
@@ -82,7 +82,7 @@ export const useRentingRate = (
 
         if (matchingConfig) {
             const rate = matchingConfig.getNumericValue();
-            console.log(`✅ Discount: ${vehicleCategory} + ${durationType} = ${rate * 100}%`);
+            // console.log(`✅ Discount: ${vehicleCategory} + ${durationType} = ${rate * 100}%`);
             return rate;
         }
 

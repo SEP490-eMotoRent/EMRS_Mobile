@@ -131,7 +131,7 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
                 documentType: 'citizen',
                 side: 'front',
                 onPhotoTaken: (uri: string, side: 'front' | 'back') => {
-                    console.log('📸 Citizen front captured:', uri);
+                    // console.log('📸 Citizen front captured:', uri);
                     setCitizenFrontImage(uri);
 
                     setTimeout(() => {
@@ -139,7 +139,7 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
                             documentType: 'citizen',
                             side: 'back',
                             onPhotoTaken: (backUri: string, backSide: 'front' | 'back') => {
-                                console.log('📸 Citizen back captured:', backUri);
+                                // console.log('📸 Citizen back captured:', backUri);
                                 setCitizenBackImage(backUri);
                             },
                         });

@@ -38,10 +38,10 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
       const decoded = jwtDecode<JWTPayload>(token);
       if (!decoded.UserId) throw new Error("UserId not found in token");
 
-      this.logger.info(`Extracted Renter ID from token: ${decoded.UserId}`);
+      // this.logger.info(`Extracted Renter ID from token: ${decoded.UserId}`);
       return decoded.UserId;
     } catch (error: any) {
-      this.logger.error(`Failed to extract renter ID from token: ${error.message}`);
+      // this.logger.error(`Failed to extract renter ID from token: ${error.message}`);
       throw new ServerException("Invalid authentication token", 401);
     }
   }
@@ -89,17 +89,17 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
 
   async update(request: UpdateRenterRequest): Promise<UpdateRenterResponse> {
     try {
-      this.logger.info("Updating renter profile...");
+      // this.logger.info("Updating renter profile...");
 
-      console.log("=== DATASOURCE UPDATE REQUEST ===");
-      console.log("Email:", request.Email);
-      console.log("Phone:", request.phone);
-      console.log("Address:", request.Address);
-      console.log("Fullname:", request.Fullname);
-      console.log("DateOfBirth:", request.DateOfBirth);
-      console.log("MediaId:", request.MediaId);
-      console.log("Has new ProfilePicture:", !!request.ProfilePicture);
-      console.log("=================================");
+      // console.log("=== DATASOURCE UPDATE REQUEST ===");
+      // console.log("Email:", request.Email);
+      // console.log("Phone:", request.phone);
+      // console.log("Address:", request.Address);
+      // console.log("Fullname:", request.Fullname);
+      // console.log("DateOfBirth:", request.DateOfBirth);
+      // console.log("MediaId:", request.MediaId);
+      // console.log("Has new ProfilePicture:", !!request.ProfilePicture);
+      // console.log("=================================");
 
       const formData = new FormData();
 
@@ -124,11 +124,11 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         formData
       );
 
-      this.logger.info("Renter profile updated successfully");
+      // this.logger.info("Renter profile updated successfully");
       return unwrapResponse(response.data);
     } catch (error: any) {
-      this.logger.error(`Failed to update renter: ${error.message}`);
-      console.error("Update error details:", error.response?.data || error);
+      // this.logger.error(`Failed to update renter: ${error.message}`);
+      // console.error("Update error details:", error.response?.data || error);
 
       throw new ServerException(
         error.response?.response?.data?.message || error.message || "Failed to update profile",

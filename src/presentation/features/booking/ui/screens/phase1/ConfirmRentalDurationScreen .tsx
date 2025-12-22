@@ -16,6 +16,10 @@ import { PricingBreakdown } from "../../organisms/booking/PricingBreakdown";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ConfirmRentalDuration'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRentalDuration'>;
+// Helper to convert ISO string back to Date for PricingBreakdown
+const convertToDate = (dateString: string): Date => {
+    return new Date(dateString);
+};
 
 export const ConfirmRentalDurationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
@@ -53,10 +57,10 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const initialDateRangeISO = useMemo(() => {
         if (dateRange) {
-            console.log('📅 Parsing Vietnamese dateRange:', dateRange);
+            // console.log('📅 Parsing Vietnamese dateRange:', dateRange);
             return DateHelper.parseVietnameseDateRangeToISO(dateRange);
         }
-        console.log('📅 Using default dateRange');
+        // console.log('📅 Using default dateRange');
         return DateHelper.getDefaultDateRangeForBooking();
     }, [dateRange]);
 
@@ -116,19 +120,19 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const displayDays = Math.floor(totalHours / 24);
     const displayHours = Math.floor(totalHours % 24);
     
-    console.log("📊 4-Component Rental:", {
-        category,
-        totalHours,
-        displayDays,
-        displayHours,
-        components: {
-            startPartial: startPartialAmount,
-            normalFullDays: normalFullDaysAmount,
-            holidayFullDays: holidayFullDaysAmount,
-            endPartial: endPartialAmount,
-        },
-        total: totalRentalFee,
-    });
+    // console.log("📊 4-Component Rental:", {
+    //     category,
+    //     totalHours,
+    //     displayDays,
+    //     displayHours,
+    //     components: {
+    //         startPartial: startPartialAmount,
+    //         normalFullDays: normalFullDaysAmount,
+    //         holidayFullDays: holidayFullDaysAmount,
+    //         endPartial: endPartialAmount,
+    //     },
+    //     total: totalRentalFee,
+    // });
 
     const handleBack = () => {
         navigation.goBack();
@@ -136,11 +140,11 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const handleContinue = () => {
         if (!validateCurrentDuration()) {
-            console.warn("Cannot continue with invalid duration");
+            // console.warn("Cannot continue with invalid duration");
             return;
         }
 
-        console.log("Continuing to insurance plans for vehicle:", vehicleId);
+        // console.log("Continuing to insurance plans for vehicle:", vehicleId);
         navigation.navigate('InsurancePlans', { 
             vehicleId,
             vehicleName,
@@ -177,7 +181,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             
             // 4-Component Data
             startPartial: startPartial ? {
-                date: startPartial.date,
+                date: startPartial.date.toISOString(),
                 hours: startPartial.hours,
                 isHoliday: startPartial.isHoliday,
                 holiday: startPartial.holiday ? {
@@ -193,7 +197,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             normalFullDays,
             normalFullDaysAmount,
             holidayFullDays: holidayFullDays.map(day => ({
-                date: day.date,
+                date: day.date.toISOString(),
                 holiday: {
                     holidayName: day.holiday.holidayName,
                     priceMultiplier: day.holiday.priceMultiplier,
@@ -204,7 +208,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
             })),
             holidayFullDaysAmount,
             endPartial: endPartial ? {
-                date: endPartial.date,
+                date: endPartial.date.toISOString(),
                 hours: endPartial.hours,
                 isHoliday: endPartial.isHoliday,
                 holiday: endPartial.holiday ? {

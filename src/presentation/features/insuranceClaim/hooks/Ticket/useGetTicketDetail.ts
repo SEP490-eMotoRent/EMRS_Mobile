@@ -28,10 +28,10 @@ export const useGetTicketDetail = (
             setError(null);
 
             const result = await getTicketDetailUseCase.execute(ticketId);
-            console.log("🎫 Ticket detail loaded:", result.id);
+            // console.log(" Ticket detail loaded:", result.id);
             setTicket(result);
         } catch (err: any) {
-            console.error("❌ Failed to load ticket detail:", err);
+            // console.error(" Failed to load ticket detail:", err);
             setError(err.message || "Không thể tải chi tiết ticket");
         } finally {
             setLoading(false);

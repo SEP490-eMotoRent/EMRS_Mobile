@@ -22,15 +22,15 @@ export class ApiCallWrapper {
         defaultErrorCode: number = 500
     ): Promise<T> {
         try {
-            this.logger.info(`🔄 ${operation}...`);
+            // this.logger.info(`🔄 ${operation}...`);
             
             const result = await apiCall();
             
-            this.logger.info(`✅ ${operation} successful`);
+            // this.logger.info(`✅ ${operation} successful`);
             
             return result;
         } catch (error: any) {
-            this.logger.error(`❌ ${operation} failed: ${error.message}`);
+            // this.logger.error(`❌ ${operation} failed: ${error.message}`);
             
             // If already a ServerException from interceptor, re-throw it
             if (error instanceof ServerException) {

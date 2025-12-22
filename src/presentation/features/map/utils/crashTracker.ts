@@ -52,21 +52,21 @@ class CrashTracker {
         }
 
         // ✅ Log when errors are thrown
-        const originalConsoleError = console.error;
-        console.error = (...args: any[]) => {
-            const errorMessage = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ');
+        // const originalConsoleError = console.error;
+        // console.error = (...args: any[]) => {
+        //     const errorMessage = args.map(arg => 
+        //         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+        //     ).join(' ');
             
-            if (errorMessage.includes('Warning:')) {
-                // Skip React warnings
-                originalConsoleError(...args);
-                return;
-            }
+        //     if (errorMessage.includes('Warning:')) {
+        //         // Skip React warnings
+        //         originalConsoleError(...args);
+        //         return;
+        //     }
 
-            this.addBreadcrumb(`❌ Console Error: ${errorMessage}`);
-            originalConsoleError(...args);
-        };
+        //     this.addBreadcrumb(`❌ Console Error: ${errorMessage}`);
+        //     originalConsoleError(...args);
+        // };
     }
 
     private static instance: CrashTracker;
@@ -89,7 +89,7 @@ class CrashTracker {
             this.breadcrumbs.shift();
         }
 
-        console.log(`🍞 ${breadcrumb}`);
+        // console.log(`🍞 ${breadcrumb}`);
     }
 
     // ✅ Set current screen/action for context
@@ -135,25 +135,23 @@ class CrashTracker {
         }
 
         // ✅ Log to console with full details
-        console.log('\n🔥🔥🔥 CRASH DETECTED 🔥🔥🔥');
-        console.log(`Type: ${type}`);
-        console.log(`Error: ${errorMessage}`);
-        console.log(`Screen: ${this.currentScreen}`);
-        console.log(`Action: ${this.currentAction}`);
-        console.log('Last 10 breadcrumbs:');
-        this.breadcrumbs.slice(-10).forEach(b => console.log(`  ${b}`));
+        // console.log('\n🔥🔥🔥 CRASH DETECTED 🔥🔥🔥');
+        // console.log(`Type: ${type}`);
+        // console.log(`Error: ${errorMessage}`);
+        // console.log(`Screen: ${this.currentScreen}`);
+        // console.log(`Action: ${this.currentAction}`);
+        // console.log('Last 10 breadcrumbs:');
+        // this.breadcrumbs.slice(-10).forEach(b => console.log(`  ${b}`));
         
-        if (stack) {
-            console.log('\nStack trace:');
-            console.log(stack);
-        }
+        // if (stack) {
+        //     console.log('\nStack trace:');
+        //     console.log(stack);
+        // }
         
-        if (additionalState) {
-            console.log('\nAdditional state:');
-            console.log(JSON.stringify(additionalState, null, 2));
-        }
-        
-        console.log('🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥\n');
+        // if (additionalState) {
+        //     console.log('\nAdditional state:');
+        //     console.log(JSON.stringify(additionalState, null, 2));
+        // }
     }
 
     // ✅ Get crash report
@@ -192,7 +190,6 @@ class CrashTracker {
     clearCrashes() {
         this.crashes = [];
         this.breadcrumbs = [];
-        console.log('🧹 Crash history cleared');
     }
 
     // ✅ Get all crashes

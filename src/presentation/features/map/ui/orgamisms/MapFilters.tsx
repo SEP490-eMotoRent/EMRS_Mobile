@@ -3,19 +3,15 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { RefreshButton } from "../atoms/buttons/RefreshButton";
 
 interface MapFiltersProps {
-    // ❌ COMMENTED OUT - Filter press removed
     // onFilterPress: () => void;
     onRefreshPress: () => void;
-    // ❌ COMMENTED OUT - Active filter count removed
     // activeFilterCount?: number;
     showFilterButton?: boolean; // Optional prop to control filter button visibility
 }
 
 export const MapFilters: React.FC<MapFiltersProps> = ({
-    // ❌ COMMENTED OUT
     // onFilterPress,
     onRefreshPress,
-    // ❌ COMMENTED OUT
     // activeFilterCount = 0,
     showFilterButton = false, // Default to false
 }) => {
@@ -26,7 +22,6 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* ❌ COMMENTED OUT - Filter Button removed */}
                 {/* {showFilterButton && (
                     <TouchableOpacity
                         style={[
@@ -57,8 +52,6 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
                         </Text>
                     </TouchableOpacity>
                 )} */}
-
-                {/* ✅ Only Refresh Button remains */}
                 <RefreshButton onPress={onRefreshPress} />
             </ScrollView>
         </View>
@@ -73,7 +66,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         gap: 8,
     },
-    // ❌ COMMENTED OUT - Filter button styles no longer needed
     // filterButton: {
     //     backgroundColor: "#1a1a1a",
     //     paddingHorizontal: 20,

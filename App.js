@@ -12,7 +12,7 @@ import {
 } from 'react-native-reanimated';
 import MapboxGL from "@rnmapbox/maps";
 import { MapboxConfig } from "./src/core/config/MapboxConfig";
-
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { store, persistor } from "./src/presentation/features/authentication/store";
 import { AuthProvider } from "./src/presentation/features/authentication/notifiers/AuthContext";
 import { LocationProvider } from "./src/presentation/features/battery/context/LocationContext";
@@ -36,21 +36,23 @@ export default function App() {
   }, []);
 
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <AuthProvider>
-          <LocationProvider>
-            <GestureHandlerRootView style={styles.container}>
-              <StatusBar backgroundColor="#FFFFFF" style="light" />
-              <NavigationContainer>
-                <RootNavigator />
-              </NavigationContainer>
-              <Toast />
-            </GestureHandlerRootView>
-          </LocationProvider>
-        </AuthProvider>
-      </PersistGate>
-    </Provider>
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <AuthProvider>
+            <LocationProvider>
+              <GestureHandlerRootView style={styles.container}>
+                <StatusBar backgroundColor="#FFFFFF" style="light" />
+                <NavigationContainer>
+                  <RootNavigator />
+                </NavigationContainer>
+                <Toast />
+              </GestureHandlerRootView>
+            </LocationProvider>
+          </AuthProvider>
+        </PersistGate>
+      </Provider>
+    </SafeAreaProvider>
   );
 }
 

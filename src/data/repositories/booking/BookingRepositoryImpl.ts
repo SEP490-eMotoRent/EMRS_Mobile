@@ -175,7 +175,7 @@ export class BookingRepositoryImpl implements BookingRepository {
 
   async getCurrentRenterBookings(): Promise<Booking[]> {
     const responses = await this.remote.getCurrentRenterBookings();
-    console.log("📦 Repository received responses:", responses.length);
+    // console.log("📦 Repository received responses:", responses.length);
     return responses.map((r) => this.mapListResponseToEntity(r));
   }
 
@@ -226,7 +226,7 @@ export class BookingRepositoryImpl implements BookingRepository {
   }
 
   async cancelBooking(bookingId: string): Promise<Booking> {
-    console.log("🔄 [REPOSITORY] Cancelling booking:", bookingId);
+    // console.log("🔄 [REPOSITORY] Cancelling booking:", bookingId);
 
     const response = await this.remote.cancelBooking(bookingId);
 
@@ -279,10 +279,10 @@ export class BookingRepositoryImpl implements BookingRepository {
       false
     );
 
-    console.log(
-      "✅ [REPOSITORY] Booking cancelled and mapped:",
-      cancelledBooking.bookingStatus
-    );
+    // console.log(
+    //   "✅ [REPOSITORY] Booking cancelled and mapped:",
+    //   cancelledBooking.bookingStatus
+    // );
     return cancelledBooking;
   }
 
@@ -399,7 +399,7 @@ export class BookingRepositoryImpl implements BookingRepository {
   // ✅ SIMPLE MAPPER (Used for wallet bookings)
   // =========================================================================
   private mapSimpleResponseToEntity(dto: BookingResponseForRenter): Booking {
-    console.log("🔄 Mapping simple booking response:", dto.id);
+    // console.log("🔄 Mapping simple booking response:", dto.id);
 
     const vehicle = dto.vehicle
       ? this.mapVehicleFromListResponse(dto.vehicle)
@@ -469,7 +469,7 @@ export class BookingRepositoryImpl implements BookingRepository {
   // ✅ LIST MAPPER - WITH NESTED OBJECTS
   // =========================================================================
   private mapListResponseToEntity(dto: BookingResponseForRenter): Booking {
-    console.log("🔄 Mapping list booking response:", dto.id);
+    // console.log("🔄 Mapping list booking response:", dto.id);
 
     const vehicle = dto.vehicle
       ? this.mapVehicleFromListResponse(dto.vehicle)
@@ -540,7 +540,6 @@ export class BookingRepositoryImpl implements BookingRepository {
     // ✅ Store image URL using any cast
     if (vehicleModel && vehicleImageUrl) {
       (vehicleModel as any).imageUrl = vehicleImageUrl;
-      console.log("🖼️ Vehicle image URL attached:", vehicleImageUrl);
     }
 
     return booking;
@@ -550,8 +549,6 @@ export class BookingRepositoryImpl implements BookingRepository {
   // ✅ DETAIL RESPONSE MAPPER - FULL BOOKING DETAILS WITH ALL FEES
   // =========================================================================
   private mapDetailResponseToEntity(dto: BookingDetailResponse): Booking {
-    console.log("🔄 Mapping detail booking response:", dto.id);
-
     const renter = dto.renter
       ? this.mapRenterFromStaffResponse(dto.renter)
       : undefined;

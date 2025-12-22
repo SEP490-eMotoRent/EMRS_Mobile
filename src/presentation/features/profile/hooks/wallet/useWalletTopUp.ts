@@ -10,14 +10,14 @@ export const useWalletTopUp = () => {
         try {
             setLoading(true);
             setError(null);
-            console.log('🚀 Creating top-up request:', amount);
+            // console.log('🚀 Creating top-up request:', amount);
             
             const result = await container.wallet.topUp.create.execute({ amount });
-            console.log('✅ Top-up request created:', result.transactionId);
+            // console.log('✅ Top-up request created:', result.transactionId);
 
             return result;
         } catch (err: any) {
-            console.error('❌ Top-up request error:', err);
+            // console.error('❌ Top-up request error:', err);
             const errorMessage = err.message || 'Không thể tạo yêu cầu nạp tiền';
             setError(errorMessage);
             throw err;

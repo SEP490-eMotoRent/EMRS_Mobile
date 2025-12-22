@@ -34,7 +34,7 @@ export const RouteLine: React.FC<RouteLineProps> = ({
             const coordinates = `${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}`;
             const url = `${directions.baseUrl}/${directions.profile}/${coordinates}?geometries=geojson&overview=full&steps=true&language=${MapboxConfig.language}&access_token=${accessToken}`;
 
-            console.log('🗺️ Fetching route from Mapbox...');
+            // console.log('🗺️ Fetching route from Mapbox...');
             
             const response = await fetch(url);
             const data = await response.json();
@@ -54,7 +54,7 @@ export const RouteLine: React.FC<RouteLineProps> = ({
                 }));
                 
                 setRouteCoordinates(coordinates);
-                console.log(`✅ Route loaded: ${coordinates.length} points`);
+                // console.log(`✅ Route loaded: ${coordinates.length} points`);
                 
                 // Pass distance and duration back to parent
                 if (onRouteData) {

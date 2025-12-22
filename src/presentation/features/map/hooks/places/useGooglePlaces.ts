@@ -21,7 +21,7 @@ export const useGooglePlaces = () => {
             setSearchResults(results);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Search failed');
-            console.error('Error searching places:', err);
+            // console.error('Error searching places:', err);
         } finally {
             setSearching(false);
         }
@@ -33,7 +33,7 @@ export const useGooglePlaces = () => {
             return await useCase.execute(placeId);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to get place details');
-            console.error('Error getting place details:', err);
+            // console.error('Error getting place details:', err);
             return null;
         }
     };

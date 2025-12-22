@@ -1,17 +1,17 @@
 export const calculateRentalDuration = (dateRangeStr: string): number => {
     // Default to 1 day if no date selected
     if (dateRangeStr === "Chọn Ngày" || !dateRangeStr || dateRangeStr.trim() === "") {
-        console.log('📅 No date selected, defaulting to 1 day');
+        // console.log('📅 No date selected, defaulting to 1 day');
         return 1;
     }
 
-    console.log('📅 Calculating duration for:', dateRangeStr);
+    // console.log('📅 Calculating duration for:', dateRangeStr);
 
     try {
         // Split by " - " separator
         const parts = dateRangeStr.split(" - ");
         if (parts.length !== 2) {
-            console.warn("Invalid date range format:", dateRangeStr);
+            // console.warn("Invalid date range format:", dateRangeStr);
             return 1;
         }
 
@@ -21,15 +21,15 @@ export const calculateRentalDuration = (dateRangeStr: string): number => {
         const startDate = parseDate(startStr.trim());
         const endDate = parseDate(endStr.trim());
 
-        console.log('📅 Parsed dates:', {
-            startStr,
-            endStr,
-            startDate,
-            endDate
-        });
+        // console.log('📅 Parsed dates:', {
+        //     startStr,
+        //     endStr,
+        //     startDate,
+        //     endDate
+        // });
 
         if (!startDate || !endDate) {
-            console.warn("Failed to parse dates:", { startStr, endStr });
+            // console.warn("Failed to parse dates:", { startStr, endStr });
             return 1;
         }
 
@@ -39,16 +39,16 @@ export const calculateRentalDuration = (dateRangeStr: string): number => {
         // Convert to days (with fractional part for hours)
         const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-        console.log('📅 Duration calculated:', {
-            diffMs,
-            diffDays: diffDays.toFixed(2),
-            rounded: Math.max(Math.round(diffDays * 100) / 100, 0.04)
-        });
+        // console.log('📅 Duration calculated:', {
+        //     diffMs,
+        //     diffDays: diffDays.toFixed(2),
+        //     rounded: Math.max(Math.round(diffDays * 100) / 100, 0.04)
+        // });
 
         // Round to 2 decimal places (hours precision)
         return Math.max(Math.round(diffDays * 100) / 100, 0.04); // Minimum 1 hour (0.04 days)
     } catch (error) {
-        console.error("Error calculating duration:", error);
+        // console.error("Error calculating duration:", error);
         return 1;
     }
 };
@@ -121,7 +121,7 @@ const parseEnglishDate = (dateStr: string): Date | null => {
             // Extract month and day manually
             const match = dateOnly.match(/([A-Za-z]+)\s+(\d+)/);
             if (!match) {
-                console.warn('🗓️ Could not parse date:', dateOnly);
+                // console.warn('🗓️ Could not parse date:', dateOnly);
                 return null;
             }
             
@@ -135,7 +135,7 @@ const parseEnglishDate = (dateStr: string): Date | null => {
             const day = parseInt(dayStr, 10);
             
             if (month === undefined || isNaN(day)) {
-                console.warn('🗓️ Invalid month or day:', monthStr, dayStr);
+                // console.warn('🗓️ Invalid month or day:', monthStr, dayStr);
                 return null;
             }
             
@@ -166,7 +166,7 @@ const parseEnglishDate = (dateStr: string): Date | null => {
         
         return parsedDate;
     } catch (error) {
-        console.warn("⚠️ Error parsing English date:", error);
+        // console.warn("⚠️ Error parsing English date:", error);
         return null;
     }
 };

@@ -103,11 +103,11 @@ export const useWalletVNPayCallback = ({
     const handleDeepLink = useCallback(
         async (url: string) => {
             if (hasHandled.current) {
-                console.log('⚠️ Deep link already handled');
+                // console.log('⚠️ Deep link already handled');
                 return;
             }
 
-            console.log('🔗 Processing wallet deep link:', url);
+            // console.log('🔗 Processing wallet deep link:', url);
             hasHandled.current = true;
             setLoading(true);
 
@@ -120,7 +120,7 @@ export const useWalletVNPayCallback = ({
                 return;
             }
 
-            console.log('📦 VNPay callback data:', dto);
+            // console.log('📦 VNPay callback data:', dto);
 
             if (dto.responseCode !== '00') {
                 console.error('❌ Payment failed:', dto.message);
@@ -129,17 +129,17 @@ export const useWalletVNPayCallback = ({
                 return;
             }
 
-            console.log('✅ Payment successful, confirming with backend...');
+            // console.log('✅ Payment successful, confirming with backend...');
 
             try {
                 await processTopUpCallback.execute(dto);
-                console.log('✅ Backend confirmed top-up successfully');
+                // console.log('✅ Backend confirmed top-up successfully');
 
                 await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
                 await new Promise((resolve) => setTimeout(resolve, 1000));
                 onSuccess();
             } catch (error: any) {
-                console.error('❌ Callback API failed:', error);
+                // console.error('❌ Callback API failed:', error);
 
                 Alert.alert(
                     'Lỗi xác nhận',
@@ -171,10 +171,10 @@ export const useWalletVNPayCallback = ({
      */
     const shouldStartLoadWithRequest = useCallback((request: any): boolean => {
         const url = request.url || '';
-        console.log('🚦 WebView wants to load:', url);
+        // console.log('🚦 WebView wants to load:', url);
 
         if (url.startsWith('emrs://')) {
-            console.log('🛑 Blocking WebView from loading deep link');
+            // console.log('🛑 Blocking WebView from loading deep link');
             return false;
         }
 
@@ -207,7 +207,7 @@ export const useWalletVNPayCallback = ({
     // Listen for deep links
     useEffect(() => {
         const handleDeepLinkEvent = (event: { url: string }) => {
-            console.log('🔗 Deep link event:', event.url);
+            // console.log('🔗 Deep link event:', event.url);
             if (event.url.startsWith('emrs://payment/callback')) {
                 handleDeepLink(event.url);
             }

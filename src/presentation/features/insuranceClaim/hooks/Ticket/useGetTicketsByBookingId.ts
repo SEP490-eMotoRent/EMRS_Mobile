@@ -44,7 +44,7 @@ export const useGetTicketsByBookingId = (
                 orderByDescending: true,
             });
 
-            console.log("📋 Tickets loaded:", result.items.length);
+            // console.log(" Tickets loaded:", result.items.length);
 
             if (append) {
                 setTickets((prev) => [...prev, ...result.items]);

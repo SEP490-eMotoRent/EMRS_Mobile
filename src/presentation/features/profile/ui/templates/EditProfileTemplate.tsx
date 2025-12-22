@@ -4,13 +4,13 @@ import {
     Dimensions,
     Image,
     Modal,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { DocumentResponse } from '../../../../../data/models/account/renter/RenterResponse';
 import { Button } from '../atoms/Button';
 import { Icon } from '../atoms/Icons/Icons';

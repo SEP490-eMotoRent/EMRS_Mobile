@@ -199,14 +199,14 @@ export const ListView: React.FC = () => {
 
   // ✅ Handle filter apply
   const handleApplyFilters = (newFilters: FilterState) => {
-    console.log("🔄 [ListView] Applying filters:", newFilters);
+    // console.log("🔄 [ListView] Applying filters:", newFilters);
     setFilters(newFilters);
   };
 
   // ✅ Infinite scroll handler
   const handleEndReached = () => {
     if (hasMore && !loadingMore && !loading) {
-      console.log("🔄 [ListView] Loading more vehicles...");
+      // console.log("🔄 [ListView] Loading more vehicles...");
       loadMore();
     }
   };

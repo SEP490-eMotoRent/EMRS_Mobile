@@ -29,12 +29,12 @@ export const getActiveFilterCount = (filters: FilterState): number => {
 /**
  * Get default/reset filter state
  */
-export const getDefaultFilters = (): FilterState => ({
-    priceRange: [0, 500000],
-    models: [],
-    rangeKm: [0, 150],
-    features: [],
-});
+// export const getDefaultFilters = (): FilterState => ({
+//     priceRange: [0, 500000],
+//     models: [],
+//     rangeKm: [0, 150],
+//     features: [],
+// });
 
 /**
  * Check if filters are at default state

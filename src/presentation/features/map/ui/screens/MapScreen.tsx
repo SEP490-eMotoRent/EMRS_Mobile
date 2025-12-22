@@ -20,28 +20,20 @@ type MapScreenRouteProp = RouteProp<BrowseStackParamList, 'Map'>;
 type MapScreenNavigationProp = StackNavigationProp<BrowseStackParamList, 'Map'>;
 
 /**
- * LocationPinWrapper - Wrapper for location pin marker with proper rendering
- * 
- * Key fix: Allows initial render to complete before disabling view tracking
- * This prevents the "blank marker" issue
+ * LocationPinWrapper - FIXED version
+ * - Keep tracksViewChanges={true} to ensure marker stays visible
+ * - This is just ONE marker, minimal performance impact
+ * - The crash was from OTHER issues (timers, debouncing, animations)
  */
-const LocationPinWrapper = React.memo(() => {
-    const [tracksViewChanges, setTracksViewChanges] = useState(true);
-    
-    // Disable tracking after initial render completes
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setTracksViewChanges(false);
-        }, 200); // Slightly longer to ensure render completes
-        return () => clearTimeout(timer);
-    }, []);
-    
+const LocationPinWrapper = React.memo(({ coordinate }: { coordinate: { latitude: number; longitude: number } }) => {
     return (
         <Marker
-            coordinate={{ latitude: 0, longitude: 0 }} // Will be overridden by parent
+            coordinate={coordinate}
             anchor={{ x: 0.5, y: 1 }}
             identifier="searched-location"
-            tracksViewChanges={tracksViewChanges}
+            tracksViewChanges={true} // ✅ Keep true - ensures marker stays visible!
+            tappable={false}
+            stopPropagation={true}
         >
             <LocationPinMarker />
         </Marker>
@@ -51,15 +43,10 @@ const LocationPinWrapper = React.memo(() => {
 LocationPinWrapper.displayName = 'LocationPinWrapper';
 
 /**
- * BranchMarkerWrapper - Optimized marker component that prevents unnecessary re-renders
- * 
- * Key optimizations:
- * 1. Uses tracksViewChanges intelligently (only true during selection change)
- * 2. Memoized to prevent re-creation on parent re-renders
- * 3. CRITICAL: Timing adjusted for 32×32 markers (increased to 200ms for consistency)
- * 
- * TIMING FIX: Increased from 150ms → 200ms for smaller 32×32 markers
- * Smaller markers render faster, need more time for state to settle and avoid race conditions
+ * BranchMarkerWrapper - FIXED version
+ * - Single useEffect for all tracksViewChanges logic
+ * - Prevents timer overlap
+ * - Increased stabilization time
  */
 const BranchMarkerWrapper = React.memo(({ 
     branch, 
@@ -70,26 +57,30 @@ const BranchMarkerWrapper = React.memo(({
     isSelected: boolean; 
     onPress: () => void;
 }) => {
-    // Track whether marker should update its view (for performance)
     const [tracksViewChanges, setTracksViewChanges] = useState(true);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
     
-    // Disable view tracking after initial render (prevents blink on map pan/zoom)
+    // ✅ FIXED: Single useEffect to handle all tracksViewChanges logic
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setTracksViewChanges(false);
-        }, 200); // INCREASED: 150 → 200ms for 32×32 markers
-        return () => clearTimeout(timer);
-    }, []);
-    
-    // CRITICAL FIX: Enable tracking whenever isSelected CHANGES (not just when true)
-    // This ensures marker updates back to black when deselected
-    useEffect(() => {
+        // Clear any existing timer first
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+        
+        // Start tracking changes
         setTracksViewChanges(true);
-        const timer = setTimeout(() => {
+        
+        // Stop tracking after 400ms (increased from 200ms for stability)
+        timerRef.current = setTimeout(() => {
             setTracksViewChanges(false);
-        }, 200); // ✅ INCREASED: 150 → 200ms for 32×32 markers
-        return () => clearTimeout(timer);
-    }, [isSelected]); // Triggers on ANY change (true -> false OR false -> true)
+        }, 400);
+        
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
+    }, [isSelected]); // Only re-run when selection changes
     
     return (
         <Marker
@@ -102,12 +93,12 @@ const BranchMarkerWrapper = React.memo(({
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={tracksViewChanges}
             identifier={`branch-${branch.id}`}
+            stopPropagation={false}
         >
             <BranchMarker isSelected={isSelected} />
         </Marker>
     );
 }, (prevProps, nextProps) => {
-    // Custom comparison: only re-render if selection state changes
     return prevProps.isSelected === nextProps.isSelected && 
         prevProps.branch.id === nextProps.branch.id;
 });
@@ -118,7 +109,6 @@ export const MapScreen: React.FC = () => {
     const route = useRoute<MapScreenRouteProp>();
     const navigation = useNavigation<MapScreenNavigationProp>();
     
-    // Memoize route params to prevent unnecessary re-calculations
     const routeParams = useMemo(() => route.params || {
         location: "1 Phạm Văn Hai, Street, Tân Bình...",
         dateRange: "Chọn Ngày",
@@ -127,14 +117,9 @@ export const MapScreen: React.FC = () => {
 
     const { location, dateRange, address } = routeParams;
 
-    // Fetch all branches from API
     const { branches, loading, error, refetch } = useBranches();
+    const { region, searchedLocation } = useMapRegion({ branches, address });
     
-    // Manage map region and geocoding
-    // FIXED: Removed setRegion to prevent controlled component behavior
-    const { region, /* setRegion, */ searchedLocation } = useMapRegion({ branches, address });
-    
-    // Handle all map interactions (branch clicks, bottom sheet, etc.)
     const {
         selectedBranchId,
         bottomSheetVisible,
@@ -150,80 +135,63 @@ export const MapScreen: React.FC = () => {
         handleBookVehicle,
     } = useMapInteractions({ dateRange });
 
-    // Filter out invalid branch coordinates
+    // ✅ FIXED: Track if map is ready before allowing interactions
+    const [mapReady, setMapReady] = useState(false);
+    const mapRef = useRef<MapView>(null);
+
     const validBranches = useMemo(() => {
-        return branches.filter(branch => 
-            branch.latitude !== 0 && 
-            branch.longitude !== 0 &&
-            !isNaN(branch.latitude) &&
-            !isNaN(branch.longitude) &&
-            branch.latitude >= -90 && 
-            branch.latitude <= 90 &&
-            branch.longitude >= -180 && 
-            branch.longitude <= 180
-        );
+        return branches
+            .filter(branch => 
+                branch.latitude !== 0 && 
+                branch.longitude !== 0 &&
+                !isNaN(branch.latitude) &&
+                !isNaN(branch.longitude) &&
+                branch.latitude >= -90 && 
+                branch.latitude <= 90 &&
+                branch.longitude >= -180 && 
+                branch.longitude <= 180
+            )
+            .slice(0, 100);
     }, [branches]);
 
-    // Get selected branch for distance calculation in bottom sheet
     const selectedBranch = useMemo(() => {
         if (!selectedBranchId) return null;
         return validBranches.find(b => b.id === selectedBranchId) || null;
     }, [selectedBranchId, validBranches]);
 
-    /**
-     * Navigate to list view with current search params
-     */
     const handleListViewPress = useCallback(() => {
         try {
-            console.log('[MapScreen] Navigating to ListView');
             navigation.navigate('ListView', { location, dateRange, address });
         } catch (err) {
-            console.error('[MapScreen] ListView navigation failed: ', err);
+            // console.error('[MapScreen] ListView navigation failed: ', err);
         }
     }, [navigation, location, dateRange, address]);
 
-    /**
-     * Refresh page - refetch branches and reset state
-     */
     const handleRefresh = useCallback(() => {
-        console.log('[MapScreen] Refreshing...');
         refetch();
         
-        // Close bottom sheet if open
         if (bottomSheetVisible) {
             handleBottomSheetClose();
         }
     }, [refetch, bottomSheetVisible, handleBottomSheetClose]);
 
-    // REMOVED: Region change handler that was causing drag resistance
-    // This created a feedback loop: user drags → handler updates state → map re-renders → resistance
-    /*
-    const regionChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    
-    const handleRegionChangeComplete = useCallback((newRegion: Region) => {
-        // Clear previous timeout
-        if (regionChangeTimeoutRef.current) {
-            clearTimeout(regionChangeTimeoutRef.current);
+    // ✅ FIXED: Safe branch marker press handler
+    const handleSafeBranchPress = useCallback((branch: Branch) => {
+        if (!mapReady) {
+            // console.warn('[MapScreen] Map not ready, ignoring marker press');
+            return;
         }
-        
-        // Throttle region updates to reduce state changes
-        regionChangeTimeoutRef.current = setTimeout(() => {
-            console.log('[MapScreen] Region changed (throttled): ', newRegion);
-            setRegion(newRegion);
-        }, 300); // Only update after user stops dragging for 300ms
-    }, [setRegion]);
+        handleBranchMarkerPress(branch);
+    }, [mapReady, handleBranchMarkerPress]);
 
-    // Cleanup timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (regionChangeTimeoutRef.current) {
-                clearTimeout(regionChangeTimeoutRef.current);
-            }
-        };
-    }, []);
-    */
+    // ✅ FIXED: Safe map press handler
+    const handleSafeMapPress = useCallback(() => {
+        if (!mapReady) {
+            return;
+        }
+        handleMapPress();
+    }, [mapReady, handleMapPress]);
 
-    // Loading state
     if (loading && branches.length === 0) {
         return (
             <View style={[styles.container, styles.centerContent]}>
@@ -233,7 +201,6 @@ export const MapScreen: React.FC = () => {
         );
     }
 
-    // Error state
     if (error && branches.length === 0) {
         return (
             <View style={[styles.container, styles.centerContent]}>
@@ -247,59 +214,38 @@ export const MapScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {/* 
-                Google Maps with optimized markers
-                
-            CRITICAL FIX: Using initialRegion instead of region prop
-                - initialRegion: Sets starting position but doesn't control the map
-                - User can drag freely without React state interfering
-                - No resistance or rubber-band effect when dragging
-                - Map only resets when component remounts or geocoding updates
-                
-            REMOVED: onRegionChangeComplete handler that was causing resistance
-            */}
             <MapView
+                ref={mapRef}
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 initialRegion={region}
-                // ❌ REMOVED: onRegionChangeComplete={handleRegionChangeComplete}
-                onPress={handleMapPress}
-                moveOnMarkerPress={false} // Prevent map from moving when marker pressed
+                onPress={handleSafeMapPress}
+                onMapReady={() => {
+                    // console.log('[MapScreen] ✅ Map ready');
+                    setMapReady(true);
+                }}
+                moveOnMarkerPress={false}
                 loadingEnabled={true}
                 loadingIndicatorColor="#d4c5f9"
+                maxZoomLevel={18}
+                minZoomLevel={10}
             >
-                {/* 
-                    Searched location pin (green flag) - VISIBLE & NON-INTERACTIVE
-                    
-                    tracksViewChanges={true}: Allows proper rendering
-                    tappable={false}: Cannot be clicked
-                    stopPropagation={true}: No event bubbling
-                */}
-                {searchedLocation && (
-                    <Marker
-                        coordinate={searchedLocation}
-                        anchor={{ x: 0.5, y: 1 }}
-                        identifier="searched-location"
-                        tracksViewChanges={true}
-                        tappable={false}
-                        stopPropagation={true}
-                    >
-                        <LocationPinMarker />
-                    </Marker>
+                {/* ✅ FIXED: Searched location marker - keeps tracksViewChanges={true} to stay visible */}
+                {searchedLocation && mapReady && (
+                    <LocationPinWrapper coordinate={searchedLocation} />
                 )}
 
-                {/* Branch markers with optimization wrapper */}
-                {validBranches.map((branch) => (
+                {/* ✅ FIXED: Only render markers when map is ready */}
+                {mapReady && validBranches.map((branch) => (
                     <BranchMarkerWrapper
                         key={branch.id}
                         branch={branch}
                         isSelected={selectedBranchId === branch.id}
-                        onPress={() => handleBranchMarkerPress(branch)}
+                        onPress={() => handleSafeBranchPress(branch)}
                     />
                 ))}
             </MapView>
 
-            {/* Search bar overlay */}
             <View style={styles.searchBarContainer}>
                 <MapSearchBar
                     location={address}
@@ -308,7 +254,6 @@ export const MapScreen: React.FC = () => {
                 />
             </View>
 
-            {/* Refresh button (filter removed) */}
             <View style={styles.filtersContainer}>
                 <MapFilters
                     onRefreshPress={handleRefresh}
@@ -316,7 +261,6 @@ export const MapScreen: React.FC = () => {
                 />
             </View>
 
-            {/* List view toggle button */}
             <View style={[
                 styles.listViewContainer,
                 bottomSheetVisible && styles.listViewContainerRaised
@@ -324,13 +268,11 @@ export const MapScreen: React.FC = () => {
                 <ListViewButton onPress={handleListViewPress} />
             </View>
 
-            {/* Booking modal */}
             <BookingModal
                 visible={bookingModalVisible}
                 onClose={handleBookingModalClose}
             />
 
-            {/* Vehicle bottom sheet with distance calculation */}
             <VehicleBottomSheet
                 visible={bottomSheetVisible}
                 vehicles={selectedVehicles}
@@ -348,7 +290,6 @@ export const MapScreen: React.FC = () => {
                 searchedLocation={searchedLocation || undefined}
             />
 
-            {/* Loading overlay when fetching vehicles */}
             {vehiclesLoading && bottomSheetVisible && (
                 <View style={styles.loadingOverlay}>
                     <View style={styles.loadingCard}>

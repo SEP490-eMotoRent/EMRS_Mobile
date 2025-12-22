@@ -35,11 +35,11 @@ export const useVehicleBranches = (vehicleModelId: string) => {
 
                 if (!mounted) return;
 
-                console.log('🔍 [useVehicleBranches] Raw branch entities from API:', JSON.stringify(branchEntities, null, 2));
+                // console.log('🔍 [useVehicleBranches] Raw branch entities from API:', JSON.stringify(branchEntities, null, 2));
 
                 // Map Branch entities to UI-friendly format
                 const uiBranches: BranchUI[] = branchEntities.map((branch: any) => {
-                    console.log(`🔍 [useVehicleBranches] Processing branch: ${branch.branchName}, vehicleCount: ${branch.vehicleCount}`);
+                    // console.log(`🔍 [useVehicleBranches] Processing branch: ${branch.branchName}, vehicleCount: ${branch.vehicleCount}`);
                     
                     return {
                         id: branch.id,
@@ -56,7 +56,7 @@ export const useVehicleBranches = (vehicleModelId: string) => {
                     };
                 });
 
-                console.log('🏢 [useVehicleBranches] Loaded branches:', JSON.stringify(uiBranches, null, 2));
+                // console.log('🏢 [useVehicleBranches] Loaded branches:', JSON.stringify(uiBranches, null, 2));
 
                 setBranches(uiBranches);
             } catch (err: any) {

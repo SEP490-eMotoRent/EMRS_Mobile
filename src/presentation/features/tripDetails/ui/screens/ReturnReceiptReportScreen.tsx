@@ -120,7 +120,7 @@ export const ReturnReceiptReportScreen: React.FC = () => {
         bookingId,
         renterConfirmed: true,
       });
-      console.log("finalizeReturnResponse", finalizeReturnResponse);
+      // console.log("finalizeReturnResponse", finalizeReturnResponse);
       const finalizeReturnData: FinalizeReturnResponse = unwrapResponse(
         finalizeReturnResponse
       );
@@ -134,7 +134,7 @@ export const ReturnReceiptReportScreen: React.FC = () => {
         refundAmount: finalizeReturnData.paymentResult.refundAmount,
       });
     } catch (error: any) {
-      console.log("error", error.message);
+      // console.log("error", error.message);
       const message = error?.message || "";
 
       if (message.includes("Insufficient wallet balance")) {

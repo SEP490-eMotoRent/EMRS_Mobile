@@ -67,7 +67,7 @@ export class VehicleModelRemoteDataSourceImpl implements VehicleModelRemoteDataS
         branchId?: string
     ): Promise<VehicleModelPaginatedSearchResponse> {
         try {
-            console.log(`📤 [SEARCH PAGINATED] Page ${pageNum}, Size ${pageSize}`);
+            // console.log(`📤 [SEARCH PAGINATED] Page ${pageNum}, Size ${pageSize}`);
             
             const params: Record<string, any> = {
                 PageNum: pageNum,
@@ -85,7 +85,7 @@ export class VehicleModelRemoteDataSourceImpl implements VehicleModelRemoteDataS
             
             const result = unwrapResponse(response.data);
             
-            console.log(`✅ [SEARCH PAGINATED] Page ${result.currentPage}/${result.totalPages}, Items: ${result.items.length}`);
+            // console.log(`✅ [SEARCH PAGINATED] Page ${result.currentPage}/${result.totalPages}, Items: ${result.items.length}`);
             
             return result;
         } catch (error: any) {

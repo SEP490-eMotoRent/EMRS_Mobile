@@ -60,7 +60,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   // 🔄 Auto-refresh wallet & transactions when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      console.log('📱 ProfileScreen focused - refreshing wallet & transactions');
+      // console.log('📱 ProfileScreen focused - refreshing wallet & transactions');
       refreshWallet();
       refreshTransactions();
     }, [])
