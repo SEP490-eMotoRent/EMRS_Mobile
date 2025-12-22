@@ -97,7 +97,6 @@ export const TripsScreen: React.FC = () => {
     const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         
-        // ✅ Current trips: Only PENDING, BOOKED, ACTIVE, RENTING
         if (["RETURNED", "COMPLETED", "CANCELLED"].includes(bookingStatus)) {
             return null;
         }
@@ -177,6 +176,14 @@ export const TripsScreen: React.FC = () => {
             booking.earlyHandoverFee
         );
 
+        const rentalFee = booking.baseRentalFee || 0;
+        const deposit = booking.depositAmount || 0;
+        const insurance = booking.insurancePackage?.packageFee || 0;
+        const calculatedTotal = rentalFee + deposit + insurance;
+
+        // Use backend totalAmount if available, otherwise fallback to calculated
+        const finalTotalAmount = booking.totalAmount ?? calculatedTotal;
+
         return {
             id: booking.id,
             vehicleName,
@@ -188,9 +195,12 @@ export const TripsScreen: React.FC = () => {
             timeInfo: calculateTimeInfo(),
             reference: `#${booking.id.substring(0, 8).toUpperCase()}`,
             location: booking.handoverBranch?.branchName || "Chi nhánh",
-            totalAmount: formatVnd(booking.totalAmount),
+            totalAmount: formatVnd(finalTotalAmount),
             depositAmount: formatVnd(booking.depositAmount),
             baseRentalFee: formatVnd(booking.baseRentalFee),
+            insuranceFee: booking.insurancePackage?.packageFee
+                ? formatVnd(booking.insurancePackage.packageFee)
+                : undefined,
             hasInsurance: !!booking.insurancePackage,
             vehicleAssigned: !!booking.vehicleId,
             hasAdditionalFees,

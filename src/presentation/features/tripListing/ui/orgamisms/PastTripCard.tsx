@@ -162,7 +162,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
             <View style={styles.amountSection}>
                 <View style={styles.amountRow}>
                     <Text style={styles.amountLabel}>
-                        {trip.status === "cancelled" ? "Số tiền hoàn" : "Tổng tiền"}
+                        {trip.status === "cancelled" ? "Số tiền cọc" : "Tổng tiền"}
                     </Text>
                     <Text style={[
                         styles.amountValue,

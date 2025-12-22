@@ -38,7 +38,7 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
     }, [cancelSearch]);
 
     /**
-     * FIXED: Increased debounce to 500ms and added animation check
+     * ✅ FIXED: Increased debounce to 500ms and added animation check
      * - Prevents rapid marker presses during animations
      * - Gives map time to settle between interactions
      */
@@ -50,21 +50,21 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
                 
                 // ✅ INCREASED: 300ms -> 500ms for better stability
                 if (timeSinceLastPress < 500) {
-                    // console.log('[useMapInteractions] Click debounced (too rapid)');
+                    console.log('[useMapInteractions] Click debounced (too rapid)');
                     trackBreadcrumb('⏭️ Click debounced');
                     return;
                 }
                 
                 // ✅ NEW: Block interactions during animations
                 if (animationInProgressRef.current) {
-                    // console.log('[useMapInteractions] Click blocked (animation in progress)');
+                    console.log('[useMapInteractions] Click blocked (animation in progress)');
                     trackBreadcrumb('🚫 Click blocked - animation in progress');
                     return;
                 }
                 
                 lastBranchPressTimeRef.current = now;
 
-                // console.log('[useMapInteractions] Branch marker pressed:', branch.id);
+                console.log('[useMapInteractions] Branch marker pressed:', branch.id);
                 trackBreadcrumb(`👆 Branch marker pressed: ${branch.id}`);
                 setTrackingContext('MapScreen', 'BranchMarkerPress');
 
@@ -76,7 +76,7 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
                 const isSame = selectedBranchIdRef.current === branch.id;
 
                 if (isSame && bottomSheetVisibleRef.current) {
-                    // console.log('[useMapInteractions] Closing sheet for same branch');
+                    console.log('[useMapInteractions] Closing sheet for same branch');
                     trackBreadcrumb('🔽 Closing bottom sheet (same branch)');
                     setTrackingContext('MapScreen', 'ClosingSheet');
                     
@@ -92,14 +92,14 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
                     // ✅ NEW: Wait for animation to complete before allowing new interactions
                     setTimeout(() => {
                         animationInProgressRef.current = false;
-                        // console.log('[useMapInteractions] Animation complete - ready for new interactions');
+                        console.log('[useMapInteractions] Animation complete - ready for new interactions');
                     }, 300); // Match animation duration
                     
                     return;
                 }
 
                 if (ongoingSearchRef.current) {
-                    // console.log('[useMapInteractions] Search already in progress, cancelling...');
+                    console.log('[useMapInteractions] Search already in progress, cancelling...');
                     trackBreadcrumb('⏳ Cancelling ongoing search');
                     cancelSearch();
                     ongoingSearchRef.current = false;
@@ -108,7 +108,7 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
                     await new Promise(resolve => setTimeout(resolve, 150));
                 }
 
-                // console.log('[useMapInteractions] Opening new branch:', branch.id);
+                console.log('[useMapInteractions] Opening new branch:', branch.id);
                 trackBreadcrumb(`🏢 Opening branch: ${branch.id}`);
                 setTrackingContext('MapScreen', 'OpeningSheet');
 
@@ -125,7 +125,7 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
 
                 const parsed = parseDateRange(dateRange);
                 
-                // console.log('[useMapInteractions] Starting search for branch:', branch.id);
+                console.log('[useMapInteractions] Starting search for branch:', branch.id);
                 trackBreadcrumb(`🔍 Starting search for branch ${branch.id}`);
                 setTrackingContext('MapScreen', 'SearchingVehicles');
                 
@@ -141,10 +141,10 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
                 // ✅ NEW: Mark animation complete
                 setTimeout(() => {
                     animationInProgressRef.current = false;
-                    // console.log('[useMapInteractions] Animation complete - ready for new interactions');
+                    console.log('[useMapInteractions] Animation complete - ready for new interactions');
                 }, 400); // Slightly longer to ensure everything settles
 
-                // console.log('[useMapInteractions] Search completed for branch:', branch.id);
+                console.log('[useMapInteractions] Search completed for branch:', branch.id);
                 trackBreadcrumb('✅ Search completed successfully');
                 setTrackingContext('MapScreen', 'SheetOpen');
                 
@@ -152,7 +152,7 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
                 ongoingSearchRef.current = false;
                 animationInProgressRef.current = false; // ✅ Reset on error
                 
-                // console.error('[useMapInteractions] Branch press failed:', err);
+                console.error('[useMapInteractions] Branch press failed:', err);
                 trackError('JS_ERROR', err, 'Branch marker press failed', {
                     branchId: branch?.id,
                     dateRange,
@@ -169,7 +169,7 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
      */
     const handleMapPress = useCallback(() => {
         // Allow map press even during animation to cancel bottom sheet
-        // console.log('[useMapInteractions] Map pressed');
+        console.log('[useMapInteractions] Map pressed');
         trackBreadcrumb('🗺️ Map pressed');
         setTrackingContext('MapScreen', 'MapPress');
 
@@ -190,7 +190,7 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
      * ✅ FIXED: Handle animation flag on close
      */
     const handleBottomSheetClose = useCallback(() => {
-        // console.log('[useMapInteractions] Bottom sheet close button pressed');
+        console.log('[useMapInteractions] Bottom sheet close button pressed');
         trackBreadcrumb('✕ Bottom sheet close button pressed');
         setTrackingContext('MapScreen', 'CloseButtonPress');
 
@@ -208,20 +208,21 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
     }, [cancelSearch]);
 
     const handleSearchBarPress = useCallback(() => {
-        // console.log('[useMapInteractions] Search bar pressed');
+        console.log('[useMapInteractions] Search bar pressed');
         trackBreadcrumb('🔍 Search bar pressed');
         setBookingModalVisible(true);
     }, []);
 
     const handleBookingModalClose = useCallback(() => {
-        // console.log('[useMapInteractions] Booking modal closed');
+        console.log('[useMapInteractions] Booking modal closed');
         trackBreadcrumb('✕ Booking modal closed');
         setBookingModalVisible(false);
     }, []);
 
     const handleBookVehicle = useCallback((vehicleId: string) => {
-        // console.log('[useMapInteractions] Book vehicle:', vehicleId);
+        console.log('[useMapInteractions] Book vehicle:', vehicleId);
         trackBreadcrumb(`📖 Book vehicle: ${vehicleId}`);
+        // Add your booking logic here
     }, []);
 
     return {
