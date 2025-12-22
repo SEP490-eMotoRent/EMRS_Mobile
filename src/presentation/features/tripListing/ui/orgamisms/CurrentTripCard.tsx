@@ -17,6 +17,7 @@ export interface CurrentTrip {
     totalAmount?: string;
     depositAmount?: string;
     baseRentalFee?: string;
+    insuranceFee?: string;
     hasInsurance?: boolean;
     vehicleAssigned?: boolean;
     hasAdditionalFees?: boolean;
@@ -63,7 +64,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 </View>
             </View>
             
-            {/* ✅ LARGE VEHICLE IMAGE - Full Width */}
+            {/* LARGE VEHICLE IMAGE - Full Width */}
             <View style={styles.imageContainer}>
                 {trip.vehicleImageUrl ? (
                     <Image 
@@ -85,7 +86,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 )}
             </View>
 
-            {/* ✅ Vehicle Info - Below Image */}
+            {/* Vehicle Info - Below Image */}
             <View style={styles.vehicleInfo}>
                 <Text style={styles.vehicleName} numberOfLines={1}>
                     {trip.vehicleName}
@@ -126,21 +127,40 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
             {/* Reference */}
             <Text style={styles.reference}>Mã đơn: {trip.reference}</Text>
             
-            {/* Amount section - for pending and booked */}
+            {/* Amount breakdown - ONLY for pending and booked */}
             {(trip.status === "pending" || trip.status === "booked") && (
                 <View style={styles.amountSection}>
+                    {/* Base Rental Fee */}
                     <View style={styles.amountRow}>
                         <Text style={styles.amountLabel}>Chi phí thuê</Text>
                         <Text style={styles.amountValue}>{trip.baseRentalFee}</Text>
                     </View>
+                    
+                    {/* Insurance Fee */}
+                    {trip.insuranceFee && (
+                        <View style={styles.amountRow}>
+                            <Text style={styles.amountLabel}>Bảo hiểm</Text>
+                            <Text style={styles.amountValue}>{trip.insuranceFee}</Text>
+                        </View>
+                    )}
+                    
+                    {/* Deposit */}
                     <View style={styles.amountRow}>
                         <Text style={styles.amountLabel}>Đặt cọc</Text>
                         <Text style={styles.amountValue}>{trip.depositAmount}</Text>
                     </View>
                 </View>
             )}
+
+            {/* ALWAYS SHOW TOTAL — this is the key fix */}
+            {trip.totalAmount && (
+                <View style={[styles.amountRow, styles.totalRow]}>
+                    <Text style={styles.totalLabel}>Tổng cộng</Text>
+                    <Text style={styles.totalValue}>{trip.totalAmount}</Text>
+                </View>
+            )}
             
-            {/* ✅ Actions - SINGLE ROW */}
+            {/* Actions - SINGLE ROW */}
             <View style={styles.actions}>
                 {trip.status === "pending" && (
                     <TouchableOpacity 
@@ -254,7 +274,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "700",
     },
-    // ✅ Large Image Container
     imageContainer: {
         width: "100%",
         height: 160,
@@ -289,7 +308,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         textTransform: "uppercase",
     },
-    // ✅ Vehicle Info Below Image
     vehicleInfo: {
         marginBottom: 12,
     },
@@ -312,7 +330,6 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 12,
     },
-    // Alerts
     urgentAlert: {
         flexDirection: "row",
         alignItems: "center",
@@ -382,7 +399,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
     },
-    // ✅ Actions - Single Row
     actions: {
         flexDirection: "row",
         gap: 10,
@@ -434,6 +450,23 @@ const styles = StyleSheet.create({
     dangerButtonText: {
         color: "#ef4444",
         fontSize: 14,
+        fontWeight: "700",
+    },
+    totalRow: {
+        borderTopWidth: 1,
+        borderTopColor: "#2a2a2a",
+        paddingTop: 12,
+        marginTop: 12,
+        marginBottom: 16,
+    },
+    totalLabel: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    totalValue: {
+        color: "#d4c5f9",
+        fontSize: 20,
         fontWeight: "700",
     },
 });

@@ -48,8 +48,8 @@ export const useMapInteractions = ({ dateRange = "Chọn Ngày" }: { dateRange?:
                 const now = Date.now();
                 const timeSinceLastPress = now - lastBranchPressTimeRef.current;
                 
-                // ✅ INCREASED: 300ms -> 500ms for better stability
-                if (timeSinceLastPress < 500) {
+                // ✅ INCREASED: 300ms -> 900ms for better stability
+                if (timeSinceLastPress < 900) {
                     // console.log('[useMapInteractions] Click debounced (too rapid)');
                     trackBreadcrumb('⏭️ Click debounced');
                     return;

@@ -11,8 +11,8 @@ interface SearchBarProps {
 const SORT_OPTIONS = [
     { id: "newest" as const, label: "Mới nhất" },
     { id: "oldest" as const, label: "Cũ nhất" },
-    { id: "price_high" as const, label: "Giá cao" },
-    { id: "price_low" as const, label: "Giá thấp" },
+    // { id: "price_high" as const, label: "Giá cao" },
+    // { id: "price_low" as const, label: "Giá thấp" },
 ];
 
 export const SearchBar: React.FC<SearchBarProps> = ({
