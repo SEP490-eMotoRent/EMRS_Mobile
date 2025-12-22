@@ -44,20 +44,20 @@ export const useWallet = (): UseWalletResult => {
     const createWalletInternal = async (): Promise<CreateWalletResponse | null> => {
         // Frontend enforcement: prevent if wallet already exists
         if (walletExists) {
-            console.log('⚠️ Wallet already exists (frontend flag), skipping creation');
+            // console.log('⚠️ Wallet already exists (frontend flag), skipping creation');
             return null;
         }
 
         // Prevent if wallet data already present
         if (walletData !== null) {
-            console.log('⚠️ Wallet data already present, skipping creation');
+            // console.log('⚠️ Wallet data already present, skipping creation');
             setWalletExists(true);
             return null;
         }
 
         // Prevent concurrent creation
         if (isCreatingRef.current) {
-            console.log('⚠️ Wallet creation already in progress, skipping');
+            // console.log('⚠️ Wallet creation already in progress, skipping');
             return null;
         }
 
@@ -65,10 +65,10 @@ export const useWallet = (): UseWalletResult => {
             isCreatingRef.current = true;
             setCreating(true);
             setCreateError(null);
-            console.log('🔨 Creating wallet...');
+            // console.log('🔨 Creating wallet...');
 
             const data = await container.wallet.balance.create.execute();
-            console.log('✅ Wallet created:', data.id);
+            // console.log('✅ Wallet created:', data.id);
 
             if (isMountedRef.current) {
                 setWalletExists(true);
@@ -92,7 +92,7 @@ export const useWallet = (): UseWalletResult => {
                 errorMsg.toLowerCase().includes('already have');
 
             if (alreadyExists) {
-                console.log('⚠️ Backend says wallet exists, fetching existing wallet...');
+                // console.log('⚠️ Backend says wallet exists, fetching existing wallet...');
                 if (isMountedRef.current) {
                     setWalletExists(true);
                 }
@@ -102,10 +102,10 @@ export const useWallet = (): UseWalletResult => {
                     if (isMountedRef.current) {
                         setWalletData(existingWallet);
                         setError(null);
-                        console.log('✅ Fetched existing wallet:', existingWallet.balance);
+                        // console.log('✅ Fetched existing wallet:', existingWallet.balance);
                     }
                 } catch (fetchErr) {
-                    console.error('❌ Failed to fetch existing wallet:', fetchErr);
+                    // console.error('❌ Failed to fetch existing wallet:', fetchErr);
                 }
                 return null;
             }
@@ -135,7 +135,7 @@ export const useWallet = (): UseWalletResult => {
      * - On subsequent fetches: just reports error if not found
      */
     const fetchBalance = useCallback(async (isInitialFetch: boolean = false) => {
-        console.log('📡 Fetching wallet balance...', { isInitialFetch });
+        // console.log('📡 Fetching wallet balance...', { isInitialFetch });
 
         try {
             setLoading(true);
@@ -146,26 +146,26 @@ export const useWallet = (): UseWalletResult => {
             if (isMountedRef.current) {
                 setWalletData(data);
                 setWalletExists(true);
-                console.log('✅ Wallet balance fetched:', data.balance);
+                // console.log('✅ Wallet balance fetched:', data.balance);
             }
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to fetch wallet balance';
-            console.error('⚠️ Wallet balance error:', errorMessage);
+            // console.error('⚠️ Wallet balance error:', errorMessage);
 
             const isWalletNotFound =
                 errorMessage.toLowerCase().includes('wallet not found') ||
                 errorMessage.toLowerCase().includes('not found for this user');
 
-            console.log('🔍 Debug:', {
-                isWalletNotFound,
-                isInitialFetch,
-                isCreating: isCreatingRef.current,
-                walletExists,
-            });
+            // console.log('🔍 Debug:', {
+            //     isWalletNotFound,
+            //     isInitialFetch,
+            //     isCreating: isCreatingRef.current,
+            //     walletExists,
+            // });
 
             // Auto-create only on initial fetch when wallet doesn't exist
             if (isWalletNotFound && isInitialFetch && !isCreatingRef.current && !walletExists) {
-                console.log('🔄 Wallet not found, auto-creating...');
+                // console.log('🔄 Wallet not found, auto-creating...');
                 await createWalletInternal();
                 return; // createWalletInternal handles state
             }
@@ -186,8 +186,6 @@ export const useWallet = (): UseWalletResult => {
      * Does NOT auto-create wallet on refresh (user must wait for initial load)
      */
     const refresh = useCallback(async () => {
-        console.log('🔃 Manual refresh requested');
-
         try {
             setLoading(true);
             setError(null);
@@ -197,11 +195,11 @@ export const useWallet = (): UseWalletResult => {
             if (isMountedRef.current) {
                 setWalletData(data);
                 setWalletExists(true);
-                console.log('✅ Wallet balance refreshed:', data.balance);
+                // console.log('✅ Wallet balance refreshed:', data.balance);
             }
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to refresh wallet';
-            console.error('⚠️ Refresh error:', errorMessage);
+            // console.error('⚠️ Refresh error:', errorMessage);
 
             // Don't auto-create on manual refresh
             // Only set error if we don't have any wallet data
@@ -218,17 +216,17 @@ export const useWallet = (): UseWalletResult => {
     // Initial fetch on mount - only once
     useEffect(() => {
         if (hasInitializedRef.current) {
-            console.log('⏭️ Already initialized, skipping');
+            // console.log('⏭️ Already initialized, skipping');
             return;
         }
 
         hasInitializedRef.current = true;
         isMountedRef.current = true;
-        console.log('🚀 useWallet mounted, initial fetch...');
+        // console.log('🚀 useWallet mounted, initial fetch...');
         fetchBalance(true);
 
         return () => {
-            console.log('🧹 useWallet unmounting...');
+            // console.log('🧹 useWallet unmounting...');
             isMountedRef.current = false;
         };
     }, []);

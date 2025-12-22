@@ -140,21 +140,21 @@ export const useRentalPricing = (
             membershipDiscountPercentage
         );
 
-        console.log("💰 [useRentalPricing] 4-Component Breakdown:", {
-            totalHours,
-            equivalentDays,
-            totalDaysExact,
-            durationType,
-            configDiscount: `${discountPercentage}%`,
-            membershipDiscount: `${membershipDiscountPercentage}%`,
-            components: {
-                startPartial: result.startPartialAmount,
-                normalFullDays: result.normalFullDaysAmount,
-                holidayFullDays: result.holidayFullDaysAmount,
-                endPartial: result.endPartialAmount,
-            },
-            finalTotal: result.totalRentalFee,
-        });
+        // console.log("💰 [useRentalPricing] 4-Component Breakdown:", {
+        //     totalHours,
+        //     equivalentDays,
+        //     totalDaysExact,
+        //     durationType,
+        //     configDiscount: `${discountPercentage}%`,
+        //     membershipDiscount: `${membershipDiscountPercentage}%`,
+        //     components: {
+        //         startPartial: result.startPartialAmount,
+        //         normalFullDays: result.normalFullDaysAmount,
+        //         holidayFullDays: result.holidayFullDaysAmount,
+        //         endPartial: result.endPartialAmount,
+        //     },
+        //     finalTotal: result.totalRentalFee,
+        // });
 
         return result;
     }, [

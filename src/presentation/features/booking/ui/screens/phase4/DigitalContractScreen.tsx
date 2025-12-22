@@ -69,7 +69,7 @@ export const DigitalContractScreen: React.FC = () => {
             setLoadingTemplate(true);
             setTemplateError(null);
 
-            console.log("📄 Fetching contract template from Configuration API...");
+            // console.log(" Fetching contract template from Configuration API...");
             
             const configurations = await container.configuration.getByType.execute(
                 ConfigurationType.RentalContractTemplate
@@ -79,14 +79,14 @@ export const DigitalContractScreen: React.FC = () => {
                 const templateConfig = configurations[0];
                 const templateUrl = templateConfig.value;
 
-                console.log("✅ Contract template fetched:", templateUrl);
+                // console.log(" Contract template fetched:", templateUrl);
                 setContractTemplateUrl(templateUrl);
             } else {
-                console.warn("⚠️ No contract template found in configurations");
+                // console.warn(" No contract template found in configurations");
                 setTemplateError("Không tìm thấy mẫu hợp đồng");
             }
         } catch (error: any) {
-            console.error("❌ Error fetching contract template:", error);
+            // console.error(" Error fetching contract template:", error);
             setTemplateError(error.message || "Không thể tải mẫu hợp đồng");
         } finally {
             setLoadingTemplate(false);
@@ -294,13 +294,13 @@ export const DigitalContractScreen: React.FC = () => {
                             showsVerticalScrollIndicator={true}
                             onError={(syntheticEvent) => {
                                 const { nativeEvent } = syntheticEvent;
-                                console.error("❌ WebView error:", nativeEvent);
+                                // console.error(" WebView error:", nativeEvent);
                             }}
                             onLoadStart={() => {
-                                console.log("📥 Starting to load PDF in WebView...");
+                                // console.log(" Starting to load PDF in WebView...");
                             }}
                             onLoadEnd={() => {
-                                console.log("✅ PDF WebView loaded successfully");
+                                // console.log(" PDF WebView loaded successfully");
                             }}
                             injectedJavaScript={`
                                 (function() {

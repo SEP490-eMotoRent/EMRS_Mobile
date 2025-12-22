@@ -71,7 +71,7 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
 
             return croppedImage.uri;
         } catch (error) {
-            console.error('❌ Crop failed:', error);
+            // console.error('❌ Crop failed:', error);
             // Return original if crop fails
             return photoUri;
         }
@@ -89,11 +89,11 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
             });
 
             if (photo?.uri) {
-                console.log('📸 Original photo:', {
-                    uri: photo.uri,
-                    width: photo.width,
-                    height: photo.height,
-                });
+                // console.log('📸 Original photo:', {
+                //     uri: photo.uri,
+                //     width: photo.width,
+                //     height: photo.height,
+                // });
 
                 // Crop to guide region
                 const croppedUri = await cropToGuide(
@@ -102,7 +102,7 @@ export const DocumentCameraView: React.FC<DocumentCameraViewProps> = ({
                     photo.height
                 );
 
-                console.log('✂️ Cropped photo:', croppedUri);
+                // console.log('✂️ Cropped photo:', croppedUri);
                 onCapture(croppedUri);
             }
         } catch (error: any) {

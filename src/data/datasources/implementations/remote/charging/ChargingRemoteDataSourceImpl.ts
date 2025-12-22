@@ -25,7 +25,7 @@ export class ChargingRemoteDataSourceImpl implements ChargingRemoteDataSource {
         code: response.status,
       };
     } catch (error: any) {
-      console.error("Error getting charging by license plate:", error);
+      // console.error("Error getting charging by license plate:", error);
       throw error;
     }
   }
@@ -43,7 +43,7 @@ export class ChargingRemoteDataSourceImpl implements ChargingRemoteDataSource {
         code: response.status,
       };
     } catch (error: any) {
-      console.error("Error getting charging rate:", error);
+      // console.error("Error getting charging rate:", error);
       throw error;
     }
   }
@@ -63,7 +63,7 @@ export class ChargingRemoteDataSourceImpl implements ChargingRemoteDataSource {
         code: response.status,
       };
     } catch (error: any) {
-      console.error("Error creating charging record:", error);
+      // console.error("Error creating charging record:", error);
       throw error;
     }
   }
@@ -78,7 +78,7 @@ export class ChargingRemoteDataSourceImpl implements ChargingRemoteDataSource {
         code: response.status,
       };
     } catch (error: any) {
-      console.error("Error getting charging by booking id:", error);
+      // console.error("Error getting charging by booking id:", error);
       throw error;
     }
   }

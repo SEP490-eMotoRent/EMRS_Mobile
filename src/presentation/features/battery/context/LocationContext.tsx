@@ -53,7 +53,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         accuracy: Location.Accuracy.Balanced,
         timeInterval: 5000,
       }).catch(async (err) => {
-        console.log('⚠️ Trying last known position...', err);
+        // console.log('⚠️ Trying last known position...', err);
         // Fallback: try last known position
         return await Location.getLastKnownPositionAsync();
       });
@@ -68,10 +68,10 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
         timestamp: currentLocation.timestamp,
       });
       setErrorMsg(null);
-      console.log('✅ Location updated:', {
-        lat: currentLocation.coords.latitude,
-        lng: currentLocation.coords.longitude,
-      });
+      // console.log('✅ Location updated:', {
+      //   lat: currentLocation.coords.latitude,
+      //   lng: currentLocation.coords.longitude,
+      // });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setErrorMsg(`Lỗi khi lấy vị trí: ${errorMessage}`);
@@ -85,7 +85,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     (async () => {
       // Use mock location in development (if enabled)
       if (USE_MOCK_LOCATION) {
-        console.log('🧪 Using mock location:', MOCK_LOCATION);
+        // console.log('🧪 Using mock location:', MOCK_LOCATION);
         setLocation(MOCK_LOCATION);
         setErrorMsg(null);
         setLoading(false);

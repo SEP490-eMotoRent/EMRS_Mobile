@@ -22,7 +22,7 @@ export class InsurancePackageRemoteDataSourceImpl implements InsurancePackageRem
 
             return response.data.data;
         } catch (error: any) {
-            console.error('Error fetching insurance packages:', error);
+            // console.error('Error fetching insurance packages:', error);
             throw new Error(
                 error.response?.data?.message || 
                 error.message || 
@@ -43,7 +43,7 @@ export class InsurancePackageRemoteDataSourceImpl implements InsurancePackageRem
 
             return response.data.data;
         } catch (error: any) {
-            console.error(`Error fetching insurance package ${id}:`, error);
+            // console.error(`Error fetching insurance package ${id}:`, error);
             throw new Error(
                 error.response?.data?.message || 
                 error.message || 

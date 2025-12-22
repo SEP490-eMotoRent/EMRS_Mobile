@@ -24,11 +24,11 @@ export const useVehicleDetail = (id: string) => {
             setError(null);
 
             const repository = container.vehicle.modelRepository;
-            const raw = await repository.getDetailRaw(id); // ✅ CHANGED: use getDetailRaw instead of getDetail
+            const raw = await repository.getDetailRaw(id); // CHANGED: use getDetailRaw instead of getDetail
 
             if (!mounted || !raw) return;
 
-            console.log('🔍 RAW API RESPONSE:', JSON.stringify(raw, null, 2));
+            // console.log('🔍 RAW API RESPONSE:', JSON.stringify(raw, null, 2));
 
             const uiData = VehicleDetailMapper.toUI({
                 ...raw,

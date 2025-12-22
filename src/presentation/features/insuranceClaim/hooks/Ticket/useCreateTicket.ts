@@ -23,9 +23,9 @@ export const useCreateTicket = (
             setLoading(true);
             setError(null);
             
-            console.log("📝 Creating ticket:", request);
+            // console.log(" Creating ticket:", request);
             const result = await createTicketUseCase.execute(request);
-            console.log("✅ Ticket created:", result.id);
+            // console.log(" Ticket created:", result.id);
             
             return result;
         } catch (err: any) {

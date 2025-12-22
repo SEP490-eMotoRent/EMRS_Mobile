@@ -14,13 +14,13 @@ export const useCreateWithdrawalRequest = () => {
         setLoading(true);
         setError(null);
 
-        console.log("🚀 [CREATE WITHDRAWAL] Starting request...");
-        console.log("📊 [CREATE WITHDRAWAL] Params:", {
-            amount,
-            bankName,
-            bankAccountNumber,
-            bankAccountName,
-        });
+        // console.log("🚀 [CREATE WITHDRAWAL] Starting request...");
+        // console.log("📊 [CREATE WITHDRAWAL] Params:", {
+        //     amount,
+        //     bankName,
+        //     bankAccountNumber,
+        //     bankAccountName,
+        // });
 
         try {
             const result = await container.wallet.withdrawal.create.execute(
@@ -29,12 +29,12 @@ export const useCreateWithdrawalRequest = () => {
                 bankAccountNumber,
                 bankAccountName
             );
-            console.log("✅ [CREATE WITHDRAWAL] Success:", result);
+            // console.log("✅ [CREATE WITHDRAWAL] Success:", result);
             return result;
         } catch (err: any) {
-            console.error("❌ [CREATE WITHDRAWAL] Error:", err);
-            console.error("❌ [CREATE WITHDRAWAL] Error message:", err.message);
-            console.error("❌ [CREATE WITHDRAWAL] Error stack:", err.stack);
+            // console.error("❌ [CREATE WITHDRAWAL] Error:", err);
+            // console.error("❌ [CREATE WITHDRAWAL] Error message:", err.message);
+            // console.error("❌ [CREATE WITHDRAWAL] Error stack:", err.stack);
             const errorMessage = err.message || "Không thể tạo yêu cầu rút tiền";
             setError(errorMessage);
             throw err;

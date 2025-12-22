@@ -189,8 +189,7 @@ export const LoginScreen: React.FC = () => {
    * TODO: Navigate to privacy policy screen or open webview
    */
   const handlePrivacyPolicy = useCallback((): void => {
-    console.log("Privacy policy");
-    // TODO: Implement navigation to privacy policy
+    // console.log("Privacy policy");
   }, []);
 
   /**

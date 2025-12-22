@@ -72,25 +72,9 @@ export const VIETNAMESE_COLORS: Record<string, string> = {
 /**
  * Parse color string from API response
  * Handles formats like: "Trắng Ngọc Trai, Đen Nhám, Lavender Sữa, Vàng"
- * 
- * @param colorString - Comma-separated color names in Vietnamese
- * @returns Array of ColorInfo objects
- * 
- * @example
- * parseColorString("Trắng Ngọc Trai, Đen Nhám, Lavender Sữa, Vàng")
- * // Returns:
- * // [
- * //   { name: "Trắng Ngọc Trai", hex: "#F8F6F0" },
- * //   { name: "Đen Nhám", hex: "#1a1a1a" },
- * //   { name: "Lavender Sữa", hex: "#F0E6FF" },
- * //   { name: "Vàng", hex: "#FFD700" }
- * // ]
  */
 export function parseColorString(colorString: string): ColorInfo[] {
-    console.log('🔍 [parseColorString] Input:', colorString);
-    
     if (!colorString || colorString.trim() === '') {
-        console.log('⚠️ [parseColorString] Empty string, returning default black');
         return [{ name: 'Đen', hex: '#000000' }]; // Default to black
     }
 
@@ -100,27 +84,19 @@ export function parseColorString(colorString: string): ColorInfo[] {
         .map(c => c.trim())
         .filter(c => c.length > 0);
 
-    console.log('🔍 [parseColorString] Split color names:', colorNames);
-
     return colorNames.map(name => {
         const normalizedName = name.toLowerCase();
         const hex = VIETNAMESE_COLORS[normalizedName] || '#808080'; // Default to gray if not found
-        
-        console.log(`🔍 [parseColorString] "${name}" → normalized: "${normalizedName}" → hex: ${hex}`);
 
         return {
-            name: name,
-            hex: hex,
+            name,
+            hex,
         };
     });
 }
 
 /**
  * Get the primary (first) color from a color string
- * 
- * @example
- * getPrimaryColor("Trắng Ngọc Trai, Đen Nhám")
- * // Returns: { name: "Trắng Ngọc Trai", hex: "#F8F6F0" }
  */
 export function getPrimaryColor(colorString: string): ColorInfo {
     const colors = parseColorString(colorString);
@@ -129,10 +105,6 @@ export function getPrimaryColor(colorString: string): ColorInfo {
 
 /**
  * Get all colors as hex array (for color picker/wheel)
- * 
- * @example
- * getColorHexArray("Trắng, Đen, Vàng")
- * // Returns: ["#FFFFFF", "#000000", "#FFD700"]
  */
 export function getColorHexArray(colorString: string): string[] {
     return parseColorString(colorString).map(c => c.hex);
@@ -142,15 +114,12 @@ export function getColorHexArray(colorString: string): string[] {
  * Check if a color is "light" (for text contrast)
  */
 export function isLightColor(hex: string): boolean {
-    // Remove # if present
     const color = hex.replace('#', '');
     
-    // Convert to RGB
     const r = parseInt(color.substring(0, 2), 16);
     const g = parseInt(color.substring(2, 4), 16);
     const b = parseInt(color.substring(4, 6), 16);
     
-    // Calculate relative luminance
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     
     return luminance > 0.5;
@@ -158,20 +127,23 @@ export function isLightColor(hex: string): boolean {
 
 /**
  * Format colors for display
- * Shows up to 3 colors, with "+X more" if there are more
- * 
- * @example
- * formatColorsForDisplay("Trắng, Đen, Xanh, Đỏ")
- * // Returns: "Trắng, Đen, Xanh +1"
+ * Shows up to N colors, with "+X more" if there are more
  */
-export function formatColorsForDisplay(colorString: string, maxShow: number = 3): string {
+export function formatColorsForDisplay(
+    colorString: string,
+    maxShow: number = 3
+): string {
     const colors = parseColorString(colorString);
     
     if (colors.length <= maxShow) {
         return colors.map(c => c.name).join(', ');
     }
     
-    const shown = colors.slice(0, maxShow).map(c => c.name).join(', ');
+    const shown = colors
+        .slice(0, maxShow)
+        .map(c => c.name)
+        .join(', ');
+        
     const remaining = colors.length - maxShow;
     
     return `${shown} +${remaining}`;

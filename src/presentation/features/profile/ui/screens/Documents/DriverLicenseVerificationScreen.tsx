@@ -137,7 +137,7 @@ export const DriverLicenseVerificationScreen = ({ navigation }: any) => {
                 documentType: 'license',
                 side: 'front',
                 onPhotoTaken: (uri: string, side: 'front' | 'back') => {
-                    console.log('📸 License front captured:', uri);
+                    // console.log('📸 License front captured:', uri);
                     setLicenseFrontImage(uri);
 
                     setTimeout(() => {
@@ -145,7 +145,7 @@ export const DriverLicenseVerificationScreen = ({ navigation }: any) => {
                             documentType: 'license',
                             side: 'back',
                             onPhotoTaken: (backUri: string, backSide: 'front' | 'back') => {
-                                console.log('📸 License back captured:', backUri);
+                                // console.log('📸 License back captured:', backUri);
                                 setLicenseBackImage(backUri);
                             },
                         });

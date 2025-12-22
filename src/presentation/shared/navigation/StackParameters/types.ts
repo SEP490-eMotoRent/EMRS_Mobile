@@ -122,9 +122,9 @@ export type BookingStackParamList = {
     discountAmount: number;
     durationType: string;
     
-    // 4-Component System
+    // 4-Component System - ALL DATES AS ISO STRINGS
     startPartial?: {
-      date: Date;
+      date: string;
       hours: number;
       isHoliday: boolean;
       holiday?: {
@@ -140,7 +140,7 @@ export type BookingStackParamList = {
     normalFullDays?: number;
     normalFullDaysAmount?: number;
     holidayFullDays?: Array<{
-      date: Date;
+      date: string;
       holiday: {
         holidayName: string;
         priceMultiplier: number;
@@ -151,7 +151,7 @@ export type BookingStackParamList = {
     }>;
     holidayFullDaysAmount?: number;
     endPartial?: {
-      date: Date;
+      date: string;
       hours: number;
       isHoliday: boolean;
       holiday?: {
@@ -213,9 +213,9 @@ export type BookingStackParamList = {
     discountAmount: number;
     durationType: string;
     
-    // 4-Component System
+    // 4-Component System - ALL DATES AS ISO STRINGS
     startPartial?: {
-      date: Date;
+      date: string;
       hours: number;
       isHoliday: boolean;
       holiday?: {
@@ -231,7 +231,7 @@ export type BookingStackParamList = {
     normalFullDays?: number;
     normalFullDaysAmount?: number;
     holidayFullDays?: Array<{
-      date: Date;
+      date: string;
       holiday: {
         holidayName: string;
         priceMultiplier: number;
@@ -242,7 +242,7 @@ export type BookingStackParamList = {
     }>;
     holidayFullDaysAmount?: number;
     endPartial?: {
-      date: Date;
+      date: string;
       hours: number;
       isHoliday: boolean;
       holiday?: {

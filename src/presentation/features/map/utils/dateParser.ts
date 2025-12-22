@@ -13,7 +13,7 @@ export const parseDateRange = (dateRangeStr: string): DateRange => {
         // Split by " - " separator
         const parts = dateRangeStr.split(" - ");
         if (parts.length !== 2) {
-            console.warn("Invalid date range format:", dateRangeStr);
+            // console.warn("Invalid date range format:", dateRangeStr);
             return {};
         }
 
@@ -24,7 +24,7 @@ export const parseDateRange = (dateRangeStr: string): DateRange => {
         const endDate = parseDate(endStr.trim());
 
         if (!startDate || !endDate) {
-            console.warn("Failed to parse dates:", { startStr, endStr });
+            // console.warn("Failed to parse dates:", { startStr, endStr });
             return {};
         }
 
@@ -37,7 +37,7 @@ export const parseDateRange = (dateRangeStr: string): DateRange => {
             endTime: endDate.toISOString(),
         };
     } catch (error) {
-        console.error("Error parsing date range:", error);
+        // console.error("Error parsing date range:", error);
         return {};
     }
 };
@@ -135,7 +135,7 @@ const parseEnglishDate = (dateStr: string): Date | null => {
         
         return parsedDate;
     } catch (error) {
-        console.error("Error parsing English date:", error);
+        // console.error("Error parsing English date:", error);
         return null;
     }
 };

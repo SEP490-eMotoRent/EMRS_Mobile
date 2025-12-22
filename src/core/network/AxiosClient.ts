@@ -22,22 +22,22 @@ export class AxiosClient {
     this.axiosInstance.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
         const token = store.getState().auth.token;
-        console.log("Interceptor running for:", config.url);
+        // console.log("Interceptor running for:", config.url);
 
         const fullUrl = `${config.baseURL || ""}${config.url}`;
-        console.log("➡️ Request URL:", fullUrl);
+        // console.log("➡️ Request URL:", fullUrl);
 
         if (config.params) {
-          console.log(
-            "🧭 Query Params:",
-            JSON.stringify(config.params, null, 2)
-          );
+          // console.log(
+          //   "🧭 Query Params:",
+          //   JSON.stringify(config.params, null, 2)
+          // );
         }
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-          console.log("Token attached to request");
+          // console.log("Token attached to request");
         } else {
-          console.warn("No token found in auth state");
+          // console.warn("No token found in auth state");
         }
 
         // Let Axios set the multipart boundary automatically
@@ -65,25 +65,25 @@ export class AxiosClient {
             }
           }
 
-          console.log("📌 Generated cURL:\n", curl);
+          // console.log("📌 Generated cURL:\n", curl);
         }
 
-        AppLogger.getInstance().info(
-          `[${config.method?.toUpperCase()}] ${config.url}`
-        );
+        // AppLogger.getInstance().info(
+        //   `[${config.method?.toUpperCase()}] ${config.url}`
+        // );
 
-        if (config.data && !(config.data instanceof FormData)) {
-          console.log(`Request Body:`, JSON.stringify(config.data, null, 2));
-        }
+        // if (config.data && !(config.data instanceof FormData)) {
+        //   console.log(`Request Body:`, JSON.stringify(config.data, null, 2));
+        // }
 
-        console.log(
-          "Request Headers:",
-          JSON.stringify(config.headers, null, 2)
-        );
+        // console.log(
+        //   "Request Headers:",
+        //   JSON.stringify(config.headers, null, 2)
+        // );
         return config;
       },
       (error) => {
-        AppLogger.getInstance().error(`Request Error: ${error.message}`);
+        // AppLogger.getInstance().error(`Request Error: ${error.message}`);
         return Promise.reject(error);
       }
     );
@@ -91,17 +91,17 @@ export class AxiosClient {
     /* ------------------- RESPONSE INTERCEPTOR ------------------- */
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => {
-        AppLogger.getInstance().info(
-          `Response: ${response.status} ${JSON.stringify(response.data)}`
-        );
+        // AppLogger.getInstance().info(
+        //   `Response: ${response.status} ${JSON.stringify(response.data)}`
+        // );
         return response;
       },
       (error) => {
-        if (error.response) {
-          console.log("Response error:", error.response.data);
-        } else if (error.request) {
-          console.log("Request error:", error.request);
-        }
+        // if (error.response) {
+        //   console.log("Response error:", error.response.data);
+        // } else if (error.request) {
+        //   console.log("Request error:", error.request);
+        // }
         return Promise.reject(error);
       }
     );

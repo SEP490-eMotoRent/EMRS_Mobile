@@ -8,15 +8,13 @@ interface ColorWheelProps {
 }
 
 export const ColorWheel: React.FC<ColorWheelProps> = ({ color, maxColors = 4 }) => {
-    // ✅ DEBUG: Log what we're receiving
-    console.log('🎨 [ColorWheel] Received color string:', color);
+    // console.log('🎨 [ColorWheel] Received color string:', color);
     
     // Parse all colors from the string
     const colors = parseColorString(color).slice(0, maxColors);
     
-    // ✅ DEBUG: Log parsed colors
-    console.log('🎨 [ColorWheel] Parsed colors:', colors);
-    console.log('🎨 [ColorWheel] Number of colors:', colors.length);
+    // console.log('🎨 [ColorWheel] Parsed colors:', colors);
+    // console.log('🎨 [ColorWheel] Number of colors:', colors.length);
 
     // If only 1 color, show a single badge
     if (colors.length === 1) {

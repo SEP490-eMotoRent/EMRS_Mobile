@@ -36,11 +36,11 @@ export const useCancelBooking = (useCase: CancelBookingUseCase) => {
                             setCancelling(true);
                             setError(null);
                             
-                            console.log("🎯 [HOOK] Cancelling booking:", bookingId);
+                            // console.log("🎯 [HOOK] Cancelling booking:", bookingId);
                             
                             await useCase.execute(bookingId);
                             
-                            console.log("✅ [HOOK] Booking cancelled successfully");
+                            // console.log("✅ [HOOK] Booking cancelled successfully");
                             
                             // Show success message
                             Alert.alert(
@@ -84,11 +84,11 @@ export const useCancelBooking = (useCase: CancelBookingUseCase) => {
             setCancelling(true);
             setError(null);
             
-            console.log("🎯 [HOOK] Cancelling booking directly:", bookingId);
+            // console.log("🎯 [HOOK] Cancelling booking directly:", bookingId);
             
             await useCase.execute(bookingId);
             
-            console.log("✅ [HOOK] Booking cancelled successfully");
+            // console.log("✅ [HOOK] Booking cancelled successfully");
             
             if (onSuccess) {
                 onSuccess();

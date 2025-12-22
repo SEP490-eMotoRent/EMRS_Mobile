@@ -21,7 +21,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'InsurancePlans'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'InsurancePlans'>;
-
+// Helper to convert ISO string back to Date for PricingBreakdown
+const convertToDate = (dateString: string): Date => {
+    return new Date(dateString);
+};
 const noProtectionPlan: InsurancePlan = {
     id: "none",
     icon: "⊘",
@@ -225,14 +228,23 @@ export const InsurancePlansScreen: React.FC = () => {
                     originalPricePerDay={pricePerDay}
                     averagePricePerDay={averageRentalPrice}
                     
-                    // 4-Component System
-                    startPartial={startPartial}
+                    // 4-Component System - ✅ Convert strings back to Date objects
+                    startPartial={startPartial ? {
+                        ...startPartial,
+                        date: convertToDate(startPartial.date),
+                    } : undefined}
                     startPartialAmount={startPartialAmount}
                     normalFullDays={normalFullDays}
                     normalFullDaysAmount={normalFullDaysAmount}
-                    holidayFullDays={holidayFullDays}
+                    holidayFullDays={holidayFullDays?.map(day => ({
+                        ...day,
+                        date: convertToDate(day.date),
+                    }))}
                     holidayFullDaysAmount={holidayFullDaysAmount}
-                    endPartial={endPartial}
+                    endPartial={endPartial ? {
+                        ...endPartial,
+                        date: convertToDate(endPartial.date),
+                    } : undefined}
                     endPartialAmount={endPartialAmount}
                     
                     configDiscount={hasDiscount && durationType !== "daily" ? {

@@ -115,13 +115,13 @@ export class DateHelper {
         };
 
         const result = `${formatISO(startDate)} - ${formatISO(endDate)} (${startTime} - ${endTime})`;
-        console.log('✅ Parsed Vietnamese date:', {
-            input: vietnameseDateRange,
-            output: result,
-            startDate: formatISO(startDate),
-            endDate: formatISO(endDate),
-            durationDays: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-        });
+        // console.log('✅ Parsed Vietnamese date:', {
+        //     input: vietnameseDateRange,
+        //     output: result,
+        //     startDate: formatISO(startDate),
+        //     endDate: formatISO(endDate),
+        //     durationDays: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+        // });
         
         return result;
     }

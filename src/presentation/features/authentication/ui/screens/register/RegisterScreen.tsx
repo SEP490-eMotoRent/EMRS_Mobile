@@ -128,7 +128,7 @@ export const RegisterScreen: React.FC = () => {
    * Currently shows placeholder console log
    */
   const handleGoogleSignUp = useCallback((): void => {
-    console.log('[RegisterScreen] Google sign up - not yet implemented');
+    // console.log('[RegisterScreen] Google sign up - not yet implemented');
     // TODO: Implement Google OAuth registration
     // Similar to LoginScreen's useGoogleLogin
   }, []);
@@ -148,7 +148,7 @@ export const RegisterScreen: React.FC = () => {
    * TODO: Navigate to privacy policy screen or open webview
    */
   const handlePrivacyPolicy = useCallback((): void => {
-    console.log('[RegisterScreen] Privacy policy');
+    // console.log('[RegisterScreen] Privacy policy');
     // TODO: Implement navigation to privacy policy
   }, []);
 

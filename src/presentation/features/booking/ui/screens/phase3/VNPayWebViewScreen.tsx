@@ -63,39 +63,29 @@ export const VNPayWebViewScreen: React.FC = () => {
         bookingId,
         enabled: pollingEnabled && !hasHandled.current,
         onStatusChange: (status) => {
-            console.log('═══════════════════════════════════════════════════');
-            console.log('🔔 [VNPAY POLLING] Status change detected:', status);
-            console.log('═══════════════════════════════════════════════════');
-            
             if (status === 'Booked') {
-                console.log('✅ [VNPAY POLLING] Payment confirmed via polling!');
-                console.log('🎯 [VNPAY POLLING] Deep link may have failed, but polling caught it');
-                
                 hasHandled.current = true;
                 setPollingEnabled(false);
-                
+
                 Alert.alert(
                     'Thanh toán thành công!',
                     'Thanh toán của bạn đã được xác nhận',
-                    [
-                        {
-                            text: 'OK',
-                            onPress: () => navigateToContract()
-                        }
-                    ]
+                    [{ text: 'OK', onPress: () => navigateToContract() }]
                 );
             } else if (status === 'Cancelled') {
-                console.log('❌ [VNPAY POLLING] Booking cancelled');
                 hasHandled.current = true;
                 setPollingEnabled(false);
-                showFailure('Booking đã hết hạn. Nếu bạn đã thanh toán, vui lòng liên hệ hỗ trợ với mã booking: ' + bookingId);
+                showFailure(
+                    'Booking đã hết hạn. Nếu bạn đã thanh toán, vui lòng liên hệ hỗ trợ với mã booking: ' +
+                        bookingId
+                );
             }
         },
         pollingInterval: 3000,
         maxDuration: 15 * 60 * 1000,
     });
 
-    // Store context
+    // ==================== STORE CONTEXT ====================
     useEffect(() => {
         const ctx: BookingContext = {
             bookingId,
@@ -111,7 +101,8 @@ export const VNPayWebViewScreen: React.FC = () => {
             totalAmount,
             securityDeposit,
         };
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ctx)).catch(console.error);
+
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ctx)).catch(() => {});
 
         return () => {
             if (!hasHandled.current) {
@@ -120,7 +111,7 @@ export const VNPayWebViewScreen: React.FC = () => {
         };
     }, []);
 
-    // Navigate to contract screen
+    // ==================== NAVIGATE TO CONTRACT ====================
     const navigateToContract = useCallback(async () => {
         const ctxStr = await AsyncStorage.getItem(STORAGE_KEY);
         const ctx: BookingContext | null = ctxStr ? JSON.parse(ctxStr) : null;
@@ -141,62 +132,71 @@ export const VNPayWebViewScreen: React.FC = () => {
         });
 
         await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
-    }, [navigation, STORAGE_KEY, bookingId, vehicleId, vehicleName, vehicleImageUrl, startDate, endDate, duration, rentalDays, branchName, insurancePlan, totalAmount, securityDeposit]);
+    }, [
+        navigation,
+        STORAGE_KEY,
+        bookingId,
+        vehicleId,
+        vehicleName,
+        vehicleImageUrl,
+        startDate,
+        endDate,
+        duration,
+        rentalDays,
+        branchName,
+        insurancePlan,
+        totalAmount,
+        securityDeposit,
+    ]);
 
-    // Parse VNPay callback from URL
+    // ==================== PARSE CALLBACK ====================
     const buildDtoFromUrl = (url: string) => {
         try {
             const u = new URL(url);
             const p = u.searchParams;
 
-            const vnp_ResponseCode = p.get("vnp_ResponseCode");
-            const vnp_TxnRef = p.get("vnp_TxnRef");
-            const vnp_Amount = p.get("vnp_Amount");
-            const vnp_BankCode = p.get("vnp_BankCode");
-            const vnp_BankTranNo = p.get("vnp_BankTranNo");
-            const vnp_CardType = p.get("vnp_CardType");
-            const vnp_PayDate = p.get("vnp_PayDate");
-            const vnp_TransactionNo = p.get("vnp_TransactionNo");
+            const vnp_ResponseCode = p.get('vnp_ResponseCode');
+            const vnp_TxnRef = p.get('vnp_TxnRef');
+            const vnp_Amount = p.get('vnp_Amount');
+            const vnp_BankCode = p.get('vnp_BankCode');
+            const vnp_BankTranNo = p.get('vnp_BankTranNo');
+            const vnp_CardType = p.get('vnp_CardType');
+            const vnp_PayDate = p.get('vnp_PayDate');
+            const vnp_TransactionNo = p.get('vnp_TransactionNo');
 
             if (!vnp_ResponseCode || !vnp_TxnRef) return null;
 
             const amount = vnp_Amount ? parseInt(vnp_Amount) / 100 : 0;
             const formatDate = (d: string) =>
-                `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${d.slice(8,10)}:${d.slice(10,12)}:${d.slice(12,14)}+07:00`;
+                `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}T${d.slice(8, 10)}:${d.slice(
+                    10,
+                    12
+                )}:${d.slice(12, 14)}+07:00`;
 
             return {
-                isSuccess: vnp_ResponseCode === "00",
+                isSuccess: vnp_ResponseCode === '00',
                 orderId: vnp_TxnRef,
-                transactionId: vnp_TransactionNo || "",
+                transactionId: vnp_TransactionNo || '',
                 amount,
                 responseCode: vnp_ResponseCode,
-                message: vnp_ResponseCode === "00" ? "Payment success" : "Payment failed",
-                bankCode: vnp_BankCode || "",
-                bankTransactionNo: vnp_BankTranNo || "",
-                cardType: vnp_CardType || "",
+                message: vnp_ResponseCode === '00' ? 'Payment success' : 'Payment failed',
+                bankCode: vnp_BankCode || '',
+                bankTransactionNo: vnp_BankTranNo || '',
+                cardType: vnp_CardType || '',
                 transactionDate: vnp_PayDate ? formatDate(vnp_PayDate) : new Date().toISOString(),
             };
-        } catch (e) {
-            console.error("❌ Failed to parse VNPay URL:", e);
+        } catch {
             return null;
         }
     };
 
-    // Handle deep link callback
+    // ==================== HANDLE DEEP LINK ====================
     const handleDeepLink = useCallback(
         async (url: string) => {
-            if (hasHandled.current) {
-                console.log('⚠️ Deep link already handled, ignoring:', url);
-                return;
-            }
-
-            console.log('═══════════════════════════════════════════════════');
-            console.log('🔗 [DEEP LINK] Processing callback');
-            console.log('═══════════════════════════════════════════════════');
-            console.log('📥 URL:', url);
+            if (hasHandled.current) return;
 
             hasHandled.current = true;
-            setPollingEnabled(false); // Stop polling when deep link fires
+            setPollingEnabled(false);
 
             webviewRef.current?.stopLoading();
             setLoading(true);
@@ -204,34 +204,23 @@ export const VNPayWebViewScreen: React.FC = () => {
             const dto = buildDtoFromUrl(url);
 
             if (!dto) {
-                console.error('❌ Invalid deep link format');
-                showFailure("Lỗi xử lý thanh toán");
+                showFailure('Lỗi xử lý thanh toán');
                 return;
             }
-
-            console.log('📦 VNPay callback data:', dto);
 
             if (dto.responseCode !== '00') {
-                console.error('❌ Payment failed:', dto.message);
-                showFailure(dto.message || "Thanh toán thất bại");
+                showFailure(dto.message || 'Thanh toán thất bại');
                 return;
             }
-
-            console.log('✅ Payment successful, confirming with backend...');
 
             try {
                 await container.booking.payment.confirmVNPay.execute(dto);
-                console.log('✅ Backend confirmed payment successfully');
-
                 await new Promise(resolve => setTimeout(resolve, 1500));
                 await navigateToContract();
-
-            } catch (error: any) {
-                console.error('❌ Callback API failed:', error);
-
+            } catch {
                 Alert.alert(
                     'Lỗi xác nhận',
-                    'Thanh toán thành công nhưng không thể xác nhận với hệ thống. Vui lòng kiểm tra mục "Chuyến đi" sau vài phút.',
+                    'Thanh toán thành công nhưng không thể xác nhận với hệ thống.',
                     [
                         {
                             text: 'Thử lại',
@@ -239,12 +228,9 @@ export const VNPayWebViewScreen: React.FC = () => {
                                 hasHandled.current = false;
                                 setPollingEnabled(true);
                                 handleDeepLink(url);
-                            }
+                            },
                         },
-                        {
-                            text: 'Đóng',
-                            onPress: () => navigation.goBack()
-                        }
+                        { text: 'Đóng', onPress: () => navigation.goBack() },
                     ]
                 );
             }
@@ -252,41 +238,39 @@ export const VNPayWebViewScreen: React.FC = () => {
         [navigateToContract, navigation]
     );
 
-    // Listen for deep links globally
+    // ==================== LISTEN DEEP LINKS ====================
     useEffect(() => {
-        const handleDeepLinkEvent = (event: { url: string }) => {
-            console.log('🔗 Deep link event received:', event.url);
-            if (event.url.startsWith('emrs://payment/callback')) {
-                console.log('🎯 VNPay callback detected!');
-                handleDeepLink(event.url);
+        const sub = Linking.addEventListener('url', e => {
+            if (e.url.startsWith('emrs://payment/callback')) {
+                handleDeepLink(e.url);
             }
-        };
-
-        const subscription = Linking.addEventListener('url', handleDeepLinkEvent);
+        });
 
         Linking.getInitialURL().then(url => {
             if (url && url.startsWith('emrs://payment/callback')) {
-                console.log('🎯 App opened with VNPay callback:', url);
                 handleDeepLink(url);
             }
         });
 
-        return () => {
-            subscription.remove();
-        };
+        return () => sub.remove();
     }, [handleDeepLink]);
 
-    // Timer
+    // ==================== TIMER ====================
     useEffect(() => {
         const tick = () => {
-            const diff = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+            const diff = Math.max(
+                0,
+                Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)
+            );
             setTimeLeft(diff);
+
             if (diff <= 0 && !hasHandled.current) {
                 hasHandled.current = true;
                 setPollingEnabled(false);
                 showExpiry();
             }
         };
+
         tick();
         expiryTimer.current = setInterval(tick, 1000);
 
@@ -295,35 +279,18 @@ export const VNPayWebViewScreen: React.FC = () => {
         };
     }, [expiresAt]);
 
-    // Block deep link navigation in WebView
-    const onShouldStartLoadWithRequest = useCallback(
-        (request: any): boolean => {
-            const url = request.url || '';
-            console.log('🚦 WebView wants to load:', url);
-            
-            if (url.startsWith('emrs://')) {
-                console.log('🛑 Blocking WebView from loading deep link');
-                console.log('✅ Deep link will be handled by Linking API');
-                return false;
-            }
-
-            return true;
-        },
-        []
-    );
+    const onShouldStartLoadWithRequest = useCallback((request: any) => {
+        const url = request.url || '';
+        return !url.startsWith('emrs://');
+    }, []);
 
     const showFailure = (msg: string = 'Thanh toán thất bại') => {
-        Alert.alert('Thất bại', msg, [
-            { text: 'OK', onPress: () => navigation.goBack() },
-        ]);
+        Alert.alert('Thất bại', msg, [{ text: 'OK', onPress: () => navigation.goBack() }]);
     };
 
     const showExpiry = () => {
         Alert.alert('Hết hạn', 'Phiên thanh toán đã hết.', [
-            {
-                text: 'OK',
-                onPress: () => navigation.navigate('ConfirmRentalDuration' as never),
-            },
+            { text: 'OK', onPress: () => navigation.navigate('ConfirmRentalDuration' as never) },
         ]);
     };
 
@@ -332,6 +299,7 @@ export const VNPayWebViewScreen: React.FC = () => {
             navigation.goBack();
             return;
         }
+
         Alert.alert('Hủy thanh toán?', 'Bạn có chắc muốn rời khỏi trang thanh toán?', [
             { text: 'Tiếp tục thanh toán', style: 'cancel' },
             {
@@ -345,11 +313,7 @@ export const VNPayWebViewScreen: React.FC = () => {
         ]);
     };
 
-    const formatTime = (seconds: number): string => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
+    const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -393,12 +357,6 @@ export const VNPayWebViewScreen: React.FC = () => {
                 thirdPartyCookiesEnabled
                 sharedCookiesEnabled
             />
-
-            <View style={styles.footer}>
-                <Text style={styles.footerTxt}>
-                    Sau khi thanh toán, ứng dụng sẽ tự động quay lại
-                </Text>
-            </View>
         </SafeAreaView>
     );
 };
@@ -435,12 +393,4 @@ const styles = StyleSheet.create({
         marginTop: -40,
     },
     overlayTxt: { color: '#fff', fontSize: 16, marginTop: 12 },
-    footer: {
-        padding: 16,
-        backgroundColor: '#1a1a1a',
-        borderTopWidth: 1,
-        borderTopColor: '#333',
-        alignItems: 'center',
-    },
-    footerTxt: { color: '#999', fontSize: 14, textAlign: 'center' },
 });

@@ -47,7 +47,7 @@ export const useLocation = (): UseLocationResult => {
                 distanceInterval: 0,
             }).catch((err) => {
                 // Fallback: try last known position
-                console.log('Trying last known position...');
+                // console.log('Trying last known position...');
                 return Location.getLastKnownPositionAsync();
             });
 
@@ -92,7 +92,7 @@ export const useLocation = (): UseLocationResult => {
                 }
             } catch (geocodeError) {
                 // Geocoding failed - we have coords but no address
-                console.log('Geocoding failed, using coordinates only');
+                // console.log('Geocoding failed, using coordinates only');
                 setLocation({
                     address: null,
                     coords: {

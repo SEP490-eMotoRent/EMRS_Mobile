@@ -26,19 +26,19 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
             !v.title.toLowerCase().includes('số điện thoại')
     );
 
-    // ✅ FIX: Treat all uploaded documents as "verified" (only check existence)
+    // FIX: Treat all uploaded documents as "verified" (only check existence)
     const safeVerifications: Verification[] = filteredVerifications.map(v => ({
         label: v.title,
         // If it's not 'needed', it means document exists → treat as 'verified'
         status: v.status === 'needed' ? 'needed' : 'verified',
-        // status: v.status === 'expired' ? 'needed' : v.status, // ⬅️ COMMENTED OUT: Old logic
+        // status: v.status === 'expired' ? 'needed' : v.status,
         validUntil: undefined, // Don't show validity period
     }));
 
-    // ✅ Check if all documents exist (not just verified by admin)
+    // Check if all documents exist (not just verified by admin)
     const allVerified = filteredVerifications.every(
         v => v.status !== 'needed' // Only check if uploaded, ignore pending/verified distinction
-        // v => v.status === 'verified' || v.status === 'valid' // ⬅️ COMMENTED OUT: Old logic
+        // v => v.status === 'verified' || v.status === 'valid'
     );
 
     return (
@@ -57,7 +57,6 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
                     <Text style={styles.warningText}>
                         Vui lòng tải lên giấy tờ để sử dụng đầy đủ tính năng.
                         {/* Chưa xác thực hoàn toàn. Vui lòng hoàn tất xác thực để sử dụng đầy đủ tính năng. */}
-                        {/* ⬆️ COMMENTED OUT: Old warning about verification */}
                     </Text>
                 </View>
             )}
@@ -65,7 +64,6 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
             <TouchableOpacity style={styles.verificationButton} onPress={onVerify}>
                 <Text style={styles.verificationButtonText}>Quản Lý Giấy Tờ</Text>
                 {/* Quản Lý Xác Thực */}
-                {/* ⬆️ COMMENTED OUT: Old button text */}
             </TouchableOpacity>
         </View>
     );

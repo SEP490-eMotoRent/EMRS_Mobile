@@ -12,24 +12,24 @@ export class AppLogger {
 
     static getInstance(): AppLogger {
         if (!AppLogger.instance) {
-        AppLogger.instance = new AppLogger();
+            AppLogger.instance = new AppLogger();
         }
         return AppLogger.instance;
     }
 
     debug(message: string): void {
-        log.debug(`🛠 [DEBUG] ${message}`);
+        // log.debug(`🛠 [DEBUG] ${message}`);
     }
 
     info(message: string): void {
-        log.info(`ℹ️ [INFO] ${message}`);
+        // log.info(`ℹ️ [INFO] ${message}`);
     }
 
     warn(message: string): void {
-        log.warn(`⚠️ [WARN] ${message}`);
+        // log.warn(`⚠️ [WARN] ${message}`);
     }
 
     error(message: string): void {
-        log.error(`❌ [ERROR] ${message}`);
+        // log.error(`❌ [ERROR] ${message}`);
     }
 }

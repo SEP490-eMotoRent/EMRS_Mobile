@@ -27,7 +27,7 @@ export const DocumentCaptureScreen: React.FC<DocumentCaptureScreenProps> = ({
     const documentName = documentType === 'citizen' ? 'Citizen ID' : "Driver's License";
 
     const handleCapture = (photoUri: string) => {
-        console.log('📸 Photo captured:', photoUri);
+        // console.log('📸 Photo captured:', photoUri);
         setCapturedPhoto(photoUri);
     };
 

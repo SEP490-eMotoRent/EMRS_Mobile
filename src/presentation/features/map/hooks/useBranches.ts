@@ -14,18 +14,18 @@ export const useBranches = () => {
             setLoading(true);
             setError(null);
             
-            console.log('🔄 Fetching branches...');
+            // console.log('🔄 Fetching branches...');
             const getAllBranchesUseCase = sl.GetAllBranchesUseCase();
             const fetchedBranches = await getAllBranchesUseCase.execute();
             
             if (isMountedRef.current) {
                 setBranches(fetchedBranches);
-                console.log('✅ Branches loaded:', fetchedBranches.length);
+                // console.log('✅ Branches loaded:', fetchedBranches.length);
             }
         } catch (err) {
             if (isMountedRef.current) {
                 setError(err instanceof Error ? err.message : 'Failed to fetch branches');
-                console.error('❌ Error fetching branches:', err);
+                // console.error('❌ Error fetching branches:', err);
             }
         } finally {
             if (isMountedRef.current) {

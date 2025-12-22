@@ -116,7 +116,6 @@ export class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
                 'Failed to fetch user'
             );
         } catch (error: any) {
-            // Special case: return null for 404 instead of throwing
             if (error.response?.status === 404 || error.code === 404) {
                 return null;
             }

@@ -45,7 +45,7 @@ export const DocumentManagementHubScreen: React.FC<DocumentManagementHubScreenPr
     // 🔄 Auto-refresh documents when screen comes into focus
     useFocusEffect(
         useCallback(() => {
-            console.log('📱 DocumentManagementHub focused - refreshing documents');
+            // console.log('📱 DocumentManagementHub focused - refreshing documents');
             refresh();
         }, [])
     );

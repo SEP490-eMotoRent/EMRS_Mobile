@@ -66,7 +66,7 @@ export const AdditionalInfoScreen: React.FC = () => {
     };
 
     const handlePrivacyPolicy = () => {
-        console.log('Privacy policy');
+        // console.log('Privacy policy');
     };
 
     return (
