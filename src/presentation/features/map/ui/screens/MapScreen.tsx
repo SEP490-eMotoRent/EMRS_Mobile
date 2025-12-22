@@ -163,7 +163,7 @@ export const MapScreen: React.FC = () => {
         try {
             navigation.navigate('ListView', { location, dateRange, address });
         } catch (err) {
-            console.error('[MapScreen] ListView navigation failed: ', err);
+            // console.error('[MapScreen] ListView navigation failed: ', err);
         }
     }, [navigation, location, dateRange, address]);
 
@@ -178,7 +178,7 @@ export const MapScreen: React.FC = () => {
     // ✅ FIXED: Safe branch marker press handler
     const handleSafeBranchPress = useCallback((branch: Branch) => {
         if (!mapReady) {
-            console.warn('[MapScreen] Map not ready, ignoring marker press');
+            // console.warn('[MapScreen] Map not ready, ignoring marker press');
             return;
         }
         handleBranchMarkerPress(branch);
@@ -221,7 +221,7 @@ export const MapScreen: React.FC = () => {
                 initialRegion={region}
                 onPress={handleSafeMapPress}
                 onMapReady={() => {
-                    console.log('[MapScreen] ✅ Map ready');
+                    // console.log('[MapScreen] ✅ Map ready');
                     setMapReady(true);
                 }}
                 moveOnMarkerPress={false}
