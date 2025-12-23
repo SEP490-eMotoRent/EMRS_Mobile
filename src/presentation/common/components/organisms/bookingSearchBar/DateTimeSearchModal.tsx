@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import {
     Dimensions,
     Modal,
-    ScrollView,
+    FlatList,
     StyleSheet,
     Text,
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
     ActivityIndicator,
+    ScrollView,
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from "react-native-calendars";
@@ -27,6 +28,81 @@ const formatLocalDate = (date: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
+// ✅ Smart memoization - only re-renders when month's dates change
+const arePropsEqual = (prevProps: any, nextProps: any) => {
+    if (prevProps.monthDate.getTime() !== nextProps.monthDate.getTime()) return false;
+    if (prevProps.minDateStr !== nextProps.minDateStr) return false;
+    if (prevProps.onDayPress !== nextProps.onDayPress) return false;
+
+    const getMonthSlice = (monthDate: Date, marked: any) => {
+        const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+        const monthStartStr = formatLocalDate(monthStart);
+        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+        const monthEndStr = formatLocalDate(monthEnd);
+
+        const slice: { [key: string]: any } = {};
+        Object.keys(marked).forEach(key => {
+            if (key >= monthStartStr && key <= monthEndStr) {
+                slice[key] = marked[key];
+            }
+        });
+        return slice;
+    };
+
+    const prevSlice = getMonthSlice(prevProps.monthDate, prevProps.markedDates);
+    const nextSlice = getMonthSlice(nextProps.monthDate, nextProps.markedDates);
+
+    return JSON.stringify(prevSlice) === JSON.stringify(nextSlice);
+};
+
+// ✅ Memoized month component
+const MonthCalendar = memo(({ 
+    monthDate, 
+    monthNames,
+    markedDates, 
+    onDayPress, 
+    minDateStr 
+}: { 
+    monthDate: Date;
+    monthNames: string[];
+    markedDates: any;
+    onDayPress: (day: any) => void;
+    minDateStr: string;
+}) => {
+    const dateString = formatLocalDate(monthDate);
+    
+    return (
+        <View style={styles.monthWrapper}>
+            <Text style={styles.monthHeader}>
+                {monthNames[monthDate.getMonth()]} {monthDate.getFullYear()}
+            </Text>
+            <View style={styles.calendarWrapper}>
+                <Calendar
+                    current={dateString}
+                    markingType="period"
+                    markedDates={markedDates}
+                    onDayPress={onDayPress}
+                    minDate={minDateStr}
+                    hideArrows={true}
+                    hideExtraDays={true}
+                    disableMonthChange={true}
+                    renderHeader={() => <View />}
+                    theme={{
+                        calendarBackground: "#000",
+                        dayTextColor: "#fff",
+                        monthTextColor: "#000",
+                        textDisabledColor: "#222",
+                        todayTextColor: "#b8a4ff",
+                        selectedDayBackgroundColor: "#b8a4ff",
+                        selectedDayTextColor: "#000",
+                    }}
+                    style={styles.calendar}
+                />
+            </View>
+        </View>
+    );
+}, arePropsEqual);
+
 export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
     visible,
     onClose,
@@ -42,7 +118,6 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
     const [pickupTime, setPickupTime] = useState("6:00 CH");
     const [returnTime, setReturnTime] = useState("10:00 SA");
 
-    // ✅ Defer calendar rendering until modal is visible
     useEffect(() => {
         if (visible) {
             setCalendarReady(false);
@@ -59,19 +134,47 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
     today.setHours(0, 0, 0, 0);
     const todayStr = formatLocalDate(today);
 
-    const monthsToDisplay = useMemo(() => {
-        const months: Date[] = [];
-        const current = new Date(today);
-        
-        for (let i = 0; i < 14; i++) {
-            months.push(new Date(current));
-            current.setMonth(current.getMonth() + 1);
+    // ✅ Lazy loading state - start with 4 months
+    const [monthsToDisplay, setMonthsToDisplay] = useState<Date[]>([]);
+
+    useEffect(() => {
+        if (visible) {
+            const initialMonths: Date[] = [];
+            const current = new Date(today);
+            
+            for (let i = 0; i < 4; i++) {
+                initialMonths.push(new Date(current));
+                current.setMonth(current.getMonth() + 1);
+            }
+            
+            setMonthsToDisplay(initialMonths);
+        } else {
+            setMonthsToDisplay([]);
         }
-        
-        return months;
+    }, [visible, todayStr]);
+
+    // ✅ Load more months on scroll (2 at a time, max 14)
+    const loadMoreMonths = useCallback(() => {
+        setMonthsToDisplay(prev => {
+            if (prev.length >= 14) return prev;
+            
+            const lastMonth = prev[prev.length - 1];
+            const newMonths: Date[] = [];
+            const current = new Date(lastMonth);
+            current.setMonth(current.getMonth() + 1);
+            
+            const maxMonthsToAdd = 14 - prev.length;
+            for (let i = 0; i < Math.min(2, maxMonthsToAdd); i++) {
+                newMonths.push(new Date(current));
+                current.setMonth(current.getMonth() + 1);
+            }
+            
+            return [...prev, ...newMonths];
+        });
     }, []);
 
-    const onDayPress = (day: any) => {
+    // ✅ useCallback for performance
+    const onDayPress = useCallback((day: any) => {
         const selectedDay = new Date(day.dateString);
         
         if (selectedDay < today) {
@@ -145,7 +248,7 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
             setStartDate(startStr);
             setEndDate(endStr);
         }
-    };
+    }, [startDate, endDate, today]);
 
     const handleConfirm = () => {
         if (startDate && endDate) {
@@ -208,6 +311,19 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
         "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
     ];
 
+    // ✅ Memoized render callbacks
+    const renderMonth = useCallback(({ item }: { item: Date }) => (
+        <MonthCalendar
+            monthDate={item}
+            monthNames={monthNames}
+            markedDates={markedDatesWithDisabled}
+            onDayPress={onDayPress}
+            minDateStr={todayStr}
+        />
+    ), [markedDatesWithDisabled, onDayPress, todayStr, monthNames]);
+
+    const keyExtractor = useCallback((item: Date, index: number) => `month-${index}`, []);
+
     return (
         <Modal
             visible={visible}
@@ -233,50 +349,25 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
 
                             <View style={styles.calendarContainer}>
                                 {!calendarReady ? (
-                                    // ✅ Show loading spinner immediately
                                     <View style={styles.loadingContainer}>
                                         <ActivityIndicator size="large" color="#b8a4ff" />
                                         <Text style={styles.loadingText}>Đang tải lịch...</Text>
                                     </View>
                                 ) : (
                                     <View style={{ flex: 1, width: '100%' }}>
-                                        <ScrollView
+                                        <FlatList
+                                            data={monthsToDisplay}
+                                            renderItem={renderMonth}
+                                            keyExtractor={keyExtractor}
                                             showsVerticalScrollIndicator={false}
-                                            removeClippedSubviews={false}
                                             style={styles.scrollView}
-                                        >
-                                            {monthsToDisplay.map((monthDate, index) => {
-                                                const dateString = formatLocalDate(monthDate);
-                                                return (
-                                                    <View key={`month-${index}`} style={styles.monthWrapper}>
-                                                        <Text style={styles.monthHeader}>
-                                                            {monthNames[monthDate.getMonth()]} {monthDate.getFullYear()}
-                                                        </Text>
-                                                        <Calendar
-                                                            current={dateString}
-                                                            markingType="period"
-                                                            markedDates={markedDatesWithDisabled}
-                                                            onDayPress={onDayPress}
-                                                            minDate={todayStr}
-                                                            hideArrows={true}
-                                                            hideExtraDays={true}
-                                                            disableMonthChange={true}
-                                                            renderHeader={() => <View />}
-                                                            theme={{
-                                                                calendarBackground: "#000",
-                                                                dayTextColor: "#fff",
-                                                                monthTextColor: "#000",
-                                                                textDisabledColor: "#222",
-                                                                todayTextColor: "#b8a4ff",
-                                                                selectedDayBackgroundColor: "#b8a4ff",
-                                                                selectedDayTextColor: "#000",
-                                                            }}
-                                                            style={styles.calendar}
-                                                        />
-                                                    </View>
-                                                );
-                                            })}
-                                        </ScrollView>
+                                            windowSize={31}
+                                            initialNumToRender={4}
+                                            maxToRenderPerBatch={2}
+                                            removeClippedSubviews={false}
+                                            onEndReached={loadMoreMonths}
+                                            onEndReachedThreshold={0.5}
+                                        />
                                     </View>
                                 )}
                             </View>
@@ -488,8 +579,14 @@ const styles = StyleSheet.create({
         textAlign: "center",
         paddingVertical: 10,
     },
+    calendarWrapper: {
+        overflow: 'hidden',
+        width: '100%',
+        paddingHorizontal: 0,
+    },
     calendar: {
-        width: "100%",
+        width: '104%',
+        marginLeft: '-2%',
     },
     dateTimeOverlay: {
         position: "absolute",

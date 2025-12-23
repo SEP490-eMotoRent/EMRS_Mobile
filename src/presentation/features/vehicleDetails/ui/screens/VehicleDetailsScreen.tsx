@@ -22,6 +22,7 @@ import { useVehicleDetail } from "../../hooks/useVehicleModelsDetails";
 import { BookingButtonWithPrice } from "../atoms/buttons/BookingButtonWithPrice";
 import { ImageGallery } from "../organisms/ImageGallery";
 import { PickupLocationSection } from "../organisms/PickupLocationSection";
+import { ExpandableSection } from "../molecules/ExpandableSection";
 import { Icon } from "../atoms/Icons/Icons";
 
 type RoutePropType = RouteProp<BrowseStackParamList, "VehicleDetails">;
@@ -36,7 +37,6 @@ export const VehicleDetailsScreen: React.FC = () => {
   
   const { vehicleId, dateRange, location } = route.params;
 
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
 
   const { data, loading, error } = useVehicleDetail(vehicleId);
@@ -48,7 +48,7 @@ export const VehicleDetailsScreen: React.FC = () => {
 
   const { renter, renterResponse } = useRenterProfile();
 
-  // ✅ NEW: Check if profile is complete
+  // Check if profile is complete
   const checkProfileComplete = () => {
     if (!renter || !renterResponse) {
       return { 
@@ -64,7 +64,6 @@ export const VehicleDetailsScreen: React.FC = () => {
       missing.push('Họ Tên');
     }
 
-    // Check phone (must be valid Vietnamese number)
     const phone = renter.phone || '';
     const cleanPhone = phone.replace(/^\+84/, '0').replace(/\D/g, '');
     if (!cleanPhone || cleanPhone.length !== 10 || !cleanPhone.startsWith('0')) {
@@ -85,7 +84,6 @@ export const VehicleDetailsScreen: React.FC = () => {
     };
   };
 
-  // ✅ UPDATED: Check documents complete
   const checkDocumentsComplete = () => {
     if (!renterResponse) {
       return { 
@@ -156,7 +154,7 @@ export const VehicleDetailsScreen: React.FC = () => {
 
   const hasAvailableVehicles = selectedBranch && (selectedBranch.vehicleCount ?? 0) > 0;
   
-  // ✅ UPDATED: Block booking if profile incomplete OR documents incomplete
+  // Block booking if profile incomplete OR documents incomplete
   const isBookingDisabled = 
     !selectedBranchId || 
     !hasAvailableVehicles || 
@@ -291,29 +289,14 @@ export const VehicleDetailsScreen: React.FC = () => {
         </View>
 
         {data.description && data.description !== "No description." && (
-          <View style={styles.descriptionContainer}>
-            <View style={styles.descriptionHeader}>
-              <Text style={styles.descriptionTitle}>Thông Tin Xe</Text>
-              <TouchableOpacity
-                style={styles.showMoreButton}
-                onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.showMoreText}>
-                  {isDescriptionExpanded ? "Ẩn Đi" : "Hiển Thị Thêm"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text
-              style={styles.descriptionText}
-              numberOfLines={isDescriptionExpanded ? undefined : 3}
-            >
-              {data.description}
-            </Text>
-          </View>
+          <ExpandableSection
+            title="Thông Tin Xe"
+            content={data.description}
+            initiallyExpanded={false}
+            numberOfLines={3}
+          />
         )}
 
-        {/* ✅ NEW: Profile Completion Warning */}
         <View style={[
           styles.requirementWarning,
           profileStatus.complete && styles.requirementWarningComplete
@@ -358,13 +341,18 @@ export const VehicleDetailsScreen: React.FC = () => {
             onPress={handleGoToProfile}
             activeOpacity={0.7}
           >
-            <Text style={styles.actionButtonText}>
+            <Text 
+              style={styles.actionButtonText}
+              allowFontScaling={false}
+              numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.85}
+            >
               {profileStatus.complete ? 'Quản Lý Thông Tin' : 'Hoàn Thiện Thông Tin'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* ✅ UPDATED: Document Verification Section */}
         <View style={[
           styles.requirementWarning,
           documentsStatus.complete && styles.requirementWarningComplete
@@ -422,7 +410,13 @@ export const VehicleDetailsScreen: React.FC = () => {
             onPress={handleGoToDocuments}
             activeOpacity={0.7}
           >
-            <Text style={styles.actionButtonText}>
+            <Text 
+              style={styles.actionButtonText}
+              allowFontScaling={false}
+              numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.85}
+            >
               {documentsStatus.complete ? 'Quản Lý Giấy Tờ' : 'Tải Lên Giấy Tờ'}
             </Text>
           </TouchableOpacity>
@@ -563,39 +557,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "left",
   },
-  descriptionContainer: {
-    backgroundColor: "#1a1a1a",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-  descriptionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  descriptionTitle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  showMoreButton: {
-    backgroundColor: "#B8A4FF",
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  showMoreText: {
-    color: "#000",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  descriptionText: {
-    color: "#9ca3af",
-    fontSize: 14,
-    lineHeight: 20,
-  },
   unavailableWarning: {
     flexDirection: "row",
     backgroundColor: "#2a1a1a",
@@ -678,9 +639,10 @@ const styles = StyleSheet.create({
   actionButton: {
     backgroundColor: "#B8A4FF",
     paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: "center",
+    minHeight: 50,
   },
   actionButtonComplete: {
     backgroundColor: "#10b981",
@@ -689,5 +651,9 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 16,
     fontWeight: "700",
+    textAlign: "center",
+    includeFontPadding: false,
+    textAlignVertical: "center",
+    paddingHorizontal: 4,
   },
 });

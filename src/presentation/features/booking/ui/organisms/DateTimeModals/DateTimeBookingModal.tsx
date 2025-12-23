@@ -61,7 +61,6 @@ const arePropsEqual = (prevProps: any, nextProps: any) => {
     return JSON.stringify(prevSlice) === JSON.stringify(nextSlice);
 };
 
-// ✅ Memoized month component with optimized equality check
 const MonthCalendar = memo(({ 
     monthDate, 
     monthNames,
@@ -82,27 +81,29 @@ const MonthCalendar = memo(({
             <Text style={styles.monthHeader}>
                 {monthNames[monthDate.getMonth()]} {monthDate.getFullYear()}
             </Text>
-            <Calendar
-                current={dateString}
-                markingType="period"
-                markedDates={markedDates}
-                onDayPress={onDayPress}
-                minDate={minDateStr}
-                hideArrows={true}
-                hideExtraDays={true}
-                disableMonthChange={true}
-                renderHeader={() => <View />}
-                theme={{
-                    calendarBackground: "#000",
-                    dayTextColor: "#fff",
-                    monthTextColor: "#000",
-                    textDisabledColor: "#222",
-                    todayTextColor: "#b8a4ff",
-                    selectedDayBackgroundColor: "#b8a4ff",
-                    selectedDayTextColor: "#000",
-                }}
-                style={styles.calendar}
-            />
+            <View style={styles.calendarWrapper}>
+                <Calendar
+                    current={dateString}
+                    markingType="period"
+                    markedDates={markedDates}
+                    onDayPress={onDayPress}
+                    minDate={minDateStr}
+                    hideArrows={true}
+                    hideExtraDays={true}
+                    disableMonthChange={true}
+                    renderHeader={() => <View />}
+                    theme={{
+                        calendarBackground: "#000",
+                        dayTextColor: "#fff",
+                        monthTextColor: "#000",
+                        textDisabledColor: "#222",
+                        todayTextColor: "#b8a4ff",
+                        selectedDayBackgroundColor: "#b8a4ff",
+                        selectedDayTextColor: "#000",
+                    }}
+                    style={styles.calendar}
+                />
+            </View>
         </View>
     );
 }, arePropsEqual);
@@ -230,7 +231,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
 
     useEffect(() => {
         if (visible && initialStartDate && initialEndDate) {
-            // ✅ Use simple inline calculation like old version
             const range: { [key: string]: any } = {};
             const start = new Date(initialStartDate);
             const end = new Date(initialEndDate);
@@ -285,7 +285,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         }
     }, [visible]);
 
-    // ✅ Optimized onDayPress - simple and fast like old version
     const onDayPress = useCallback((day: any) => {
         const selectedDay = new Date(day.dateString);
         
@@ -294,7 +293,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         }
 
         if (!startDate || (startDate && endDate)) {
-            // First selection
             setStartDate(day.dateString);
             setEndDate(null);
             setSelectedDates({
@@ -308,7 +306,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                 },
             });
         } else {
-            // Second selection
             const range: { [key: string]: any } = {};
             const firstDate = new Date(startDate);
             const secondDate = new Date(day.dateString);
@@ -330,7 +327,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
                     },
                 });
             } else {
-                // ✅ Simple while loop like old version - proven fast
                 let currentDate = new Date(start);
                 while (currentDate <= end) {
                     const dateStr = formatLocalDate(currentDate);
@@ -435,11 +431,9 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
         setShowTimePicker(false);
     };
 
-    // ✅ Direct mutation like old version - FAST but safe
     const markedDatesWithDisabled = useMemo(() => {
         const marked = { ...selectedDates };
         
-        // Add today indicator
         if (!marked[todayStr]) {
             marked[todayStr] = {
                 marked: true,
@@ -455,7 +449,6 @@ export const DateTimeBookingModal: React.FC<DateTimeBookingModalProps> = ({
             };
         }
         
-        // Disable past dates - simple loop like old version
         const disableDate = new Date(minDate);
         for (let i = 0; i < 60; i++) {
             disableDate.setDate(disableDate.getDate() - 1);
@@ -806,8 +799,14 @@ const styles = StyleSheet.create({
         textAlign: "center",
         paddingVertical: 10,
     },
-    calendar: {
+    calendarWrapper: {
+        overflow: 'hidden',
         width: '100%',
+        paddingHorizontal: 0,
+    },
+    calendar: {
+        width: '104%',
+        marginLeft: '-2%',
     },
     dateTimeOverlay: {
         position: "absolute",
