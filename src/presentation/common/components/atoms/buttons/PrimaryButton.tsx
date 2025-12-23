@@ -56,7 +56,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
                     ]}
                     allowFontScaling={false}
                     numberOfLines={1}
-                    adjustsFontSizeToFit
+                    adjustsFontSizeToFit={true}
                     minimumFontScale={0.8}
                 >
                     {title}
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     button: {
         backgroundColor: colors.button.primary,
         paddingVertical: 16,
-        paddingHorizontal: 24,
+        paddingHorizontal: 28,
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
@@ -78,13 +78,16 @@ const styles = StyleSheet.create({
     },
     flexButton: {
         flex: 1,
-        paddingHorizontal: 12,
+        paddingHorizontal: 16,
     },
     text: {
         color: colors.button.text,
         fontSize: 16,
         fontWeight: '600',
         textAlign: 'center',
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+        paddingHorizontal: 4,
     },
     buttonDisabled: {
         backgroundColor: '#333',

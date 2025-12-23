@@ -24,17 +24,14 @@ function formatDateRangeVietnamese(dateRange: string): string {
 
     let formatted = dateRange;
 
-    // Replace months
     Object.entries(monthMap).forEach(([eng, viet]) => {
         formatted = formatted.replace(new RegExp(`\\b${eng}\\b`, 'g'), viet);
     });
 
-    // Replace AM/PM
     Object.entries(timeMap).forEach(([eng, viet]) => {
         formatted = formatted.replace(new RegExp(`\\b${eng}\\b`, 'g'), viet);
     });
 
-    // Swap date format: "Thg 11 13" → "13 Thg 11"
     formatted = formatted.replace(/(Thg \d+) (\d+)/g, '$2 $1');
 
     return formatted;
@@ -50,46 +47,51 @@ export const BookingButtonWithPrice: React.FC<BookingButtonWithPriceProps> = ({
         
         return (
             <View style={styles.container}>
-            <View style={styles.splitContainer}>
-                {/* Left Side: Price + Date Info */}
-                <View style={styles.priceSection}>
-                <Text 
-                    style={styles.priceText}
-                    allowFontScaling={false}
-                >
-                    {pricePerDay.toLocaleString('vi-VN')}đ / ngày
-                </Text>
-                <Text 
-                    style={styles.dateText} 
-                    numberOfLines={1}
-                    allowFontScaling={false}
-                >
-                    {formattedDateRange}
-                </Text>
+                <View style={styles.splitContainer}>
+                    <View style={styles.priceSection}>
+                        <Text 
+                            style={styles.priceText}
+                            allowFontScaling={false}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit={true}
+                            minimumFontScale={0.85}
+                        >
+                            {pricePerDay.toLocaleString('vi-VN')}đ / ngày
+                        </Text>
+                        <Text 
+                            style={styles.dateText} 
+                            numberOfLines={1}
+                            allowFontScaling={false}
+                            adjustsFontSizeToFit={true}
+                            minimumFontScale={0.85}
+                        >
+                            {formattedDateRange}
+                        </Text>
+                    </View>
+                    
+                    <TouchableOpacity
+                        style={[
+                            styles.button,
+                            disabled && styles.buttonDisabled
+                        ]}
+                        onPress={onPress}
+                        activeOpacity={0.8}
+                        disabled={disabled}
+                    >
+                        <Text 
+                            style={[
+                                styles.buttonText,
+                                disabled && styles.buttonTextDisabled
+                            ]}
+                            allowFontScaling={false}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit={true}
+                            minimumFontScale={0.85}
+                        >
+                            Đặt xe
+                        </Text>
+                    </TouchableOpacity>
                 </View>
-                
-                {/* Right Side: Booking Button */}
-                <TouchableOpacity
-                style={[
-                    styles.button,
-                    disabled && styles.buttonDisabled
-                ]}
-                onPress={onPress}
-                activeOpacity={0.8}
-                disabled={disabled}
-                >
-                <Text 
-                    style={[
-                        styles.buttonText,
-                        disabled && styles.buttonTextDisabled
-                    ]}
-                    allowFontScaling={false}
-                    numberOfLines={1}
-                >
-                    Đặt xe
-                </Text>
-                </TouchableOpacity>
-            </View>
             </View>
         );
 };
@@ -110,7 +112,6 @@ const styles = StyleSheet.create({
         gap: 12,
         alignItems: "center",
     },
-    // Left side: Price + Date
     priceSection: {
         flex: 1,
         justifyContent: "center",
@@ -120,21 +121,26 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 18,
         fontWeight: "700",
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     dateText: {
         color: "#9ca3af",
         fontSize: 13,
         fontWeight: "500",
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
-    // Right side: Button
     button: {
         backgroundColor: "#a78bfa",
         paddingVertical: 16,
-        paddingHorizontal: 32,
+        paddingHorizontal: 36,
         borderRadius: 16,
         alignItems: "center",
         justifyContent: "center",
-        flexShrink: 0, // ✅ Prevent button from shrinking
+        flexShrink: 0,
+        minWidth: 120,
+        minHeight: 56,
     },
     buttonDisabled: {
         backgroundColor: "#4b5563",
@@ -145,6 +151,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
         textAlign: "center",
+        includeFontPadding: false,
+        textAlignVertical: "center",
+        paddingHorizontal: 4,
     },
     buttonTextDisabled: {
         color: "#9ca3af",
