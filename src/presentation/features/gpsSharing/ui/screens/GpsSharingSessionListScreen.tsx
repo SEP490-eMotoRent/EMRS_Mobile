@@ -532,7 +532,6 @@ export const GpsSharingSessionListScreen: React.FC = () => {
       </View>
     );
   };
-  console.log(rentingBookings);
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader

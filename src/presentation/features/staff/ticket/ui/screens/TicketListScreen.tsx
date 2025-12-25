@@ -50,7 +50,6 @@ export const TicketListScreen: React.FC = () => {
         pageNum: 1,
         orderByDescending: true,
       });
-      console.log(tickets);
       setTickets(tickets.items);
     }
   };

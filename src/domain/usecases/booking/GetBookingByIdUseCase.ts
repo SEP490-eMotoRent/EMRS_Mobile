@@ -7,16 +7,7 @@ export class GetBookingByIdUseCase {
     async execute(bookingId: string): Promise<Booking | null> {
         try {
             const booking = await this.bookingRepository.getById(bookingId);
-            
-            if (booking) {
-                console.log("✅ Booking found:", {
-                    id: booking.id,
-                    status: booking.bookingStatus,
-                    vehicleModel: booking.vehicleModelId,
-                });
-            } else {
-                console.warn("⚠️ Booking not found:", bookingId);
-            }
+
             
             return booking;
         } catch (error: any) {

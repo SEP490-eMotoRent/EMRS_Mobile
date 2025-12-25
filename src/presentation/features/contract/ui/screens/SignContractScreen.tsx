@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import sl from "../../../../../core/di/InjectionContainer";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
-import { WebView } from "react-native-webview";
 import { AntDesign } from "@expo/vector-icons";
 import { TripStackParamList } from "../../../../shared/navigation/StackParameters/types";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,6 +26,7 @@ import Toast from "react-native-toast-message";
 import { useAppSelector } from "../../../authentication/store/hooks";
 import { RootState } from "../../../authentication/store";
 import Pdf from "react-native-pdf";
+import { WebView } from "react-native-webview";
 
 type SignContractScreenRouteProp = RouteProp<
   TripStackParamList,
@@ -167,18 +167,22 @@ export const SignContractScreen: React.FC = () => {
       />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
-          {contract?.contractPdfUrl ? (
-            <View style={styles.webviewWrap}>
+          <View style={styles.webviewWrap}>
+            {contract?.contractPdfUrl ? (
               <Pdf
-                source={{ uri: contract.contractPdfUrl, cache: true }}
+                trustAllCerts={false}
+                source={{ uri: contract?.contractPdfUrl, cache: true }}
                 style={styles.webview}
-                enablePaging={false}
-                horizontal={false}
                 enableAnnotationRendering
                 onError={(error) => console.log(error)}
               />
-            </View>
-          ) : null}
+            ) : (
+              <WebView
+                source={{ uri: contract?.contractPdfUrl }}
+                style={styles.webview}
+              />
+            )}
+          </View>
 
           <Text style={styles.termsTitle}>Điều khoản & chính sách</Text>
 
