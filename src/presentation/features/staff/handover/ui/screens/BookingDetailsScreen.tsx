@@ -925,7 +925,10 @@ export const BookingDetailsScreen: React.FC = () => {
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryKey}>Tổng phụ phí</Text>
                   <Text style={styles.summaryVal}>
-                    {formatVnd((summary?.totalChargingFee + summary?.totalAdditionalFees) || 0)}
+                    {formatVnd(
+                      summary?.totalChargingFee +
+                        summary?.totalAdditionalFees || 0
+                    )}
                   </Text>
                 </View>
 
@@ -1162,7 +1165,7 @@ export const BookingDetailsScreen: React.FC = () => {
                 onPress={handleShareGPSInvite}
               >
                 <AntDesign name="export" size={16} color="#000" />
-                <Text style={styles.actionBtnText}>Share GPS Invite</Text>
+                <Text style={styles.actionBtnText}>Chia sẻ GPS</Text>
               </TouchableOpacity>
             </View>
           )}
