@@ -6,6 +6,8 @@ interface PaymentMethodCardProps {
     isSelected: boolean;
     onSelect: () => void;
     currentBalance: string;
+    availableBalance: string;
+    reservedBalance: number;
     afterBalance: string;
     isSufficient: boolean;
 }
@@ -14,9 +16,13 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
     isSelected,
     onSelect,
     currentBalance,
+    availableBalance,
+    reservedBalance,
     afterBalance,
     isSufficient,
 }) => {
+    const hasReserved = reservedBalance > 0;
+
     return (
         <TouchableOpacity 
             style={[styles.card, isSelected && styles.selectedCard]}
@@ -34,10 +40,30 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
             </View>
             
             <View style={styles.balanceContainer}>
-                <View style={styles.balanceRow}>
-                    <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
-                    <Text style={styles.balanceValue}>{currentBalance}</Text>
-                </View>
+                {/* SHOW RESERVED BREAKDOWN IF EXISTS */}
+                {hasReserved ? (
+                    <>
+                        <View style={styles.balanceRow}>
+                            <Text style={styles.balanceLabel}>Tổng số dư</Text>
+                            <Text style={styles.balanceValue}>{currentBalance}</Text>
+                        </View>
+                        <View style={styles.balanceRow}>
+                            <Text style={styles.balanceLabelReserved}>Đang chờ rút</Text>
+                            <Text style={styles.balanceValueReserved}>
+                                -{reservedBalance.toLocaleString('vi-VN')}đ
+                            </Text>
+                        </View>
+                        <View style={[styles.balanceRow, styles.availableRow]}>
+                            <Text style={styles.balanceLabelAvailable}>Số dư khả dụng</Text>
+                            <Text style={styles.balanceValueAvailable}>{availableBalance}</Text>
+                        </View>
+                    </>
+                ) : (
+                    <View style={styles.balanceRow}>
+                        <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
+                        <Text style={styles.balanceValue}>{currentBalance}</Text>
+                    </View>
+                )}
                 
                 {isSufficient ? (
                     <View style={styles.balanceRow}>
@@ -116,6 +142,32 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: "600",
+    },
+    // Reserved balance
+    balanceLabelReserved: {
+        color: "#999",
+        fontSize: 13,
+    },
+    balanceValueReserved: {
+        color: "#fbbf24",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    // Available balance
+    availableRow: {
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: "#333",
+    },
+    balanceLabelAvailable: {
+        color: "#4ade80",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    balanceValueAvailable: {
+        color: "#4ade80",
+        fontSize: 16,
+        fontWeight: "700",
     },
     balanceValueAfter: {
         color: "#4ade80",

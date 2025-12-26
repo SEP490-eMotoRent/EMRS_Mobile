@@ -4,6 +4,8 @@ import { Icon } from "../atoms/Icons/Icons";
 
 interface WalletCardProps {
   balance: number | null;
+  availableBalance: number | null;
+  reservedBalance: number;
   loading: boolean;
   error: string | null;
   onAddFunds: () => void;
@@ -14,6 +16,8 @@ interface WalletCardProps {
 
 export const WalletCard: React.FC<WalletCardProps> = ({
   balance,
+  availableBalance,
+  reservedBalance,
   loading,
   error,
   onAddFunds,
@@ -25,6 +29,8 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   const formatNumber = (num: number): string => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
+
+  const hasReserved = reservedBalance > 0;
 
   // === RENDER LOADING STATE ===
   if (loading) {
@@ -79,10 +85,31 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.availableText}>Số Dư</Text>
-      <Text style={styles.balanceAmount}>
-        {balance !== null ? formatNumber(balance) : '0'}đ
+      {/* MAIN BALANCE - Show Available if there's reserved */}
+      <Text style={styles.availableText}>
+        {hasReserved ? "Số Dư Khả Dụng" : "Số Dư"}
       </Text>
+      <Text style={styles.balanceAmount}>
+        {availableBalance !== null ? formatNumber(availableBalance) : '0'}đ
+      </Text>
+
+      {/* RESERVED BALANCE INFO */}
+      {hasReserved && (
+        <View style={styles.reservedContainer}>
+          <View style={styles.reservedRow}>
+            <Text style={styles.reservedLabel}>Tổng số dư</Text>
+            <Text style={styles.reservedValue}>
+              {balance !== null ? formatNumber(balance) : '0'}đ
+            </Text>
+          </View>
+          <View style={styles.reservedRow}>
+            <Text style={styles.reservedLabel}>Đang chờ rút</Text>
+            <Text style={styles.reservedValueHighlight}>
+              -{formatNumber(reservedBalance)}đ
+            </Text>
+          </View>
+        </View>
+      )}
 
       <View style={styles.walletActions}>
         <TouchableOpacity style={styles.addFundsButton} onPress={onAddFunds}>
@@ -133,6 +160,33 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     marginBottom: 16,
+  },
+  // Reserved balance section
+  reservedContainer: {
+    backgroundColor: "#2a2a2a",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  reservedRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  reservedLabel: {
+    color: "#999",
+    fontSize: 13,
+  },
+  reservedValue: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  reservedValueHighlight: {
+    color: "#fbbf24",
+    fontSize: 14,
+    fontWeight: "600",
   },
   walletActions: {
     flexDirection: "row",

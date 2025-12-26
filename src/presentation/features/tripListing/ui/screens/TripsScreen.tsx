@@ -592,7 +592,7 @@ export const TripsScreen: React.FC = () => {
                     onPress={() => setActiveTab("current")}
                 />
                 <TabButton
-                    label="Lịch sử"
+                    label="Tất cả"
                     isActive={activeTab === "past"}
                     onPress={() => setActiveTab("past")}
                 />

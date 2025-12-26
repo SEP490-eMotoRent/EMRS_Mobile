@@ -1,5 +1,6 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React from "react";
+import React, { useCallback } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ProfileStackParamList } from "../../../../../shared/navigation/StackParameters/types";
@@ -15,95 +16,102 @@ interface WithdrawalRequestListScreenProps {
 export const WithdrawalRequestListScreen: React.FC<WithdrawalRequestListScreenProps> = ({ navigation }) => {
     const { requests, loading, error, refresh } = useWithdrawalRequests();
 
+    // ✅ AUTO-REFRESH WHEN SCREEN COMES INTO FOCUS
+    useFocusEffect(
+        useCallback(() => {
+            refresh();
+        }, [])
+    );
+
     const handleRequestPress = (requestId: string) => {
         navigation.navigate("WithdrawalRequestDetail", { requestId });
     };
 
     if (loading && requests.length === 0) {
         return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
-            <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
-            <View style={styles.placeholder} />
-            </View>
-            <View style={styles.centerContent}>
-            <ActivityIndicator size="large" color="#c4b5fd" />
-            </View>
-        </SafeAreaView>
+            <SafeAreaView style={styles.container} edges={["top"]}>
+                <View style={styles.header}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                        <Text style={styles.backText}>←</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
+                    <View style={styles.placeholder} />
+                </View>
+                <View style={styles.centerContent}>
+                    <ActivityIndicator size="large" color="#c4b5fd" />
+                </View>
+            </SafeAreaView>
         );
     }
 
     if (error && requests.length === 0) {
         return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
-            <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
-            <View style={styles.placeholder} />
-            </View>
-            <View style={styles.centerContent}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={refresh}>
-                <Text style={styles.retryText}>Thử lại</Text>
-            </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+            <SafeAreaView style={styles.container} edges={["top"]}>
+                <View style={styles.header}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                        <Text style={styles.backText}>←</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
+                    <View style={styles.placeholder} />
+                </View>
+                <View style={styles.centerContent}>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity style={styles.retryButton} onPress={refresh}>
+                        <Text style={styles.retryText}>Thử lại</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
         );
     }
 
     if (requests.length === 0) {
         return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
-            <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
-            <View style={styles.placeholder} />
-            </View>
-            <View style={styles.centerContent}>
-            <Text style={styles.emptyText}>Chưa có yêu cầu rút tiền nào</Text>
-            <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate("CreateWithdrawalRequest")}>
-                <Text style={styles.createButtonText}>Tạo yêu cầu</Text>
-            </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+            <SafeAreaView style={styles.container} edges={["top"]}>
+                <View style={styles.header}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                        <Text style={styles.backText}>←</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
+                    <View style={styles.placeholder} />
+                </View>
+                <View style={styles.centerContent}>
+                    <Text style={styles.emptyText}>Chưa có yêu cầu rút tiền nào</Text>
+                    <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate("CreateWithdrawalRequest")}>
+                        <Text style={styles.createButtonText}>Tạo yêu cầu</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
         );
     }
 
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
-            <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("CreateWithdrawalRequest")}>
-            <Text style={styles.addText}>+</Text>
-            </TouchableOpacity>
-        </View>
-        <FlatList
-            data={requests}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-            <WithdrawalRequestCard
-                id={item.id}
-                amount={item.amount}
-                bankName={item.bankName}
-                bankAccountNumber={item.bankAccountNumber}
-                status={item.status as any}
-                createdAt={item.createdAt}
-                onPress={() => handleRequestPress(item.id)}
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <Text style={styles.backText}>←</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Yêu cầu rút tiền</Text>
+                <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("CreateWithdrawalRequest")}>
+                    <Text style={styles.addText}>+</Text>
+                </TouchableOpacity>
+            </View>
+            <FlatList
+                data={requests}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <WithdrawalRequestCard
+                        id={item.id}
+                        amount={item.amount}
+                        bankName={item.bankName}
+                        bankAccountNumber={item.bankAccountNumber}
+                        status={item.status as any}
+                        createdAt={item.createdAt}
+                        onPress={() => handleRequestPress(item.id)}
+                    />
+                )}
+                contentContainerStyle={styles.listContent}
+                refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor="#c4b5fd" colors={["#c4b5fd"]} />}
             />
-            )}
-            contentContainerStyle={styles.listContent}
-            refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor="#c4b5fd" colors={["#c4b5fd"]} />}
-        />
         </SafeAreaView>
     );
 };

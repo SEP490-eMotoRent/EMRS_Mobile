@@ -28,10 +28,12 @@ import { PaymentNotices } from "../../organisms/payment/PaymentNotices";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'PaymentConfirmation'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'PaymentConfirmation'>;
+
 // Helper to convert ISO string back to Date for PricingBreakdown
 const convertToDate = (dateString: string): Date => {
     return new Date(dateString);
 };
+
 interface BookingContext {
     bookingId?: string;
     vehicleId: string;
@@ -51,7 +53,15 @@ export const PaymentConfirmationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
     const navigation = useNavigation<NavigationPropType>();
 
-    const { balance: walletBalance, loading: walletLoading, refresh: refreshWallet } = useWallet();
+    // ✅ GET AVAILABLE BALANCE & RESERVED BALANCE
+    const { 
+        balance: walletBalance, 
+        availableBalance,
+        reservedBalance,
+        loading: walletLoading, 
+        refresh: refreshWallet 
+    } = useWallet();
+    
     const user = useAppSelector((state) => state.auth.user);
     const userId = user?.id;
 
@@ -67,7 +77,10 @@ export const PaymentConfirmationScreen: React.FC = () => {
         );
     }
 
-    const safeBalance = walletBalance ?? 0;
+    // ✅ USE AVAILABLE BALANCE FOR SPENDING
+    const safeBalance = availableBalance ?? 0;
+    const actualBalance = walletBalance ?? 0;
+    const hasReserved = reservedBalance > 0;
 
     const { 
         vehicleId, 
@@ -126,31 +139,15 @@ export const PaymentConfirmationScreen: React.FC = () => {
         console.warn("Total mismatch detected!");
         console.warn("Our calculation:", totalAmount);
         console.warn("Passed from prev screen:", passedTotal);
-    } else {
-        // console.log("Total verification passed:", totalAmount);
     }
 
     const afterBalance = safeBalance - totalAmount;
     const isSufficient = afterBalance >= 0;
     const totalAmountFormatted = `${totalAmount.toLocaleString('vi-VN')}đ`;
 
-    // console.log("Frontend pricing breakdown:", {
-    //     holidaySurcharge,
-    //     holidayFullDaysCount: holidayFullDays?.length || 0, // ← FIXED
-    //     membershipDiscountPercentage,
-    //     membershipDiscountAmount,
-    //     membershipTier,
-    //     baseRentalFee,
-    //     rentingRate,
-    //     averageRentalPrice,
-    //     totalAmount,
-    // });
-
     const parseDateString = (isoDate: string | null, displayDate: string): Date => {
         try {
             if (isoDate && isoDate.includes('-')) {
-                // console.log('Parsing as ISO string:', isoDate);
-                
                 const timeMatch = displayDate.match(/(\d+):(\d+)\s*(AM|PM|SA|CH)/i);
                 if (!timeMatch) {
                     throw new Error(`Cannot extract time from: ${displayDate}`);
@@ -167,12 +164,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 
                 const date = new Date(isoDate);
                 date.setHours(hours, parseInt(minutes, 10), 0, 0);
-                
-                // console.log("Parsed date successfully:", {
-                //     isoDate,
-                //     displayDate,
-                //     result: date.toISOString(),
-                // });
                 
                 return date;
             }
@@ -206,11 +197,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
 
             const year = new Date().getFullYear();
             const date = new Date(year, monthIndex, parseInt(day, 10), hour, parseInt(minutes, 10), 0, 0);
-            
-            // console.log("Parsed Vietnamese date:", {
-            //     input: displayDate,
-            //     output: date.toISOString(),
-            // });
             
             return date;
         } catch (error: any) {
@@ -254,17 +240,9 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 totalRentalFee: rentalFeeAmount,
             };
 
-            // console.log("Sending to backend:", JSON.stringify(bookingInput, null, 2));
-
             if (selectedPaymentMethod === "wallet") {
                 const booking = await createBooking(bookingInput);
                 await refreshWallet();
-
-                // console.log("Wallet booking created:", {
-                //     id: booking.id,
-                //     bookingCode: booking.bookingCode,
-                //     status: booking.bookingStatus,
-                // });
 
                 const contractNumber = booking.bookingCode || booking.id;
                 
@@ -289,11 +267,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
             } 
             else if (selectedPaymentMethod === "vnpay") {
                 const result = await container.booking.create.vnpay.execute(bookingInput);
-
-                // console.log("VNPay booking created:", {
-                //     bookingId: result.booking.id,
-                //     vnpayUrl: result.vnpayUrl,
-                // });
 
                 const context: BookingContext = {
                     bookingId: result.booking.id,
@@ -331,14 +304,7 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 });
             } 
             else if (selectedPaymentMethod === "zalopay") {
-                // console.log("Creating ZaloPay booking...");
-                
                 const result = await container.booking.create.zalopay.execute(bookingInput);
-
-                // console.log("ZaloPay booking created:", {
-                //     bookingId: result.booking.id,
-                //     zaloPayUrl: result.vnpayUrl,
-                // });
 
                 const context: BookingContext = {
                     bookingId: result.booking.id,
@@ -374,8 +340,6 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 });
 
                 setTimeout(async () => {
-                    // console.log("Opening ZaloPay app with URL:", result.vnpayUrl);
-                    
                     const canOpen = await Linking.canOpenURL(result.vnpayUrl);
                     if (canOpen) {
                         await Linking.openURL(result.vnpayUrl);
@@ -468,10 +432,13 @@ export const PaymentConfirmationScreen: React.FC = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Chọn phương thức thanh toán</Text>
                     
+                    {/* ✅ PASS NEW PROPS TO PaymentMethodCard */}
                     <PaymentMethodCard
                         isSelected={selectedPaymentMethod === "wallet"}
                         onSelect={() => setSelectedPaymentMethod("wallet")}
-                        currentBalance={`${safeBalance.toLocaleString()}đ`}
+                        currentBalance={`${actualBalance.toLocaleString()}đ`}
+                        availableBalance={`${safeBalance.toLocaleString()}đ`}
+                        reservedBalance={reservedBalance}
                         afterBalance={`${afterBalance.toLocaleString()}đ`}
                         isSufficient={isSufficient}
                     />
