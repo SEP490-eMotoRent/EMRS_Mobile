@@ -35,7 +35,9 @@ export const RentalScreen: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
   const [rentedBookings, setRentedBookings] = useState<Booking[] | null>(null);
-  const [handoverSchedule, setHandoverSchedule] = useState<Booking[] | null>(null);
+  const [handoverSchedule, setHandoverSchedule] = useState<Booking[] | null>(
+    null
+  );
   const user = useAppSelector((state: RootState) => state.auth.user);
   useEffect(() => {
     fetchBookings(1);
@@ -47,7 +49,7 @@ export const RentalScreen: React.FC = () => {
       const getBookingListUseCase = new GetBookingListUseCase(
         sl.get("BookingRepository")
       );
-      const today = new Date().toISOString().split("T")[0]; 
+      const today = new Date().toISOString().split("T")[0];
       const response = await getBookingListUseCase.execute(
         "",
         "",
@@ -110,7 +112,9 @@ export const RentalScreen: React.FC = () => {
               </View>
               <View>
                 <Text style={styles.authTitle}>Xác thực khách hàng</Text>
-                <Text style={styles.authSubtitle}>Quét khuôn mặt để tìm booking</Text>
+                <Text style={styles.authSubtitle}>
+                  Quét khuôn mặt để tìm booking
+                </Text>
               </View>
             </View>
           </View>
@@ -118,10 +122,11 @@ export const RentalScreen: React.FC = () => {
             <View style={styles.authDescriptionContainer}>
               <AntDesign name="info-circle" size={14} color="#C9B6FF" />
               <Text style={styles.authDescription}>
-                Sử dụng camera để xác thực khuôn mặt khách hàng và tìm kiếm bookings của họ
+                Sử dụng camera để xác thực khuôn mặt khách hàng và tìm kiếm
+                bookings của họ
               </Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.scanButton}
               onPress={() => navigation.navigate("ScanFace")}
             >
@@ -145,7 +150,8 @@ export const RentalScreen: React.FC = () => {
             <View>
               <Text style={styles.scheduleTitle}>Lịch giao xe hôm nay</Text>
               <Text style={styles.scheduleSubtitle}>
-                {handoverSchedule?.length || 0} booking{handoverSchedule?.length !== 1 ? 's' : ''}
+                {handoverSchedule?.length || 0} booking
+                {handoverSchedule?.length !== 1 ? "s" : ""}
               </Text>
             </View>
           </View>
@@ -159,7 +165,11 @@ export const RentalScreen: React.FC = () => {
         {!handoverSchedule || handoverSchedule.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyStateIcon}>
-              <AntDesign name="calendar" size={48} color={colors.text.secondary} />
+              <AntDesign
+                name="calendar"
+                size={48}
+                color={colors.text.secondary}
+              />
             </View>
             <Text style={styles.emptyStateTitle}>Chưa có lịch giao xe</Text>
             <Text style={styles.emptyStateSubtitle}>
@@ -168,97 +178,119 @@ export const RentalScreen: React.FC = () => {
           </View>
         ) : (
           handoverSchedule.map((item) => (
-          <View key={item.id} style={styles.handoverCard}>
-            <View style={styles.handoverHeader}>
-              <View style={styles.timeSection}>
-                <AntDesign
-                  name="clock-circle"
-                  size={16}
-                  color={colors.text.primary}
-                />
-                <Text style={styles.timeText}>{item.startDatetime?.toLocaleString("en-GB")}</Text>
-                <Text style={styles.timeSubtext}>{item.endDatetime?.toLocaleString("en-GB")}</Text>
-              </View>
-              <TouchableOpacity style={styles.arrivalButton}>
-                <Text style={styles.arrivalButtonText}>
-                  {item.bookingStatus}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.customerSection}>
-              <View style={styles.customerInfo}>
-                <AntDesign name="user" size={16} color={colors.text.primary} />
-                <Text style={styles.customerName}>{item.renter?.account?.fullname}</Text>
-                <AntDesign name="check-circle" size={16} color="#4CAF50" />
-                <Text style={styles.bookingId}>{item.bookingCode}</Text>
-              </View>
-            </View>
-
-            <View style={styles.vehicleSection}>
-              <Image
-                source={require("../../../../../../../assets/images/motor.png")}
-                style={styles.vehicleImage}
-              />
-              <View style={styles.vehicleInfo}>
-                <Text style={styles.vehicleName}>{item.vehicle?.vehicleModel?.modelName}</Text>
-                <Text style={styles.rentalDuration}>{item.vehicle?.vehicleModel?.rentalPricing?.rentalPrice}</Text>
-              </View>
-            </View>
-
-            <View style={styles.separator} />
-
-            <View style={styles.specsSection}>
-              <Text style={styles.specsTitle}>Vehicle Specifications</Text>
-              <Text style={styles.branchText}>{item.handoverBranch?.branchName}</Text>
-
-              <View style={styles.specsGrid}>
-                <View style={styles.specCard}>
-                  <FontAwesome
-                    name="battery-4"
-                    size={16}
-                    color={colors.text.primary}
-                  />
-                  <Text style={styles.specText}>Battery Capacity 3.24 kWh</Text>
-                </View>
-                <View style={styles.specCard}>
+            <View key={item.id} style={styles.handoverCard}>
+              <View style={styles.handoverHeader}>
+                <View style={styles.timeSection}>
                   <AntDesign
                     name="clock-circle"
                     size={16}
                     color={colors.text.primary}
                   />
-                  <Text style={styles.specText}>Max Range 180 km</Text>
+                  <Text style={styles.timeText}>
+                    {item.startDatetime?.toLocaleString("en-GB")}
+                  </Text>
+                  <Text style={styles.timeSubtext}>
+                    {item.endDatetime?.toLocaleString("en-GB")}
+                  </Text>
                 </View>
-                <View style={styles.specCard}>
-                  <AntDesign
-                    name="dashboard"
-                    size={16}
-                    color={colors.text.primary}
-                  />
-                  <Text style={styles.specText}>Top Speed 99 km/h</Text>
-                </View>
-                <View style={styles.specCard}>
-                  <FontAwesome5
-                    name="weight-hanging"
-                    size={16}
-                    color={colors.text.primary}
-                  />
-                  <Text style={styles.specText}>Weight 118 kg</Text>
-                </View>
+                <TouchableOpacity style={styles.arrivalButton}>
+                  <Text style={styles.arrivalButtonText}>
+                    {item.bookingStatus}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </View>
 
-            <TouchableOpacity
-              style={styles.viewDetailsButton}
-              onPress={() => navigation.navigate("BookingDetails", { bookingId: item.id })}
-            >
-              <View style={styles.viewDetailsButtonContent}>
-                <AntDesign name="file-text" size={16} color="#0B0B0F" />
-                <Text style={styles.viewDetailsButtonText}>Xem chi tiết Booking</Text>
-                <AntDesign name="right" size={14} color="#0B0B0F" />
+              <View style={styles.customerSection}>
+                <View style={styles.customerInfo}>
+                  <AntDesign
+                    name="user"
+                    size={16}
+                    color={colors.text.primary}
+                  />
+                  <Text style={styles.customerName}>
+                    {item.renter?.account?.fullname}
+                  </Text>
+                  <AntDesign name="check-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.bookingId}>{item.bookingCode}</Text>
+                </View>
               </View>
-            </TouchableOpacity>
-          </View>
+
+              <View style={styles.vehicleSection}>
+                <Image
+                  source={require("../../../../../../../assets/images/motor.png")}
+                  style={styles.vehicleImage}
+                />
+                <View style={styles.vehicleInfo}>
+                  <Text style={styles.vehicleName}>
+                    {item.vehicle?.vehicleModel?.modelName}
+                  </Text>
+                  <Text style={styles.rentalDuration}>
+                    {item.vehicle?.vehicleModel?.rentalPricing?.rentalPrice}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.separator} />
+
+              <View style={styles.specsSection}>
+                <Text style={styles.specsTitle}>Vehicle Specifications</Text>
+                <Text style={styles.branchText}>
+                  {item.handoverBranch?.branchName}
+                </Text>
+
+                <View style={styles.specsGrid}>
+                  <View style={styles.specCard}>
+                    <FontAwesome
+                      name="battery-4"
+                      size={16}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.specText}>
+                      Battery Capacity 3.24 kWh
+                    </Text>
+                  </View>
+                  <View style={styles.specCard}>
+                    <AntDesign
+                      name="clock-circle"
+                      size={16}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.specText}>Max Range 180 km</Text>
+                  </View>
+                  <View style={styles.specCard}>
+                    <AntDesign
+                      name="dashboard"
+                      size={16}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.specText}>Top Speed 99 km/h</Text>
+                  </View>
+                  <View style={styles.specCard}>
+                    <FontAwesome5
+                      name="weight-hanging"
+                      size={16}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.specText}>Weight 118 kg</Text>
+                  </View>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.viewDetailsButton}
+                onPress={() =>
+                  navigation.navigate("BookingDetails", { bookingId: item.id })
+                }
+              >
+                <View style={styles.viewDetailsButtonContent}>
+                  <AntDesign name="file-text" size={16} color="#0B0B0F" />
+                  <Text style={styles.viewDetailsButtonText}>
+                    Xem chi tiết Booking
+                  </Text>
+                  <AntDesign name="right" size={14} color="#0B0B0F" />
+                </View>
+              </TouchableOpacity>
+            </View>
           ))
         )}
       </View>
@@ -268,27 +300,27 @@ export const RentalScreen: React.FC = () => {
     <View style={styles.tabContent}>
       {/* Search Section */}
       <View style={styles.searchSection}>
-          <View style={styles.searchHeader}>
-            <View style={styles.searchIconContainer}>
-              <AntDesign name="search" size={18} color="#7DB3FF" />
-            </View>
-            <Text style={styles.searchTitle}>Tìm kiếm theo biển số</Text>
+        <View style={styles.searchHeader}>
+          <View style={styles.searchIconContainer}>
+            <AntDesign name="search" size={18} color="#7DB3FF" />
           </View>
-          <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <AntDesign name="idcard" size={16} color={colors.text.secondary} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Nhập biển số xe (VD: 73-MD6999.99)"
-                placeholderTextColor={colors.text.secondary}
-                value={searchPlate}
-                onChangeText={setSearchPlate}
-              />
-            </View>
-            <TouchableOpacity style={styles.searchButton}>
-              <AntDesign name="search" size={18} color="#0B0B0F" />
-            </TouchableOpacity>
+          <Text style={styles.searchTitle}>Tìm kiếm theo biển số</Text>
+        </View>
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <AntDesign name="idcard" size={16} color={colors.text.secondary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Nhập biển số xe (VD: 73-MD6999.99)"
+              placeholderTextColor={colors.text.secondary}
+              value={searchPlate}
+              onChangeText={setSearchPlate}
+            />
           </View>
+          <TouchableOpacity style={styles.searchButton}>
+            <AntDesign name="search" size={18} color="#0B0B0F" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Rented Vehicles List */}
@@ -306,7 +338,9 @@ export const RentalScreen: React.FC = () => {
             </View>
           </View>
           <View style={styles.rentedBadge}>
-            <Text style={styles.rentedBadgeText}>{rentedBookings?.length || 0}</Text>
+            <Text style={styles.rentedBadgeText}>
+              {rentedBookings?.length || 0}
+            </Text>
           </View>
         </View>
 
@@ -322,122 +356,121 @@ export const RentalScreen: React.FC = () => {
           </View>
         ) : (
           rentedBookings.map((booking) => (
-          <View key={booking.id} style={styles.rentedCard}>
-            <View style={styles.rentedCardHeader}>
-              <View style={styles.customerInfo}>
-                <Image
-                  source={
-                    booking.renter?.avatarUrl ||
-                    require("../../../../../../../assets/images/avatar.png")
-                  }
-                  style={styles.customerAvatar}
-                />
-                <View style={styles.customerDetails}>
-                  <Text style={styles.customerName}>
-                    {booking.renter?.account?.fullname}
-                  </Text>
-                  <Text style={styles.customerBranch}>
-                    {booking.handoverBranch?.branchName}
-                  </Text>
+            <View key={booking.id} style={styles.rentedCard}>
+              <View style={styles.rentedCardHeader}>
+                <View style={styles.customerInfo}>
+                  <Image
+                    source={{ uri: booking.renter?.avatarUrl }}
+                    style={styles.customerAvatar}
+                  />
+                  <View style={styles.customerDetails}>
+                    <Text style={styles.customerName}>
+                      {booking.renter?.account?.fullname}
+                    </Text>
+                    <Text style={styles.customerBranch}>
+                      {booking.handoverBranch?.branchName}
+                    </Text>
+                  </View>
+                  <Image
+                    source={{ uri: booking.vehicle?.fileUrl[0] }}
+                    style={styles.vehicleThumbnail}
+                  />
                 </View>
-                <Image
-                  source={{ uri: booking.vehicle?.fileUrl[0] }}
-                  style={styles.vehicleThumbnail}
-                />
               </View>
-            </View>
 
-            <View style={styles.vehicleDetails}>
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <AntDesign name="car" size={14} color={colors.text.primary} />
-                  <Text style={styles.detailLabel}>Xe</Text>
-                </View>
-                <Text style={styles.detailValue}>
-                  {booking.vehicle?.vehicleModel?.modelName}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <AntDesign
-                    name="idcard"
-                    size={14}
-                    color={colors.text.primary}
-                  />
-                  <Text style={styles.detailLabel}>Biển số xe</Text>
-                </View>
-                <View style={styles.platePill}>
-                  <Text style={styles.platePillText}>
-                    {booking.vehicle?.licensePlate}
+              <View style={styles.vehicleDetails}>
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <AntDesign
+                      name="car"
+                      size={14}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.detailLabel}>Xe</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {booking.vehicle?.vehicleModel?.modelName}
                   </Text>
                 </View>
-              </View>
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <AntDesign
-                    name="calendar"
-                    size={14}
-                    color={colors.text.primary}
-                  />
-                  <Text style={styles.detailLabel}>Thời gian nhận xe</Text>
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <AntDesign
+                      name="idcard"
+                      size={14}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.detailLabel}>Biển số xe</Text>
+                  </View>
+                  <View style={styles.platePill}>
+                    <Text style={styles.platePillText}>
+                      {booking.vehicle?.licensePlate}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.detailValue}>
-                  {booking.startDatetime?.toLocaleString("en-GB")}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <AntDesign
-                    name="clock-circle"
-                    size={14}
-                    color={colors.text.primary}
-                  />
-                  <Text style={styles.detailLabel}>Thời gian trả xe</Text>
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <AntDesign
+                      name="calendar"
+                      size={14}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.detailLabel}>Thời gian nhận xe</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {booking.startDatetime?.toLocaleString("en-GB")}
+                  </Text>
                 </View>
-                <View
-                  style={[
-                    styles.statusPill,
-                    {
-                      backgroundColor:
-                        getStatusColor(booking.bookingStatus) + "33",
-                    },
-                  ]}
-                >
-                  <Text
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <AntDesign
+                      name="clock-circle"
+                      size={14}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.detailLabel}>Thời gian trả xe</Text>
+                  </View>
+                  <View
                     style={[
-                      styles.statusPillText,
-                      { color: getStatusColor(booking.bookingStatus) },
+                      styles.statusPill,
+                      {
+                        backgroundColor:
+                          getStatusColor(booking.bookingStatus) + "33",
+                      },
                     ]}
                   >
-                    {booking.endDatetime?.toLocaleString("en-GB")}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.statusPillText,
+                        { color: getStatusColor(booking.bookingStatus) },
+                      ]}
+                    >
+                      {booking.endDatetime?.toLocaleString("en-GB")}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <View style={styles.actionsRow}>
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() =>
-                  navigation.navigate("BookingDetails", {
-                    bookingId: booking.id,
-                  })
-                }
-              >
-                <AntDesign name="file-text" size={16} color="#C9B6FF" />
-                <Text style={styles.secondaryButtonText}>Xem chi tiết</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.startReturnButton}
-                onPress={() =>
-                  navigation.navigate("ScanFace")
-                }
-              >
-                <AntDesign name="login" size={16} color="#000" />
-                <Text style={styles.startReturnText}>Bắt đầu trả xe</Text>
-              </TouchableOpacity>
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={() =>
+                    navigation.navigate("BookingDetails", {
+                      bookingId: booking.id,
+                    })
+                  }
+                >
+                  <AntDesign name="file-text" size={16} color="#C9B6FF" />
+                  <Text style={styles.secondaryButtonText}>Xem chi tiết</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.startReturnButton}
+                  onPress={() => navigation.navigate("ScanFace")}
+                >
+                  <AntDesign name="login" size={16} color="#000" />
+                  <Text style={styles.startReturnText}>Bắt đầu trả xe</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
           ))
         )}
       </View>
@@ -466,10 +499,12 @@ export const RentalScreen: React.FC = () => {
             }}
           >
             <View style={styles.tabButtonContent}>
-              <AntDesign 
-                name="calendar" 
-                size={16} 
-                color={activeTab === "handover" ? "#0B0B0F" : colors.text.secondary} 
+              <AntDesign
+                name="calendar"
+                size={16}
+                color={
+                  activeTab === "handover" ? "#0B0B0F" : colors.text.secondary
+                }
               />
               <Text
                 style={[
@@ -480,8 +515,18 @@ export const RentalScreen: React.FC = () => {
                 Lịch giao xe
               </Text>
               {handoverSchedule && handoverSchedule.length > 0 && (
-                <View style={[styles.tabBadge, activeTab === "handover" && styles.tabBadgeActive]}>
-                  <Text style={[styles.tabBadgeText, activeTab === "handover" && styles.tabBadgeTextActive]}>
+                <View
+                  style={[
+                    styles.tabBadge,
+                    activeTab === "handover" && styles.tabBadgeActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabBadgeText,
+                      activeTab === "handover" && styles.tabBadgeTextActive,
+                    ]}
+                  >
                     {handoverSchedule.length}
                   </Text>
                 </View>
@@ -498,10 +543,12 @@ export const RentalScreen: React.FC = () => {
             }}
           >
             <View style={styles.tabButtonContent}>
-              <AntDesign 
-                name="car" 
-                size={16} 
-                color={activeTab === "rented" ? "#0B0B0F" : colors.text.secondary} 
+              <AntDesign
+                name="car"
+                size={16}
+                color={
+                  activeTab === "rented" ? "#0B0B0F" : colors.text.secondary
+                }
               />
               <Text
                 style={[
