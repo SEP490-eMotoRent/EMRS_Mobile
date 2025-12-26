@@ -15,11 +15,11 @@ export const FilterTags: React.FC<FilterTagsProps> = ({ tags, activeTagId, onTag
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.container}
         >
-            <FilterTag
-                label="All"
+            {/* <FilterTag
+                label="Tất cả"
                 isActive={activeTagId === null}
                 onPress={() => onTagPress(null)}
-            />
+            /> */}
             {tags.map((tag) => (
                 <FilterTag
                     key={tag.id}
@@ -37,10 +37,10 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
         paddingHorizontal: 16,
-        paddingTop: 0,        // no top padding
-        paddingBottom: 0,     // no bottom padding
-        gap: 8,               // keep horizontal spacing between tags
-        alignItems: "flex-start", // align to top (no vertical centering)
-        backgroundColor: "#000",  // match screen background
+        paddingTop: 0,
+        paddingBottom: 0,
+        gap: 8,
+        alignItems: "flex-start",
+        backgroundColor: "#000",
     },
 });

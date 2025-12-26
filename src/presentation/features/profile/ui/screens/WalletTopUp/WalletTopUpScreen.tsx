@@ -92,33 +92,33 @@ export const WalletTopUpScreen: React.FC = () => {
                     expiresAt,
                 });
             } else {
-                // ==================== ZALOPAY FLOW WITH LOGGING ====================
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🚀 [ZALOPAY WALLET] STARTING ZALOPAY FLOW');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('📊 Amount:', parsedAmount);
-                console.log('⏰ Timestamp:', new Date().toISOString());
+                // ==================== ZALOPAY FLOW ====================
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('🚀 [ZALOPAY WALLET] STARTING ZALOPAY FLOW');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('📊 Amount:', parsedAmount);
+                // console.log('⏰ Timestamp:', new Date().toISOString());
                 
-                console.log('🔄 [ZALOPAY WALLET] Calling backend API...');
+                // console.log('🔄 [ZALOPAY WALLET] Calling backend API...');
                 const result = await createTopUpZaloPayRequest(parsedAmount);
                 
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('📥 [ZALOPAY WALLET] BACKEND RESPONSE:');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('Full Response:', JSON.stringify(result, null, 2));
-                console.log('Transaction ID:', result.transactionId);
-                console.log('Amount:', result.amount);
-                console.log('Status:', result.status);
-                console.log('Transaction Code:', result.transactionCode);
-                console.log('Created At:', result.createdAt);
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🔗 ZALOPAY URL:', result.zaloPayUrl);
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('📥 [ZALOPAY WALLET] BACKEND RESPONSE:');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('Full Response:', JSON.stringify(result, null, 2));
+                // console.log('Transaction ID:', result.transactionId);
+                // console.log('Amount:', result.amount);
+                // console.log('Status:', result.status);
+                // console.log('Transaction Code:', result.transactionCode);
+                // console.log('Created At:', result.createdAt);
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('🔗 ZALOPAY URL:', result.zaloPayUrl);
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 
                 // ⚠️ CRITICAL VALIDATION
                 if (!result.zaloPayUrl) {
-                    console.error('❌ [ZALOPAY WALLET] ERROR: zaloPayUrl is NULL/UNDEFINED!');
-                    console.error('Full result object:', result);
+                    // console.error('❌ [ZALOPAY WALLET] ERROR: zaloPayUrl is NULL/UNDEFINED!');
+                    // console.error('Full result object:', result);
                     Alert.alert(
                         'Lỗi Backend',
                         'Backend không trả về ZaloPay URL.\n\n' +
@@ -129,13 +129,13 @@ export const WalletTopUpScreen: React.FC = () => {
                 }
                 
                 if (result.zaloPayUrl === 'https://payment-complete/') {
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('❌ [ZALOPAY WALLET] BACKEND RETURNED MOCK URL!');
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('This is a BACKEND BUG!');
-                    console.error('ZaloPayService is returning mock URL instead of real ZaloPay URL');
-                    console.error('Backend must call real ZaloPay API and return valid URL');
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.error('❌ [ZALOPAY WALLET] BACKEND RETURNED MOCK URL!');
+                    // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.error('This is a BACKEND BUG!');
+                    // console.error('ZaloPayService is returning mock URL instead of real ZaloPay URL');
+                    // console.error('Backend must call real ZaloPay API and return valid URL');
+                    // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     Alert.alert(
                         'Lỗi Backend - Mock URL',
                         '🔴 Backend trả về URL GIẢ: "https://payment-complete/"\n\n' +
@@ -147,9 +147,9 @@ export const WalletTopUpScreen: React.FC = () => {
                 }
                 
                 if (!result.zaloPayUrl.startsWith('http')) {
-                    console.error('❌ [ZALOPAY WALLET] ERROR: Invalid URL format!');
-                    console.error('URL received:', result.zaloPayUrl);
-                    console.error('URL must start with http:// or https://');
+                    // console.error('❌ [ZALOPAY WALLET] ERROR: Invalid URL format!');
+                    // console.error('URL received:', result.zaloPayUrl);
+                    // console.error('URL must start with http:// or https://');
                     Alert.alert(
                         'Lỗi Backend - Invalid URL',
                         'URL không hợp lệ: ' + result.zaloPayUrl + '\n\n' +
@@ -158,8 +158,8 @@ export const WalletTopUpScreen: React.FC = () => {
                     return;
                 }
                 
-                console.log('✅ [ZALOPAY WALLET] URL validation passed');
-                console.log('📦 [ZALOPAY WALLET] Saving context to AsyncStorage...');
+                // console.log('✅ [ZALOPAY WALLET] URL validation passed');
+                // console.log('📦 [ZALOPAY WALLET] Saving context to AsyncStorage...');
 
                 const context = {
                     transactionId: result.transactionId,
@@ -167,20 +167,20 @@ export const WalletTopUpScreen: React.FC = () => {
                     transactionCode: result.transactionCode,
                 };
                 
-                console.log('Context data:', JSON.stringify(context, null, 2));
+                // console.log('Context data:', JSON.stringify(context, null, 2));
                 
                 await AsyncStorage.setItem(
                     `zalopay_wallet_context_${result.transactionId}`,
                     JSON.stringify(context)
                 );
                 
-                console.log('✅ [ZALOPAY WALLET] Context saved successfully');
-                console.log('🧭 [ZALOPAY WALLET] Navigating to WalletZaloPayResult...');
-                console.log('Navigation params:', {
-                    transactionId: result.transactionId,
-                    amount: parsedAmount,
-                    zaloPayUrl: result.zaloPayUrl,
-                });
+                // console.log('✅ [ZALOPAY WALLET] Context saved successfully');
+                // console.log('🧭 [ZALOPAY WALLET] Navigating to WalletZaloPayResult...');
+                // console.log('Navigation params:', {
+                //     transactionId: result.transactionId,
+                //     amount: parsedAmount,
+                //     zaloPayUrl: result.zaloPayUrl,
+                // });
 
                 navigation.navigate('WalletZaloPayResult', {
                     transactionId: result.transactionId,
@@ -188,17 +188,17 @@ export const WalletTopUpScreen: React.FC = () => {
                     zaloPayUrl: result.zaloPayUrl,
                 });
                 
-                console.log('✅ [ZALOPAY WALLET] Navigation dispatched');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('✅ [ZALOPAY WALLET] Navigation dispatched');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             }
         } catch (err: any) {
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.error('❌ [ZALOPAY WALLET] EXCEPTION CAUGHT');
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.error('Error object:', err);
-            console.error('Error message:', err.message);
-            console.error('Error stack:', err.stack);
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.error('❌ [ZALOPAY WALLET] EXCEPTION CAUGHT');
+            // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.error('Error object:', err);
+            // console.error('Error message:', err.message);
+            // console.error('Error stack:', err.stack);
+            // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             Alert.alert('Lỗi', err.message || 'Không thể tạo yêu cầu nạp tiền');
         }
     };

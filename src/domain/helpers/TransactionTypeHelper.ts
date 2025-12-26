@@ -1,14 +1,14 @@
 export class TransactionTypeHelper {
     private static readonly TRANSACTION_TYPE_MAP: Record<string, string> = {
         // Booking transactions
-        'BookingDeposit': 'Đặt Cọc',
-        'BookingRefund': 'Hoàn Tiền Đặt Cọc',
-        'BookingAdditionalPayment': 'Thanh Toán Thêm',
+        'BookingDeposit': 'Đặt Xe',
+        'BookingRefund': 'Hoàn Tiền Đặt Xe',
+        'BookingAdditionalPayment': 'Thanh Toán Phụ Phí',
         'BookingReturnRefund': 'Hoàn Tiền Trả Xe',
         
         // Wallet transactions
-        'WalletTopUp': 'Nạp Tiền',
-        'WalletWithdraw': 'Rút Tiền',
+        'WalletTopUp': 'Nạp Tiền Vào Ví',
+        'WalletWithdraw': 'Rút Tiền Khỏi Ví',
         
         // Insurance Claim transactions
         'InsuranceClaimPayment': 'Thanh Toán Bảo Hiểm',

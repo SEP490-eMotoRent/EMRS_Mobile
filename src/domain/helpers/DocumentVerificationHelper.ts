@@ -16,26 +16,26 @@ export class DocumentVerificationHelper {
         const citizenDoc = documents.find(doc => doc.documentType === 'Citizen');
         
         if (!citizenDoc) {
-        return {
-            label: 'Xác thực CCCD',
-            status: 'needed'
-        };
+            return {
+                label: 'Căn Cước Công Dân',
+                status: 'needed'
+            };
         }
 
         const expiryDate = new Date(citizenDoc.expiryDate);
         const now = new Date();
 
         if (expiryDate < now) {
-        return {
-            label: 'Xác thực CCCD',
-            status: 'expired'
-        };
+            return {
+                label: 'Căn Cước Công Dân',
+                status: 'expired'
+            };
         }
 
         return {
-        label: 'Xác thực CCCD',
-        status: 'verified',
-        validUntil: expiryDate.getFullYear().toString()
+            label: 'Căn Cước Công Dân',
+            status: 'verified',
+            validUntil: expiryDate.getFullYear().toString()
         };
     }
 
@@ -44,7 +44,7 @@ export class DocumentVerificationHelper {
      */
     static getDriverLicenseVerification(documents: DocumentResponse[]): VerificationInfo {
         const licenseDoc = documents.find(doc => 
-            doc.documentType === 'Driving' ||  // ✅ ADD THIS!
+            doc.documentType === 'Driving' ||
             doc.documentType === 'DriverLicense' || 
             doc.documentType === 'License'
         );
@@ -81,8 +81,8 @@ export class DocumentVerificationHelper {
         const isVerified = phone && phone.trim().length > 0;
         
         return {
-        label: 'Số điện thoại',
-        status: isVerified ? 'verified' : 'needed'
+            label: 'Số điện thoại',
+            status: isVerified ? 'verified' : 'needed'
         };
     }
 
@@ -94,9 +94,9 @@ export class DocumentVerificationHelper {
         phone: string
     ): VerificationInfo[] {
         return [
-        this.getIdVerification(documents),
-        this.getDriverLicenseVerification(documents),
-        this.getPhoneVerification(phone)
+            this.getIdVerification(documents),
+            this.getDriverLicenseVerification(documents),
+            this.getPhoneVerification(phone)
         ];
     }
 
@@ -106,7 +106,7 @@ export class DocumentVerificationHelper {
     static isFullyVerified(documents: DocumentResponse[], phone: string): boolean {
         const verifications = this.getAllVerifications(documents, phone);
         return verifications.every(v => 
-        v.status === 'verified' || v.status === 'valid'
+            v.status === 'verified' || v.status === 'valid'
         );
     }
 }
