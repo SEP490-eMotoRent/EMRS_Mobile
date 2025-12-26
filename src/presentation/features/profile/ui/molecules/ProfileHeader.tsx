@@ -1,10 +1,11 @@
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
+// ✅ FIX: Change from @expo/vector-icons to react-native-vector-icons
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { DocumentResponse, MembershipResponse } from "../../../../../data/models/account/renter/RenterResponse";
 import { Badge } from "../atoms/Badge";
+import { MembershipTier } from "../atoms/Badges/MembershipBadge";
 import { Icon } from "../atoms/Icons/Icons";
-import { MembershipBadge, MembershipTier } from "../atoms/Badges/MembershipBadge";
 
 interface ProfileHeaderProps {
   name: string;
@@ -76,6 +77,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   name="medal" 
                   size={11} 
                   color={getMembershipColor()} 
+                  solid
                 />
                 <Text style={[styles.badgeText, { color: getMembershipColor() }]}>
                   {membershipTier}
@@ -87,7 +89,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               style={styles.editButton}
               activeOpacity={0.7}
             >
-              <Icon name="edit" />
+              <Icon name="edit" size={18} color="#999" />
             </TouchableOpacity>
           </View>
 
@@ -103,23 +105,22 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </View>
       )}
       {/* Stats Row - Improved design */}
-      <View style={styles.statsRow}>
+      {/* <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <FontAwesome5 name="car" size={16} color="#fff" style={styles.statIcon} />
+          <FontAwesome5 name="car" size={16} color="#fff" style={styles.statIcon} solid />
           <Text style={styles.statText}>{trips} chuyến</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <FontAwesome5 name="map-marker-alt" size={16} color="#fff" style={styles.statIcon} />
-          {/* ✅ Now with proper spacing */}
+          <FontAwesome5 name="map-marker-alt" size={16} color="#fff" style={styles.statIcon} solid />
           <Text style={styles.statText}>{formattedDistance}</Text>
         </View>
-      </View>
+      </View> */}
 
       {/* Membership Discount Banner - Improved design */}
       {discountPercentage > 0 && (
         <View style={styles.discountBanner}>
-          <FontAwesome5 name="gift" size={16} color="#22c55e" style={styles.discountIcon} />
+          <FontAwesome5 name="gift" size={16} color="#22c55e" style={styles.discountIcon} solid />
           <Text style={styles.discountText}>
             Giảm {discountPercentage}% mỗi lần đặt xe
           </Text>

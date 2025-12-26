@@ -7,7 +7,7 @@ import { Transaction } from '../temp';
 interface TransactionListProps {
     transactions: Transaction[];
     onViewAll: () => void;
-    limit?: number; // NEW: Optional limit for how many to show
+    limit?: number;
 }
 
 export const TransactionList: React.FC<TransactionListProps> = ({ 

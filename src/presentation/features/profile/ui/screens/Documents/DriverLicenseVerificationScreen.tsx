@@ -378,7 +378,8 @@ export const DriverLicenseVerificationScreen = ({ navigation }: any) => {
                         autoFill={licenseAutoFill}
                         onAutoFillChange={setLicenseAutoFill}
                         onUpload={handleLicenseUpload}
-                        onUpdate={handleLicenseDocumentSubmit}
+                        // ✅ CRITICAL: Only show update button when NO document exists (creating new)
+                        {...(!licenseDoc && { onUpdate: handleLicenseDocumentSubmit })}
                         existingDocument={licenseDoc}
                         onViewDocument={(imageUrl) => {
                             // Image viewer handled by DocumentSection

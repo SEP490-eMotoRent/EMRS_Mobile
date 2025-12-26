@@ -26,17 +26,20 @@ import { CancelWithdrawalRequestUseCase } from '../../../domain/usecases/withdra
 
 // Use Cases - Transaction
 import { GetMyTransactionsUseCase } from '../../../domain/usecases/transaction/GetMyTransactionsUseCase';
+import { CreateTopUpZaloPayRequestUseCase } from '../../../domain/usecases/wallet/topUp/CreateTopUpZaloPayRequestUseCase';
+import { ProcessZaloPayCallbackUseCase } from '../../../domain/usecases/wallet/topUp/ProcessZaloPayCallbackUseCase';
 
 /**
  * WalletModule - Complete Wallet Domain
  * 
  * Handles all wallet-related functionality:
  * - Wallet creation and balance management
- * - Top-up requests (VNPay integration)
+ * - Top-up requests (VNPay & ZaloPay integration)
  * - Withdrawal requests
  * - Transaction history
  * 
  * Migrated from InjectionContainer - 100% complete
+ * Updated with ZaloPay support
  */
 export class WalletModule {
     // ==================== REPOSITORIES ====================
@@ -50,7 +53,9 @@ export class WalletModule {
 
     // ==================== USE CASES - TOP-UP ====================
     private _createTopUpRequestUseCase: CreateTopUpRequestUseCase | null = null;
+    private _createTopUpZaloPayRequestUseCase: CreateTopUpZaloPayRequestUseCase | null = null;
     private _processTopUpCallbackUseCase: ProcessTopUpCallbackUseCase | null = null;
+    private _processZaloPayCallbackUseCase: ProcessZaloPayCallbackUseCase | null = null;
 
     // ==================== USE CASES - WITHDRAWAL ====================
     private _createWithdrawalRequestUseCase: CreateWithdrawalRequestUseCase | null = null;
@@ -71,24 +76,24 @@ export class WalletModule {
 
     get repository(): WalletRepositoryImpl {
         if (!this._walletRepository) {
-        const remoteDataSource = new WalletRemoteDataSourceImpl(this.axiosClient);
-        this._walletRepository = new WalletRepositoryImpl(remoteDataSource);
+            const remoteDataSource = new WalletRemoteDataSourceImpl(this.axiosClient);
+            this._walletRepository = new WalletRepositoryImpl(remoteDataSource);
         }
         return this._walletRepository;
     }
 
     get withdrawalRepository(): WithdrawalRequestRepositoryImpl {
         if (!this._withdrawalRequestRepository) {
-        const remoteDataSource = new WithdrawalRequestRemoteDataSourceImpl(this.axiosClient);
-        this._withdrawalRequestRepository = new WithdrawalRequestRepositoryImpl(remoteDataSource);
+            const remoteDataSource = new WithdrawalRequestRemoteDataSourceImpl(this.axiosClient);
+            this._withdrawalRequestRepository = new WithdrawalRequestRepositoryImpl(remoteDataSource);
         }
         return this._withdrawalRequestRepository;
     }
 
     get transactionRepository(): TransactionRepositoryImpl {
         if (!this._transactionRepository) {
-        const remoteDataSource = new TransactionRemoteDataSourceImpl(this.axiosClient);
-        this._transactionRepository = new TransactionRepositoryImpl(remoteDataSource);
+            const remoteDataSource = new TransactionRemoteDataSourceImpl(this.axiosClient);
+            this._transactionRepository = new TransactionRepositoryImpl(remoteDataSource);
         }
         return this._transactionRepository;
     }
@@ -101,19 +106,23 @@ export class WalletModule {
      */
     get balance() {
         return {
-        get: this.getWalletBalanceUseCase,
-        create: this.createWalletUseCase,
+            get: this.getWalletBalanceUseCase,
+            create: this.createWalletUseCase,
         };
     }
 
     /**
      * Top-up use cases
-     * Usage: container.wallet.topUp.create.execute()
+     * Usage: 
+     * - VNPay: container.wallet.topUp.create.execute()
+     * - ZaloPay: container.wallet.topUp.createZaloPay.execute()
      */
     get topUp() {
         return {
-        create: this.createTopUpRequestUseCase,
-        processCallback: this.processTopUpCallbackUseCase,
+            create: this.createTopUpRequestUseCase,
+            createZaloPay: this.createTopUpZaloPayRequestUseCase,
+            processCallback: this.processTopUpCallbackUseCase,
+            processZaloPayCallback: this.processZaloPayCallbackUseCase,
         };
     }
 
@@ -123,10 +132,10 @@ export class WalletModule {
      */
     get withdrawal() {
         return {
-        create: this.createWithdrawalRequestUseCase,
-        getMy: this.getMyWithdrawalRequestsUseCase,
-        getDetail: this.getWithdrawalRequestDetailUseCase,
-        cancel: this.cancelWithdrawalRequestUseCase,
+            create: this.createWithdrawalRequestUseCase,
+            getMy: this.getMyWithdrawalRequestsUseCase,
+            getDetail: this.getWithdrawalRequestDetailUseCase,
+            cancel: this.cancelWithdrawalRequestUseCase,
         };
     }
 
@@ -136,7 +145,7 @@ export class WalletModule {
      */
     get transactions() {
         return {
-        getMy: this.getMyTransactionsUseCase,
+            getMy: this.getMyTransactionsUseCase,
         };
     }
 
@@ -144,14 +153,14 @@ export class WalletModule {
 
     private get createWalletUseCase(): CreateWalletUseCase {
         if (!this._createWalletUseCase) {
-        this._createWalletUseCase = new CreateWalletUseCase(this.repository);
+            this._createWalletUseCase = new CreateWalletUseCase(this.repository);
         }
         return this._createWalletUseCase;
     }
 
     private get getWalletBalanceUseCase(): GetWalletBalanceUseCase {
         if (!this._getWalletBalanceUseCase) {
-        this._getWalletBalanceUseCase = new GetWalletBalanceUseCase(this.repository);
+            this._getWalletBalanceUseCase = new GetWalletBalanceUseCase(this.repository);
         }
         return this._getWalletBalanceUseCase;
     }
@@ -160,44 +169,58 @@ export class WalletModule {
 
     private get createTopUpRequestUseCase(): CreateTopUpRequestUseCase {
         if (!this._createTopUpRequestUseCase) {
-        this._createTopUpRequestUseCase = new CreateTopUpRequestUseCase(this.repository);
+            this._createTopUpRequestUseCase = new CreateTopUpRequestUseCase(this.repository);
         }
         return this._createTopUpRequestUseCase;
     }
 
+    private get createTopUpZaloPayRequestUseCase(): CreateTopUpZaloPayRequestUseCase {
+        if (!this._createTopUpZaloPayRequestUseCase) {
+            this._createTopUpZaloPayRequestUseCase = new CreateTopUpZaloPayRequestUseCase(this.repository);
+        }
+        return this._createTopUpZaloPayRequestUseCase;
+    }
+
     private get processTopUpCallbackUseCase(): ProcessTopUpCallbackUseCase {
         if (!this._processTopUpCallbackUseCase) {
-        this._processTopUpCallbackUseCase = new ProcessTopUpCallbackUseCase(this.repository);
+            this._processTopUpCallbackUseCase = new ProcessTopUpCallbackUseCase(this.repository);
         }
         return this._processTopUpCallbackUseCase;
+    }
+
+    private get processZaloPayCallbackUseCase(): ProcessZaloPayCallbackUseCase {
+        if (!this._processZaloPayCallbackUseCase) {
+            this._processZaloPayCallbackUseCase = new ProcessZaloPayCallbackUseCase(this.repository);
+        }
+        return this._processZaloPayCallbackUseCase;
     }
 
     // ==================== PRIVATE GETTERS - WITHDRAWAL ====================
 
     private get createWithdrawalRequestUseCase(): CreateWithdrawalRequestUseCase {
         if (!this._createWithdrawalRequestUseCase) {
-        this._createWithdrawalRequestUseCase = new CreateWithdrawalRequestUseCase(this.withdrawalRepository);
+            this._createWithdrawalRequestUseCase = new CreateWithdrawalRequestUseCase(this.withdrawalRepository);
         }
         return this._createWithdrawalRequestUseCase;
     }
 
     private get getMyWithdrawalRequestsUseCase(): GetMyWithdrawalRequestsUseCase {
         if (!this._getMyWithdrawalRequestsUseCase) {
-        this._getMyWithdrawalRequestsUseCase = new GetMyWithdrawalRequestsUseCase(this.withdrawalRepository);
+            this._getMyWithdrawalRequestsUseCase = new GetMyWithdrawalRequestsUseCase(this.withdrawalRepository);
         }
         return this._getMyWithdrawalRequestsUseCase;
     }
 
     private get getWithdrawalRequestDetailUseCase(): GetWithdrawalRequestDetailUseCase {
         if (!this._getWithdrawalRequestDetailUseCase) {
-        this._getWithdrawalRequestDetailUseCase = new GetWithdrawalRequestDetailUseCase(this.withdrawalRepository);
+            this._getWithdrawalRequestDetailUseCase = new GetWithdrawalRequestDetailUseCase(this.withdrawalRepository);
         }
         return this._getWithdrawalRequestDetailUseCase;
     }
 
     private get cancelWithdrawalRequestUseCase(): CancelWithdrawalRequestUseCase {
         if (!this._cancelWithdrawalRequestUseCase) {
-        this._cancelWithdrawalRequestUseCase = new CancelWithdrawalRequestUseCase(this.withdrawalRepository);
+            this._cancelWithdrawalRequestUseCase = new CancelWithdrawalRequestUseCase(this.withdrawalRepository);
         }
         return this._cancelWithdrawalRequestUseCase;
     }
@@ -206,7 +229,7 @@ export class WalletModule {
 
     private get getMyTransactionsUseCase(): GetMyTransactionsUseCase {
         if (!this._getMyTransactionsUseCase) {
-        this._getMyTransactionsUseCase = new GetMyTransactionsUseCase(this.transactionRepository);
+            this._getMyTransactionsUseCase = new GetMyTransactionsUseCase(this.transactionRepository);
         }
         return this._getMyTransactionsUseCase;
     }

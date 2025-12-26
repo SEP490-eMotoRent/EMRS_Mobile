@@ -3,7 +3,13 @@ import { Transaction } from '../../../../../domain/entities/financial/Transactio
 import { container } from '../../../../../core/di/ServiceContainer';
 import { useAppSelector } from '../../../authentication/store/hooks';
 
-export const useTransactions = () => {
+interface UseTransactionsOptions {
+    includeFailedTransactions?: boolean;
+}
+
+export const useTransactions = (options: UseTransactionsOptions = {}) => {
+    const { includeFailedTransactions = false } = options;
+    
     const token = useAppSelector((state) => state.auth.token);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -22,11 +28,17 @@ export const useTransactions = () => {
 
             const result = await container.wallet.transactions.getMy.execute();
 
-            // Filter out failed transactions - only show successful ones
-            const successfulTransactions = result.filter(t => t.status === 'Success');
-
-            // console.log('✅ Transactions fetched:', successfulTransactions.length);
-            setTransactions(successfulTransactions);
+            // ✅ Filter based on options
+            const validTransactions = includeFailedTransactions 
+                ? result
+                : result.filter(t => t.status === 'Success' || t.status === 'Pending');
+            
+            // ✅ Sort ONLY by date (newest first) - no status priority
+            validTransactions.sort((a, b) => {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+            
+            setTransactions(validTransactions);
         } catch (err: any) {
             console.error('❌ Failed to fetch transactions:', err);
             setError(err.message || 'Failed to load transactions');
@@ -38,7 +50,7 @@ export const useTransactions = () => {
 
     useEffect(() => {
         fetchTransactions();
-    }, [token]);
+    }, [token, includeFailedTransactions]);
 
     const refresh = async () => {
         await fetchTransactions();

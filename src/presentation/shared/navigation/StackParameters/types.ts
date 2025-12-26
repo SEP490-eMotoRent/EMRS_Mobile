@@ -478,6 +478,11 @@ export type ProfileStackParamList = {
     amount: number;
     expiresAt: string;
   };
+  WalletZaloPayResult: {
+    transactionId: string;
+    amount: number;
+    zaloPayUrl: string;
+  };
   WalletTopUpResult: {
     success: boolean;
     amount: number;

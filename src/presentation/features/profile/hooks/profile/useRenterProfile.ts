@@ -1,5 +1,3 @@
-// src/features/account/profile/hooks/useRenterProfile.ts
-
 import { useEffect, useState } from 'react';
 import { 
     RenterResponse, 
