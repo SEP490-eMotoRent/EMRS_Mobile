@@ -236,7 +236,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
   const handleDateOfBirthPress = () => setShowDatePicker(true);
   const handleDateOfBirthConfirm = (date: string) => setDateOfBirth(date);
 
-  // ✅ NEW: Phone number validation and formatting
+  // ✅ Phone number validation and formatting
   const handlePhoneNumberChange = (text: string) => {
     // Remove all non-digit characters
     const digitsOnly = text.replace(/\D/g, '');
@@ -273,25 +273,16 @@ export const EditProfileScreen = ({ navigation }: any) => {
     /* your code */
   };
 
-  // ✅ UPDATED: Enhanced validation
+  // ✅ UPDATED: Validation WITHOUT email check
   const validateProfile = (): { valid: boolean; message?: string } => {
     // Check full name
     if (!fullName.trim()) {
       return { valid: false, message: "Vui lòng nhập họ tên" };
     }
 
-    // Check email
-    if (!email.trim()) {
-      return { valid: false, message: "Vui lòng nhập email" };
-    }
+    // ❌ REMOVED EMAIL VALIDATION - Email cannot be changed
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return { valid: false, message: "Email không hợp lệ" };
-    }
-
-    // ✅ Check phone number (9-10 digits, flexible for both formats)
-    // Accepts: 0779123456 (10 digits) or 779123456 (9 digits without leading 0)
+    // ✅ Check phone number (9-10 digits)
     if (!phoneNumber || (phoneNumber.length !== 9 && phoneNumber.length !== 10)) {
       return { 
         valid: false, 
@@ -312,62 +303,63 @@ export const EditProfileScreen = ({ navigation }: any) => {
     return { valid: true };
   };
 
-  // ✅ UPDATED: Save with validation
+  // ✅ UPDATED: Save WITH email (but user cannot edit it in UI)
   const handleSave = async () => {
-    try {
-      // Validate before saving
-      const validation = validateProfile();
-      if (!validation.valid) {
-        Alert.alert("Lỗi", validation.message || "Thông tin không hợp lệ");
-        return;
-      }
+      try {
+        // Validate before saving
+        const validation = validateProfile();
+        if (!validation.valid) {
+          Alert.alert("Lỗi", validation.message || "Thông tin không hợp lệ");
+          return;
+        }
 
-      let formattedDate = dateOfBirth;
-      if (dateOfBirth?.includes("/")) {
-        const [d, m, y] = dateOfBirth.split("/");
-        formattedDate = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-      }
+        let formattedDate = dateOfBirth;
+        if (dateOfBirth?.includes("/")) {
+          const [d, m, y] = dateOfBirth.split("/");
+          formattedDate = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+        }
 
-      const request: any = {
-        Email: email.trim(),
-        phone: phoneNumber.startsWith("0")
-          ? `+84${phoneNumber.substring(1)}`
-          : `+84${phoneNumber}`,
-        Address: address.trim(),
-        DateOfBirth: formattedDate || undefined,
-        Fullname: fullName.trim() || undefined,
-      };
-
-      // SEND MediaId IF WE HAVE ONE (this prevents duplicates!)
-      if (avatarMediaId) {
-        request.MediaId = avatarMediaId;
-      }
-
-      // Only send file if user picked a new image
-      if (profileImageUri && !profileImageUri.startsWith("http")) {
-        request.ProfilePicture = {
-          uri: profileImageUri,
-          name: "profile.jpg",
-          type: "image/jpeg",
+        const request: any = {
+          // ✅ SEND EMAIL (unchanged from backend's perspective)
+          Email: email.trim(),
+          phone: phoneNumber.startsWith("0")
+            ? `+84${phoneNumber.substring(1)}`
+            : `+84${phoneNumber}`,
+          Address: address.trim(),
+          DateOfBirth: formattedDate || undefined,
+          Fullname: fullName.trim() || undefined,
         };
+
+        // SEND MediaId IF WE HAVE ONE (this prevents duplicates!)
+        if (avatarMediaId) {
+          request.MediaId = avatarMediaId;
+        }
+
+        // Only send file if user picked a new image
+        if (profileImageUri && !profileImageUri.startsWith("http")) {
+          request.ProfilePicture = {
+            uri: profileImageUri,
+            name: "profile.jpg",
+            type: "image/jpeg",
+          };
+        }
+
+        const response = await update(request);
+
+        // Backend now returns ProfilePicture (string URL)
+        if (response.ProfilePicture) {
+          setProfileImageUri(response.ProfilePicture);
+        }
+
+        await refresh();
+        Alert.alert("Thành công", "Cập nhật hồ sơ thành công!");
+        navigation.goBack();
+      } catch (err: any) {
+        console.error("Update failed:", err);
+        Alert.alert("Lỗi", err.message || "Không thể cập nhật hồ sơ");
       }
-
-      const response = await update(request);
-
-      // Backend now returns ProfilePicture (string URL)
-      if (response.ProfilePicture) {
-        setProfileImageUri(response.ProfilePicture);
-      }
-
-      await refresh();
-      Alert.alert("Thành công", "Cập nhật hồ sơ thành công!");
-      navigation.goBack();
-    } catch (err: any) {
-      console.error("Update failed:", err);
-      Alert.alert("Lỗi", err.message || "Không thể cập nhật hồ sơ");
-    }
   };
-
+  
   if (fetchLoading) {
     return (
       <View style={styles.loadingContainer}>

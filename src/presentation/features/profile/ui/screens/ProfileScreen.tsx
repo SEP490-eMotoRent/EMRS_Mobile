@@ -45,7 +45,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     membership,
   } = useRenterProfile();
   const { 
-    balance, 
+    balance,
+    availableBalance,
+    reservedBalance,
     loading: walletLoading, 
     error: walletError, 
     refresh: refreshWallet 
@@ -60,7 +62,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   // 🔄 Auto-refresh wallet & transactions when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      // console.log('📱 ProfileScreen focused - refreshing wallet & transactions');
       refreshWallet();
       refreshTransactions();
     }, [])
@@ -167,7 +168,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       }),
       // Apply negative sign for debits (money OUT)
       amount: TransactionTypeHelper.isCredit(t.transactionType) ? t.amount : -t.amount,
-      status: t.status as 'Success' | 'Pending' | 'Failed', // ✅ Pass status through
+      status: t.status as 'Success' | 'Pending' | 'Failed',
   }));
 
   // ✅ Check if transactions exist (hide section if empty)
@@ -202,6 +203,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
         <WalletCard
           balance={balance}
+          availableBalance={availableBalance}
+          reservedBalance={reservedBalance}
           loading={walletLoading}
           error={walletError}
           onAddFunds={handleAddFunds}

@@ -9,9 +9,10 @@ import {
 } from "react-native";
 import { FormInput } from "../../atoms/FormInput";
 
-
 interface WithdrawalFormProps {
     currentBalance: number;
+    availableBalance: number;
+    reservedBalance: number;
     onSubmit: (data: {
         amount: number;
         bankName: string;
@@ -23,6 +24,8 @@ interface WithdrawalFormProps {
 
 export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
     currentBalance,
+    availableBalance,
+    reservedBalance,
     onSubmit,
     loading = false,
 }) => {
@@ -32,6 +35,8 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
     const [accountName, setAccountName] = useState("");
 
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const hasReserved = reservedBalance > 0;
 
     // Format number with thousand separators (dots)
     const formatNumber = (value: string): string => {
@@ -61,8 +66,11 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
 
         if (!amount || rawAmount <= 0) {
             newErrors.amount = "Vui lòng nhập số tiền hợp lệ";
-        } else if (rawAmount > currentBalance) {
-            newErrors.amount = "Số dư không đủ";
+        } else if (rawAmount > availableBalance) {
+            // ✅ VALIDATE AGAINST AVAILABLE BALANCE
+            newErrors.amount = hasReserved 
+                ? `Số dư khả dụng không đủ (${availableBalance.toLocaleString('vi-VN')}đ)`
+                : "Số dư không đủ";
         }
 
         if (!bankName.trim()) {
@@ -109,10 +117,30 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
     return (
         <View style={styles.container}>
             <View style={styles.balanceCard}>
-                <Text style={styles.balanceLabel}>Số dư hiện tại</Text>
-                <Text style={styles.balanceAmount}>
-                    {currentBalance.toLocaleString('vi-VN')}đ
+                <Text style={styles.balanceLabel}>
+                    {hasReserved ? "Số dư khả dụng" : "Số dư hiện tại"}
                 </Text>
+                <Text style={styles.balanceAmount}>
+                    {availableBalance.toLocaleString('vi-VN')}đ
+                </Text>
+
+                {/* ✅ SHOW RESERVED INFO */}
+                {hasReserved && (
+                    <View style={styles.reservedInfo}>
+                        <View style={styles.reservedRow}>
+                            <Text style={styles.reservedLabel}>Tổng số dư</Text>
+                            <Text style={styles.reservedValue}>
+                                {currentBalance.toLocaleString('vi-VN')}đ
+                            </Text>
+                        </View>
+                        <View style={styles.reservedRow}>
+                            <Text style={styles.reservedLabel}>Đang chờ rút</Text>
+                            <Text style={styles.reservedValueHighlight}>
+                                -{reservedBalance.toLocaleString('vi-VN')}đ
+                            </Text>
+                        </View>
+                    </View>
+                )}
             </View>
 
             <FormInput
@@ -192,6 +220,34 @@ const styles = StyleSheet.create({
         color: "#c4b5fd",
         fontSize: 32,
         fontWeight: "700",
+    },
+    // Reserved balance info
+    reservedInfo: {
+        width: "100%",
+        marginTop: 16,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: "#333",
+        gap: 8,
+    },
+    reservedRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    reservedLabel: {
+        color: "#999",
+        fontSize: 13,
+    },
+    reservedValue: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "500",
+    },
+    reservedValueHighlight: {
+        color: "#fbbf24",
+        fontSize: 14,
+        fontWeight: "600",
     },
     submitButton: {
         backgroundColor: "#c4b5fd",

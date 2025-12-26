@@ -47,13 +47,13 @@ export const WalletZaloPayResultScreen: React.FC = () => {
 
     const { transactionId, amount, zaloPayUrl } = route.params;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🎬 [WALLET ZALOPAY RESULT] SCREEN MOUNTED');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📋 Transaction ID:', transactionId);
-    console.log('💰 Amount:', amount);
-    console.log('🔗 ZaloPay URL:', zaloPayUrl);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    // console.log('🎬 [WALLET ZALOPAY RESULT] SCREEN MOUNTED');
+    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    // console.log('📋 Transaction ID:', transactionId);
+    // console.log('💰 Amount:', amount);
+    // console.log('🔗 ZaloPay URL:', zaloPayUrl);
+    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // ==================== MANUAL POLLING ====================
     useEffect(() => {
@@ -61,44 +61,44 @@ export const WalletZaloPayResultScreen: React.FC = () => {
             return;
         }
 
-        console.log('🔄 [WALLET ZALOPAY POLLING] Starting polling...');
-        console.log('Polling interval: 3 seconds');
-        console.log('Timeout: 15 minutes');
+        // console.log('🔄 [WALLET ZALOPAY POLLING] Starting polling...');
+        // console.log('Polling interval: 3 seconds');
+        // console.log('Timeout: 15 minutes');
 
         const pollTransactionStatus = async () => {
             try {
-                console.log('📡 [POLLING] Fetching transactions...');
-                const startTime = Date.now();
+                // console.log('📡 [POLLING] Fetching transactions...');
+                // const startTime = Date.now();
                 
                 const transactions = await container.wallet.transactions.getMy.execute();
-                const endTime = Date.now();
+                // const endTime = Date.now();
                 
-                console.log(`📊 [POLLING] API call took ${endTime - startTime}ms`);
-                console.log(`📊 [POLLING] Found ${transactions.length} total transactions`);
+                // console.log(`📊 [POLLING] API call took ${endTime - startTime}ms`);
+                // console.log(`📊 [POLLING] Found ${transactions.length} total transactions`);
                 
                 const transaction = transactions.find(t => t.id === transactionId);
 
                 if (!transaction) {
-                    console.warn('⚠️ [POLLING] Transaction not found!');
-                    console.warn('Looking for ID:', transactionId);
-                    console.warn('Available IDs:', transactions.slice(0, 5).map(t => t.id));
+                    // console.warn('⚠️ [POLLING] Transaction not found!');
+                    // console.warn('Looking for ID:', transactionId);
+                    // console.warn('Available IDs:', transactions.slice(0, 5).map(t => t.id));
                     return;
                 }
 
-                console.log('✅ [POLLING] Transaction found:');
-                console.log('  - ID:', transaction.id);
-                console.log('  - Status:', transaction.status);
-                console.log('  - Amount:', transaction.amount);
-                console.log('  - Type:', transaction.transactionType);
-                console.log('  - Created:', transaction.createdAt);
+                // console.log('✅ [POLLING] Transaction found:');
+                // console.log('  - ID:', transaction.id);
+                // console.log('  - Status:', transaction.status);
+                // console.log('  - Amount:', transaction.amount);
+                // console.log('  - Type:', transaction.transactionType);
+                // console.log('  - Created:', transaction.createdAt);
 
                 if (transaction.status === 'Success' && !hasHandled.current) {
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('✅ [POLLING] PAYMENT SUCCESSFUL!');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('Wallet balance should be updated by backend');
-                    console.log('Stopping polling and showing success screen');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.log('✅ [POLLING] PAYMENT SUCCESSFUL!');
+                    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.log('Wallet balance should be updated by backend');
+                    // console.log('Stopping polling and showing success screen');
+                    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     
                     hasHandled.current = true;
                     setPollingEnabled(false);
@@ -106,11 +106,11 @@ export const WalletZaloPayResultScreen: React.FC = () => {
                     clearIntervals();
                     setTimeout(() => navigateToSuccess(), 2000);
                 } else if ((transaction.status === 'Failed' || transaction.status === 'Cancelled') && !hasHandled.current) {
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('❌ [POLLING] Payment failed/cancelled');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('Transaction status:', transaction.status);
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.log('❌ [POLLING] Payment failed/cancelled');
+                    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.log('Transaction status:', transaction.status);
+                    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     
                     hasHandled.current = true;
                     setPollingEnabled(false);
@@ -118,16 +118,16 @@ export const WalletZaloPayResultScreen: React.FC = () => {
                     setErrorMessage('Giao dịch thất bại');
                     clearIntervals();
                 } else {
-                    console.log('⏳ [POLLING] Still pending, will check again in 3s');
+                    // console.log('⏳ [POLLING] Still pending, will check again in 3s');
                 }
             } catch (error: any) {
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('❌ [POLLING] ERROR!');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('Error:', error);
-                console.error('Message:', error.message);
-                console.error('Stack:', error.stack);
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('❌ [POLLING] ERROR!');
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('Error:', error);
+                // console.error('Message:', error.message);
+                // console.error('Stack:', error.stack);
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 // Don't stop polling on error, just log it
             }
         };
@@ -141,12 +141,12 @@ export const WalletZaloPayResultScreen: React.FC = () => {
         // Set up timeout
         const timeoutId = setTimeout(() => {
             if (!hasHandled.current) {
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('⏱️ [POLLING] TIMEOUT REACHED (15 min)');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('Payment was not completed within 15 minutes');
-                console.log('If user completed payment, backend may not have updated transaction');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('⏱️ [POLLING] TIMEOUT REACHED (15 min)');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('Payment was not completed within 15 minutes');
+                // console.log('If user completed payment, backend may not have updated transaction');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 
                 hasHandled.current = true;
                 setPollingEnabled(false);
@@ -160,7 +160,7 @@ export const WalletZaloPayResultScreen: React.FC = () => {
         timerRef.current = setInterval(() => setElapsedTime(prev => prev + 1), 1000);
 
         return () => {
-            console.log('🧹 [POLLING] Cleaning up polling timers');
+            // console.log('🧹 [POLLING] Cleaning up polling timers');
             clearIntervals();
             clearTimeout(timeoutId);
         };
@@ -179,22 +179,22 @@ export const WalletZaloPayResultScreen: React.FC = () => {
 
     // ==================== HANDLE ZALOPAY CALLBACK ====================
     const handleZaloPayCallback = async (url: string) => {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📞 [DEEP LINK CALLBACK] RECEIVED!');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🔗 Raw URL:', url);
-        console.log('⏰ Timestamp:', new Date().toISOString());
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('📞 [DEEP LINK CALLBACK] RECEIVED!');
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('🔗 Raw URL:', url);
+        // console.log('⏰ Timestamp:', new Date().toISOString());
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         if (hasHandled.current) {
-            console.log('⏭️ [CALLBACK] Already handled, skipping');
-            console.log('hasHandled.current:', hasHandled.current);
+            // console.log('⏭️ [CALLBACK] Already handled, skipping');
+            // console.log('hasHandled.current:', hasHandled.current);
             return;
         }
 
         if (isProcessing) {
-            console.log('⏭️ [CALLBACK] Already processing, skipping');
-            console.log('isProcessing:', isProcessing);
+            // console.log('⏭️ [CALLBACK] Already processing, skipping');
+            // console.log('isProcessing:', isProcessing);
             return;
         }
 
@@ -203,30 +203,30 @@ export const WalletZaloPayResultScreen: React.FC = () => {
         setPollingEnabled(false);
         clearIntervals();
 
-        console.log('🔒 [CALLBACK] Locked for processing');
+        // console.log('🔒 [CALLBACK] Locked for processing');
 
         try {
             const params = parseCallbackUrl(url);
             
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📋 [CALLBACK] PARSED PARAMETERS:');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('  appid:', params.appid || 'MISSING');
-            console.log('  apptransid:', params.apptransid || 'MISSING');
-            console.log('  pmcid:', params.pmcid || 'MISSING');
-            console.log('  bankcode:', params.bankcode || 'MISSING');
-            console.log('  amount:', params.amount || 'MISSING');
-            console.log('  discountamount:', params.discountamount || 'MISSING');
-            console.log('  status:', params.status || 'MISSING');
-            console.log('  checksum:', params.checksum ? params.checksum.substring(0, 20) + '...' : 'MISSING');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('📋 [CALLBACK] PARSED PARAMETERS:');
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('  appid:', params.appid || 'MISSING');
+            // console.log('  apptransid:', params.apptransid || 'MISSING');
+            // console.log('  pmcid:', params.pmcid || 'MISSING');
+            // console.log('  bankcode:', params.bankcode || 'MISSING');
+            // console.log('  amount:', params.amount || 'MISSING');
+            // console.log('  discountamount:', params.discountamount || 'MISSING');
+            // console.log('  status:', params.status || 'MISSING');
+            // console.log('  checksum:', params.checksum ? params.checksum.substring(0, 20) + '...' : 'MISSING');
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
             if (!params.status) {
-                console.error('❌ [CALLBACK] CRITICAL: Missing status parameter!');
+                // console.error('❌ [CALLBACK] CRITICAL: Missing status parameter!');
                 throw new Error('Missing status in callback');
             }
 
-            console.log('📦 [CALLBACK] Building backend request...');
+            // console.log('📦 [CALLBACK] Building backend request...');
 
             const callbackRequest = {
                 AppId: parseInt(params.appid || '0'),
@@ -240,116 +240,116 @@ export const WalletZaloPayResultScreen: React.FC = () => {
                 Message: params.status === '1' ? 'Success' : 'Failed'
             };
 
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📤 [CALLBACK] SENDING TO BACKEND:');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('Backend endpoint: PUT /api/Wallet/zalopay/callback');
-            console.log('Request body:');
-            console.log(JSON.stringify({
-                ...callbackRequest,
-                Checksum: callbackRequest.Checksum.substring(0, 20) + '...'
-            }, null, 2));
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('📤 [CALLBACK] SENDING TO BACKEND:');
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('Backend endpoint: PUT /api/Wallet/zalopay/callback');
+            // console.log('Request body:');
+            // console.log(JSON.stringify({
+            //     ...callbackRequest,
+            //     Checksum: callbackRequest.Checksum.substring(0, 20) + '...'
+            // }, null, 2));
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-            console.log('🔄 [CALLBACK] Calling backend processZaloPayCallback...');
-            const startTime = Date.now();
+            // console.log('🔄 [CALLBACK] Calling backend processZaloPayCallback...');
+            // const startTime = Date.now();
             
             const result = await container.wallet.topUp.processZaloPayCallback.execute(callbackRequest);
             
-            const endTime = Date.now();
-            console.log(`⏱️ [CALLBACK] Backend call took ${endTime - startTime}ms`);
+            // const endTime = Date.now();
+            // console.log(`⏱️ [CALLBACK] Backend call took ${endTime - startTime}ms`);
             
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📥 [CALLBACK] BACKEND RESPONSE:');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('Result:', result);
-            console.log('Type:', typeof result);
-            console.log('Is true?', result === true);
-            console.log('Is false?', result === false);
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('📥 [CALLBACK] BACKEND RESPONSE:');
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.log('Result:', result);
+            // console.log('Type:', typeof result);
+            // console.log('Is true?', result === true);
+            // console.log('Is false?', result === false);
+            // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
             if (result === true) {
-                console.log('✅ [CALLBACK] Backend confirmed payment success!');
-                console.log('Wallet balance has been updated');
-                console.log('Navigating to success screen in 2 seconds...');
+                // console.log('✅ [CALLBACK] Backend confirmed payment success!');
+                // console.log('Wallet balance has been updated');
+                // console.log('Navigating to success screen in 2 seconds...');
                 
                 setPaymentStatus('success');
                 setTimeout(() => navigateToSuccess(), 2000);
             } else {
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('❌ [CALLBACK] Backend returned FALSE!');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('Backend ProcessTopUpCallBackZaloPay failed');
-                console.error('Possible causes:');
-                console.error('  1. Checksum validation failed');
-                console.error('  2. Transaction already processed');
-                console.error('  3. Wallet not found');
-                console.error('  4. Database error');
-                console.error('Check backend logs for details');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('❌ [CALLBACK] Backend returned FALSE!');
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('Backend ProcessTopUpCallBackZaloPay failed');
+                // console.error('Possible causes:');
+                // console.error('  1. Checksum validation failed');
+                // console.error('  2. Transaction already processed');
+                // console.error('  3. Wallet not found');
+                // console.error('  4. Database error');
+                // console.error('Check backend logs for details');
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 
                 setPaymentStatus('failed');
                 setErrorMessage('Backend không xác nhận thanh toán');
             }
 
         } catch (error: any) {
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.error('❌ [CALLBACK] EXCEPTION!');
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.error('Error:', error);
-            console.error('Message:', error.message);
-            console.error('Stack:', error.stack);
-            console.error('Name:', error.name);
-            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.error('❌ [CALLBACK] EXCEPTION!');
+            // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            // console.error('Error:', error);
+            // console.error('Message:', error.message);
+            // console.error('Stack:', error.stack);
+            // console.error('Name:', error.name);
+            // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
             setPaymentStatus('failed');
             setErrorMessage(error.message || 'Lỗi xử lý callback');
         } finally {
             setIsProcessing(false);
-            console.log('🔓 [CALLBACK] Processing complete, unlocked');
+            // console.log('🔓 [CALLBACK] Processing complete, unlocked');
         }
     };
 
     const parseCallbackUrl = (url: string): ZaloPayCallbackData => {
-        console.log('🔍 [PARSE] Parsing callback URL...');
+        // console.log('🔍 [PARSE] Parsing callback URL...');
         try {
             const urlObj = new URL(url);
             const params: ZaloPayCallbackData = {};
             
-            console.log('URL scheme:', urlObj.protocol);
-            console.log('URL host:', urlObj.host);
-            console.log('URL pathname:', urlObj.pathname);
+            // console.log('URL scheme:', urlObj.protocol);
+            // console.log('URL host:', urlObj.host);
+            // console.log('URL pathname:', urlObj.pathname);
             
-            let paramCount = 0;
+            // let paramCount = 0;
             urlObj.searchParams.forEach((value, key) => {
                 params[key.toLowerCase() as keyof ZaloPayCallbackData] = value;
-                paramCount++;
+                // paramCount++;
             });
             
-            console.log(`✅ [PARSE] Parsed ${paramCount} parameters`);
+            // console.log(`✅ [PARSE] Parsed ${paramCount} parameters`);
             return params;
         } catch (error) {
-            console.error('❌ [PARSE] Failed to parse URL!');
-            console.error('Error:', error);
-            console.error('URL:', url);
+            // console.error('❌ [PARSE] Failed to parse URL!');
+            // console.error('Error:', error);
+            // console.error('URL:', url);
             return {};
         }
     };
 
     const navigateToSuccess = async () => {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🧭 [NAVIGATION] Navigating to success screen...');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('🧭 [NAVIGATION] Navigating to success screen...');
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         
         try {
             await AsyncStorage.removeItem(`zalopay_wallet_context_${transactionId}`);
-            console.log('✅ [NAVIGATION] Cleared AsyncStorage context');
+            // console.log('✅ [NAVIGATION] Cleared AsyncStorage context');
         } catch (error) {
-            console.error('⚠️ [NAVIGATION] Failed to clear context:', error);
+            // console.error('⚠️ [NAVIGATION] Failed to clear context:', error);
         }
         
-        console.log('Target screen: WalletTopUpResult');
-        console.log('Params:', { success: true, amount, transactionId });
+        // console.log('Target screen: WalletTopUpResult');
+        // console.log('Params:', { success: true, amount, transactionId });
         
         navigation.replace('WalletTopUpResult', {
             success: true,
@@ -357,82 +357,82 @@ export const WalletZaloPayResultScreen: React.FC = () => {
             transactionId,
         });
         
-        console.log('✅ [NAVIGATION] Navigation dispatched');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('✅ [NAVIGATION] Navigation dispatched');
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     };
 
     // ==================== DEEP LINK LISTENER ====================
     useEffect(() => {
-        console.log('🔗 [DEEP LINK] Setting up listeners...');
+        // console.log('🔗 [DEEP LINK] Setting up listeners...');
 
         const handleDeepLinkEvent = (event: { url: string }) => {
-            console.log('🔔 [DEEP LINK EVENT] Received event:', event.url);
+            // console.log('🔔 [DEEP LINK EVENT] Received event:', event.url);
             
             if (event.url.startsWith('emrs://payment/callback')) {
-                console.log('✅ [DEEP LINK EVENT] This is a payment callback');
+                // console.log('✅ [DEEP LINK EVENT] This is a payment callback');
                 handleZaloPayCallback(event.url);
             } else {
-                console.log('⏭️ [DEEP LINK EVENT] Not a payment callback, ignoring');
+                // console.log('⏭️ [DEEP LINK EVENT] Not a payment callback, ignoring');
             }
         };
 
         const subscription = Linking.addEventListener('url', handleDeepLinkEvent);
-        console.log('✅ [DEEP LINK] Event listener registered');
+        // console.log('✅ [DEEP LINK] Event listener registered');
 
         Linking.getInitialURL().then(url => {
             if (url) {
-                console.log('🔗 [DEEP LINK] Initial URL found:', url);
+                // console.log('🔗 [DEEP LINK] Initial URL found:', url);
                 if (url.startsWith('emrs://payment/callback')) {
-                    console.log('✅ [DEEP LINK] Initial URL is payment callback');
+                    // console.log('✅ [DEEP LINK] Initial URL is payment callback');
                     handleZaloPayCallback(url);
                 } else {
-                    console.log('⏭️ [DEEP LINK] Initial URL is not payment callback');
+                    // console.log('⏭️ [DEEP LINK] Initial URL is not payment callback');
                 }
             } else {
-                console.log('🔗 [DEEP LINK] No initial URL');
+                // console.log('🔗 [DEEP LINK] No initial URL');
             }
         });
 
         return () => {
-            console.log('🔗 [DEEP LINK] Removing listener');
+            // console.log('🔗 [DEEP LINK] Removing listener');
             subscription.remove();
         };
     }, [isProcessing]);
 
     // ==================== APP STATE LISTENER ====================
     useEffect(() => {
-        console.log('📱 [APP STATE] Setting up listener...');
+        // console.log('📱 [APP STATE] Setting up listener...');
         const subscription = AppState.addEventListener('change', handleAppStateChange);
         return () => {
-            console.log('📱 [APP STATE] Removing listener');
+            // console.log('📱 [APP STATE] Removing listener');
             subscription.remove();
         };
     }, []);
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📱 [APP STATE] State changed');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Previous state:', appState.current);
-        console.log('New state:', nextAppState);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('📱 [APP STATE] State changed');
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // console.log('Previous state:', appState.current);
+        // console.log('New state:', nextAppState);
+        // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         
         if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-            console.log('📱 [APP STATE] App became active! User returned from ZaloPay');
-            console.log('📱 [APP STATE] Checking for deep link...');
+            // console.log('📱 [APP STATE] App became active! User returned from ZaloPay');
+            // console.log('📱 [APP STATE] Checking for deep link...');
             
             Linking.getInitialURL().then(url => {
                 if (url) {
-                    console.log('🔗 [APP STATE] Found URL:', url);
+                    // console.log('🔗 [APP STATE] Found URL:', url);
                     if (url.startsWith('emrs://payment/callback')) {
-                        console.log('✅ [APP STATE] URL is payment callback, processing...');
+                        // console.log('✅ [APP STATE] URL is payment callback, processing...');
                         handleZaloPayCallback(url);
                     } else {
-                        console.log('⏭️ [APP STATE] URL is not payment callback');
+                        // console.log('⏭️ [APP STATE] URL is not payment callback');
                     }
                 } else {
-                    console.log('🔗 [APP STATE] No URL found');
-                    console.log('User may have closed ZaloPay without completing payment');
+                    // console.log('🔗 [APP STATE] No URL found');
+                    // console.log('User may have closed ZaloPay without completing payment');
                 }
             });
         }
@@ -444,34 +444,34 @@ export const WalletZaloPayResultScreen: React.FC = () => {
     useEffect(() => {
         const openZaloPayApp = async () => {
             try {
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('📱 [ZALOPAY APP] Preparing to open ZaloPay...');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('URL:', zaloPayUrl);
-                console.log('Waiting 500ms before opening...');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('📱 [ZALOPAY APP] Preparing to open ZaloPay...');
+                // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.log('URL:', zaloPayUrl);
+                // console.log('Waiting 500ms before opening...');
                 
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                console.log('🔍 [ZALOPAY APP] Checking if URL can be opened...');
+                // console.log('🔍 [ZALOPAY APP] Checking if URL can be opened...');
                 const canOpen = await Linking.canOpenURL(zaloPayUrl);
-                console.log('Can open URL?', canOpen);
+                // console.log('Can open URL?', canOpen);
                 
                 if (canOpen) {
-                    console.log('📱 [ZALOPAY APP] Opening URL now...');
+                    // console.log('📱 [ZALOPAY APP] Opening URL now...');
                     await Linking.openURL(zaloPayUrl);
-                    console.log('✅ [ZALOPAY APP] ZaloPay opened successfully');
-                    console.log('User should now see ZaloPay payment screen');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.log('✅ [ZALOPAY APP] ZaloPay opened successfully');
+                    // console.log('User should now see ZaloPay payment screen');
+                    // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } else {
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('❌ [ZALOPAY APP] Cannot open URL!');
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.error('Possible causes:');
-                    console.error('  1. ZaloPay app not installed');
-                    console.error('  2. Invalid URL format');
-                    console.error('  3. URL scheme not supported');
-                    console.error('URL:', zaloPayUrl);
-                    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.error('❌ [ZALOPAY APP] Cannot open URL!');
+                    // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    // console.error('Possible causes:');
+                    // console.error('  1. ZaloPay app not installed');
+                    // console.error('  2. Invalid URL format');
+                    // console.error('  3. URL scheme not supported');
+                    // console.error('URL:', zaloPayUrl);
+                    // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     
                     Alert.alert(
                         'Lỗi',
@@ -480,11 +480,11 @@ export const WalletZaloPayResultScreen: React.FC = () => {
                     );
                 }
             } catch (error) {
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('❌ [ZALOPAY APP] Failed to open!');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('Error:', error);
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('❌ [ZALOPAY APP] Failed to open!');
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // console.error('Error:', error);
+                // console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             }
         };
         
@@ -492,15 +492,15 @@ export const WalletZaloPayResultScreen: React.FC = () => {
     }, [zaloPayUrl]);
 
     const handleRetry = () => {
-        console.log('🔄 [USER ACTION] Retry button pressed');
-        console.log('Clearing intervals and going back...');
+        // console.log('🔄 [USER ACTION] Retry button pressed');
+        // console.log('Clearing intervals and going back...');
         clearIntervals();
         navigation.goBack();
     };
 
     const handleGoHome = () => {
-        console.log('🏠 [USER ACTION] Go home button pressed');
-        console.log('Clearing intervals and navigating to top...');
+        // console.log('🏠 [USER ACTION] Go home button pressed');
+        // console.log('Clearing intervals and navigating to top...');
         clearIntervals();
         navigation.popToTop();
     };

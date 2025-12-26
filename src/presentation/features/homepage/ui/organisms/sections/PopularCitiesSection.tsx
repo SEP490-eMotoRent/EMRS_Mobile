@@ -24,14 +24,14 @@ export const PopularCitiesSection: React.FC<PopularCitiesSectionProps> = ({ onCi
             name: 'Tân Bình',
             image: 'https://cdn.xanhsm.com/2025/05/93e733a3-tan-binh-o-dau-4.jpg',
         },
-        {
-            name: 'Bình Thạnh',
-            image: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=200&h=200&fit=crop',
-        },
-        {
-            name: 'Quận 7',
-            image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&h=200&fit=crop',
-        },
+        // {
+        //     name: 'Bình Thạnh',
+        //     image: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=200&h=200&fit=crop',
+        // },
+        // {
+        //     name: 'Quận 7',
+        //     image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&h=200&fit=crop',
+        // },
         {
             name: 'Quận 2',
             image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRczEwzo3kIdtFr716BpdpglZn4_Tczrdqfhw&s',

@@ -12,7 +12,6 @@ import { useGetCurrentRenterBookings } from "../../hooks/useGetCurrentRenterBook
 import { useRefundRate } from "../../hooks/useRefundRate";
 import { FilterTags } from "../molecules/FilterTags";
 import { SearchBar } from "../molecules/SearchBar";
-import { TabButton } from "../molecules/TabButton";
 import { CurrentTrip, CurrentTripCard } from "../orgamisms/CurrentTripCard";
 import { PastTrip, PastTripCard } from "../orgamisms/PastTripCard";
 import { TripsHeader } from "../orgamisms/TripsHeader";
@@ -20,9 +19,8 @@ import { FeedbackModal } from "../orgamisms/modal/FeedbackModal";
 
 type TripsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'Trip'>;
 
-type TabType = "current" | "past";
-type CurrentFilterType = "pending" | "booked" | "renting" | null;
-type PastFilterType = "pending" | "booked" | "renting" | "returned" | "completed" | "cancelled" | null;
+// ✅ UNIFIED FILTER TYPE - covers all statuses + "all"
+type FilterType = "all" | "pending" | "booked" | "renting" | "returned" | "completed" | "cancelled";
 type SortOption = "newest" | "oldest" | "price_high" | "price_low";
 
 type DisplayTrip = CurrentTrip | PastTrip;
@@ -36,11 +34,9 @@ interface FeedbackModalState {
 
 export const TripsScreen: React.FC = () => {
     const navigation = useNavigation<TripsScreenNavigationProp>();
-    const [activeTab, setActiveTab] = useState<TabType>("current");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOption, setSortOption] = useState<SortOption>("newest");
-    const [currentFilter, setCurrentFilter] = useState<CurrentFilterType>(null);
-    const [pastFilter, setPastFilter] = useState<PastFilterType>(null);
+    const [activeFilter, setActiveFilter] = useState<FilterType>("all"); // ✅ Default to "all"
 
     const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
         visible: false,
@@ -102,7 +98,6 @@ export const TripsScreen: React.FC = () => {
     const mapBookingToCurrentTrip = (booking: Booking): CurrentTrip | null => {
         const bookingStatus = booking.bookingStatus?.toUpperCase();
         
-        // ✅ Only pending, booked, renting go to Current tab
         if (!["PENDING", "BOOKED", "ACTIVE", "RENTING"].includes(bookingStatus)) {
             return null;
         }
@@ -229,7 +224,6 @@ export const TripsScreen: React.FC = () => {
             return "";
         };
 
-        // ✅ Updated status map with "returned"
         const statusMap: Record<string, "pending" | "booked" | "renting" | "returned" | "completed" | "cancelled"> = {
             "PENDING": "pending",
             "BOOKED": "booked",
@@ -245,7 +239,6 @@ export const TripsScreen: React.FC = () => {
         const feedback = bookingFeedbacks[booking.id];
         const hasFeedback = feedback !== null && feedback !== undefined;
 
-        // ✅ Calculate refund amount if cancelled
         let calculatedRefundAmount = 0;
         if (bookingStatus === "CANCELLED") {
             calculatedRefundAmount = booking.depositAmount || 0;
@@ -289,18 +282,16 @@ export const TripsScreen: React.FC = () => {
         };
     };
 
-    // Unified list for History tab (all bookings)
+    // ✅ UNIFIED LIST - All bookings in one place
     const allDisplayTrips = React.useMemo<DisplayTrip[]>(() => {
         return bookings
             .map((booking): DisplayTrip | null => {
                 const statusUpper = booking.bookingStatus?.toUpperCase() || "";
                 
-                // ✅ Current trips (pending, booked, renting)
                 if (["PENDING", "BOOKED", "ACTIVE", "RENTING"].includes(statusUpper)) {
                     return mapBookingToCurrentTrip(booking);
                 }
                 
-                // ✅ Past trips (returned, completed, cancelled)
                 if (["RETURNED", "COMPLETED", "CANCELLED"].includes(statusUpper)) {
                     return mapBookingToPastTrip(booking, refundRate);
                 }
@@ -309,14 +300,6 @@ export const TripsScreen: React.FC = () => {
             })
             .filter((t): t is DisplayTrip => t !== null);
     }, [bookings, bookingFeedbacks, refundRate]);
-
-    // Only active trips for Current tab
-    const currentTrips = React.useMemo<CurrentTrip[]>(() => 
-        bookings
-            .map(mapBookingToCurrentTrip)
-            .filter((t): t is CurrentTrip => t !== null),
-        [bookings]
-    );
 
     const sortTrips = <T extends DisplayTrip>(trips: T[]): T[] => {
         const sorted = [...trips];
@@ -407,22 +390,13 @@ export const TripsScreen: React.FC = () => {
         });
     };
 
-    const filteredCurrentTrips = sortTrips(
-        currentTrips.filter(trip => {
-            if (currentFilter && trip.status !== currentFilter) return false;
-            
-            if (searchQuery) {
-                return trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       trip.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
-            }
-            return true;
-        })
-    );
-
-    const filteredAllTrips = sortTrips(
+    // ✅ UNIFIED FILTER LOGIC
+    const filteredTrips = sortTrips(
         allDisplayTrips.filter(trip => {
-            if (pastFilter && trip.status !== pastFilter) return false;
+            // Filter by status (if not "all")
+            if (activeFilter !== "all" && trip.status !== activeFilter) return false;
+            
+            // Filter by search query
             if (searchQuery) {
                 const nameMatch = trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase());
                 const categoryMatch = trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -433,13 +407,9 @@ export const TripsScreen: React.FC = () => {
         })
     );
 
-    const currentFilterTags = [
-        { id: "pending", label: "Chờ thanh toán", count: currentTrips.filter(t => t.status === "pending").length },
-        { id: "booked", label: "Đã đặt xe", count: currentTrips.filter(t => t.status === "booked").length },
-        { id: "renting", label: "Đang thuê", count: currentTrips.filter(t => t.status === "renting").length },
-    ];
-
-    const pastFilterTags = [
+    // ✅ FILTER TAGS WITH "ALL" OPTION
+    const filterTags = [
+        { id: "all", label: "Tất cả", count: allDisplayTrips.length },
         { id: "pending", label: "Chờ thanh toán", count: allDisplayTrips.filter(t => t.status === "pending").length },
         { id: "booked", label: "Đã đặt xe", count: allDisplayTrips.filter(t => t.status === "booked").length },
         { id: "renting", label: "Đang thuê", count: allDisplayTrips.filter(t => t.status === "renting").length },
@@ -448,7 +418,7 @@ export const TripsScreen: React.FC = () => {
         { id: "cancelled", label: "Đã hủy", count: allDisplayTrips.filter(t => t.status === "cancelled").length },
     ];
 
-    const renderCurrentTrips = () => {
+    const renderTrips = () => {
         if (loading) {
             return (
                 <View style={styles.centerContainer}>
@@ -471,57 +441,7 @@ export const TripsScreen: React.FC = () => {
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={refetch} />
                 }
-                data={filteredCurrentTrips}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                    <CurrentTripCard
-                        trip={item}
-                        onViewDetails={() => handleViewDetails(item.id)}
-                        onReportIssue={item.status === "renting" ? () => handleReportIssue(item.id, item) : undefined}
-                        onCancel={(item.status === "pending" || item.status === "booked") ? () => handleCancelBooking(item.id) : undefined}
-                        onPayNow={item.status === "pending" ? () => handlePayNow(item.id) : undefined}
-                        onExtend={item.status === "renting" ? () => handleExtend(item.id) : undefined}
-                    />
-                )}
-                contentContainerStyle={styles.listContentCurrent}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyIcon}>◐</Text>
-                        <Text style={styles.emptyTitle}>Chưa có chuyến đi nào được đặt...</Text>
-                        <Text style={styles.emptyMessage}>
-                            Đã đến lúc lên kế hoạch cho một chuyến đi thật thú vị rồi, chọn ngay một chiếc xe nhé!
-                        </Text>
-                    </View>
-                }
-            />
-        );
-    };
-
-    const renderHistoryTrips = () => {
-        if (loading) {
-            return (
-                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color="#7C4DFF" />
-                    <Text style={styles.loadingText}>Đang tải lịch sử...</Text>
-                </View>
-            );
-        }
-
-        if (error) {
-            return (
-                <View style={styles.centerContainer}>
-                    <Text style={styles.errorText}>Lỗi: {error}</Text>
-                </View>
-            );
-        }
-
-        return (
-            <FlatList
-                refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={refetch} />
-                }
-                data={filteredAllTrips}
+                data={filteredTrips}
                 keyExtractor={item => item.id}
                 renderItem={({ item, index }) => {
                     const isCurrent = item.status === "pending" || item.status === "booked" || item.status === "renting";
@@ -560,10 +480,10 @@ export const TripsScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
-                        <Text style={styles.emptyIcon}>◑</Text>
-                        <Text style={styles.emptyTitle}>Chưa có lịch sử chuyến đi</Text>
+                        <Text style={styles.emptyIcon}>◐</Text>
+                        <Text style={styles.emptyTitle}>Chưa có chuyến đi nào</Text>
                         <Text style={styles.emptyMessage}>
-                            Tất cả các chuyến đi sẽ xuất hiện ở đây
+                            Tất cả các chuyến đi của bạn sẽ xuất hiện ở đây
                         </Text>
                     </View>
                 }
@@ -585,37 +505,17 @@ export const TripsScreen: React.FC = () => {
                 onSortChange={setSortOption}
             />
 
-            <View style={styles.tabsContainer}>
-                <TabButton
-                    label="Đang diễn ra"
-                    isActive={activeTab === "current"}
-                    onPress={() => setActiveTab("current")}
+            {/* ✅ NO MORE TABS - Just filter tags */}
+            <View style={styles.filterContainer}>
+                <FilterTags
+                    tags={filterTags}
+                    activeTagId={activeFilter}
+                    onTagPress={(id) => setActiveFilter(id as FilterType)}
                 />
-                <TabButton
-                    label="Lịch sử"
-                    isActive={activeTab === "past"}
-                    onPress={() => setActiveTab("past")}
-                />
-            </View>
-
-            <View style={{ marginTop: 8, marginBottom: 8 }}>
-                {activeTab === "current" ? (
-                    <FilterTags
-                        tags={currentFilterTags}
-                        activeTagId={currentFilter}
-                        onTagPress={(id) => setCurrentFilter(id as CurrentFilterType)}
-                    />
-                ) : (
-                    <FilterTags
-                        tags={pastFilterTags}
-                        activeTagId={pastFilter}
-                        onTagPress={(id) => setPastFilter(id as PastFilterType)}
-                    />
-                )}
             </View>
 
             <View style={styles.contentContainer}>
-                {activeTab === "current" ? renderCurrentTrips() : renderHistoryTrips()}
+                {renderTrips()}
             </View>
 
             {cancelling && (
@@ -645,22 +545,15 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#000",
     },
-    tabsContainer: {
-        flexDirection: "row",
-        backgroundColor: "#000",
-        borderBottomWidth: 1,
-        borderBottomColor: "#1a1a1a",
+    filterContainer: {
+        marginTop: 8,
+        marginBottom: 8,
     },
     contentContainer: {
         flex: 1,
         paddingTop: 0,
     },
     listContent: {
-        paddingHorizontal: 16,
-        paddingTop: 0,
-        paddingBottom: 20,
-    },
-    listContentCurrent: {
         paddingHorizontal: 16,
         paddingTop: 0,
         paddingBottom: 20,

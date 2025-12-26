@@ -40,6 +40,7 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
                 placeholder="Điền Họ Tên"
             />
 
+            {/* ✅ EMAIL IS NOW LOCKED - Cannot be edited */}
             <TextInput
                 label="Email*"
                 value={email}
@@ -47,6 +48,8 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
                 placeholder="Điền Địa Chỉ Email"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={false}
+                style={styles.disabledInput}
             />
 
             <TextInput
@@ -79,5 +82,10 @@ const styles = StyleSheet.create({
     },
     title: {
         marginBottom: 16,
+    },
+    // ✅ Style for disabled email field
+    disabledInput: {
+        opacity: 0.6,
+        backgroundColor: '#1a1a1a',
     },
 });
