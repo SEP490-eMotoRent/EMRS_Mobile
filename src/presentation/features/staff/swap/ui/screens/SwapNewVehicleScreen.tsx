@@ -18,8 +18,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "../../../../../common/components/organisms/ScreenHeader";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { StaffStackParamList } from "../../../../../shared/navigation/StackParameters/types";
-import { Route, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { vehicleSwapDraftStore, SwapPhotoMap } from "../store/vehicleSwapDraftStore";
+import {
+  Route,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
+import {
+  vehicleSwapDraftStore,
+  SwapPhotoMap,
+} from "../store/vehicleSwapDraftStore";
 
 type Nav = StackNavigationProp<StaffStackParamList, "SwapNewVehicle">;
 
@@ -77,12 +85,19 @@ export const SwapNewVehicleScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const draft = vehicleSwapDraftStore.getDraft();
   const { newVehicleOdometerKm, newVehicleBatteryPercentage } = route.params;
-  const [odometer, setOdometer] = useState(newVehicleOdometerKm?.toString() || "");
-  const [battery, setBattery] = useState(newVehicleBatteryPercentage?.toString() || "");
+  const [odometer, setOdometer] = useState(
+    newVehicleOdometerKm?.toString() || ""
+  );
+  const [battery, setBattery] = useState(
+    newVehicleBatteryPercentage?.toString() || ""
+  );
   const [note, setNote] = useState(draft.newVehicle.conditionNote || "");
-  const [photos, setPhotos] = useState<SwapPhotoMap>(draft.newVehicle.photos || {});
-  const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>({});
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [photos, setPhotos] = useState<SwapPhotoMap>(
+    draft.newVehicle.photos || {}
+  );
+  const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>(
+    {}
+  );
   const [errors, setErrors] = useState<{
     photos?: string;
     odometer?: string;
@@ -94,7 +109,6 @@ export const SwapNewVehicleScreen: React.FC = () => {
   const photosShakeAnim = useRef(new Animated.Value(0)).current;
   const odometerShakeAnim = useRef(new Animated.Value(0)).current;
   const batteryShakeAnim = useRef(new Animated.Value(0)).current;
-  const checklistShakeAnim = useRef(new Animated.Value(0)).current;
 
   const ensurePermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
@@ -190,7 +204,10 @@ export const SwapNewVehicleScreen: React.FC = () => {
         newErrors.odometer = "Số km phải là số hợp lệ (≥ 0)";
         isValid = false;
         shakeError(odometerShakeAnim);
-      } else if (newVehicleOdometerKm !== undefined && odometerNum < newVehicleOdometerKm) {
+      } else if (
+        newVehicleOdometerKm !== undefined &&
+        odometerNum < newVehicleOdometerKm
+      ) {
         newErrors.odometer = `Số km phải lớn hơn hoặc bằng số km của xe mới (${newVehicleOdometerKm} km)`;
         isValid = false;
         shakeError(odometerShakeAnim);
@@ -211,17 +228,7 @@ export const SwapNewVehicleScreen: React.FC = () => {
       }
     }
 
-    // Validate checklist
-    const totalChecklist = checklistSections.reduce(
-      (sum, sec) => sum + sec.items.length,
-      0
-    );
-    const completedChecklist = Object.values(checklistItems).filter(Boolean).length;
-    if (completedChecklist < totalChecklist * 0.8) {
-      newErrors.checklist = "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra";
-      isValid = false;
-      shakeError(checklistShakeAnim);
-    }
+    // Checklist is optional, no validation required
 
     setErrors(newErrors);
 
@@ -232,8 +239,6 @@ export const SwapNewVehicleScreen: React.FC = () => {
           scrollViewRef.current?.scrollTo({ y: 0, animated: true });
         } else if (newErrors.odometer || newErrors.battery) {
           scrollViewRef.current?.scrollTo({ y: 300, animated: true });
-        } else if (newErrors.checklist) {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
         }
       }, 100);
     }
@@ -276,29 +281,55 @@ export const SwapNewVehicleScreen: React.FC = () => {
 
   const checklistSections: ChecklistSection[] = [
     {
-      key: "exterior",
-      title: "Ngoại thất",
+      key: "body-paint",
+      title: "Thân xe & Ngoại thất (5 mục)",
       items: [
-        { key: "scratch_dent", label: "Không trầy xước, móp méo" },
-        { key: "paint_ok", label: "Sơn không bong tróc" },
-        { key: "lights_ok", label: "Đèn pha/xi-nhan hoạt động" },
+        { key: "scratches_dents", label: "Không có vết xước hoặc lõm trên thân xe" },
+        { key: "paint_condition", label: "Sơn không bị bong tróc hoặc phai màu" },
+        { key: "mirrors_intact", label: "Gương chiếu hậu nguyên vẹn, không vỡ" },
+        { key: "body_panels_secure", label: "Chắn bùn và vỏ bảo vệ chắc chắn" },
+        { key: "branding_intact", label: "Logo và nhãn hiệu còn nguyên vẹn" },
       ],
     },
     {
-      key: "tires",
-      title: "Lốp & Thắng",
+      key: "battery-power",
+      title: "Pin & Hệ thống điện (5 mục)",
       items: [
-        { key: "tire_ok", label: "Lốp còn gai, không phù" },
-        { key: "brake_ok", label: "Phanh hoạt động bình thường" },
+        { key: "battery_mounted", label: "Pin được lắp chắc chắn, không lỏng" },
+        { key: "charging_port", label: "Cổng sạc sạch sẽ, không bị hư hỏng" },
+        { key: "cables_intact", label: "Dây sạc và cáp điện nguyên vẹn" },
+        { key: "battery_indicator", label: "Hiển thị mức pin hoạt động chính xác" },
+        { key: "battery_lock", label: "Khóa pin hoạt động tốt" },
       ],
     },
     {
-      key: "battery",
-      title: "Pin & Điện",
+      key: "wheels-tires",
+      title: "Bánh xe & Phanh (4 mục)",
       items: [
-        { key: "battery_mount", label: "Pin lắp chắc chắn" },
-        { key: "charging_port", label: "Cổng sạc không hỏng" },
-        { key: "cable_intact", label: "Dây sạc nguyên vẹn" },
+        { key: "tread_ok", label: "Gai lốp còn tốt, không bị mòn quá mức" },
+        { key: "pressure_ok", label: "Áp suất lốp đúng tiêu chuẩn" },
+        { key: "rims_ok", label: "Vành xe không bị cong, không có vết nứt" },
+        { key: "brakes_work", label: "Phanh trước/sau hoạt động bình thường" },
+      ],
+    },
+    {
+      key: "lights-signals",
+      title: "Đèn & Tín hiệu (4 mục)",
+      items: [
+        { key: "headlights", label: "Đèn pha sáng và hoạt động tốt" },
+        { key: "turn_signals", label: "Đèn xi nhan hoạt động đúng" },
+        { key: "taillights", label: "Đèn hậu/phanh hoạt động" },
+        { key: "warning_lights", label: "Đèn báo hiệu cảnh báo hoạt động" },
+      ],
+    },
+    {
+      key: "controls",
+      title: "Điều khiển & Màn hình (4 mục)",
+      items: [
+        { key: "horn_works", label: "Còi xe hoạt động tốt" },
+        { key: "display_works", label: "Màn hình hiển thị hoạt động bình thường" },
+        { key: "throttle_brake", label: "Tay ga và phanh tay hoạt động mượt" },
+        { key: "switches_work", label: "Công tắc và nút điều khiển hoạt động" },
       ],
     },
   ];
@@ -307,15 +338,13 @@ export const SwapNewVehicleScreen: React.FC = () => {
     setChecklistItems((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const toggleSection = (key: string) => {
-    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const totalChecklist = checklistSections.reduce(
     (sum, sec) => sum + sec.items.length,
     0
   );
-  const completedChecklist = Object.values(checklistItems).filter(Boolean).length;
+  const completedChecklist =
+    Object.values(checklistItems).filter(Boolean).length;
 
   // Auto-clear errors when conditions are met
   useEffect(() => {
@@ -325,19 +354,16 @@ export const SwapNewVehicleScreen: React.FC = () => {
     }
   }, [photosCount]);
 
-  useEffect(() => {
-    // Clear checklist error when 80% is completed
-    if (totalChecklist > 0 && completedChecklist >= totalChecklist * 0.8 && errors.checklist) {
-      setErrors((prev) => ({ ...prev, checklist: undefined }));
-    }
-  }, [completedChecklist, totalChecklist]);
 
   useEffect(() => {
     // Xóa odometer error khi số km hợp lệ và >= newVehicleOdometerKm
     if (odometer && errors.odometer) {
       const odometerNum = parseInt(odometer);
       if (!isNaN(odometerNum) && odometerNum >= 0) {
-        if (newVehicleOdometerKm === undefined || odometerNum >= newVehicleOdometerKm) {
+        if (
+          newVehicleOdometerKm === undefined ||
+          odometerNum >= newVehicleOdometerKm
+        ) {
           setErrors((prev) => ({ ...prev, odometer: undefined }));
         }
       }
@@ -347,9 +373,18 @@ export const SwapNewVehicleScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView ref={scrollViewRef} contentContainerStyle={styles.content}>
-        <ScreenHeader title="Xe mới" subtitle="Bước 3/4 · Nhập thông tin xe mới" onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title="Xe mới"
+          subtitle="Bước 3/4 · Nhập thông tin xe mới"
+          onBack={() => navigation.goBack()}
+        />
 
-        <Animated.View style={[styles.photosCard, { transform: [{ translateX: photosShakeAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.photosCard,
+            { transform: [{ translateX: photosShakeAnim }] },
+          ]}
+        >
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
               <View style={styles.cardHeaderIcon}>
@@ -421,7 +456,12 @@ export const SwapNewVehicleScreen: React.FC = () => {
           )}
         </Animated.View>
 
-        <Animated.View style={[styles.card, { transform: [{ translateX: odometerShakeAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.card,
+            { transform: [{ translateX: odometerShakeAnim }] },
+          ]}
+        >
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
               <View style={styles.cardHeaderIconInfo}>
@@ -452,7 +492,9 @@ export const SwapNewVehicleScreen: React.FC = () => {
             </View>
           )}
           <Text style={styles.label}>Mức pin</Text>
-          <Animated.View style={{ transform: [{ translateX: batteryShakeAnim }] }}>
+          <Animated.View
+            style={{ transform: [{ translateX: batteryShakeAnim }] }}
+          >
             <TextInput
               style={[styles.input, errors.battery && styles.inputError]}
               keyboardType="numeric"
@@ -468,7 +510,11 @@ export const SwapNewVehicleScreen: React.FC = () => {
             />
             {errors.battery && (
               <View style={styles.errorContainer}>
-                <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
+                <AntDesign
+                  name="exclamation-circle"
+                  size={14}
+                  color="#FF6B6B"
+                />
                 <Text style={styles.errorText}>{errors.battery}</Text>
               </View>
             )}
@@ -485,57 +531,64 @@ export const SwapNewVehicleScreen: React.FC = () => {
           />
         </Animated.View>
 
-        <Animated.View style={[{ transform: [{ translateX: checklistShakeAnim }] }]} ref={checklistRef} collapsable={false}>
+        <View
+          ref={checklistRef}
+          collapsable={false}
+        >
           <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardHeaderLeft}>
-              <View style={styles.cardHeaderIconInfo}>
-                <AntDesign name="check-square" size={16} color="#C9B6FF" />
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardHeaderLeft}>
+                <View style={styles.cardHeaderIconInfo}>
+                  <AntDesign name="check-square" size={16} color="#C9B6FF" />
+                </View>
+                <Text style={styles.sectionTitle}>Checklist xe mới</Text>
               </View>
-              <Text style={styles.sectionTitle}>Checklist xe mới</Text>
+              <View style={styles.progressBadge}>
+                <Text style={styles.progressText}>
+                  {completedChecklist}/{totalChecklist}
+                </Text>
+              </View>
             </View>
-            <View style={styles.progressBadge}>
-              <Text style={styles.progressText}>
-                {completedChecklist}/{totalChecklist}
-              </Text>
-            </View>
-          </View>
 
-          {checklistSections.map((section) => {
-            const isOpen = !!expanded[section.key];
-            const done = section.items.filter((i) => checklistItems[i.key]).length;
-            return (
-              <View key={section.key} style={styles.sectionCard}>
-                <TouchableOpacity
-                  style={styles.sectionHeader}
-                  onPress={() => toggleSection(section.key)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.sectionHeaderLeft}>
-                    <AntDesign
-                      name={done === section.items.length ? "check-circle" : "right-circle"}
-                      size={14}
-                      color={done === section.items.length ? "#67D16C" : colors.text.secondary}
-                    />
-                    <Text style={styles.sectionHeaderTitle}>{section.title}</Text>
-                    <Text style={styles.sectionHeaderMeta}>
-                      {done}/{section.items.length}
-                    </Text>
+            {checklistSections.map((section) => {
+              const done = section.items.filter(
+                (i) => checklistItems[i.key]
+              ).length;
+              return (
+                <View key={section.key} style={styles.sectionCard}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionHeaderLeft}>
+                      <AntDesign
+                        name={
+                          done === section.items.length
+                            ? "check-circle"
+                            : "file-text"
+                        }
+                        size={14}
+                        color={
+                          done === section.items.length
+                            ? "#67D16C"
+                            : colors.text.secondary
+                        }
+                      />
+                      <Text style={styles.sectionHeaderTitle}>
+                        {section.title}
+                      </Text>
+                      <Text style={styles.sectionHeaderMeta}>
+                        {done}/{section.items.length}
+                      </Text>
+                    </View>
                   </View>
-                  <AntDesign
-                    name={isOpen ? "up" : "down"}
-                    size={14}
-                    color={colors.text.secondary}
-                  />
-                </TouchableOpacity>
-                {isOpen && (
                   <View style={styles.itemsContainer}>
                     {section.items.map((item) => {
                       const checked = !!checklistItems[item.key];
                       return (
                         <TouchableOpacity
                           key={item.key}
-                          style={[styles.itemRow, checked && styles.itemRowChecked]}
+                          style={[
+                            styles.itemRow,
+                            checked && styles.itemRowChecked,
+                          ]}
                           onPress={() => toggleChecklistItem(item.key)}
                           activeOpacity={0.8}
                         >
@@ -545,7 +598,13 @@ export const SwapNewVehicleScreen: React.FC = () => {
                               checked && styles.checkboxChecked,
                             ]}
                           >
-                            {checked && <AntDesign name="check" size={12} color="#FFFFFF" />}
+                            {checked && (
+                              <AntDesign
+                                name="check"
+                                size={12}
+                                color="#FFFFFF"
+                              />
+                            )}
                           </View>
                           <Text
                             style={[
@@ -559,18 +618,11 @@ export const SwapNewVehicleScreen: React.FC = () => {
                       );
                     })}
                   </View>
-                )}
-              </View>
-            );
-          })}
-          {errors.checklist && (
-            <View style={styles.errorContainer}>
-              <AntDesign name="exclamation-circle" size={14} color="#FF6B6B" />
-              <Text style={styles.errorText}>{errors.checklist}</Text>
-            </View>
-          )}
+                </View>
+              );
+            })}
           </View>
-        </Animated.View>
+        </View>
 
         <TouchableOpacity style={styles.primary} onPress={handleNext}>
           <Text style={styles.primaryText}>Lưu xe mới & Tiếp tục</Text>
@@ -620,7 +672,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  cardHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
   cardHeaderIcon: {
     width: 36,
     height: 36,
@@ -669,7 +726,11 @@ const styles = StyleSheet.create({
     borderColor: "#232838",
   },
   textarea: { minHeight: 80, textAlignVertical: "top" },
-  sectionTitle: { color: colors.text.primary, fontWeight: "700", marginBottom: 8 },
+  sectionTitle: {
+    color: colors.text.primary,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
   photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
     width: "48%",
@@ -795,7 +856,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#67D16C",
     borderColor: "#67D16C",
   },
-  itemText: { color: colors.text.primary, flex: 1, fontSize: 13, fontWeight: "500" },
+  itemText: {
+    color: colors.text.primary,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "500",
+  },
   itemTextChecked: { color: "#67D16C", fontWeight: "700" },
   errorContainer: {
     flexDirection: "row",
@@ -821,4 +887,3 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,107,107,0.05)",
   },
 });
-

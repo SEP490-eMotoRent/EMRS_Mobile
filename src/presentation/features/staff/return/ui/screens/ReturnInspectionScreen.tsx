@@ -113,7 +113,6 @@ export const ReturnInspectionScreen: React.FC = () => {
     fetchBooking();
   }, [bookingId]);
 
-
   const fetchBooking = async () => {
     try {
       setLoading(true);
@@ -239,10 +238,15 @@ export const ReturnInspectionScreen: React.FC = () => {
         {/* User and Vehicle Information Card */}
         <View style={styles.infoCard}>
           <View style={styles.userInfo}>
-            <Image source={{ uri: booking?.renter?.avatarUrl }} style={styles.userAvatar} />
+            <Image
+              source={{ uri: booking?.renter?.avatarUrl }}
+              style={styles.userAvatar}
+            />
             <View style={styles.userDetails}>
               <Text style={styles.userName}>{booking?.renter?.fullName()}</Text>
-              <Text style={styles.userPhone}>Số điện thoại: {booking?.renter?.phone}</Text>
+              <Text style={styles.userPhone}>
+                Số điện thoại: {booking?.renter?.phone}
+              </Text>
               <Text style={styles.userBranch}>
                 Mã đặt chỗ: {bookingId ? `#${bookingId.slice(-10)}` : "N/A"}
               </Text>
