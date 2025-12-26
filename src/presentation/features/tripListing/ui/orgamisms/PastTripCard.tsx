@@ -10,10 +10,13 @@ export interface PastTrip {
     vehicleImageUrl?: string;
     dates: string;
     duration?: string;
-    status: "pending" | "booked" | "renting" | "completed" | "cancelled";
+    status: "pending" | "booked" | "renting" | "completed" | "cancelled" | "returned";
     rating?: number;
     totalAmount?: string;
     refundedAmount?: string;
+    depositAmount?: string;
+    baseRentalFee?: string;
+    insuranceFee?: string;
     hadInsurance?: boolean;
     lateReturnFee?: string;
     hasFeedback?: boolean;
@@ -104,6 +107,56 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 </View>
             </View>
             
+            {/* ✅ CANCELLED STATUS - Show full breakdown + refund */}
+            {trip.status === "cancelled" && (
+                <View style={styles.cancelledSection}>
+                    <View style={styles.cancelledAlert}>
+                        <Icon name="info-circle" size={14} color="#fbbf24" solid />
+                        <Text style={styles.cancelledText}>
+                            {trip.cancellationReason || "Đơn đã được hủy"}
+                        </Text>
+                    </View>
+                    
+                    {/* Full Price Breakdown */}
+                    <View style={styles.priceBreakdown}>
+                        {/* Base Rental Fee */}
+                        {trip.baseRentalFee && (
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>Chi phí thuê</Text>
+                                <Text style={styles.breakdownValue}>{trip.baseRentalFee}</Text>
+                            </View>
+                        )}
+                        
+                        {/* Insurance Fee */}
+                        {trip.insuranceFee && (
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>Bảo hiểm</Text>
+                                <Text style={styles.breakdownValue}>{trip.insuranceFee}</Text>
+                            </View>
+                        )}
+                        
+                        {/* Deposit */}
+                        {trip.depositAmount && (
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>Tiền cọc</Text>
+                                <Text style={styles.breakdownValue}>{trip.depositAmount}</Text>
+                            </View>
+                        )}
+                    </View>
+                    
+                    {/* Refund Info */}
+                    <View style={styles.refundSection}>
+                        <View style={styles.refundRow}>
+                            <View style={styles.refundLeft}>
+                                <Icon name="undo" size={12} color="#22c55e" solid />
+                                <Text style={styles.refundLabel}>Số tiền hoàn lại</Text>
+                            </View>
+                            <Text style={styles.refundValue}>{trip.refundedAmount}</Text>
+                        </View>
+                    </View>
+                </View>
+            )}
+            
             {/* Feedback Section - Shows for completed trips only */}
             {trip.status === "completed" && (
                 trip.hasFeedback ? (
@@ -158,20 +211,15 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 </View>
             )}
             
-            {/* Amount row */}
-            <View style={styles.amountSection}>
-                <View style={styles.amountRow}>
-                    <Text style={styles.amountLabel}>
-                        {trip.status === "cancelled" ? "Số tiền cọc" : ""}
-                    </Text>
-                    <Text style={[
-                        styles.amountValue,
-                        trip.status === "cancelled" && styles.refundedAmount
-                    ]}>
-                        {trip.status === "cancelled" ? trip.refundedAmount : trip.totalAmount}
-                    </Text>
+            {/* Amount row - ONLY for completed, pending, booked, renting */}
+            {/* {trip.status !== "cancelled" && (
+                <View style={styles.amountSection}>
+                    <View style={styles.amountRow}>
+                        <Text style={styles.amountLabel}>Tổng thanh toán</Text>
+                        <Text style={styles.amountValue}>{trip.totalAmount}</Text>
+                    </View>
                 </View>
-            </View>
+            )} */}
             
             {/* ✅ Actions - Single Row */}
             <View style={styles.actions}>
@@ -213,7 +261,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    // ✅ NEW: Large Image Container
     imageContainer: {
         width: "100%",
         height: 160,
@@ -248,7 +295,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         textTransform: "uppercase",
     },
-    // ✅ NEW: Vehicle Info Below Image
     vehicleInfo: {
         marginBottom: 12,
     },
@@ -271,7 +317,77 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 12,
     },
-    // Feedback
+    cancelledSection: {
+        marginBottom: 12,
+    },
+    cancelledAlert: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: "rgba(251, 191, 36, 0.1)",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "rgba(251, 191, 36, 0.3)",
+    },
+    cancelledText: {
+        color: "#fbbf24",
+        fontSize: 13,
+        fontWeight: "600",
+        flex: 1,
+    },
+    priceBreakdown: {
+        backgroundColor: "#1a1a1a",
+        borderWidth: 1,
+        borderColor: "#2a2a2a",
+        borderRadius: 10,
+        padding: 12,
+        marginBottom: 12,
+        gap: 8,
+    },
+    breakdownRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    breakdownLabel: {
+        color: "#999",
+        fontSize: 13,
+    },
+    breakdownValue: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    refundSection: {
+        backgroundColor: "rgba(34, 197, 94, 0.1)",
+        borderWidth: 1,
+        borderColor: "rgba(34, 197, 94, 0.3)",
+        borderRadius: 10,
+        padding: 12,
+    },
+    refundRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    refundLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    refundLabel: {
+        color: "#22c55e",
+        fontSize: 14,
+        fontWeight: "700",
+    },
+    refundValue: {
+        color: "#22c55e",
+        fontSize: 16,
+        fontWeight: "700",
+    },
     feedbackRow: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -375,10 +491,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
     },
-    refundedAmount: {
-        color: "#22c55e",
-    },
-    // ✅ Actions - Single Row
     actions: {
         flexDirection: "row",
         gap: 10,
@@ -395,21 +507,6 @@ const styles = StyleSheet.create({
     },
     primaryButtonText: {
         color: "#000",
-        fontSize: 14,
-        fontWeight: "700",
-    },
-    secondaryButton: {
-        flex: 1,
-        backgroundColor: "#2a2a2a",
-        paddingVertical: 13,
-        borderRadius: 12,
-        alignItems: "center",
-        flexDirection: "row",
-        justifyContent: "center",
-        gap: 7,
-    },
-    secondaryButtonText: {
-        color: "#d4c5f9",
         fontSize: 14,
         fontWeight: "700",
     },

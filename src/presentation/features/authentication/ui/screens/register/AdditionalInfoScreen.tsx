@@ -28,11 +28,11 @@ export const AdditionalInfoScreen: React.FC = () => {
     // Get email and password from previous screen
     const { email, password } = route.params;
 
-    const handleComplete = async (data: { 
-        fullname: string; 
-        username: string; 
-        phone: string; 
-        address: string; 
+    const handleComplete = async (data: {
+        fullname: string;
+        username: string;
+        phone: string;
+        address: string;
         dateOfBirth: string;
         avatarUrl?: string;
     }) => {

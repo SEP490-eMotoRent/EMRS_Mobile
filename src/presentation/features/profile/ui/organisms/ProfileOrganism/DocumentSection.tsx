@@ -29,7 +29,7 @@ interface DocumentSectionProps {
     autoFill: boolean;
     onAutoFillChange: (value: boolean) => void;
     onUpload: (method: 'camera' | 'gallery') => void;
-    onUpdate: () => void;
+    onUpdate?: () => void; // ✅ FIXED: Made optional with ?
     additionalFields?: React.ReactNode;
     existingDocument?: DocumentData;
     onViewDocument?: (imageUrl: string) => void;
@@ -146,14 +146,17 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                     )}
                 </View>
                 <View style={styles.headerActions}>
-                    <Button 
-                        onPress={onUpdate} 
-                        style={styles.updateButton} 
-                        variant="ghost"
-                        disabled={!hasNewImages && !hasDocument}
-                    >
-                        <Text style={styles.updateText}>Cập Nhật</Text>
-                    </Button>
+                    {/* ✅ FIXED: Only render button when onUpdate is provided */}
+                    {onUpdate && (
+                        <Button 
+                            onPress={onUpdate} 
+                            style={styles.updateButton} 
+                            variant="ghost"
+                            disabled={!hasNewImages && !hasDocument}
+                        >
+                            <Text style={styles.updateText}>Cập Nhật</Text>
+                        </Button>
+                    )}
                     {hasDocument && onDeleteDocument && (
                         <Button 
                             onPress={onDeleteDocument} 

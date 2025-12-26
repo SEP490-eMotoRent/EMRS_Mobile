@@ -8,6 +8,7 @@ import { ProfileScreen } from '../../../../features/profile/ui/screens/ProfileSc
 import { WalletTopUpResultScreen } from '../../../../features/profile/ui/screens/WalletTopUp/WalletTopUpResultScreen';
 import { WalletTopUpScreen } from '../../../../features/profile/ui/screens/WalletTopUp/WalletTopUpScreen';
 import { WalletVNPayWebViewScreen } from '../../../../features/profile/ui/screens/WalletTopUp/WalletVNPayWebViewScreen';
+import { WalletZaloPayResultScreen } from '../../../../features/profile/ui/screens/WalletTopUp/WalletZaloPayResultScreen';
 import { CreateWithdrawalRequestScreen } from '../../../../features/profile/ui/screens/Withdrawal/CreateWithdrawalRequestScreen';
 import { WithdrawalRequestDetailScreen } from '../../../../features/profile/ui/screens/Withdrawal/WithdrawalRequestDetailScreen';
 import { WithdrawalRequestListScreen } from '../../../../features/profile/ui/screens/Withdrawal/WithdrawalRequestListScreen';
@@ -51,6 +52,7 @@ export const ProfileNavigator: React.FC = () => {
             {/* Wallet Top-Up Screens */}
             <Stack.Screen name="WalletTopUp" component={WalletTopUpScreen} />
             <Stack.Screen name="WalletVNPayWebView" component={WalletVNPayWebViewScreen} />
+            <Stack.Screen name="WalletZaloPayResult" component={WalletZaloPayResultScreen} />
             <Stack.Screen name="WalletTopUpResult" component={WalletTopUpResultScreen} />
 
             {/* Transaction Screens */}

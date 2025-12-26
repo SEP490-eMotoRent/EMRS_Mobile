@@ -167,6 +167,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       }),
       // Apply negative sign for debits (money OUT)
       amount: TransactionTypeHelper.isCredit(t.transactionType) ? t.amount : -t.amount,
+      status: t.status as 'Success' | 'Pending' | 'Failed', // ✅ Pass status through
   }));
 
   // ✅ Check if transactions exist (hide section if empty)
@@ -194,7 +195,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           documents={renterResponse.documents}
           memberSince={memberSince}
           trips="0"
-          distance="0" // Pass number only, component will add " km"
+          distance="0"
           membership={membership}
           onEdit={handleEdit}
         />

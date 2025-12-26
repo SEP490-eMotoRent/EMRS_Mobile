@@ -380,7 +380,8 @@ export const CitizenIDVerificationScreen = ({ navigation }: any) => {
                         autoFill={citizenAutoFill}
                         onAutoFillChange={setCitizenAutoFill}
                         onUpload={handleCitizenUpload}
-                        onUpdate={handleCitizenDocumentSubmit}
+                        // ✅ CRITICAL: Only show update button when NO document exists (creating new)
+                        {...(!citizenDoc && { onUpdate: handleCitizenDocumentSubmit })}
                         existingDocument={citizenDoc}
                         onViewDocument={(imageUrl) => {
                             // Image viewer handled by DocumentSection

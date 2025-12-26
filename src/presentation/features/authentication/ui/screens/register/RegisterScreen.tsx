@@ -187,7 +187,7 @@ export const RegisterScreen: React.FC = () => {
           <SignInPrompt onSignInPress={handleSignIn} />
 
           {/* Privacy policy and terms notice */}
-          <PrivacyNotice onPrivacyPolicyPress={handlePrivacyPolicy} />
+          {/* <PrivacyNotice onPrivacyPolicyPress={handlePrivacyPolicy} /> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

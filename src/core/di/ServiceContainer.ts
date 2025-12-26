@@ -42,6 +42,9 @@ import { RentalReturnModule } from "./modules/RentalReturnModule";
  * 
  * // Wallet operations
  * const balance = await container.wallet.balance.get.execute();
+ * 
+ * // Transaction operations (convenience getter for wallet.transactions)
+ * const transactions = await container.transaction.getByRenterId.execute();
  * ```
  */
 export class ServiceContainer {
@@ -209,6 +212,24 @@ export class ServiceContainer {
             this._rentalReturnModule = RentalReturnModule.create(this.axiosClient);
         }
         return this._rentalReturnModule;
+    }
+
+    // ==================== CONVENIENCE GETTERS ====================
+
+    /**
+     * Transaction operations (convenience getter for wallet.transactions)
+     * Usage: container.transaction.getByRenterId.execute()
+     * 
+     * Note: This delegates to wallet.transactions for backwards compatibility
+     */
+    get transaction() {
+        return {
+            /**
+             * Get transactions by current renter
+             * Alias for: container.wallet.transactions.getMy.execute()
+             */
+            getByRenterId: this.wallet.transactions.getMy,
+        };
     }
 
     // ==================== UTILITY GETTERS ====================

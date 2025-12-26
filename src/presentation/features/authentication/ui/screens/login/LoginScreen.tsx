@@ -263,7 +263,7 @@ export const LoginScreen: React.FC = () => {
           <SignUpPrompt onSignUpPress={handleSignUpNow} />
 
           {/* Privacy policy and terms notice */}
-          <PrivacyNotice onPrivacyPolicyPress={handlePrivacyPolicy} />
+          {/* <PrivacyNotice onPrivacyPolicyPress={handlePrivacyPolicy} /> */}
         </ScrollView>
       </KeyboardAvoidingView>
 

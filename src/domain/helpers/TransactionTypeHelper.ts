@@ -1,25 +1,18 @@
 export class TransactionTypeHelper {
     private static readonly TRANSACTION_TYPE_MAP: Record<string, string> = {
-        // Wallet transactions
-        'WalletTopUp': 'Nạp tiền',
-        'WalletWithdrawal': 'Rút tiền',
-        
         // Booking transactions
-        'BookingDeposit': 'Đặt cọc',
-        'BookingRefund': 'Hoàn tiền',
-        'BookingPayment': 'Thanh toán thuê xe',
+        'BookingDeposit': 'Đặt Cọc',
+        'BookingRefund': 'Hoàn Tiền Đặt Cọc',
+        'BookingAdditionalPayment': 'Thanh Toán Thêm',
+        'BookingReturnRefund': 'Hoàn Tiền Trả Xe',
         
-        // Additional fees
-        'LateFee': 'Phí trả xe trễ',
-        'DamageFee': 'Phí hư hỏng',
-        'CleaningFee': 'Phí vệ sinh',
-        'ExcessKmFee': 'Phí vượt quá km',
+        // Wallet transactions
+        'WalletTopUp': 'Nạp Tiền',
+        'WalletWithdraw': 'Rút Tiền',
         
-        // Other
-        'Refund': 'Hoàn tiền',
-        'Payment': 'Thanh toán',
-        'Transfer': 'Chuyển khoản',
-        'Adjustment': 'Điều chỉnh',
+        // Insurance Claim transactions
+        'InsuranceClaimPayment': 'Thanh Toán Bảo Hiểm',
+        'InsuranceClaimRefund': 'Hoàn Tiền Bảo Hiểm',
     };
 
     /**
@@ -31,29 +24,29 @@ export class TransactionTypeHelper {
     }
 
     /**
-     * Check if a transaction type is income (positive amount)
+     * Check if a transaction type is income (positive amount - money IN)
+     * All refunds and top-ups are income
      */
     static isIncomeType(transactionType: string): boolean {
         const incomeTypes = [
-            'WalletTopUp',
-            'BookingRefund',
-            'Refund',
+            'WalletTopUp',              // User adds money
+            'BookingRefund',            // User gets deposit back
+            'BookingReturnRefund',      // User gets refund when returning bike
+            'InsuranceClaimRefund',     // User gets insurance refund
         ];
         return incomeTypes.includes(transactionType);
     }
 
     /**
-     * Check if a transaction type is expense (negative amount)
+     * Check if a transaction type is expense (negative amount - money OUT)
+     * All deposits, payments, and withdrawals are expenses
      */
     static isExpenseType(transactionType: string): boolean {
         const expenseTypes = [
-            'WalletWithdrawal',
-            'BookingDeposit',
-            'BookingPayment',
-            'LateFee',
-            'DamageFee',
-            'CleaningFee',
-            'ExcessKmFee',
+            'BookingDeposit',           // User pays deposit
+            'BookingAdditionalPayment', // User pays additional fees
+            'WalletWithdraw',           // User withdraws money
+            'InsuranceClaimPayment',    // User pays for insurance claim
         ];
         return expenseTypes.includes(transactionType);
     }
@@ -67,9 +60,27 @@ export class TransactionTypeHelper {
     }
 
     /**
+     * Alias for isExpenseType() - determines if transaction is a debit (money OUT)
+     * @returns true if transaction removes money from wallet, false if it adds money
+     */
+    static isDebit(transactionType: string): boolean {
+        return this.isExpenseType(transactionType);
+    }
+
+    /**
      * Get icon name based on transaction type
      */
     static getIconName(transactionType: string): 'plus' | 'minus' {
         return this.isIncomeType(transactionType) ? 'plus' : 'minus';
+    }
+
+    /**
+     * Get color based on transaction type
+     * @returns green for income, red for expense
+     */
+    static getColor(transactionType: string): { positive: string; negative: string } {
+        return this.isIncomeType(transactionType) 
+            ? { positive: '#4ade80', negative: '#f87171' }
+            : { positive: '#4ade80', negative: '#f87171' };
     }
 }

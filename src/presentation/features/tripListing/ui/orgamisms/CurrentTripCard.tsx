@@ -10,7 +10,7 @@ export interface CurrentTrip {
     vehicleImageUrl?: string;
     dates: string;
     duration?: string;
-    status: "pending" | "booked" | "renting";
+    status: "pending" | "booked" | "renting" | "returned";
     timeInfo?: string;
     reference: string;
     location?: string;
@@ -124,6 +124,17 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 </View>
             )}
 
+            {/* RETURNED: Awaiting final settlement */}
+            {trip.status === "returned" && (
+                <View style={styles.returnedAlert}>
+                    <Icon name="check-circle" size={16} color="#6366f1" solid />
+                    <View style={styles.alertContent}>
+                        <Text style={styles.returnedTitle}>Xe đã trả - Chờ xác nhận cuối cùng</Text>
+                        <Text style={styles.returnedSubtext}>Đang kiểm tra xe và hoàn tất thanh toán</Text>
+                    </View>
+                </View>
+            )}
+
             {/* Reference */}
             <Text style={styles.reference}>Mã đơn: {trip.reference}</Text>
             
@@ -227,6 +238,19 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                             </TouchableOpacity>
                         )}
                     </>
+                )}
+
+                {trip.status === "returned" && (
+                    <TouchableOpacity 
+                        style={styles.primaryButton} 
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onViewDetails();
+                        }}
+                    >
+                        <Icon name="file-alt" size={14} color="#000" solid />
+                        <Text style={styles.primaryButtonText}>Xem chi tiết</Text>
+                    </TouchableOpacity>
                 )}
             </View>
         </TouchableOpacity>
@@ -372,6 +396,29 @@ const styles = StyleSheet.create({
         color: "#ef4444",
         fontSize: 13,
         fontWeight: "600",
+    },
+    returnedAlert: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        backgroundColor: "rgba(99, 102, 241, 0.1)",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "rgba(99, 102, 241, 0.3)",
+    },
+    returnedTitle: {
+        color: "#6366f1",
+        fontSize: 13,
+        fontWeight: "700",
+    },
+    returnedSubtext: {
+        color: "#6366f1",
+        fontSize: 11,
+        opacity: 0.8,
+        marginTop: 2,
     },
     reference: {
         color: "#666",

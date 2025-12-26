@@ -112,6 +112,8 @@ export const ApiEndpoints = {
     myBalance: "/Wallet/my-balance",
     topUp: "/Wallet/topup",
     vnPayCallback: "/Wallet/vnpay/callback",
+    topUpZaloPay: "/Wallet/topup/zalopay",
+    zaloPayCallback: "/Wallet/zalopay/callback",
   },
 
   // Receipt endpoints
