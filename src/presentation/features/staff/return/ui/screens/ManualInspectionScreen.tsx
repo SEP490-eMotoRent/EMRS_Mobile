@@ -49,7 +49,6 @@ interface InspectionCategory {
   id: string;
   title: string;
   items: InspectionItem[];
-  expanded: boolean;
 }
 
 type PhotoTileProps = {
@@ -140,65 +139,54 @@ export const ManualInspectionScreen: React.FC = () => {
   const [categories, setCategories] = useState<InspectionCategory[]>([
     {
       id: "body-paint",
-      title: "Thân xe & Sơn",
-      expanded: true,
+      title: "Thân xe & Ngoại thất (5 mục)",
       items: [
-        { id: "1", label: "Đèn hậu hoạt động tốt", checked: false },
-        { id: "2", label: "Gương chiếu hậu nguyên vẹn", checked: false },
-        { id: "3", label: "Phanh trước/sau hoạt động", checked: false },
-        { id: "4", label: "Không có vết xước trên thân xe", checked: false },
-        { id: "5", label: "Bề mặt sơn không bị bong tróc", checked: false },
-        { id: "6", label: "Cửa xe đóng mở bình thường", checked: false },
-        { id: "7", label: "Kính chắn gió không vỡ", checked: false },
-        { id: "8", label: "Logo và nhãn hiệu còn nguyên", checked: false },
+        { id: "1", label: "Không có vết xước hoặc lõm trên thân xe", checked: false },
+        { id: "2", label: "Sơn không bị bong tróc hoặc phai màu", checked: false },
+        { id: "3", label: "Gương chiếu hậu nguyên vẹn, không vỡ", checked: false },
+        { id: "4", label: "Chắn bùn và vỏ bảo vệ chắc chắn", checked: false },
+        { id: "5", label: "Logo và nhãn hiệu còn nguyên vẹn", checked: false },
+      ],
+    },
+    {
+      id: "battery-power",
+      title: "Pin & Hệ thống điện (5 mục)",
+      items: [
+        { id: "6", label: "Pin được lắp chắc chắn, không lỏng", checked: false },
+        { id: "7", label: "Cổng sạc sạch sẽ, không bị hư hỏng", checked: false },
+        { id: "8", label: "Dây sạc và cáp điện nguyên vẹn", checked: false },
+        { id: "9", label: "Hiển thị mức pin hoạt động chính xác", checked: false },
+        { id: "10", label: "Khóa pin hoạt động tốt", checked: false },
       ],
     },
     {
       id: "wheels-tires",
-      title: "Bánh xe & Lốp",
-      expanded: false,
+      title: "Bánh xe & Phanh (4 mục)",
       items: [
-        { id: "9", label: "Lốp không bị mòn quá mức", checked: false },
-        { id: "10", label: "Vành xe không bị cong", checked: false },
-        { id: "11", label: "Áp suất lốp đúng tiêu chuẩn", checked: false },
-        { id: "12", label: "Không có vết nứt trên lốp", checked: false },
+        { id: "11", label: "Gai lốp còn tốt, không bị mòn quá mức", checked: false },
+        { id: "12", label: "Áp suất lốp đúng tiêu chuẩn", checked: false },
+        { id: "13", label: "Vành xe không bị cong, không có vết nứt", checked: false },
+        { id: "14", label: "Phanh trước/sau hoạt động bình thường", checked: false },
       ],
     },
     {
       id: "lights-signals",
-      title: "Đèn & Tín hiệu",
-      expanded: false,
+      title: "Đèn & Tín hiệu (4 mục)",
       items: [
-        { id: "13", label: "Đèn pha hoạt động", checked: false },
-        { id: "14", label: "Đèn xi-nhan hoạt động", checked: false },
-        { id: "15", label: "Đèn phanh hoạt động", checked: false },
-        { id: "16", label: "Đèn báo rẽ hoạt động", checked: false },
-        { id: "17", label: "Đèn cảnh báo hoạt động", checked: false },
-        { id: "18", label: "Đèn nội thất hoạt động", checked: false },
+        { id: "15", label: "Đèn pha sáng và hoạt động tốt", checked: false },
+        { id: "16", label: "Đèn xi nhan hoạt động đúng", checked: false },
+        { id: "17", label: "Đèn hậu/phanh hoạt động", checked: false },
+        { id: "18", label: "Đèn báo hiệu cảnh báo hoạt động", checked: false },
       ],
     },
     {
-      id: "interior-features",
-      title: "Nội thất & Tính năng",
-      expanded: false,
+      id: "controls",
+      title: "Điều khiển & Màn hình (4 mục)",
       items: [
-        { id: "19", label: "Ghế ngồi không bị rách", checked: false },
-        { id: "20", label: "Tay lái hoạt động tốt", checked: false },
-        { id: "21", label: "Công tắc và nút bấm hoạt động", checked: false },
-        { id: "22", label: "Màn hình hiển thị hoạt động", checked: false },
-        { id: "23", label: "Hệ thống điều hòa hoạt động", checked: false },
-        { id: "24", label: "Ổ cắm sạc hoạt động", checked: false },
-      ],
-    },
-    {
-      id: "safety-equipment",
-      title: "Thiết bị an toàn",
-      expanded: false,
-      items: [
-        { id: "25", label: "Mũ bảo hiểm có sẵn", checked: false },
-        { id: "26", label: "Áo phản quang có sẵn", checked: false },
-        { id: "27", label: "Bộ cứu thương có sẵn", checked: false },
-        { id: "28", label: "Còi xe hoạt động", checked: false },
+        { id: "19", label: "Còi xe hoạt động tốt", checked: false },
+        { id: "20", label: "Màn hình hiển thị hoạt động bình thường", checked: false },
+        { id: "21", label: "Tay ga và phanh tay hoạt động mượt", checked: false },
+        { id: "22", label: "Công tắc và nút điều khiển hoạt động", checked: false },
       ],
     },
   ]);
@@ -351,13 +339,6 @@ export const ManualInspectionScreen: React.FC = () => {
     ]).start();
   };
 
-  const toggleCategory = (categoryId: string) => {
-    setCategories((prev) =>
-      prev.map((cat) =>
-        cat.id === categoryId ? { ...cat, expanded: !cat.expanded } : cat
-      )
-    );
-  };
 
   const toggleItem = (categoryId: string, itemId: string) => {
     setCategories((prev) =>
@@ -801,11 +782,7 @@ export const ManualInspectionScreen: React.FC = () => {
 
             return (
               <View key={category.id} style={styles.categoryCard}>
-                <TouchableOpacity
-                  style={styles.categoryHeader}
-                  onPress={() => toggleCategory(category.id)}
-                  activeOpacity={0.8}
-                >
+                <View style={styles.categoryHeader}>
                   <View style={styles.categoryHeaderLeft}>
                     <View
                       style={[
@@ -848,15 +825,9 @@ export const ManualInspectionScreen: React.FC = () => {
                         ]}
                       />
                     </View>
-                    <AntDesign
-                      name={category.expanded ? "up" : "down"}
-                      size={16}
-                      color={colors.text.secondary}
-                    />
                   </View>
-                </TouchableOpacity>
+                </View>
 
-                {category.expanded && (
                   <View style={styles.itemsContainer}>
                     {category.items.map((item) => (
                       <TouchableOpacity
@@ -896,7 +867,6 @@ export const ManualInspectionScreen: React.FC = () => {
                       </TouchableOpacity>
                     ))}
                   </View>
-                )}
               </View>
             );
           })}
@@ -951,11 +921,10 @@ export const ManualInspectionScreen: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.primaryCta,
-              (checkedItems !== totalItems || isSubmitting) &&
-                styles.primaryCtaDisabled,
+              isSubmitting && styles.primaryCtaDisabled,
             ]}
             onPress={handleCompleteInspection}
-            disabled={checkedItems !== totalItems || isSubmitting}
+            disabled={isSubmitting}
           >
             <View style={styles.primaryCtaContent}>
               {isSubmitting ? (
@@ -963,14 +932,12 @@ export const ManualInspectionScreen: React.FC = () => {
                   <AntDesign name="loading" size={18} color="#0B0B0F" />
                   <Text style={styles.primaryCtaText}>Đang gửi...</Text>
                 </>
-              ) : checkedItems === totalItems &&
-                booking?.bookingStatus === "Renting" ? (
+              ) : booking?.bookingStatus === "Renting" ? (
                 <>
                   <AntDesign name="check-circle" size={18} color="#0B0B0F" />
                   <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
                 </>
-              ) : checkedItems === totalItems &&
-                booking?.bookingStatus === "Returned" ? (
+              ) : booking?.bookingStatus === "Returned" ? (
                 <>
                   <AntDesign name="check-circle" size={18} color="#0B0B0F" />
                   <Text style={styles.primaryCtaText}>
@@ -979,10 +946,8 @@ export const ManualInspectionScreen: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <AntDesign name="clock-circle" size={18} color="#9CA3AF" />
-                  <Text style={styles.primaryCtaTextDisabled}>
-                    Chưa hoàn thành
-                  </Text>
+                  <AntDesign name="check-circle" size={18} color="#0B0B0F" />
+                  <Text style={styles.primaryCtaText}>Hoàn thành kiểm tra</Text>
                 </>
               )}
             </View>

@@ -101,7 +101,6 @@ export const VehicleInspectionScreen: React.FC = () => {
     isUpdateReceipt,
   } = route.params || {};
   const navigation = useNavigation<InspectionNav>();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [photos, setPhotos] = useState<Record<string, string | null>>({
     front: null,
     back: null,
@@ -193,65 +192,56 @@ export const VehicleInspectionScreen: React.FC = () => {
   }[] = [
     {
       key: "bodyPaint",
-      title: "Thân xe & Sơn (10 mục)",
+      title: "Thân xe & Ngoại thất (5 mục)",
       items: [
-        { label: "Vết xước hoặc lõm", key: "scratches_dents" },
-        { label: "Tình trạng sơn", key: "paint_condition" },
-        { label: "Căn chỉnh tấm", key: "panel_alignment" },
-        { label: "Nhãn dán/decals", key: "stickers_decals" },
-        { label: "Độ sạch tổng thể", key: "overall_cleanliness" },
+        { label: "Không có vết xước hoặc lõm trên thân xe", key: "scratches_dents" },
+        { label: "Sơn không bị bong tróc hoặc phai màu", key: "paint_condition" },
+        { label: "Gương chiếu hậu nguyên vẹn, không vỡ", key: "mirrors_intact" },
+        { label: "Chắn bùn và vỏ bảo vệ chắc chắn", key: "body_panels_secure" },
+        { label: "Logo và nhãn hiệu còn nguyên vẹn", key: "branding_intact" },
       ],
     },
     {
       key: "batteryPower",
-      title: "Pin & Hệ thống điện (4 mục)",
+      title: "Pin & Hệ thống điện (5 mục)",
       items: [
-        { label: "Pin được lắp chắc chắn", key: "battery_mounted" },
-        { label: "Tình trạng cổng sạc", key: "charging_port" },
-        { label: "Dây cáp nguyên vẹn", key: "cables_intact" },
-      ],
-    },
-    {
-      key: "cleanliness",
-      title: "Đánh giá độ sạch (6 mục)",
-      items: [
-        { label: "Ghế và sàn sạch", key: "seat_floorboards" },
-        { label: "Gương sạch", key: "mirrors_clean" },
-        { label: "Chắn bùn sạch", key: "mudguards_clean" },
+        { label: "Pin được lắp chắc chắn, không lỏng", key: "battery_mounted" },
+        { label: "Cổng sạc sạch sẽ, không bị hư hỏng", key: "charging_port" },
+        { label: "Dây sạc và cáp điện nguyên vẹn", key: "cables_intact" },
+        { label: "Hiển thị mức pin hoạt động chính xác", key: "battery_indicator" },
+        { label: "Khóa pin hoạt động tốt", key: "battery_lock" },
       ],
     },
     {
       key: "wheelsTires",
-      title: "Bánh xe & Lốp (4 mục)",
+      title: "Bánh xe & Phanh (4 mục)",
       items: [
-        { label: "Gai lốp OK", key: "tread_ok" },
-        { label: "Áp suất OK", key: "pressure_ok" },
+        { label: "Gai lốp còn tốt, không bị mòn quá mức", key: "tread_ok" },
+        { label: "Áp suất lốp đúng tiêu chuẩn", key: "pressure_ok" },
+        { label: "Vành xe không bị cong, không có vết nứt", key: "rims_ok" },
+        { label: "Phanh trước/sau hoạt động bình thường", key: "brakes_work" },
       ],
     },
     {
       key: "lights",
-      title: "Đèn & Tín hiệu (6 mục)",
+      title: "Đèn & Tín hiệu (4 mục)",
       items: [
-        { label: "Đèn pha", key: "headlights" },
-        { label: "Đèn xi nhan", key: "turn_signals" },
+        { label: "Đèn pha sáng và hoạt động tốt", key: "headlights" },
+        { label: "Đèn xi nhan hoạt động đúng", key: "turn_signals" },
+        { label: "Đèn hậu/phanh hoạt động", key: "taillights" },
+        { label: "Đèn báo hiệu cảnh báo hoạt động", key: "warning_lights" },
       ],
     },
     {
       key: "controls",
-      title: "Điều khiển & Bảng điều khiển (8 mục)",
+      title: "Điều khiển & Màn hình (4 mục)",
       items: [
-        { label: "Còi hoạt động", key: "horn_works" },
-        { label: "Đồng hồ tốc độ hoạt động", key: "speedo_works" },
+        { label: "Còi xe hoạt động tốt", key: "horn_works" },
+        { label: "Màn hình hiển thị hoạt động bình thường", key: "display_works" },
+        { label: "Tay ga và phanh tay hoạt động mượt", key: "throttle_brake" },
+        { label: "Công tắc và nút điều khiển hoạt động", key: "switches_work" },
       ],
-    },
-    {
-      key: "safety",
-      title: "Thiết bị an toàn (3 mục)",
-      items: [
-        { label: "Có mũ bảo hiểm", key: "helmet_available" },
-        { label: "Có bộ dụng cụ", key: "toolkit_available" },
-      ],
-    },
+    }
   ];
 
   const toggleChecklistItem = (itemKey: string) => {
@@ -311,7 +301,6 @@ export const VehicleInspectionScreen: React.FC = () => {
   const isReadyForHandover = () => {
     return (
       getPhotosCount() === 4 &&
-      getCompletedCount() >= getTotalCount() * 0.8 &&
       startOdometerKm &&
       startBatteryPercentage
     );
@@ -388,15 +377,7 @@ export const VehicleInspectionScreen: React.FC = () => {
       }
     }
 
-    // Validate checklist
-    const totalChecklist = getTotalCount();
-    const completedChecklist = getCompletedCount();
-    if (completedChecklist < totalChecklist * 0.8) {
-      newErrors.checklist =
-        "Vui lòng hoàn thành ít nhất 80% danh sách kiểm tra";
-      isValid = false;
-      shakeError(checklistShakeAnim);
-    }
+    // Checklist is optional, no validation required
 
     setErrors(newErrors);
 
@@ -416,11 +397,6 @@ export const VehicleInspectionScreen: React.FC = () => {
             y: inputCardY - 20,
             animated: true,
           });
-        } else if (newErrors.checklist && checklistContainerY > 0) {
-          scrollViewRef.current?.scrollTo({
-            y: checklistContainerY - 20,
-            animated: true,
-          });
         }
       }, 100);
     }
@@ -437,18 +413,6 @@ export const VehicleInspectionScreen: React.FC = () => {
     }
   }, [photos, errors.photos]);
 
-  useEffect(() => {
-    // Clear checklist error when 80% is completed
-    const totalChecklist = getTotalCount();
-    const completedChecklist = getCompletedCount();
-    if (
-      totalChecklist > 0 &&
-      completedChecklist >= totalChecklist * 0.8 &&
-      errors.checklist
-    ) {
-      setErrors((prev) => ({ ...prev, checklist: undefined }));
-    }
-  }, [checklistItems, errors.checklist]);
 
   useEffect(() => {
     // Clear odometer error when value is valid
@@ -866,10 +830,9 @@ export const VehicleInspectionScreen: React.FC = () => {
             </View>
           </View>
         </View>
-        {/* Inspection Checklist - Accordions */}
-        <Animated.View
+        {/* Inspection Checklist */}
+        <View
           ref={checklistContainerRef}
-          style={[{ transform: [{ translateX: checklistShakeAnim }] }]}
           onLayout={(event) => {
             const { y } = event.nativeEvent.layout;
             setChecklistContainerY(y);
@@ -917,7 +880,6 @@ export const VehicleInspectionScreen: React.FC = () => {
               </View>
             </View>
             {sections.map((section) => {
-              const isOpen = !!expanded[section.key];
               const sectionCompleted = section.items.filter(
                 (item) => checklistItems[item.key]
               ).length;
@@ -929,16 +891,7 @@ export const VehicleInspectionScreen: React.FC = () => {
 
               return (
                 <View key={section.key} style={styles.categoryCard}>
-                  <TouchableOpacity
-                    style={styles.categoryHeader}
-                    onPress={() =>
-                      setExpanded((prev) => ({
-                        ...prev,
-                        [section.key]: !prev[section.key],
-                      }))
-                    }
-                    activeOpacity={0.8}
-                  >
+                  <View style={styles.categoryHeader}>
                     <View style={styles.categoryHeaderLeft}>
                       <View
                         style={[
@@ -985,76 +938,59 @@ export const VehicleInspectionScreen: React.FC = () => {
                           ]}
                         />
                       </View>
-                      <AntDesign
-                        name={isOpen ? "up" : "down"}
-                        size={16}
-                        color={colors.text.secondary}
-                      />
                     </View>
-                  </TouchableOpacity>
+                  </View>
 
-                  {isOpen && (
-                    <View style={styles.itemsContainer}>
-                      {section.items.map((item, idx) => (
-                        <TouchableOpacity
-                          key={idx}
+                  <View style={styles.itemsContainer}>
+                    {section.items.map((item, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={[
+                          styles.itemCard,
+                          checklistItems[item.key] && styles.itemCardChecked,
+                        ]}
+                        onPress={() => toggleChecklistItem(item.key)}
+                        activeOpacity={0.8}
+                      >
+                        <View
                           style={[
-                            styles.itemCard,
-                            checklistItems[item.key] && styles.itemCardChecked,
+                            styles.checkboxCircle,
+                            checklistItems[item.key] &&
+                              styles.checkboxChecked,
                           ]}
-                          onPress={() => toggleChecklistItem(item.key)}
-                          activeOpacity={0.8}
                         >
-                          <View
-                            style={[
-                              styles.checkboxCircle,
-                              checklistItems[item.key] &&
-                                styles.checkboxChecked,
-                            ]}
-                          >
-                            {checklistItems[item.key] && (
-                              <AntDesign
-                                name="check"
-                                size={14}
-                                color="#FFFFFF"
-                              />
-                            )}
-                          </View>
-                          <Text
-                            style={[
-                              styles.itemText,
-                              checklistItems[item.key] &&
-                                styles.itemTextChecked,
-                            ]}
-                          >
-                            {item.label}
-                          </Text>
                           {checklistItems[item.key] && (
                             <AntDesign
-                              name="check-circle"
-                              size={16}
-                              color="#67D16C"
+                              name="check"
+                              size={14}
+                              color="#FFFFFF"
                             />
                           )}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+                        </View>
+                        <Text
+                          style={[
+                            styles.itemText,
+                            checklistItems[item.key] &&
+                              styles.itemTextChecked,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                        {checklistItems[item.key] && (
+                          <AntDesign
+                            name="check-circle"
+                            size={16}
+                            color="#67D16C"
+                          />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               );
             })}
-            {errors.checklist && (
-              <View style={[styles.errorContainer, { marginHorizontal: 16 }]}>
-                <AntDesign
-                  name="exclamation-circle"
-                  size={14}
-                  color="#FF6B6B"
-                />
-                <Text style={styles.errorText}>{errors.checklist}</Text>
-              </View>
-            )}
           </View>
-        </Animated.View>
+        </View>
 
         {/* Current Status Summary */}
         <View style={styles.statusCard}>

@@ -8,6 +8,9 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Modal,
+  StatusBar,
+  Dimensions,
 } from "react-native";
 import { colors } from "../../../../../common/theme/colors";
 import { AntDesign, MaterialIcons } from "@expo/vector-icons";
@@ -22,6 +25,7 @@ import sl from "../../../../../../core/di/InjectionContainer";
 import Toast from "react-native-toast-message";
 import { RentalReceipt } from "../../../../../../domain/entities/booking/RentalReceipt";
 import { useGetLastReceipt } from "../../../return/ui/hooks/useGetLastReceipt";
+import ImageViewer from "react-native-image-zoom-viewer";
 
 type HandoverReportNav = StackNavigationProp<
   StaffStackParamList,
@@ -46,28 +50,45 @@ export const HandoverReportScreen: React.FC = () => {
   } = route.params || {};
   const [rentalReceipts, setRentalReceipts] = useState<RentalReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { getLastReceipt, booking } = useGetLastReceipt({ bookingId });
 
   // Handle array data from response
-  const handOverImages = useMemo(() => {
-    if (Array.isArray(getLastReceipt()?.handOverVehicleImageFiles))
-      return getLastReceipt()?.handOverVehicleImageFiles;
-    if (getLastReceipt()?.handOverVehicleImageFiles)
-      return [getLastReceipt()?.handOverVehicleImageFiles];
+  const handOverImages = useMemo((): string[] => {
+    const files = getLastReceipt()?.handOverVehicleImageFiles;
+    if (Array.isArray(files)) return files;
+    if (files) return [files];
     return [];
   }, [getLastReceipt()?.handOverVehicleImageFiles]);
 
-  const checklistImages = useMemo(() => {
-    if (Array.isArray(getLastReceipt()?.checkListHandoverFile))
-      return getLastReceipt()?.checkListHandoverFile;
-    if (getLastReceipt()?.checkListHandoverFile)
-      return [getLastReceipt()?.checkListHandoverFile];
+  const checklistImages = useMemo((): string[] => {
+    const files = getLastReceipt()?.checkListHandoverFile;
+    if (Array.isArray(files)) return files;
+    if (files) return [files];
     return [];
   }, [getLastReceipt()?.checkListHandoverFile]);
 
   const getImageLabel = (index: number, total: number) => {
     const labels = ["Mặt trước", "Mặt sau", "Bên trái", "Bên phải"];
     return labels[index] || `Ảnh ${index + 1}`;
+  };
+
+  const combinedImages = useMemo(() => {
+    return [...handOverImages, ...checklistImages];
+  }, [handOverImages, checklistImages]);
+
+  const zoomImages = useMemo(() => {
+    return combinedImages.map((uri: string) => ({ url: uri }));
+  }, [combinedImages]);
+
+  const openImageModal = (index: number) => {
+    setSelectedImageIndex(index);
+    setImageModalVisible(true);
+  };
+
+  const closeImageModal = () => {
+    setImageModalVisible(false);
   };
   const generateConstract = async () => {
     try {
@@ -232,23 +253,28 @@ export const HandoverReportScreen: React.FC = () => {
           <View style={styles.card}>
             <View style={styles.cardHeaderContainer}>
               <View style={styles.cardHeaderIcon}>
-                <AntDesign name="check-circle" size={18} color="#67D16C" />
+                <AntDesign name="check-square" size={18} color="#FFD666" />
               </View>
-              <Text style={styles.cardHeader}>Danh sách kiểm tra</Text>
+              <Text style={styles.cardHeader}>Checklist bàn giao</Text>
             </View>
             {checklistImages.map((imageUrl, index) => (
-              <View key={index} style={styles.checklistContainer}>
+              <TouchableOpacity
+                key={index}
+                activeOpacity={0.85}
+                style={styles.checklistWrap}
+                onPress={() => openImageModal(handOverImages.length + index)}
+              >
                 <Image
                   source={{ uri: imageUrl }}
                   style={styles.checklistImage}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
-                {checklistImages.length > 1 && (
-                  <Text style={styles.checklistLabel}>
-                    Trang {index + 1}/{checklistImages.length}
-                  </Text>
-                )}
+                <View style={styles.photoOverlay}>
+                  <View style={styles.photoOverlayIcon}>
+                    <AntDesign name="eye" size={20} color="#fff" />
+                  </View>
               </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
@@ -344,6 +370,55 @@ export const HandoverReportScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Image Zoom Modal */}
+      <Modal
+        visible={imageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeImageModal}
+        statusBarTranslucent
+      >
+        <View style={styles.imageModalContainer}>
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor="rgba(0,0,0,0.95)"
+          />
+          <SafeAreaView edges={["top"]} style={styles.imageModalSafeArea}>
+            <View style={styles.imageModalHeader}>
+              <Text style={styles.imageModalCounter}>
+                {selectedImageIndex + 1} / {combinedImages.length}
+              </Text>
+              <TouchableOpacity
+                style={styles.imageModalCloseButton}
+                onPress={closeImageModal}
+                activeOpacity={0.7}
+              >
+                <AntDesign name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+
+          <ImageViewer
+            imageUrls={zoomImages}
+            index={selectedImageIndex}
+            enableSwipeDown
+            onSwipeDown={closeImageModal}
+            onChange={(index) => {
+              if (typeof index === "number") {
+                setSelectedImageIndex(index);
+              }
+            }}
+            renderIndicator={(currentIndex, allSize) => (
+              <Text style={styles.imageModalCounter}>
+                {currentIndex} / {allSize}
+              </Text>
+            )}
+            backgroundColor="rgba(0,0,0,0.95)"
+            saveToLocalByLongPress={false}
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -551,26 +626,68 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
-  checklistContainer: {
+  checklistWrap: {
     borderRadius: 12,
-    overflow: "hidden",
     borderWidth: 1,
     borderColor: "#2A2D36",
-    marginBottom: 12,
+    overflow: "hidden",
     backgroundColor: "#2A2D36",
-    height: 1500,
+    position: "relative",
+    maxHeight: 400,
+    marginBottom: 12,
   },
   checklistImage: {
     width: "100%",
-    height: "100%",
-    backgroundColor: "#2A2D36",
+    height: 400,
+    resizeMode: "contain",
   },
-  checklistLabel: {
-    color: colors.text.secondary,
-    fontSize: 12,
-    textAlign: "center",
-    paddingVertical: 8,
+  photoOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+  },
+  photoOverlayIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  imageModalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.95)",
+  },
+  imageModalSafeArea: {
+    backgroundColor: "rgba(0,0,0,0.95)",
+  },
+  imageModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  imageModalCounter: {
+    color: "#fff",
+    fontSize: 14,
     fontWeight: "600",
+  },
+  imageModalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   verificationRow: {
     gap: 12,
