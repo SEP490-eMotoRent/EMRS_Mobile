@@ -211,7 +211,6 @@ export const FaceScanCameraScreen = () => {
     const minFaceHeight = height * 0.25; // >= 25% chiều cao màn hình
 
     const sizeOK = faceWidth > minFaceWidth && faceHeight > minFaceHeight;
-
     return yawOK && pitchOK && eyesOK && sizeOK;
   };
 
@@ -255,7 +254,7 @@ export const FaceScanCameraScreen = () => {
       Toast.show({
         type: "error",
         text1: "Đã xảy ra lỗi",
-        text2: "Vui lòng thử lại sau.",
+        text2: error.message,
       });
     } finally {
       setIsProcessing(false);
@@ -269,24 +268,6 @@ export const FaceScanCameraScreen = () => {
 
   return (
     <View style={StyleSheet.absoluteFill}>
-      <View style={styles.topControls}>
-        <TouchableOpacity
-          style={styles.switchCamBtn}
-          onPress={() => {
-            // Đổi giữa cam trước / sau
-            setFaceStatus(null);
-            if (stableTimer.current) {
-              clearTimeout(stableTimer.current);
-              stableTimer.current = null;
-            }
-            setCameraPosition((prev) => (prev === "front" ? "back" : "front"));
-          }}
-        >
-          <Text style={styles.switchCamText}>
-            {cameraPosition === "front" ? "Dùng cam sau" : "Dùng cam trước"}
-          </Text>
-        </TouchableOpacity>
-      </View>
 
       <DetectorCamera
         ref={cameraRef}

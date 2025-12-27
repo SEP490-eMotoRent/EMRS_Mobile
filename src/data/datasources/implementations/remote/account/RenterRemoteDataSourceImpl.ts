@@ -152,7 +152,7 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         code: response.data.code,
       };
     } catch (error: any) {
-      throw new ServerException(error.response?.data?.message || "Failed to scan face", error.response?.status || 500);
+      throw new ServerException(error?.message || "Failed to scan face", error?.status || 500);
     }
   }
 
@@ -168,7 +168,7 @@ export class RenterRemoteDataSourceImpl implements RenterRemoteDataSource {
         code: response.data.code,
       };
     } catch (error: any) {
-      throw new ServerException(error.response?.data?.message || "Failed to get renter by ID card", error.response?.status || 500);
+      throw new ServerException(error?.message || "Failed to get renter by ID card", error?.status || 500);
     }
   }
 }
