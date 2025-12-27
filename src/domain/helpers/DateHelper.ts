@@ -65,7 +65,7 @@ export class DateHelper {
         const match = vietnameseDateRange.match(pattern);
 
         if (!match) {
-            console.warn('❌ Failed to parse Vietnamese date range:', vietnameseDateRange);
+            // console.warn('❌ Failed to parse Vietnamese date range:', vietnameseDateRange);
             return this.getDefaultDateRangeForBooking();
         }
 

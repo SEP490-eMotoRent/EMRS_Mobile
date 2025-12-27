@@ -16,10 +16,6 @@ import { PricingBreakdown } from "../../organisms/booking/PricingBreakdown";
 
 type RoutePropType = RouteProp<BookingStackParamList, 'ConfirmRentalDuration'>;
 type NavigationPropType = StackNavigationProp<BookingStackParamList, 'ConfirmRentalDuration'>;
-// Helper to convert ISO string back to Date for PricingBreakdown
-const convertToDate = (dateString: string): Date => {
-    return new Date(dateString);
-};
 
 export const ConfirmRentalDurationScreen: React.FC = () => {
     const route = useRoute<RoutePropType>();
@@ -55,12 +51,16 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
     const branchOpenTimeSACH = branchOpenTime ? convertTo12HourFormat(branchOpenTime) : "6:00 SA";
     const branchCloseTimeSACH = branchCloseTime ? convertTo12HourFormat(branchCloseTime) : "10:00 CH";
 
+    // ✅ SIMPLIFIED: Just parse dates, use default if parse fails (silent fallback)
     const initialDateRangeISO = useMemo(() => {
         if (dateRange) {
-            // console.log('📅 Parsing Vietnamese dateRange:', dateRange);
-            return DateHelper.parseVietnameseDateRangeToISO(dateRange);
+            try {
+                return DateHelper.parseVietnameseDateRangeToISO(dateRange);
+            } catch (error) {
+                console.warn('⚠️ Failed to parse dateRange, using default:', dateRange);
+                return DateHelper.getDefaultDateRangeForBooking();
+            }
         }
-        // console.log('📅 Using default dateRange');
         return DateHelper.getDefaultDateRangeForBooking();
     }, [dateRange]);
 
@@ -119,20 +119,6 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const displayDays = Math.floor(totalHours / 24);
     const displayHours = Math.floor(totalHours % 24);
-    
-    // console.log("📊 4-Component Rental:", {
-    //     category,
-    //     totalHours,
-    //     displayDays,
-    //     displayHours,
-    //     components: {
-    //         startPartial: startPartialAmount,
-    //         normalFullDays: normalFullDaysAmount,
-    //         holidayFullDays: holidayFullDaysAmount,
-    //         endPartial: endPartialAmount,
-    //     },
-    //     total: totalRentalFee,
-    // });
 
     const handleBack = () => {
         navigation.goBack();
@@ -140,11 +126,9 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
 
     const handleContinue = () => {
         if (!validateCurrentDuration()) {
-            // console.warn("Cannot continue with invalid duration");
             return;
         }
 
-        // console.log("Continuing to insurance plans for vehicle:", vehicleId);
         navigation.navigate('InsurancePlans', { 
             vehicleId,
             vehicleName,
@@ -248,6 +232,7 @@ export const ConfirmRentalDurationScreen: React.FC = () => {
                     endDateISO={endDateISO}
                 />
 
+                {/* ✅ ONLY show validation errors when user actually has invalid dates */}
                 {durationError && (
                     <View style={styles.errorBanner}>
                         <View style={styles.errorIconContainer}>

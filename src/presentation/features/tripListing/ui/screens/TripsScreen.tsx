@@ -19,7 +19,6 @@ import { FeedbackModal } from "../orgamisms/modal/FeedbackModal";
 
 type TripsScreenNavigationProp = StackNavigationProp<TripStackParamList, 'Trip'>;
 
-// ✅ UNIFIED FILTER TYPE - covers all statuses + "all"
 type FilterType = "all" | "pending" | "booked" | "renting" | "returned" | "completed" | "cancelled";
 type SortOption = "newest" | "oldest" | "price_high" | "price_low";
 
@@ -36,7 +35,7 @@ export const TripsScreen: React.FC = () => {
     const navigation = useNavigation<TripsScreenNavigationProp>();
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOption, setSortOption] = useState<SortOption>("newest");
-    const [activeFilter, setActiveFilter] = useState<FilterType>("all"); // ✅ Default to "all"
+    const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
     const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
         visible: false,
@@ -205,6 +204,9 @@ export const TripsScreen: React.FC = () => {
             vehicleAssigned: !!booking.vehicleId,
             hasAdditionalFees,
             paymentExpiry: calculatePaymentExpiry(),
+            
+            // ✅ NEW: Add start datetime for sorting
+            startDatetime: booking.startDatetime || new Date(),
         };
     };
 
@@ -279,10 +281,12 @@ export const TripsScreen: React.FC = () => {
             cancellationReason: bookingStatus === "CANCELLED"
                 ? "Đơn đã được hủy" 
                 : undefined,
+            
+            // ✅ NEW: Add start datetime for sorting
+            startDatetime: booking.startDatetime || new Date(),
         };
     };
 
-    // ✅ UNIFIED LIST - All bookings in one place
     const allDisplayTrips = React.useMemo<DisplayTrip[]>(() => {
         return bookings
             .map((booking): DisplayTrip | null => {
@@ -301,14 +305,27 @@ export const TripsScreen: React.FC = () => {
             .filter((t): t is DisplayTrip => t !== null);
     }, [bookings, bookingFeedbacks, refundRate]);
 
+    // ✅ FIXED: Sort by actual start datetime
     const sortTrips = <T extends DisplayTrip>(trips: T[]): T[] => {
         const sorted = [...trips];
 
         switch (sortOption) {
             case "newest":
-                return sorted.reverse();
+                // Sort by start date DESC (soonest/most recent first)
+                return sorted.sort((a, b) => {
+                    const dateA = (a as any).startDatetime as Date;
+                    const dateB = (b as any).startDatetime as Date;
+                    return dateB.getTime() - dateA.getTime();
+                });
+                
             case "oldest":
-                return sorted;
+                // Sort by start date ASC (furthest/oldest first)
+                return sorted.sort((a, b) => {
+                    const dateA = (a as any).startDatetime as Date;
+                    const dateB = (b as any).startDatetime as Date;
+                    return dateA.getTime() - dateB.getTime();
+                });
+                
             case "price_high":
             case "price_low":
                 return sorted.sort((a, b) => {
@@ -316,6 +333,7 @@ export const TripsScreen: React.FC = () => {
                     const priceB = parseFloat((b.totalAmount || "0").replace(/[^0-9]/g, '') || '0');
                     return sortOption === "price_high" ? priceB - priceA : priceA - priceB;
                 });
+                
             default:
                 return sorted;
         }
@@ -390,24 +408,28 @@ export const TripsScreen: React.FC = () => {
         });
     };
 
-    // ✅ UNIFIED FILTER LOGIC
+    // ✅ FIXED: Proper filter combination with AND logic
     const filteredTrips = sortTrips(
         allDisplayTrips.filter(trip => {
-            // Filter by status (if not "all")
-            if (activeFilter !== "all" && trip.status !== activeFilter) return false;
+            // 1. Filter by status (if not "all")
+            const statusMatch = activeFilter === "all" || trip.status === activeFilter;
             
-            // Filter by search query
-            if (searchQuery) {
-                const nameMatch = trip.vehicleName.toLowerCase().includes(searchQuery.toLowerCase());
-                const categoryMatch = trip.vehicleCategory?.toLowerCase().includes(searchQuery.toLowerCase());
-                const referenceMatch = 'reference' in trip && trip.reference?.toLowerCase().includes(searchQuery.toLowerCase());
-                return nameMatch || categoryMatch || referenceMatch;
+            // 2. Filter by search query (if exists)
+            let searchMatch = true;
+            if (searchQuery.trim()) {
+                const query = searchQuery.toLowerCase().trim();
+                const nameMatch = trip.vehicleName.toLowerCase().includes(query);
+                const categoryMatch = trip.vehicleCategory?.toLowerCase().includes(query);
+                const referenceMatch = 'reference' in trip && 
+                                        trip.reference?.toLowerCase().includes(query);
+                searchMatch = nameMatch || categoryMatch || referenceMatch;
             }
-            return true;
+            
+            // 3. Combine both filters with AND
+            return statusMatch && searchMatch;
         })
     );
 
-    // ✅ FILTER TAGS WITH "ALL" OPTION
     const filterTags = [
         { id: "all", label: "Tất cả", count: allDisplayTrips.length },
         { id: "pending", label: "Chờ thanh toán", count: allDisplayTrips.filter(t => t.status === "pending").length },
@@ -483,7 +505,9 @@ export const TripsScreen: React.FC = () => {
                         <Text style={styles.emptyIcon}>◐</Text>
                         <Text style={styles.emptyTitle}>Chưa có chuyến đi nào</Text>
                         <Text style={styles.emptyMessage}>
-                            Tất cả các chuyến đi của bạn sẽ xuất hiện ở đây
+                            {activeFilter !== "all" 
+                                ? `Không có chuyến đi nào ở trạng thái "${filterTags.find(t => t.id === activeFilter)?.label}"`
+                                : "Tất cả các chuyến đi của bạn sẽ xuất hiện ở đây"}
                         </Text>
                     </View>
                 }
@@ -505,7 +529,6 @@ export const TripsScreen: React.FC = () => {
                 onSortChange={setSortOption}
             />
 
-            {/* ✅ NO MORE TABS - Just filter tags */}
             <View style={styles.filterContainer}>
                 <FilterTags
                     tags={filterTags}

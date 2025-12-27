@@ -15,7 +15,7 @@ export interface FilterState {
     models: string[];
     rangeKm: [number, number];
     features: string[];
-    showUnavailable: boolean;  // ✅ NEW
+    showUnavailable: boolean;
 }
 
 interface FilterModalProps {

@@ -22,6 +22,9 @@ export interface CurrentTrip {
     vehicleAssigned?: boolean;
     hasAdditionalFees?: boolean;
     paymentExpiry?: string;
+    
+    // ✅ NEW: For sorting
+    startDatetime: Date;
 }
 
 interface CurrentTripCardProps {
@@ -163,7 +166,7 @@ export const CurrentTripCard: React.FC<CurrentTripCardProps> = ({
                 </View>
             )}
 
-            {/* ALWAYS SHOW TOTAL — this is the key fix */}
+            {/* ALWAYS SHOW TOTAL */}
             {trip.totalAmount && (
                 <View style={[styles.amountRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Tổng cộng</Text>
