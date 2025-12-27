@@ -18,7 +18,7 @@ export interface ElectricVehicle {
     price: number;
     features: string[];
     rentalDays?: number;
-    imageUrl?: string;
+    imageUrl?: string | null;
 }
 
 type VehicleCardNavigationProp = StackNavigationProp<BrowseStackParamList>;
@@ -41,55 +41,32 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
     const navigation = useNavigation<VehicleCardNavigationProp>();
     const isMountedRef = useRef(true);
 
-    /**
-     * FIXED: Lifecycle management
-     * - Commented out console.logs for performance
-     */
     useEffect(() => {
-        // console.log('[VehicleCard] Mounted for vehicle ID: ', vehicle.id);
         isMountedRef.current = true;
         return () => {
-            // console.log('[VehicleCard] Unmounting for vehicle ID: ', vehicle.id);
             isMountedRef.current = false;
         };
     }, [vehicle.id]);
 
-    /**
-     * FIXED: Navigation handler
-     * - Commented out console.logs
-     * - Added mounted check for safety
-     */
     const goToVehicleDetails = useCallback(() => {
-        if (!isMountedRef.current) {
-            // console.log('[VehicleCard] Navigation prevented: unmounted for ID ', vehicle.id);
-            return;
-        }
+        if (!isMountedRef.current) return;
 
         try {
-            // console.log('[VehicleCard] Navigating to VehicleDetails for ID ', vehicle.id);
             navigation.navigate("VehicleDetails", {
                 vehicleId: vehicle.id,
                 dateRange,
                 location,
             });
         } catch (error) {
-            // console.error('[VehicleCard] Navigation error for ID ', vehicle.id, ': ', error);
+            console.error('[VehicleCard] Navigation error:', error);
         }
     }, [navigation, vehicle.id, dateRange, location]);
 
-    /**
-     * FIXED: Book button handler
-     * - Commented out console.logs
-     */
     const handleBookPress = useCallback((e: any) => {
         e.stopPropagation();
-        if (!isMountedRef.current) {
-            // console.log('[VehicleCard] Book action prevented: unmounted for ID ', vehicle.id);
-            return;
-        }
-        // console.log('[VehicleCard] Book button pressed for ID ', vehicle.id);
+        if (!isMountedRef.current) return;
         goToVehicleDetails();
-    }, [goToVehicleDetails, vehicle.id]);
+    }, [goToVehicleDetails]);
 
     return (
         <TouchableOpacity
@@ -107,7 +84,6 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
 
                 {/* Image Container */}
                 <View style={styles.imageContainer}>
-                    {/* Dark Gradient Overlay for better badge visibility */}
                     <LinearGradient
                         colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.2)", "transparent"]}
                         start={{ x: 0, y: 0 }}
@@ -127,7 +103,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                         </View>
                     )}
 
-                    {/* Distance Badge - Top Left */}
+                    {/* Distance Badge */}
                     {distance && (
                         <View style={styles.distanceBadge}>
                             <View style={styles.distanceBadgeContent}>
@@ -137,7 +113,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                         </View>
                     )}
 
-                    {/* Battery/Range Badge - Top Right */}
+                    {/* Range Badge */}
                     {vehicle.range && (
                         <View style={styles.rangeBadge}>
                             <LinearGradient
@@ -152,22 +128,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                         </View>
                     )}
 
-                    {/* Enhanced Color Indicator - Bottom Left */}
+                    {/* Color Indicator */}
                     <View style={styles.colorIndicatorContainer}>
-                        <View
-                            style={[
-                                styles.colorGlow,
-                                { backgroundColor: vehicle.colorHex },
-                            ]}
-                        />
-                        <View
-                            style={[
-                                styles.colorDot,
-                                { backgroundColor: vehicle.colorHex },
-                            ]}
-                        >
+                        <View style={[styles.colorGlow, { backgroundColor: vehicle.colorHex }]} />
+                        <View style={[styles.colorDot, { backgroundColor: vehicle.colorHex }]}>
                             <View style={styles.colorHighlight} />
-                            {(vehicle.color === "Trắng" || vehicle.colorHex === "#ffffff") && (
+                            {(vehicle.color === "Trắng" || vehicle.color === "trắng" || vehicle.colorHex === "#ffffff" || vehicle.colorHex === "#FFFFFF") && (
                                 <View style={styles.colorDotBorder} />
                             )}
                         </View>
@@ -179,19 +145,19 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
 
                 {/* Info Section */}
                 <View style={styles.infoSection}>
-                    {/* Vehicle Name & Type */}
-                    <View style={styles.nameRow}>
-                        <View style={styles.nameContainer}>
-                            <Text style={styles.vehicleName} numberOfLines={1}>
-                                {vehicle.name}
-                            </Text>
-                            <Text style={styles.vehicleType}>{vehicle.type}</Text>
-                        </View>
+                    {/* ✅ FIXED: Simplified name section */}
+                    <View style={styles.nameSection}>
+                        <Text style={styles.vehicleName}>
+                            {vehicle.name || "Xe Điện"}
+                        </Text>
+                        <Text style={styles.vehicleType}>
+                            {vehicle.type || "ECONOMY"}
+                        </Text>
                     </View>
 
                     <View style={styles.divider} />
 
-                    {/* Price & CTA Row */}
+                    {/* Price & Button */}
                     <View style={styles.actionRow}>
                         <View style={styles.priceContainer}>
                             <View style={styles.priceRow}>
@@ -203,7 +169,6 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
                             <Text style={styles.priceLabel}>Giá thuê</Text>
                         </View>
 
-                        {/* Enhanced Book Button */}
                         <TouchableOpacity
                             style={styles.bookButton}
                             onPress={handleBookPress}
@@ -400,22 +365,19 @@ const styles = StyleSheet.create({
     infoSection: {
         padding: 12,
     },
-    nameRow: {
+    // ✅ FIXED: Completely new simplified name section
+    nameSection: {
         marginBottom: 8,
-    },
-    nameContainer: {
-        flex: 1,
     },
     vehicleName: {
         fontSize: 15,
         fontWeight: "700",
-        color: "#fff",
+        color: "#ffffff",
         marginBottom: 2,
-        letterSpacing: 0.3,
     },
     vehicleType: {
         fontSize: 10,
-        color: "#999",
+        color: "#999999",
         fontWeight: "500",
     },
     divider: {
