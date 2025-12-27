@@ -2,7 +2,6 @@ import { Feedback } from "../../../domain/entities/booking/Feedback";
 import { FeedbackDetailResponse } from "../../models/feedback/FeedbackDetailResponse";
 import { FeedbackResponse } from "../../models/feedback/FeedbackResponse";
 
-
 export class FeedbackMapper {
     /**
      * Map FeedbackDetailDTO (from GET endpoints) to domain entity
@@ -10,12 +9,18 @@ export class FeedbackMapper {
      */
     static fromDetailDTO(dto: FeedbackDetailResponse): Feedback {
         return new Feedback(
-            dto.feedbackId,
-            dto.rating,
-            dto.comment,
-            dto.bookingId,
-            dto.renterName,  // renterName from detail response
-            undefined        // no renterId
+            dto.feedbackId,           // id
+            dto.rating,               // rating
+            dto.comment,              // comment
+            '',                       // renterId (empty - not provided in detail response)
+            dto.bookingId,            // bookingId ✅ FIXED!
+            new Date(),               // createdAt
+            null,                     // updatedAt
+            null,                     // deletedAt
+            false,                    // isDeleted
+            undefined,                // renter
+            dto.renterName,           // renterName ✅ FIXED - in correct position!
+            undefined                 // booking
         );
     }
 
@@ -25,11 +30,18 @@ export class FeedbackMapper {
      */
     static fromResponseDTO(dto: FeedbackResponse): Feedback {
         return new Feedback(
-            dto.feedbackId,
-            dto.rating,
-            dto.comment,
-            dto.bookingId,
-            dto.renterId     // renterId from create response
+            dto.feedbackId,           // id
+            dto.rating,               // rating
+            dto.comment,              // comment
+            dto.renterId,             // renterId
+            dto.bookingId,            // bookingId
+            new Date(),               // createdAt
+            null,                     // updatedAt
+            null,                     // deletedAt
+            false,                    // isDeleted
+            undefined,                // renter
+            undefined,                // renterName (not in create response)
+            undefined                 // booking
         );
     }
 

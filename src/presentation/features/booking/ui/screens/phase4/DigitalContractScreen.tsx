@@ -231,18 +231,6 @@ export const DigitalContractScreen: React.FC = () => {
                                     Mang theo <Text style={styles.infoTextBold}>CCCD và giấy phép lái xe gốc</Text> để ký hợp đồng
                                 </Text>
                             </View>
-                            <View style={styles.infoItem}>
-                                <Text style={styles.infoBullet}>•</Text>
-                                <Text style={styles.infoText}>
-                                    Tiền đặt cọc {securityDeposit} sẽ được hoàn lại trong vòng 7 ngày làm việc sau khi trả xe
-                                </Text>
-                            </View>
-                            <View style={styles.infoItem}>
-                                <Text style={styles.infoBullet}>•</Text>
-                                <Text style={styles.infoText}>
-                                    Bạn có thể xem chi tiết đặt xe trong mục "Chuyến đi"
-                                </Text>
-                            </View>
                         </View>
                     </>
                 )}
