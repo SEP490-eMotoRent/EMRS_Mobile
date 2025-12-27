@@ -579,50 +579,50 @@ export const SwapNewVehicleScreen: React.FC = () => {
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.itemsContainer}>
-                    {section.items.map((item) => {
-                      const checked = !!checklistItems[item.key];
-                      return (
-                        <TouchableOpacity
-                          key={item.key}
-                          style={[
-                            styles.itemRow,
-                            checked && styles.itemRowChecked,
-                          ]}
-                          onPress={() => toggleChecklistItem(item.key)}
-                          activeOpacity={0.8}
-                        >
-                          <View
+                    <View style={styles.itemsContainer}>
+                      {section.items.map((item) => {
+                        const checked = !!checklistItems[item.key];
+                        return (
+                          <TouchableOpacity
+                            key={item.key}
                             style={[
-                              styles.checkbox,
-                              checked && styles.checkboxChecked,
+                              styles.itemRow,
+                              checked && styles.itemRowChecked,
                             ]}
+                            onPress={() => toggleChecklistItem(item.key)}
+                            activeOpacity={0.8}
                           >
-                            {checked && (
-                              <AntDesign
-                                name="check"
-                                size={12}
-                                color="#FFFFFF"
-                              />
-                            )}
-                          </View>
-                          <Text
-                            style={[
-                              styles.itemText,
-                              checked && styles.itemTextChecked,
-                            ]}
-                          >
-                            {item.label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
+                            <View
+                              style={[
+                                styles.checkbox,
+                                checked && styles.checkboxChecked,
+                              ]}
+                            >
+                              {checked && (
+                                <AntDesign
+                                  name="check"
+                                  size={12}
+                                  color="#FFFFFF"
+                                />
+                              )}
+                            </View>
+                            <Text
+                              style={[
+                                styles.itemText,
+                                checked && styles.itemTextChecked,
+                              ]}
+                            >
+                              {item.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                 </View>
               );
             })}
+              </View>
           </View>
-        </View>
 
         <TouchableOpacity style={styles.primary} onPress={handleNext}>
           <Text style={styles.primaryText}>Lưu xe mới & Tiếp tục</Text>
