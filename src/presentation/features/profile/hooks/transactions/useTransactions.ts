@@ -28,12 +28,16 @@ export const useTransactions = (options: UseTransactionsOptions = {}) => {
 
             const result = await container.wallet.transactions.getMy.execute();
 
-            // ✅ Filter based on options
+            // ✅ FIXED: Include 'Completed' status (for insurance transactions)
             const validTransactions = includeFailedTransactions 
                 ? result
-                : result.filter(t => t.status === 'Success' || t.status === 'Pending');
+                : result.filter(t => 
+                    t.status === 'Success' || 
+                    t.status === 'Pending' ||
+                    t.status === 'Completed'  // ✅ INSURANCE TRANSACTIONS
+                  );
             
-            // ✅ Sort ONLY by date (newest first) - no status priority
+            // Sort by date (newest first)
             validTransactions.sort((a, b) => {
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
             });
