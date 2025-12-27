@@ -21,6 +21,9 @@ export interface PastTrip {
     lateReturnFee?: string;
     hasFeedback?: boolean;
     cancellationReason?: string;
+    
+    // ✅ NEW: For sorting
+    startDatetime: Date;
 }
 
 interface PastTripCardProps {
@@ -66,7 +69,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 )}
             </View>
             
-            {/* ✅ LARGE VEHICLE IMAGE - Full Width */}
+            {/* LARGE VEHICLE IMAGE - Full Width */}
             <View style={styles.imageContainer}>
                 {trip.vehicleImageUrl ? (
                     <Image 
@@ -88,7 +91,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 )}
             </View>
 
-            {/* ✅ Vehicle Info - Below Image */}
+            {/* Vehicle Info - Below Image */}
             <View style={styles.vehicleInfo}>
                 <Text style={styles.vehicleName} numberOfLines={1}>
                     {trip.vehicleName}
@@ -107,7 +110,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 </View>
             </View>
             
-            {/* ✅ CANCELLED STATUS - Show full breakdown + refund */}
+            {/* CANCELLED STATUS - Show full breakdown + refund */}
             {trip.status === "cancelled" && (
                 <View style={styles.cancelledSection}>
                     <View style={styles.cancelledAlert}>
@@ -211,17 +214,7 @@ export const PastTripCard: React.FC<PastTripCardProps> = ({
                 </View>
             )}
             
-            {/* Amount row - ONLY for completed, pending, booked, renting */}
-            {/* {trip.status !== "cancelled" && (
-                <View style={styles.amountSection}>
-                    <View style={styles.amountRow}>
-                        <Text style={styles.amountLabel}>Tổng thanh toán</Text>
-                        <Text style={styles.amountValue}>{trip.totalAmount}</Text>
-                    </View>
-                </View>
-            )} */}
-            
-            {/* ✅ Actions - Single Row */}
+            {/* Actions - Single Row */}
             <View style={styles.actions}>
                 <TouchableOpacity
                     style={styles.primaryButton}

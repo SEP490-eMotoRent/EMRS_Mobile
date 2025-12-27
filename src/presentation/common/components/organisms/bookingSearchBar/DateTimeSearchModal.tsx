@@ -14,6 +14,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from "react-native-calendars";
 import { PrimaryButton } from "../../atoms/buttons/PrimaryButton";
+import { parseTime, validateRentalDuration } from "../../../../features/booking/utils/RentalDurationValidator";
+
 
 interface DateTimeSearchModalProps {
     visible: boolean;
@@ -118,6 +120,9 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
     const [pickupTime, setPickupTime] = useState("6:00 CH");
     const [returnTime, setReturnTime] = useState("10:00 SA");
 
+    // ✅ Validation state
+    const [validationError, setValidationError] = useState<string | null>(null);
+
     useEffect(() => {
         if (visible) {
             setCalendarReady(false);
@@ -127,6 +132,13 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
             return () => clearTimeout(timer);
         } else {
             setCalendarReady(false);
+        }
+    }, [visible]);
+
+    // ✅ Reset validation error when modal closes
+    useEffect(() => {
+        if (!visible) {
+            setValidationError(null);
         }
     }, [visible]);
 
@@ -172,6 +184,64 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
             return [...prev, ...newMonths];
         });
     }, []);
+
+    // ✅ Validate date range against business rules
+    const validateDateRange = useCallback((
+        startDateStr: string | null,
+        endDateStr: string | null,
+        startTimeStr: string,
+        endTimeStr: string
+    ): string | null => {
+        if (!startDateStr || !endDateStr) {
+            return "Vui lòng chọn ngày nhận và trả xe";
+        }
+
+        // Parse times
+        const startTime = parseTime(startTimeStr);
+        const endTime = parseTime(endTimeStr);
+
+        // Create full date-time objects
+        const startDateTime = new Date(startDateStr);
+        startDateTime.setHours(startTime.hours, startTime.minutes, 0, 0);
+
+        const endDateTime = new Date(endDateStr);
+        endDateTime.setHours(endTime.hours, endTime.minutes, 0, 0);
+
+        // Rule 1: Check 24-hour advance booking
+        const now = new Date();
+        const minAllowedTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        
+        if (startDateTime < minAllowedTime) {
+            const formatDateTime = (date: Date) => {
+                return date.toLocaleString('vi-VN', { 
+                    day: '2-digit', 
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            };
+            return `Phải đặt trước ít nhất 24 giờ. Thời gian nhận xe phải sau ${formatDateTime(minAllowedTime)}`;
+        }
+
+        // Rule 2: Validate rental duration (no negative, minimum 24 hours)
+        const validation = validateRentalDuration(startDateTime, endDateTime);
+        if (!validation.isValid) {
+            return validation.error;
+        }
+
+        return null; // All validations passed
+    }, []);
+
+    // ✅ Re-validate whenever dates or times change
+    useEffect(() => {
+        if (startDate && endDate) {
+            const error = validateDateRange(startDate, endDate, pickupTime, returnTime);
+            setValidationError(error);
+        } else {
+            setValidationError(null);
+        }
+    }, [startDate, endDate, pickupTime, returnTime, validateDateRange]);
 
     // ✅ useCallback for performance
     const onDayPress = useCallback((day: any) => {
@@ -250,11 +320,24 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
         }
     }, [startDate, endDate, today]);
 
+    // ✅ Validate before confirming
     const handleConfirm = () => {
-        if (startDate && endDate) {
-            onConfirm(`${startDate} - ${endDate} (${pickupTime} - ${returnTime})`);
-            onClose();
+        if (!startDate || !endDate) {
+            setValidationError("Vui lòng chọn ngày nhận và trả xe");
+            return;
         }
+
+        // Final validation check
+        const error = validateDateRange(startDate, endDate, pickupTime, returnTime);
+        
+        if (error) {
+            setValidationError(error);
+            return;
+        }
+
+        // All validations passed - confirm and close
+        onConfirm(`${startDate} - ${endDate} (${pickupTime} - ${returnTime})`);
+        onClose();
     };
 
     const openTimePicker = (type: "pickup" | "return") => {
@@ -324,6 +407,9 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
 
     const keyExtractor = useCallback((item: Date, index: number) => `month-${index}`, []);
 
+    // ✅ Disable confirm button when validation fails
+    const isConfirmDisabled = !startDate || !endDate || validationError !== null;
+
     return (
         <Modal
             visible={visible}
@@ -373,6 +459,14 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                             </View>
 
                             <View style={styles.dateTimeOverlay}>
+                                {/* ✅ Error Banner */}
+                                {validationError && (
+                                    <View style={styles.errorBanner}>
+                                        <Text style={styles.errorIcon}>⚠️</Text>
+                                        <Text style={styles.errorText}>{validationError}</Text>
+                                    </View>
+                                )}
+
                                 <View style={styles.dateTimeContainer}>
                                     <View style={styles.dateTimeBox}>
                                         <Text style={styles.dateLabel}>Giờ Nhận</Text>
@@ -387,7 +481,11 @@ export const DateTimeSearchModal: React.FC<DateTimeSearchModalProps> = ({
                                         </TouchableOpacity>
                                     </View>
                                 </View>
-                                <PrimaryButton title="Xác Nhận" onPress={handleConfirm} />
+                                <PrimaryButton 
+                                    title="Xác Nhận" 
+                                    onPress={handleConfirm}
+                                    disabled={isConfirmDisabled}
+                                />
                             </View>
 
                             {showTimePicker && (
@@ -410,10 +508,12 @@ interface TimePickerModalProps {
 }
 
 const TimePickerModal: React.FC<TimePickerModalProps> = ({ onConfirm, onCancel }) => {
-    const [selectedHour, setSelectedHour] = useState(10);
+    // ✅ FIXED: Vietnamese time format - 12 comes first!
+    const [selectedHour, setSelectedHour] = useState(12);
     const [selectedPeriod, setSelectedPeriod] = useState("SA");
 
-    const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+    // ✅ FIXED: Hours in Vietnamese order [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
     const periods = ["SA", "CH"];
 
     const ITEM_HEIGHT = 60;
@@ -479,6 +579,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ onConfirm, onCancel }
         <View style={styles.timePickerOverlay}>
             <View style={styles.timePickerSheet}>
                 <Text style={styles.timePickerTitle}>Chọn Giờ</Text>
+                <Text style={styles.timePickerSubtitle}>Chỉ giờ mở cửa chi nhánh</Text>
                 
                 <View style={styles.pickerWrapper}>
                     <View style={styles.selectionIndicator} />
@@ -596,6 +697,27 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         alignItems: "center",
     },
+    errorBanner: {
+        backgroundColor: "#7c2d12",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 12,
+        width: "100%",
+        flexDirection: "row",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#ea580c",
+    },
+    errorIcon: {
+        fontSize: 16,
+        marginRight: 8,
+    },
+    errorText: {
+        color: "#fed7aa",
+        fontSize: 13,
+        flex: 1,
+        fontWeight: "500",
+    },
     dateTimeContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -644,7 +766,12 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 22,
         fontWeight: "700",
-        marginBottom: 30,
+        marginBottom: 6,
+    },
+    timePickerSubtitle: {
+        color: "#999",
+        fontSize: 13,
+        marginBottom: 24,
     },
     pickerWrapper: {
         position: "relative",

@@ -37,7 +37,7 @@ export function useVehicleModels(): UseVehicleModelsResult {
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to fetch vehicle models';
             setError(errorMessage);
-            console.error('Error fetching vehicle models:', err);
+            // console.error('Error fetching vehicle models:', err);
         } finally {
             setLoading(false);
         }
